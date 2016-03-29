@@ -1,2 +1,2 @@
 # finances
-Track finances in an SQL database.
+Track personal finances in an SQL database.
