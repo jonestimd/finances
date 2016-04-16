@@ -1,6 +1,7 @@
 package io.github.jonestimd.finance.domain.transaction;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 import io.github.jonestimd.finance.domain.TestDomainUtils;
 import io.github.jonestimd.finance.domain.TestSequence;
@@ -57,6 +58,11 @@ public class TransactionDetailBuilder {
 
     public TransactionDetailBuilder onTransaction() {
         transaction = new TransactionBuilder().nextId().get();
+        return this;
+    }
+
+    public TransactionDetailBuilder onTransaction(Date date) {
+        transaction = new TransactionBuilder().nextId().date(date).get();
         return this;
     }
 

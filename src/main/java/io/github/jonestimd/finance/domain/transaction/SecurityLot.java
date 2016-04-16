@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.domain.transaction;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -38,6 +39,7 @@ import javax.persistence.Table;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.asset.Security;
+import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import io.github.jonestimd.lang.Comparables;
 import org.hibernate.annotations.ForeignKey;
 
@@ -139,8 +141,12 @@ public class SecurityLot extends BaseDomain<Long> {
         return applySplits(purchase.getRemainingShares());
     }
 
-    public BigDecimal getPurchasePrice() { // TODO adjust for splits?
-        return purchase.getTransaction().getSecurityPurchasePrice();
+    /**
+     * @return the purchase price adjusted for splits
+     */
+    public BigDecimal getPurchasePrice() {
+        SplitRatio ratio = getSecurity().getSplitRatio(purchase.getTransaction().getDate(), sale.getTransaction().getDate());
+        return purchase.getTransaction().getSecurityPurchasePrice().divide(ratio.getRatio(getSecurity().getScale()), RoundingMode.HALF_EVEN);
     }
 
     /**
@@ -158,7 +164,7 @@ public class SecurityLot extends BaseDomain<Long> {
     }
 
     public Security getSecurity() {
-        return sale.getTransaction().getSecurity();
+        return purchase.getTransaction().getSecurity();
     }
 
     /**
