@@ -1,0 +1,24 @@
+apply plugin: 'java'
+
+//compileJava.sourceCompatibility = 1.8
+compileJava.targetCompatibility = 1.8
+group = 'io.github.jonestimd'
+version = '0.7-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile rootProject
+
+    testCompile project( path: ':', configuration: 'testCompile' )
+    testCompile files( rootProject.buildDir.absolutePath + '/classes/test' )
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'tdj-finances', 'Implementation-Version': version
+    }
+    destinationDir = file( "$rootProject.libsDir/plugins" )
+}

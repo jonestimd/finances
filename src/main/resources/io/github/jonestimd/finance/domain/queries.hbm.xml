@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd" [
+    <!ENTITY joinSecurity "join security security_1_ on security.id = security_1_.asset_id">
+    <!ENTITY adjustedShares "adjust_shares(t.security_id, t.date, td.asset_quantity)">
+    <!ENTITY securitySummary "t.security_id, count(distinct t.id) useCount
+        , sum(coalesce(&adjustedShares;, 0)) shares
+        , min(t.date) firstAcquired
+        , sum(case when td.asset_quantity > 0 then
+                abs(td.amount)*(td.asset_quantity-coalesce(sl.purchase_shares,0))/td.asset_quantity
+              else 0 end) costBasis
+        , sum(case when td.asset_quantity is null and td.amount > 0 then td.amount else 0 end) dividends
+        from transaction t
+        join transaction_detail td on t.id = td.transaction_id
+        left join (
+            select purchase_tx_detail_id, sum(purchase_shares) purchase_shares from security_lot
+            group by purchase_tx_detail_id
+        ) sl on td.id = sl.purchase_tx_detail_id
+        where t.security_id is not null">
+]>
+<hibernate-mapping>
+    <sql-query name="account.getSummaries">
+      <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
+      <return-join alias="company" property="account.company"/>
+      <return-join alias="asset" property="account.currency"/>
+      <return-scalar column="useCount" type="long"/>
+      <return-scalar column="balance" type="java.math.BigDecimal"/>
+      select {company.*}, {asset.*}, {account.*}, summary.useCount, summary.balance
+      from account
+      join asset on account.currency_id = asset.id
+      left join company on account.company_id = company.id
+      left join (
+        select t.account_id, count(distinct t.id) useCount,
+            sum(case tc.amount_type when 'ASSET_VALUE' then 0 else td.amount end) balance
+        from transaction t
+        left join transaction_detail td on t.id = td.transaction_id
+        left join transaction_category tc on td.transaction_category_id = tc.id
+        group by t.account_id) summary on account.id = summary.account_id
+    </sql-query>
+    <sql-query name="security.getSummaries">
+        <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
+        <return-scalar column="useCount" type="long"/>
+        <return-scalar column="shares" type="java.math.BigDecimal"/>
+        <return-scalar column="firstAcquired" type="java.util.Date"/>
+        <return-scalar column="costBasis" type="java.math.BigDecimal"/>
+        <return-scalar column="dividends" type="java.math.BigDecimal"/><!-- TODO include commission in cost basis -->
+        select {security.*}, coalesce(summary.useCount, 0) useCount, coalesce(summary.shares, 0) shares,
+            summary.firstAcquired, summary.costBasis, summary.dividends
+        from asset security &joinSecurity;
+        left join (
+            select &securitySummary;
+            group by t.security_id
+            having sum(coalesce(&adjustedShares;, 0)) != 0
+        ) summary on summary.security_id = security.id
+    </sql-query>
+    <sql-query name="security.getSummariesByAccount">
+        <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
+        <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
+        <return-scalar column="useCount" type="long"/>
+        <return-scalar column="shares" type="java.math.BigDecimal"/>
+        <return-scalar column="firstAcquired" type="java.util.Date"/>
+        <return-scalar column="costBasis" type="java.math.BigDecimal"/>
+        <return-scalar column="dividends" type="java.math.BigDecimal"/>
+        select {security.*}, summary.useCount, summary.shares, {account.*}, summary.firstAcquired, summary.costBasis, summary.dividends
+        from (
+            select t.account_id, &securitySummary;
+            group by t.account_id, t.security_id
+            having sum(coalesce(&adjustedShares;, 0)) != 0
+        ) summary
+        join account on summary.account_id = account.id
+        join asset security on summary.security_id = security.id
+        &joinSecurity;
+    </sql-query>
+    <sql-query name="security.getAccountSummary">
+        <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
+        <return-scalar column="useCount" type="long"/>
+        <return-scalar column="shares" type="java.math.BigDecimal"/>
+        select {security.*}, summary.useCount, summary.shares
+        from asset security &joinSecurity;
+        join (
+            select t.security_id, count(distinct t.id) useCount, sum(&adjustedShares;) shares
+            from account
+            join transaction t on t.account_id = account.id
+            join transaction_detail td on t.id = td.transaction_id
+            where account.id = :accountId
+              and t.security_id is not null
+            group by t.security_id
+        ) summary on security.id = summary.security_id
+    </sql-query>
+<!--
+    <query name="account.removeFromCompany">
+        update Account set company = null where company in (:companies)
+    </query>
+
+    <query name="stockSplit.findBySecurityAndDate">
+        from StockSplit where date = :date and security = :security
+    </query>
+
+    <query name="payee.getSummaries">
+        select payee, (select count(*) from Transaction t where t.payee = payee) as useCount,
+            (select max(date) from Transaction t where t.payee = payee) as latestTransaction
+        from Payee payee
+    </query>
+
+    <query name="transactionCategory.getSummaries">
+        select category, (select count(distinct td.transaction) from TransactionDetail td where td.category = category) as useCount
+        from TransactionCategory category
+    </query>
+    <query name="transactionCategory.getParents">
+        select distinct key.parent from TransactionCategory
+    </query>
+
+    <query name="transactionGroup.getSummaries">
+        select g, (select count(distinct td.transaction) from TransactionDetail td where td.group = g) as useCount
+        from TransactionGroup g
+    </query>
+
+    <query name="SecurityLot.findBySaleIdWithPurchaseLots">
+        select distinct lot
+        from SecurityLot lot join fetch lot.purchase p join fetch p.saleLots
+        where lot.sale.id = :saleId
+    </query>
+    <query name="SecurityLot.deleteSaleLots">
+        delete from SecurityLot lot where lot.sale.id = :saleId
+    </query>
+
+    <query name="transactionDetail.findOrphanTransfers">
+        select td from TransactionDetail td join td.relatedDetail rd where rd.relatedDetail.id is null
+    </query>
+    <query name="transaction.securitySalesWithoutLots">
+        select distinct td
+        from TransactionDetail td join td.transaction t join td.category type join t.security s
+        where lower(s.name) like lower(:securityName)
+          and t.date = :saleDate
+          and type.key.code in (:actions)
+          and not exists (from SecurityLot l where l.sale.id = td.id)
+    </query>
+    <query name="transaction.unsoldSecuritySharesByDate">
+        select distinct td
+        from TransactionDetail td join td.transaction t join td.category c left join fetch td.saleLots
+        where t.date = :purchaseDate
+          and t.account = :account
+          and t.security = :security
+          and c.key.code in (:actions)
+          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id))
+    </query>
+    <query name="transaction.unsoldSecurityShares">
+        select distinct td
+        from TransactionDetail td join td.transaction t join td.category c left join fetch td.saleLots
+        where t.date &lt;= :saleDate
+          and t.account = :account
+          and t.security = :security
+          and c.key.code in (:actions)
+          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id))
+    </query>
+    <query name="transaction.replaceCategory">
+        update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)
+    </query>
+    <query name="transaction.replacePayee">
+        update Transaction set payee.id = :newPayeeId where payee.id in (:oldPayeeIds)
+    </query>
+    <query name="transaction.latestForPayee">
+        from Transaction where payee.id = :payeeId order by date desc, id desc
+    </query>
+
+    <query name="ImportFile.findOneByName">
+        from ImportFile where name = ?
+    </query>
+-->
+    <database-object>
+        <create>
+            create function adjust_shares(security_id bigint, from_date date, shares decimal(19,6))
+            returns decimal(19,6)
+            language java deterministic reads sql data
+            external name 'CLASSPATH:io.github.jonestimd.javadb.DatabaseFunctions.adjustShares'
+        </create>
+        <drop>drop function if exists adjust_shares</drop>
+        <dialect-scope name="org.hibernate.dialect.HSQLDialect"/>
+    </database-object>
+    <database-object>
+        <create>
+            create function adjust_shares(security_id bigint, from_date datetime, shares decimal(19,6))
+                returns decimal(19,6)
+                deterministic reads sql data
+            begin
+                declare done boolean default false;
+                declare shares_in  decimal(19,6);
+                declare shares_out decimal(19,6);
+                declare cur cursor for
+                    select ss.shares_out, ss.shares_in
+                    from stock_split ss
+                    where ss.security_id = security_id and ss.date >= from_date;
+                declare continue handler for NOT FOUND set done = true;
+
+                if shares is not null then
+                    open cur;
+                    read_loop: loop
+                        fetch cur into shares_out, shares_in;
+                        if done then
+                            leave read_loop;
+                        end if;
+                        set shares = shares * shares_out / shares_in;
+                    end loop read_loop;
+                    close cur;
+                end if;
+                return shares;
+            end
+        </create>
+        <drop>drop function if exists adjust_shares</drop>
+        <dialect-scope name="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+    </database-object>
+</hibernate-mapping>

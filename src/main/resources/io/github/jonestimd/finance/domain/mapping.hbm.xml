@@ -1,0 +1,279 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd" [
+    <!ENTITY BaseDomain SYSTEM "classpath://io/github/jonestimd/finance/domain/baseDomain.xml">
+]>
+<hibernate-mapping default-access="field">
+    <class name="io.github.jonestimd.finance.domain.account.Company" table="company">
+        <id name="id" column="id" type="long">
+            <generator class="native">
+                <param name="sequence">company_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <property name="name" type="string" length="100" not-null="true" unique-key="company_ak"/>
+        <bag name="accounts" inverse="true">
+            <key column="company_id" not-null="true"/>
+            <one-to-many class="io.github.jonestimd.finance.domain.account.Account"/>
+        </bag>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.account.Account" table="account">
+        <id name="id" column="id" type="long">
+            <generator class="native">
+                <param name="sequence">account_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <many-to-one name="currency" column="currency_id" not-null="true" class="io.github.jonestimd.finance.domain.asset.Currency"
+                     lazy="false" fetch="join" foreign-key="account_currency_fk"/>
+        <many-to-one name="company" column="company_id" class="io.github.jonestimd.finance.domain.account.Company"
+                     lazy="false" fetch="join" foreign-key="account_company_fk" unique-key="account_ak"/>
+        <property name="name" type="string" length="100" not-null="true" unique-key="account_ak"/>
+        <property name="type" length="25" not-null="true">
+            <type name="io.github.jonestimd.hibernate.EnumUserType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.account.AccountType</param>
+            </type>
+        </property>
+        <property name="number" column="account_no" type="string" length="25"/>
+        <property name="closed" type="yes_no" not-null="true"/>
+        <property name="description" type="text"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.asset.Asset" table="asset" abstract="true">
+        <id name="id" column="id" type="long">
+            <generator class="native">
+                <param name="sequence">asset_id_seq</param>
+            </generator>
+        </id>
+        <discriminator type="string">
+            <column name="type" unique-key="asset_ak" not-null="true"/>
+        </discriminator>
+        &BaseDomain;
+        <property name="name" type="string" length="100" not-null="true" unique-key="asset_ak"/>
+        <property name="symbol" type="string" length="10"/>
+        <property name="scale" type="int" not-null="true"/>
+
+        <subclass name="io.github.jonestimd.finance.domain.asset.Currency" discriminator-value="Currency"/>
+        <subclass name="io.github.jonestimd.finance.domain.asset.Security" discriminator-value="Security">
+            <bag name="splits" inverse="true" lazy="false">
+                <key column="security_id" not-null="true"/>
+                <one-to-many class="io.github.jonestimd.finance.domain.transaction.StockSplit"/>
+            </bag>
+            <join table="security">
+                <key column="asset_id" foreign-key="security_asset_fk" not-null="true"/>
+                <property name="type" type="string" length="25" not-null="true"/>
+            </join>
+        </subclass>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.StockSplit" table="stock_split">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">stock_split_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <property name="date" type="timestamp" not-null="true" unique-key="stock_split_ak"/>
+        <many-to-one name="security" column="security_id" not-null="true" class="io.github.jonestimd.finance.domain.asset.Security"
+                     lazy="false" fetch="join" foreign-key="stock_split_security_fk" unique-key="stock_split_ak"/>
+        <component name="splitRatio" class="io.github.jonestimd.finance.domain.asset.SplitRatio">
+            <property name="sharesIn" column="shares_in" type="big_decimal" precision="19" scale="6" not-null="true"/>
+            <property name="sharesOut" column="shares_out" type="big_decimal" precision="19" scale="6" not-null="true"/>
+        </component>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.Payee" table="payee">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">payee_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <property name="name" type="string" length="200" not-null="true" unique-key="payee_ak"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionCategory" table="transaction_category">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">transaction_category_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <component name="key" class="io.github.jonestimd.finance.domain.transaction.CategoryKey">
+            <property name="code" type="string" length="50" not-null="true" unique-key="transaction_category_ak"/>
+            <many-to-one name="parent" column="parent_id" foreign-key="tx_type_parent_fk" unique-key="transaction_category_ak"
+                         lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"/>
+        </component>
+        <property name="income" type="yes_no" not-null="true"/>
+        <property name="security" type="yes_no" not-null="true"/>
+        <property name="amountType" column="amount_type" not-null="true">
+            <type name="io.github.jonestimd.hibernate.EnumUserType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.transaction.AmountType</param>
+            </type>
+        </property>
+        <property name="description" type="text"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionGroup" table="transaction_group">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">transaction_group_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <property name="name" type="string" length="50" not-null="true" unique-key="transaction_group_ak"/>
+        <property name="description" type="text"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.SecurityLot" table="security_lot">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">security_lot_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <many-to-one name="purchase" column="purchase_tx_detail_id" not-null="true" foreign-key="security_lot_purchase_tx_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionDetail" unique-key="security_lot_ak"/>
+        <many-to-one name="sale" column="sale_tx_detail_id" not-null="true" foreign-key="security_lot_sale_tx_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionDetail" unique-key="security_lot_ak"/>
+        <property name="purchaseShares" column="purchase_shares" type="big_decimal" precision="19" scale="6" not-null="true"/>
+        <property name="saleShares" column="sale_shares" type="big_decimal" precision="19" scale="6" not-null="true"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionDetail" table="transaction_detail">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">transaction_detail_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <many-to-one name="transaction" column="transaction_id" not-null="true" cascade="save-update,merge"
+                     lazy="false" foreign-key="tx_detail_tx_fk" class="io.github.jonestimd.finance.domain.transaction.Transaction"/>
+        <property name="amount" type="big_decimal" precision="19" scale="2" not-null="true"/>
+        <property name="memo" type="string" length="2000"/>
+        <many-to-one name="category" column="transaction_category_id" class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"
+                     lazy="false" foreign-key="tx_detail_tx_type_fk"/>
+        <many-to-one name="group" column="transaction_group_id" cascade="save-update" foreign-key="tx_detail_group_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionGroup"/>
+        <many-to-one name="relatedDetail" column="related_detail_id" cascade="save-update,merge,delete"
+                     class="io.github.jonestimd.finance.domain.transaction.TransactionDetail"
+                     lazy="false" foreign-key="tx_detail_transfer_fk" unique-key="related_detail_uk"/>
+        <many-to-one name="exchangeAsset" column="exchange_asset_id" class="io.github.jonestimd.finance.domain.asset.Asset"
+                     lazy="false" foreign-key="tx_detail_asset_fk"/>
+        <property name="assetQuantity" column="asset_quantity" type="big_decimal" precision="19" scale="6"/>
+        <bag name="saleLots" inverse="true">
+            <key column="purchase_tx_detail_id" not-null="true"/>
+            <one-to-many class="io.github.jonestimd.finance.domain.transaction.SecurityLot"/>
+        </bag>
+        <property name="saleLotShares" formula="(select sum(security_lot.sale_shares) from security_lot where id = security_lot.sale_tx_detail_id)"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.transaction.Transaction" table="transaction">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">transaction_id_seq</param>
+            </generator>
+        </id>
+        &BaseDomain;
+        <many-to-one name="account" column="account_id" not-null="true" foreign-key="tx_account_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.account.Account"/>
+        <property name="date" type="date" not-null="true"/>
+        <property name="number" column="reference_number" type="string" length="30"/>
+        <many-to-one name="payee" column="payee_id" foreign-key="tx_payee_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.transaction.Payee"/>
+        <property name="cleared" type="yes_no" not-null="true"/>
+        <property name="memo" type="string" length="2000"/>
+        <many-to-one name="security" column="security_id" foreign-key="tx_security_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.asset.Security"/>
+        <bag name="details" inverse="true" lazy="false" cascade="save-update,merge,delete">
+            <key column="transaction_id" not-null="true"/>
+            <one-to-many class="io.github.jonestimd.finance.domain.transaction.TransactionDetail"/>
+        </bag>
+    </class>
+
+    <!-- file imports -->
+    <class name="io.github.jonestimd.finance.domain.fileimport.ImportField" table="import_field">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">import_field_id_seq</param>
+            </generator>
+        </id>
+        <property name="label" type="string" length="255" insert="false" update="false"/>
+        <property name="type" length="255" not-null="true">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.fileimport.FieldType</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
+        <many-to-one name="region" column="import_page_region_id" class="io.github.jonestimd.finance.domain.fileimport.PageRegion"
+                     lazy="false" foreign-key="import_field_page_region_fk"/>
+        <property name="amountFormat" column="number_format" length="15">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.fileimport.AmountFormat</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
+        <property name="dateFormat" column="date_format" type="string" length="50"/>
+        <property name="negate" type="yes_no" not-null="true"/>
+        <property name="memo" type="string" length="2000"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.fileimport.PageRegion" table="import_page_region">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">import_page_region_id_seq</param>
+            </generator>
+        </id>
+        <many-to-one name="importFile" column="import_file_id" not-null="true" foreign-key="import_page_region_file_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.fileimport.ImportFile"/>
+        <property name="top" type="float" not-null="true"/>
+        <property name="bottom" type="float" not-null="true"/>
+        <property name="labelLeft" column="label_left" type="float" not-null="true"/>
+        <property name="labelRight" column="label_right" type="float" not-null="true"/>
+        <property name="valueLeft" column="value_left" type="float" not-null="true"/>
+        <property name="valueRight" column="value_right" type="float" not-null="true"/>
+    </class>
+
+    <class name="io.github.jonestimd.finance.domain.fileimport.ImportFile" table="import_file" abstract="true">
+        <id name="id" column="id" type="long">
+            <generator class="native">
+                <param name="sequence">import_file_id_seq</param>
+            </generator>
+        </id>
+        <discriminator column="import_type" type="string" length="20" not-null="true"/>
+        <property name="name" type="string" length="250" not-null="false" unique-key="import_file_ak"/>
+        <map name="fields" lazy="false" cascade="all-delete-orphan">
+            <key column="import_file_id" not-null="true" foreign-key="import_field_file_fk"/>
+            <map-key column="label" type="string" length="250"/>
+            <one-to-many class="io.github.jonestimd.finance.domain.fileimport.ImportField"/>
+        </map>
+        <map name="categoryMap" table="import_category" lazy="false" cascade="all-delete-orphan">
+            <key column="import_file_id" not-null="true" foreign-key="import_category_file_fk"/>
+            <map-key column="type_alias" type="string" length="255"/>
+            <many-to-many column="transaction_category_id" foreign-key="import_category_category_fk"
+                          class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"/>
+        </map>
+        <map name="transferAccountMap" table="import_transfer_account" lazy="false" cascade="all-delete-orphan">
+            <key column="import_file_id" not-null="true" foreign-key="import_transfer_account_file_fk"/>
+            <map-key column="account_alias" type="string" length="255"/>
+            <many-to-many column="account_id" class="io.github.jonestimd.finance.domain.account.Account"
+                          foreign-key="import_transfer_account_account_fk"/>
+        </map>
+        <map name="payeeMap" table="import_payee" lazy="false" cascade="all-delete-orphan">
+            <key column="import_file_id" not-null="true" foreign-key="import_payee_file_fk"/>
+            <map-key column="payee_alias" type="string" length="255"/>
+            <many-to-many column="payee_id" class="io.github.jonestimd.finance.domain.transaction.Payee"
+                          foreign-key="import_payee_payee_fk"/>
+        </map>
+        <many-to-one name="account" column="account_id" foreign-key="import_file_account_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.account.Account"/>
+        <many-to-one name="payee" column="payee_id" foreign-key="import_file_payee_fk"
+                     lazy="false" class="io.github.jonestimd.finance.domain.transaction.Payee"/>
+        <property name="multiDetail" column="multi_detail" type="yes_no" not-null="true"/>
+        <property name="reconcile" type="yes_no" not-null="true"/>
+
+        <subclass name="io.github.jonestimd.finance.domain.fileimport.pdf.PdfImportFile" discriminator-value="PDF"/>
+        <subclass name="io.github.jonestimd.finance.domain.fileimport.csv.CsvImportFile" discriminator-value="CSV"/>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,111 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+apply plugin: 'java'
+
+compileJava.sourceCompatibility = 1.8
+
+group = 'io.github.jonestimd'
+version = '0.11-SNAPSHOT'
+
+allprojects { // TODO add plugin-api module and test-common module
+    repositories {
+        mavenLocal()
+        mavenCentral()
+//        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+}
+
+def hibernateVersion = "4.3.7.Final"
+
+evaluationDependsOnChildren()
+
+dependencies {
+//    compile files( System.getProperty("java.home") + "/lib/ext/jfxrt.jar")
+    compile( group: 'com.google.guava', name: 'guava', version: '18.0' )
+    compile( group: 'commons-lang', name: 'commons-lang', version: '2.4' )
+    compile( group: 'log4j', name: 'log4j', version: '1.2.15' ) { transitive = false }
+    compile( group: 'org.hibernate', name: 'hibernate-core', version: hibernateVersion ) {
+        exclude group: 'org.jboss.logging', module: 'jboss-logging-annotations'
+        exclude group: 'org.jboss', module: 'jandex'
+    }
+    compile( group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1' ) { transitive = false }
+    compile( group: 'com.itextpdf', name: 'itextpdf', version: '5.5.3' )
+    compile( group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6' )
+    compile( group: 'org.jsoup', name: 'jsoup', version: '1.8.1' )
+    compile( group: 'org.glassfish', name: 'javax.json', version: '1.0.4' )
+    compile( group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
+    compile( group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.0')
+    compile( group: 'com.typesafe', name: 'config', version: '1.3.0')
+
+    runtime( group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernateVersion ) {
+        exclude group: 'org.hibernate', module: 'hibernate-core'
+        exclude group: 'org.jboss.logging', module: 'jboss-logging-annotations'
+    }
+    runtime( group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1' ) { transitive = false }
+    runtime( group: 'org.objenesis', name: 'objenesis', version: '1.2' )
+    runtime( group: 'org.javassist', name: 'javassist', version: '3.18.1-GA' )
+    runtime( group: 'mysql', name: 'mysql-connector-java', version: '5.1.6' )
+    runtime( group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.5.3' )
+    runtime( group: 'com.jgoodies', name: 'jgoodies-common', version: '1.7.0' )
+
+    testCompile( group: 'junit', name: 'junit', version: '4.7' )
+    testCompile( group: 'org.easytesting', name: 'fest-assert', version: '1.4' )
+    testCompile( group: 'org.easytesting', name: 'fest-util', version: '1.1.6' )
+    testCompile( group: 'org.mockito', name: 'mockito-core', version: '1.9.0' )
+
+    testRuntime( group: 'org.hsqldb', name: 'hsqldb', version: '2.3.3', classifier: 'jdk6debug')
+}
+
+processResources {
+    filesMatching("**/*.properties") {
+        filter(ReplaceTokens, tokens: ['io.github.jonestimd.finance.version': version, 'build.date': new Date().toString()])
+    }
+}
+
+jar { // Error executing a jar built by Gradle on Ubuntu
+//    manifest {
+//        attributes 'Implementation-Title': 'tdj-finances',
+//                'Implementation-Version': version,
+//                'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
+//                'Class-Path': configurations.runtime.files.collect { it.name }.join(' ')
+//    }
+//    from sourceSets.main.output, childProjects.swing-ext.sourceSets.main.output
+//    from sourceSets.main.output, childProjects.collections.sourceSets.main.output
+    doLast {
+        ant.jar(destfile: archivePath, basedir: sourceSets.main.output.classesDir) {
+            delegate.manifest {
+                attribute(name: 'Implementation-Title', value: 'tdj-finances')
+                attribute(name: 'Implementation-Version', value: version)
+                attribute(name: 'Main-class', value: 'io.github.jonestimd.finance.ApplicationLauncher')
+                attribute(name: 'Class-Path', value: configurations.runtime.files.collect { it.name }.join(' '))
+            }
+        }
+        ant.jar(destfile: archivePath, basedir: sourceSets.main.output.resourcesDir, update: true)
+        ant.chmod(file: archivePath, perm: 'a+x')
+    }
+}
+
+def childRuntime(String name) {
+    childProjects[name].configurations.runtime.files
+            .findAll { ! configurations.runtime.files.contains(it) }
+            .findAll { ! configurations.archives.artifacts.collect{ it.file }.contains(it) }
+}
+
+task assemble(overwrite: true, type: Tar, dependsOn: [jar, ':swing-ext:jar', ':collections:jar', ':stockquote-plugin:jar']) {
+    includeEmptyDirs = false
+    compression = Compression.BZIP2
+    into 'finances'
+    from project.libsDir
+    from configurations.runtime.files
+    from childRuntime('stockquote-plugin'), {
+        into 'plugins'
+    }
+}
+
+//task javaHome {
+//    System.out.println(System.getProperty("java.home"))
+//    System.out.println(project.tasks.compileJava.classpath)
+//    project.tasks.each() { prop ->
+//        System.out.println(prop)
+//    }
+//}

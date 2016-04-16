@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemas>
+    <postgresql>
+        create schema ${schema};
+    </postgresql>
+
+    <mysql>
+        create schema ${schema};
+        create user '${user}'@'%' identified by '${password}';
+        grant all privileges on ${shcema}.* to ${user};
+        flush privileges;
+    </mysql>
+</schemas>
