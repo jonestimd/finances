@@ -2,6 +2,8 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.math.BigDecimal;
 
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
 import io.github.jonestimd.finance.domain.transaction.Payee;
@@ -9,6 +11,7 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
+import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import org.junit.Test;
 
 import static org.fest.assertions.Assertions.*;
@@ -68,6 +71,17 @@ public class TransactionFilterTest {
         assertThat(filter.test(new TransactionBuilder().nextId().details(new TransactionDetail(new TransactionCategory("fed tax"), BigDecimal.ONE, null, null)).get())).isTrue();
         assertThat(filter.test(new TransactionBuilder().nextId().details(new TransactionDetail(new TransactionCategory("TAX state"), BigDecimal.ONE, null, null)).get())).isTrue();
         assertThat(filter.test(new TransactionBuilder().nextId().details(new TransactionDetail(new TransactionCategory("state"), BigDecimal.ONE, null, null)).get())).isFalse();
+    }
+
+    @Test
+    public void matchesTransferAccount() throws Exception {
+        TransactionFilter filter = new TransactionFilter("account");
+        Account account1 = new Account(-1L, "account1");
+        Account account2 = new Account(new Company("company"), "account2");
+
+        assertThat(filter.test(new TransactionBuilder().nextId().details(TransactionDetail.newTransfer(account1, BigDecimal.TEN)).get())).isTrue();
+        assertThat(filter.test(new TransactionBuilder().nextId().details(TransactionDetail.newTransfer(account2, BigDecimal.TEN)).get())).isTrue();
+        assertThat(filter.test(new TransactionBuilder().nextId().details(TransactionDetail.newTransfer(new Account(-2L, "xxx"), BigDecimal.TEN)).get())).isFalse();
     }
 
     @Test

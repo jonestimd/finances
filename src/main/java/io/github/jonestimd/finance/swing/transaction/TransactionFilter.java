@@ -55,7 +55,7 @@ public class TransactionFilter implements Predicate<Transaction> {
 
     private boolean matchesDetail(Transaction transaction, String filterText) {
         return transaction.getDetails().stream().anyMatch(detail -> detail.getMemo() != null && detail.getMemo().toLowerCase().contains(filterText)
-                || detail.getCategory() != null && detail.getCategory().qualifiedName(" ").toLowerCase().contains(filterText)
+                || detail.getTransactionType() != null && detail.getTransactionType().qualifiedName(" ").toLowerCase().contains(filterText)
                 || detail.getAmount().toString().contains(filterText));
     }
 }
