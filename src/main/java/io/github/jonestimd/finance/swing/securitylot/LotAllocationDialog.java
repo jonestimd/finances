@@ -90,6 +90,7 @@ public class LotAllocationDialog extends FormDialog {
         saleSharesField.setText(sale.getAssetQuantity().negate().toString());
         setAllocatedShares(null);
         pack();
+        setSize(LABELS.getInt(RESOURCE_PREFIX + "width"), LABELS.getInt(RESOURCE_PREFIX + "height"));
         setVisible(true);
     }
 
