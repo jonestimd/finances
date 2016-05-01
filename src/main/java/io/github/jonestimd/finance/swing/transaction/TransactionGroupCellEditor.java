@@ -31,7 +31,6 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.ComboBoxDomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.component.EditableComboBoxCellEditor;
-import io.github.jonestimd.swing.list.ListModelIterable;
 import io.github.jonestimd.swing.validation.Validator;
 
 public class TransactionGroupCellEditor extends EditableComboBoxCellEditor<TransactionGroup> {
@@ -50,8 +49,7 @@ public class TransactionGroupCellEditor extends EditableComboBoxCellEditor<Trans
     }
 
     protected TransactionGroup saveItem(TransactionGroup item) {
-        TransactionGroupDialog dialog = new TransactionGroupDialog((Window) getComboBox().getTopLevelAncestor(),
-                new ListModelIterable<>(getComboBoxModel()));
+        TransactionGroupDialog dialog = new TransactionGroupDialog((Window) getComboBox().getTopLevelAncestor(), getComboBoxModel());
         try {
             return dialog.show(item) ? item : null;
         } finally {

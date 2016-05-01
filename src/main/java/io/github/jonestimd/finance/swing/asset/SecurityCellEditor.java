@@ -31,7 +31,6 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.ComboBoxDomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.component.EditableComboBoxCellEditor;
-import io.github.jonestimd.swing.list.ListModelIterable;
 import io.github.jonestimd.swing.validation.Validator;
 
 public class SecurityCellEditor extends EditableComboBoxCellEditor<Security> {
@@ -52,7 +51,7 @@ public class SecurityCellEditor extends EditableComboBoxCellEditor<Security> {
     }
 
     protected Security saveItem(Security item) {
-        SecurityDialog dialog = new SecurityDialog((Window) getComboBox().getTopLevelAncestor(), new ListModelIterable<>(getComboBoxModel()));
+        SecurityDialog dialog = new SecurityDialog((Window) getComboBox().getTopLevelAncestor(), getComboBoxModel());
         try {
             return dialog.show(item) ? item : null;
         } finally {
