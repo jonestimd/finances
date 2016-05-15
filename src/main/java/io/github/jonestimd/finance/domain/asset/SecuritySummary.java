@@ -29,10 +29,10 @@ import io.github.jonestimd.finance.domain.transaction.TransactionSummary;
 
 public class SecuritySummary extends TransactionSummary<Security> {
     private Account account;
-    private BigDecimal shares;
+    private BigDecimal shares = BigDecimal.ZERO;
     private Date firstAcquired;
-    private BigDecimal costBasis;
-    private BigDecimal dividends;
+    private BigDecimal costBasis = BigDecimal.ZERO;
+    private BigDecimal dividends = BigDecimal.ZERO;
 
     public SecuritySummary() {
         super(new Security(), 0L);
