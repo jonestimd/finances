@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -141,7 +142,11 @@ public class ApplicationLauncher {
     private void launch(String[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
         URLClassLoader classLoader = createClassLoader();
         Thread.currentThread().setContextClassLoader(classLoader);
-        String selector = (args.length > 1 && args[0].equals("--run")) ? args[1] : "default";
+        String selector = "default";
+        if (args.length > 1 && args[0].equals("--run")) {
+            selector = args[1];
+            args = Arrays.copyOfRange(args, 2, args.length);
+        }
         String mainClassName = config.getProperty("main." + selector);
         if (mainClassName != null) {
             Class<?> mainClass = classLoader.loadClass(mainClassName);
