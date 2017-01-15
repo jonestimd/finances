@@ -22,10 +22,10 @@
 package io.github.jonestimd.finance.file;
 
 import java.io.InputStream;
-import java.util.Map;
 
+import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 
 public interface FieldValueExtractor {
-    Iterable<Map<ImportField, String>> parse(InputStream inputStream) throws Exception;
+    Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws Exception;
 }

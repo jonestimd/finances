@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
@@ -52,7 +52,7 @@ public class SingleDetailImportContextTest {
         when(importFile.getFieldValueExtractor()).thenReturn(fieldValueExtractor);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, categoryMapper);
         when(fieldValueExtractor.parse(inputStream))
-                .thenReturn(Collections.singletonList(ImmutableMap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME)));
+                .thenReturn(Collections.singletonList(ImmutableMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME)));
         when(payeeMapper.get(PAYEE_NAME)).thenReturn(payee);
 
         List<Transaction> transactions = context.parseTransactions(inputStream);
@@ -70,7 +70,7 @@ public class SingleDetailImportContextTest {
         when(importFile.getFieldValueExtractor()).thenReturn(fieldValueExtractor);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, categoryMapper);
         when(fieldValueExtractor.parse(inputStream))
-                .thenReturn(Collections.singletonList(ImmutableMap.of(amountField, "10", categoryField, CATEGORY_CODE)));
+                .thenReturn(Collections.singletonList(ImmutableMultimap.of(amountField, "10", categoryField, CATEGORY_CODE)));
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
         List<Transaction> transactions = context.parseTransactions(inputStream);
@@ -90,7 +90,7 @@ public class SingleDetailImportContextTest {
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, categoryMapper);
         when(fieldValueExtractor.parse(inputStream))
-                .thenReturn(Collections.singletonList(ImmutableMap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
+                .thenReturn(Collections.singletonList(ImmutableMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
         List<Transaction> transactions = context.parseTransactions(inputStream);

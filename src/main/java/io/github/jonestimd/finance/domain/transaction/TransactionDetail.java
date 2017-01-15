@@ -333,6 +333,10 @@ public class TransactionDetail extends BaseDomain<Long> {
         return category == null && group == null && relatedDetail == null && memo == null && amount == null;
     }
 
+    public boolean isZeroAmount() {
+        return amount == null || amount.compareTo(BigDecimal.ZERO) == 0;
+    }
+
     public boolean isUnsavedAndEmpty() {
         return id == null && isEmpty();
     }

@@ -25,18 +25,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Maps;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.itextpdf.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.file.FieldValueExtractor;
 import io.github.jonestimd.util.Streams;
+
+import static com.google.common.collect.Multimaps.*;
 
 public class PdfFieldValueExtractor implements FieldValueExtractor {
     private final Collection<ImportField> importFields;
@@ -46,16 +48,18 @@ public class PdfFieldValueExtractor implements FieldValueExtractor {
     }
 
     @Override
-    public Iterable<Map<ImportField, String>> parse(InputStream inputStream) throws IOException {
+    public Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws IOException {
         return Collections.singleton(getFieldValues(new TextExtractor(inputStream).getText()));
     }
 
-    protected Map<ImportField, String> getFieldValues(Stream<Entry<Vector, String>> pdfText) throws IOException {
-        return Maps.filterValues(Maps.transformValues(new TextWalker(pdfText::iterator).fieldValues, StringBuilder::toString), Predicates.not(String::isEmpty));
+    protected ListMultimap<ImportField, String> getFieldValues(Stream<Entry<Vector, String>> pdfText) throws IOException {
+        ListMultimap<ImportField, String> fieldValues = transformValues(new TextWalker(pdfText::iterator).fieldValues, StringBuilder::toString);
+        fieldValues.values().removeIf(String::isEmpty);
+        return fieldValues;
     }
 
     private class TextWalker {
-        private final Map<ImportField, StringBuilder> fieldValues = new LinkedHashMap<>();
+        private final ListMultimap<ImportField, StringBuilder> fieldValues = LinkedListMultimap.create();
         private float x = -1f;
         private float y = -1f;
         private final StringBuilder prefix = new StringBuilder();
@@ -70,7 +74,7 @@ public class PdfFieldValueExtractor implements FieldValueExtractor {
                 List<ImportField> fieldCandidates = getMatches();
                 if (fieldCandidates.size() == 1) {
                     ImportField field = fieldCandidates.get(0);
-                    if (field.getLabel().equals(prefix.toString().trim()) && field.isValueRegion(x)) {
+                    if (field.getLabel().equalsIgnoreCase(prefix.toString().trim()) && field.isValueRegion(x)) {
                         appendValue(field, entry.getValue());
                     }
                     else if (field.isLabelRegion(x)) {
@@ -88,15 +92,15 @@ public class PdfFieldValueExtractor implements FieldValueExtractor {
         }
 
         private boolean isMatch(ImportField field) {
-            return field.getLabel().startsWith(prefix.toString().trim()) && field.isInRegion(x, y);
+            return field.getLabel().toUpperCase().startsWith(prefix.toString().trim()) && field.isInRegion(x, y);
         }
 
         protected void appendPrefix(String value) {
-            prefix.append(value).append(' ');
+            prefix.append(value.toUpperCase()).append(' ');
             List<ImportField> fieldCandidates = getMatches();
             if (fieldCandidates.size() == 1) {
                 ImportField field = fieldCandidates.get(0);
-                if (field.getLabel().equals(prefix.toString().trim())) {
+                if (field.getLabel().equalsIgnoreCase(prefix.toString().trim())) {
                     fieldValues.put(field, new StringBuilder());
                 }
             }
@@ -107,7 +111,8 @@ public class PdfFieldValueExtractor implements FieldValueExtractor {
         }
 
         protected void appendValue(ImportField field, String value) {
-            StringBuilder buffer = fieldValues.get(field);
+            List<StringBuilder> values = fieldValues.get(field);
+            StringBuilder buffer = values.get(values.size()-1);
             if (buffer.length() > 0) {
                 buffer.append(' ');
             }

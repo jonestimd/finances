@@ -28,12 +28,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
@@ -54,15 +56,16 @@ public abstract class ImportContext {
     }
 
     public List<Transaction> parseTransactions(InputStream source) throws Exception {
-        Iterable<Map<ImportField, String>> records = importFile.getFieldValueExtractor().parse(source);
+        Iterable<Multimap<ImportField, String>> records = importFile.getFieldValueExtractor().parse(source);
         return Streams.of(records).map(this::toTransaction).collect(Collectors.toList());
     }
 
-    private Transaction toTransaction(Map<ImportField, String> fieldValues) {
+    private Transaction toTransaction(Multimap<ImportField, String> fieldValues) {
         Transaction transaction = new Transaction(importFile.getAccount(), new Date(), importFile.getPayee(), false, null); // TODO override account in UI?
-        fieldValues.entrySet().stream()
+        fieldValues.entries().stream()
                 .filter(entry -> !updateTransaction(transaction, entry.getValue(), entry.getKey()))
                 .forEach(entry -> updateDetails(transaction, entry.getValue(), entry.getKey()));
+        transaction.getDetails().removeIf(TransactionDetail::isZeroAmount);
         return transaction;
     }
 

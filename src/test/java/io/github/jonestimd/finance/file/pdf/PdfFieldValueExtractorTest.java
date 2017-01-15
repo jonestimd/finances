@@ -4,6 +4,8 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.itextpdf.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
@@ -28,9 +30,9 @@ public class PdfFieldValueExtractorTest {
         addPdfText("The Other_field something", 0f, y);
         addPdfText(payeeField, y, "");
 
-        Map<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues).isEmpty();
+        assertThat(fieldValues.asMap()).isEmpty();
     }
 
     @Test
@@ -40,10 +42,10 @@ public class PdfFieldValueExtractorTest {
         addPdfText("The Other_field something", 0f, y);
         addPdfText(payeeField, y, "payee");
 
-        Map<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(payeeField)).isEqualTo(payee);
-        assertThat(fieldValues).hasSize(1).as("no empty values");
+        assertThat(fieldValues.get(payeeField)).containsOnly(payee);
+        assertThat(fieldValues.asMap()).hasSize(1).as("no empty values");
     }
 
     @Test
@@ -53,10 +55,10 @@ public class PdfFieldValueExtractorTest {
         addPdfText(dateField, 1f, date);
         addPdfText(payeeField, 2f, "payee");
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(dateField)).isEqualTo(date);
-        assertThat(fieldValues.get(payeeField)).isEqualTo(payee);
+        assertThat(fieldValues.get(dateField)).containsOnly(date);
+        assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
 
     @Test
@@ -66,22 +68,22 @@ public class PdfFieldValueExtractorTest {
         addPdfText(dateField, 1f, date);
         addPdfText(payeeField, 1f, "payee");
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(dateField)).isEqualTo(date);
-        assertThat(fieldValues.get(payeeField)).isEqualTo(payee);
+        assertThat(fieldValues.get(dateField)).containsOnly(date);
+        assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
 
     @Test
-    public void usesLastValue() throws Exception {
+    public void returnsAllValues() throws Exception {
         final String date1 = "05/13/1926";
         final String date2 = "06/17/1926";
         addPdfText(dateField, 1f, date1);
         addPdfText(dateField, 2f, date2);
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        ListMultimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(dateField)).isEqualTo(date2);
+        assertThat(fieldValues.get(dateField)).containsExactly(date1, date2);
     }
 
     @Test
@@ -89,9 +91,9 @@ public class PdfFieldValueExtractorTest {
         String payee = "some payee";
         addPdfText(payeeField, 1f, "some payee");
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(payeeField)).isEqualTo(payee);
+        assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
 
     @Test
@@ -100,9 +102,9 @@ public class PdfFieldValueExtractorTest {
         addPdfText(payeeField, 1f, "some payee");
         addPdfText("ignored", payeeField.getRegion().getValueRight(), 1.1f);
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(payeeField)).isEqualTo(payee);
+        assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
 
     @Test
@@ -116,13 +118,13 @@ public class PdfFieldValueExtractorTest {
         addPdfText("Amount", 0f, 30f);
         addPdfText("below", 10f, 30f);
 
-        Map<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
 
-        assertThat(fieldValues.get(amountField)).isEqualTo("the amount");
+        assertThat(fieldValues.get(amountField)).containsOnly("the amount");
     }
 
     protected void addPdfText(ImportField field, float y, String text) {
-        String label = field.getLabel();
+        String label = field.getLabel().toUpperCase();
         float x = field.getRegion().getValueRight() - label.split(" ").length - text.split(" ").length;
         x = addPdfText(label, x, y);
         addPdfText(text, x, y);

@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.file.FieldValueExtractor;
 import io.github.jonestimd.util.Streams;
@@ -39,13 +41,13 @@ public class CsvFieldValueExtractor implements FieldValueExtractor {
     }
 
     @Override
-    public Iterable<Map<ImportField, String>> parse(InputStream inputStream) throws Exception {
+    public Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws Exception {
         return Streams.map(new CsvParser(inputStream).getStream(), this::mapRecord);
     }
 
-    protected Map<ImportField, String> mapRecord(Map<String, String> record) {
-        return importFields.stream()
+    protected Multimap<ImportField, String> mapRecord(Map<String, String> record) {
+        return Multimaps.forMap(importFields.stream()
                 .filter(field -> record.containsKey(field.getLabel()))
-                .collect(Collectors.toMap(Function.identity(), field -> record.get(field.getLabel())));
+                .collect(Collectors.toMap(Function.identity(), field -> record.get(field.getLabel()))));
     }
 }
