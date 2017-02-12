@@ -64,15 +64,13 @@ processResources {
     }
 }
 
-jar { // Error executing a jar built by Gradle on Ubuntu
-//    manifest {
-//        attributes 'Implementation-Title': 'tdj-finances',
-//                'Implementation-Version': version,
-//                'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
-//                'Class-Path': configurations.runtime.files.collect { it.name }.join(' ')
-//    }
-//    from sourceSets.main.output, childProjects.swing-ext.sourceSets.main.output
-//    from sourceSets.main.output, childProjects.collections.sourceSets.main.output
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'tdj-finances',
+                'Implementation-Version': version,
+                'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
+                'Class-Path': configurations.runtime.files.collect { it.name }.join(' ')
+    }
     doLast {
         ant.jar(destfile: archivePath, basedir: sourceSets.main.output.classesDir) {
             delegate.manifest {
@@ -104,7 +102,7 @@ def childRuntime(String name) {
             .findAll { ! configurations.archives.artifacts.collect{ it.file }.contains(it) }
 }
 
-task assemble(overwrite: true, type: Tar, dependsOn: [jar, ':swing-ext:jar', ':collections:jar', ':stockquote-plugin:jar']) {
+task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']) {
     includeEmptyDirs = false
     compression = Compression.BZIP2
     into 'finances'
