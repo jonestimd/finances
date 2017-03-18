@@ -84,7 +84,7 @@ public class ApplicationLauncher {
     }
 
     public ApplicationLauncher() throws URISyntaxException, IOException {
-        System.setProperty("install.dir", getInstallDirectory());
+        if (! System.getProperties().containsKey("install.dir")) System.setProperty("install.dir", getInstallDirectory());
         config.load(getClass().getResourceAsStream("/launcher.properties"));
         String extensions = config.getProperty("classpath.append");
         if (extensions != null) {
