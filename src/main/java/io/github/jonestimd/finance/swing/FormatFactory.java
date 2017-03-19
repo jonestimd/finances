@@ -22,8 +22,11 @@
 package io.github.jonestimd.finance.swing;
 
 import java.text.DecimalFormat;
+import java.text.FieldPosition;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.text.ParsePosition;
+import java.util.function.Function;
 
 public class FormatFactory {
     public static Format currencyFormat() {
@@ -34,5 +37,23 @@ public class FormatFactory {
         NumberFormat format = NumberFormat.getNumberInstance();
         format.setMaximumFractionDigits(BundleType.LABELS.getInt("format.number.precision"));
         return format;
+    }
+
+    public static <T> Format format(Function<T, String> toString) {
+        return new Format() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+                if (obj != null) {
+                    toAppendTo.append(toString.apply((T) obj));
+                }
+                return toAppendTo;
+            }
+
+            @Override
+            public Object parseObject(String source, ParsePosition pos) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

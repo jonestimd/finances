@@ -23,4 +23,12 @@ public class FormatFactoryTest {
 
         assertThat(format.format(1.987654321111)).isEqualTo("1.987654321");
     }
+
+    @Test
+    public void formatByFunction() throws Exception {
+        Format format = FormatFactory.format(Object::toString);
+
+        assertThat(format.format(1234)).isEqualTo("1234");
+        assertThat(format.format(null)).isEqualTo("");
+    }
 }
