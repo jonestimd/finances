@@ -21,45 +21,47 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.database;
 
-import java.awt.BorderLayout;
 import java.awt.Window;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.ServiceLoader;
 
-import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigRenderOptions;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.swing.dialog.FormDialog;
+import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class ConnectionDialog extends FormDialog {
     public static final String RESOURCE_PREFIX = "dialog.connection.";
-    private final List<DatabaseConfig> driverTemplates;
-    private final ConnectionPanel connectionPanel;
 
-    public ConnectionDialog(Window owner, List<DatabaseConfig> driverTemplates) throws SQLException {
+    private final ConfigurationView configView;
+
+    public ConnectionDialog(Window owner, List<DriverConfigurationService> driverTemplates) throws SQLException {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
-        this.driverTemplates = driverTemplates;
-        connectionPanel = new ConnectionPanel(driverTemplates, cancelAction);
-        getFormPanel().setLayout(new BorderLayout());
-        getFormPanel().add(connectionPanel, BorderLayout.CENTER);
-        getFormPanel().setBorder(BorderFactory.createEmptyBorder());
+        configView = new ConfigurationView(getFormPanel(), driverTemplates);
+        addButton(configView.getDefaultsAction());
+    }
+
+    public Config toConfig() {
+        return configView.toConfig("default");
     }
 
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-            List<DatabaseConfig> driverTemplates = DatabaseConfig.loadTemplates();
-            ConnectionDialog dialog = new ConnectionDialog(JOptionPane.getRootFrame(), driverTemplates);
+            ServiceLoader<DriverConfigurationService> plugins = ServiceLoader.load(DriverConfigurationService.class);
+            ConnectionDialog dialog = new ConnectionDialog(JOptionPane.getRootFrame(), Streams.toList(plugins));
             dialog.pack();
             dialog.setVisible(true);
-
             if (!dialog.isCancelled()) {
                 ConfigRenderOptions renderOptions = ConfigRenderOptions.concise().setFormatted(true).setJson(false);
-                System.out.println(dialog.connectionPanel.toConfig().root().render(renderOptions));
+                System.out.println(dialog.toConfig().root().render(renderOptions));
             }
         } catch (Exception ex) {
             ex.printStackTrace();

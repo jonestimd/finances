@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,30 +19,19 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.swing.database;
+package io.github.jonestimd.finance.plugin;
 
 import java.util.Map;
 
-import io.github.jonestimd.swing.validation.RequiredValidator;
-import io.github.jonestimd.swing.validation.Validator;
-
-import static io.github.jonestimd.finance.swing.BundleType.LABELS;
-
-public interface ConfigurationPanel {
-    String RESOURCE_PREFIX = "database.configuration.";
-    String REQUIRED_SUFFIX = ".required";
-
-    void setModel(DatabaseConfig model);
-
-    boolean isSelected();
-
-//    void setSelected(boolean selected);
-
-    default <T> Validator<T> validator(Validator<T> validator) {
-        return validator.when(this::isSelected);
+public class MySqlDriverConnectionService extends RemoteDriverConnectionService {
+    public MySqlDriverConnectionService() {
+        super("MySql", "org.hibernate.dialect.MySQL5InnoDBDialect", "com.mysql.jdbc.Driver", "mysql://");
     }
 
-    default Validator<String> requiredValidator(String field) {
-        return new RequiredValidator(LABELS.getString(RESOURCE_PREFIX + field + REQUIRED_SUFFIX));
+    @Override
+    public Map<Field, String> getDefaultValues() {
+        Map<Field, String> properties = super.getDefaultValues();
+        properties.put(Field.PORT, "3306");
+        return properties;
     }
 }
