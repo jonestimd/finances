@@ -56,7 +56,7 @@ public class CategoryKeyTableCellEditor extends CompositeCellEditor<CategoryKey>
         categories.remove(table.convertRowIndexToModel(row));
         Collections.sort(categories);
         categories.add(0, null);
-        parentList.getModel().setElements(categories);
+        parentList.getModel().setElements(categories, false);
 
         int selectedIndex = categories.indexOf(value.getParent());
         parentList.setSelectedIndex(selectedIndex);
