@@ -164,7 +164,7 @@ public class SecurityLot extends BaseDomain<Long> {
     }
 
     public Security getSecurity() {
-        return purchase.getTransaction().getSecurity();
+        return purchase != null ? purchase.getTransaction().getSecurity() : sale.getTransaction().getSecurity();
     }
 
     /**

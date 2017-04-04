@@ -2,6 +2,7 @@ package io.github.jonestimd.finance.file.download;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -70,7 +71,7 @@ public class FileDownloadTest {
         assertThat(credentials.getPassword()).isEqualTo("thePassword");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IOException.class)
     public void downloadNewStatementsThrowsExceptionForStatusNotOk() throws Exception {
         final Config filesStep = ConfigFactory.parseString("{ method = get, path = /files }");
         final CloseableHttpResponse response = mock(CloseableHttpResponse.class);

@@ -89,7 +89,7 @@ public class UpdateSharesDialog extends FormDialog {
     }
 
     public boolean show(List<SecuritySummary> securitySummaries, TransactionDetail detail) {
-        securityField.getModel().setElements(securitySummaries);
+        securityField.getModel().setElements(securitySummaries, false);
         securityField.setSelectedItem(detail.getTransaction().getSecurity());
         endingSharesField.setText("");
         grossAmountField.setText("");
