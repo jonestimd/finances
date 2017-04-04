@@ -35,4 +35,34 @@ public class SecurityLotTest {
 
         assertThat(lot.getPurchasePrice()).isEqualTo(BigDecimal.valueOf(5L));
     }
+
+    @Test
+    public void getSecurityUsesPurchaseTransaction() throws Exception {
+        Security security = new Security("stock", SecurityType.STOCK);
+        TransactionDetail purchase = new TransactionDetailBuilder().amount(BigDecimal.TEN.negate())
+                .shares(BigDecimal.ONE).get();
+        new TransactionBuilder().date(DateUtils.addDays(splitDate, -1))
+                .account(new Account(new Currency()))
+                .security(security)
+                .details(purchase).get();
+        SecurityLot lot = new SecurityLot();
+        lot.setPurchase(purchase);
+
+        assertThat(lot.getSecurity()).isEqualTo(security);
+    }
+
+    @Test
+    public void getSecurityUsesSaleTransaction() throws Exception {
+        Security security = new Security("stock", SecurityType.STOCK);
+        TransactionDetail sale = new TransactionDetailBuilder().amount(BigDecimal.TEN)
+                .shares(BigDecimal.ONE).get();
+        new TransactionBuilder().date(DateUtils.addDays(splitDate, -1))
+                .account(new Account(new Currency()))
+                .security(security)
+                .details(sale).get();
+        SecurityLot lot = new SecurityLot();
+        lot.setSale(sale);
+
+        assertThat(lot.getSecurity()).isEqualTo(security);
+    }
 }
