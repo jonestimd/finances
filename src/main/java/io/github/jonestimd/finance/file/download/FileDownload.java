@@ -119,10 +119,28 @@ public class FileDownload {
     }
 
     protected void execute(Config step, List<Object> fileKeys) throws IOException, ParseException {
+        for (int tries=0; true; ) {
+            try {
+                executeOnce(step, fileKeys);
+                return;
+            } catch (IOException ex) {
+                if (tries++ < 3) {
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else throw ex;
+            }
+        }
+    }
+
+    private void executeOnce(Config step, List<Object> fileKeys) throws IOException, ParseException {
         HttpUriRequest request = requestFactory.request(step, fileKeys);
         try (CloseableHttpResponse response = client.execute(request)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                throw new RuntimeException("Download failed: " + response.getStatusLine().toString());
+                throw new IOException("Download failed: " + response.getStatusLine().toString());
             }
             if (step.hasPath("result")) {
                 StepResponse<?> result = getResponse(step.getString("result.format"), response.getEntity());
