@@ -116,6 +116,7 @@ public abstract class DomainEventTablePanel<T extends UniqueId<?>> extends Valid
         public void updateUI(List<? extends DomainEvent<?, ?>> events) {
             events.forEach(eventPublisher::publishEvent);
             getTableModel().commit();
+            tableSelectionChanged(); // in case the selected row was just saved
         }
     }
 }
