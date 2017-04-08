@@ -55,8 +55,8 @@ import org.hibernate.annotations.Formula;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Table(name = "transaction_detail", uniqueConstraints = @UniqueConstraint(name = "related_detail_uk", columnNames = "related_detail_id"))
-@SequenceGenerator(name = "id_generator", sequenceName = "transaction_detail_id_seq")
+@Table(name = "tx_detail", uniqueConstraints = @UniqueConstraint(name = "related_detail_uk", columnNames = "related_detail_id"))
+@SequenceGenerator(name = "id_generator", sequenceName = "tx_detail_id_seq")
 @NamedQueries({
     @NamedQuery(name = TransactionDetail.FIND_ORPHAN_TRANSFERS,
         query = "select td from TransactionDetail td join td.relatedDetail rd where rd.relatedDetail.id is null"),
@@ -108,17 +108,17 @@ public class TransactionDetail extends BaseDomain<Long> {
 
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
     private Long id;
-    @ManyToOne(optional=false) @JoinColumn(name="transaction_id", nullable=false)
+    @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false)
     @ForeignKey(name = "tx_detail_tx_fk") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})
     private Transaction transaction;
     @Column(name = "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
     @ManyToOne @Cascade(CascadeType.SAVE_UPDATE) @ForeignKey(name="tx_detail_group_fk")
-    @JoinColumn(name = "transaction_group_id")
+    @JoinColumn(name = "tx_group_id")
     private TransactionGroup group;
     @Column(name = "memo", length = 2000)
     private String memo;
-    @ManyToOne @ForeignKey(name="tx_detail_tx_type_fk") @JoinColumn(name = "transaction_category_id")
+    @ManyToOne @ForeignKey(name="tx_detail_tx_type_fk") @JoinColumn(name = "tx_category_id")
     protected TransactionCategory category;
     @ManyToOne @ForeignKey(name="tx_detail_transfer_fk")
     @JoinColumn(name = "related_detail_id") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE, CascadeType.DELETE})

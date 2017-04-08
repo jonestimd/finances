@@ -22,13 +22,21 @@
 package io.github.jonestimd.finance.plugin;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.function.Consumer;
+
+import com.typesafe.config.Config;
+import io.github.jonestimd.finance.swing.BundleType;
 
 public class DerbyDriverConnectionService extends EmbeddedDriverConnectionService {
-    private final List<String> defaultPath = Arrays.asList(System.getProperty("user.home"), "Documents", "finances");
+    protected static final List<String> DEFAULT_PATH = Arrays.asList(System.getProperty("user.home"), ".finances", "database");
 
     public DerbyDriverConnectionService() {
         super("Derby", "org.hibernate.dialect.DerbyTenSevenDialect", "org.apache.derby.jdbc.EmbeddedDriver", "derby:directory:");
@@ -47,7 +55,37 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     @Override
     public Map<Field, String> getDefaultValues() {
         Map<Field, String> properties = new HashMap<>();
-        properties.put(Field.DIRECTORY, String.join(File.separator, defaultPath));
+        properties.put(Field.DIRECTORY, String.join(File.separator, DEFAULT_PATH));
         return properties;
+    }
+
+    @Override
+    public Properties getConnectionProperties(Config config) {
+        Properties properties = super.getConnectionProperties(config);
+        properties.setProperty("hibernate.temp.use_jdbc_metadata_defaults", "false");
+        return properties;
+    }
+
+    @Override
+    public boolean prepareDatabase(Config config, Consumer<String> updateProgress) throws Exception {
+        Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+        File dbDirectory = new File(config.getString(Field.DIRECTORY.toString()));
+        if (dbDirectory.exists() && dbDirectory.listFiles().length == 0) {
+            // need to delete the directory so Derby will create the database
+            dbDirectory.delete();
+        }
+        if (! dbDirectory.exists()) {
+            updateProgress.accept(BundleType.LABELS.getString("database.status.creatingDatabase"));
+            dbDirectory.getParentFile().mkdirs();
+            Connection connection = DriverManager.getConnection(getJdbcUrl(config) + ";create=true");
+            connection.close();
+            return true;
+        }
+        try (Connection connection = DriverManager.getConnection(getJdbcUrl(config))) {
+            connection.prepareStatement("select * from company").getMetaData();
+        } catch (SQLException ex) {
+            return true;
+        }
+        return false;
     }
 }

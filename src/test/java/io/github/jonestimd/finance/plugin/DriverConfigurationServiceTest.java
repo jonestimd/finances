@@ -21,26 +21,35 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.util.List;
 import java.util.Properties;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import io.github.jonestimd.collection.MapBuilder;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
+import io.github.jonestimd.util.Streams;
+import org.junit.Test;
 
-public abstract class EmbeddedDriverConnectionService extends DriverConfigurationService {
+import static org.fest.assertions.Assertions.*;
 
-    protected EmbeddedDriverConnectionService(String name, String dialect, String driverClassName, String urlPrefix) {
-        super(name, dialect, driverClassName, urlPrefix);
+public class DriverConfigurationServiceTest {
+    @Test
+    public void getServices() throws Exception {
+        List<DriverConfigurationService> services = DriverConfigurationService.getServices();
+
+        assertThat(Streams.map(services, DriverConfigurationService::getName)).contains("Derby", "MySql", "PostgreSQL");
     }
 
-    @Override
-    public Properties getConnectionProperties(Config config) {
-        Properties properties = new Properties();
-        properties.put("hibernate.dialect", dialect);
-        properties.put("hibernate.connection.driver_class", driverClassName);
-        properties.put("hibernate.connection.url", getJdbcUrl(config));
-        return properties;
-    }
+    @Test
+    public void forConfigMatchesDriverName() throws Exception {
+        Config config = ConfigFactory.parseMap(new MapBuilder<String, String>()
+                .put("driver", "Derby")
+                .put("directory", "/home/user/finances").get());
 
-    protected String getJdbcUrl(Config config) {
-        return "jdbc:" + urlPrefix + config.getString(Field.DIRECTORY.toString());
+        DriverService service = DriverConfigurationService.forConfig(config);
+
+        Properties properties = service.getConnectionProperties();
+        assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.DerbyTenSevenDialect");
     }
 }

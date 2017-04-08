@@ -35,8 +35,8 @@ import javax.persistence.UniqueConstraint;
 import com.google.common.base.Function;
 import io.github.jonestimd.finance.domain.BaseDomain;
 
-@Entity @Table(name="transaction_group", uniqueConstraints={@UniqueConstraint(name = "transaction_group_ak", columnNames={"name"})})
-@SequenceGenerator(name="id_generator", sequenceName="transaction_group_id_seq")
+@Entity @Table(name="tx_group", uniqueConstraints={@UniqueConstraint(name = "tx_group_ak", columnNames={"name"})})
+@SequenceGenerator(name="id_generator", sequenceName="tx_group_id_seq")
 @NamedQuery(name = TransactionGroup.SUMMARY_QUERY,
     query = "select g, (select count(distinct td.transaction) from TransactionDetail td where td.group = g) as useCount from TransactionGroup g")
 public class TransactionGroup extends BaseDomain<Long> implements Comparable<TransactionGroup> {

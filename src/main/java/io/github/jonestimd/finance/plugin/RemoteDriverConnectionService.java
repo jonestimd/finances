@@ -32,23 +32,11 @@ import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Fiel
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 
-public abstract class RemoteDriverConnectionService implements DriverConfigurationService {
+public abstract class RemoteDriverConnectionService extends DriverConfigurationService {
     protected static final List<Field> FIELDS = unmodifiableList(asList(HOST, PORT, SCHEMA, USER, PASSWORD));
-    private final String name;
-    private final String dialect;
-    private final String driverClassName;
-    private final String urlPrefix;
 
     protected RemoteDriverConnectionService(String name, String dialect, String driverClassName, String urlPrefix) {
-        this.name = name;
-        this.dialect = dialect;
-        this.driverClassName = driverClassName;
-        this.urlPrefix = urlPrefix;
-    }
-
-    @Override
-    public String getName() {
-        return name;
+        super(name, dialect, driverClassName, urlPrefix);
     }
 
     @Override

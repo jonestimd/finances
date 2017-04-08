@@ -24,23 +24,37 @@ package io.github.jonestimd.javadb;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Stored function implementations for embedded databases.
+ */
 public class DatabaseFunctions {
     public static final String SELECT_SPLITS = "select ss.shares_out, ss.shares_in from stock_split ss where ss.security_id = ? and ss.date >= ?";
 
+    /** HSQL version of the stored function */
     public static BigDecimal adjustShares(Connection connection, Long securityId, Date fromDate, BigDecimal shares) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement(SELECT_SPLITS);
-        ps.setLong(1, securityId);
-        ps.setDate(2, fromDate);
-        if (ps.execute()) {
-            ResultSet resultSet = ps.getResultSet();
-            while (resultSet.next()) {
-                shares = shares.multiply(resultSet.getBigDecimal("shares_out")).divide(resultSet.getBigDecimal("shares_in"));
+        try (PreparedStatement ps = connection.prepareStatement(SELECT_SPLITS)) {
+            ps.setLong(1, securityId);
+            ps.setDate(2, fromDate);
+            if (ps.execute()) {
+                try (ResultSet resultSet = ps.getResultSet()) {
+                    while (resultSet.next()) {
+                        shares = shares.multiply(resultSet.getBigDecimal("shares_out")).divide(resultSet.getBigDecimal("shares_in"));
+                    }
+                }
             }
         }
         return shares;
+    }
+
+    /** Derby version of the stored function */
+    public static BigDecimal adjustShares(long securityId, Date fromDate, BigDecimal shares) throws SQLException {
+        try (Connection connection = DriverManager.getConnection("jdbc:default:connection")) {
+            return adjustShares(connection, securityId, fromDate, shares);
+        }
     }
 }

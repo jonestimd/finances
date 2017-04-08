@@ -23,34 +23,40 @@ package io.github.jonestimd.finance.swing;
 
 import java.awt.Insets;
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Properties;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.typesafe.config.Config;
 import io.github.jonestimd.finance.SystemProperty;
+import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
-import io.github.jonestimd.finance.dao.SchemaBuilder;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.service.ServiceContext;
+import io.github.jonestimd.finance.swing.database.ConnectionDialog;
 import io.github.jonestimd.finance.swing.transaction.TransactionsPanel;
+import io.github.jonestimd.swing.BackgroundRunner;
+import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
 import io.github.jonestimd.swing.window.StatusFrame;
-import io.github.jonestimd.util.PropertiesLoader;
 import org.apache.log4j.Logger;
 
 public class FinanceApplication {
     public static final File DEFAULT_CONNECTION_PROPERTIES = new File(System.getProperty("user.home"), ".finances/connection.properties");
+    public static final String CONNECTION_FILE_PROPERTY = "connection.properties";
     private static final String PROPERTIES_FILENAME = ".finances/finances.properties";
     private static final ResourceBundle bundle = BundleType.LABELS.get();
     private static final Logger logger = Logger.getLogger(FinanceApplication.class);
 
     public static void main(String args[]) {
-//        java.util.logging.Logger.getLogger("java.awt.focus.Component").setLevel(java.util.logging.Level.FINEST);
+        if (Boolean.getBoolean("debug-focus")) {
+            java.util.logging.Logger.getLogger("java.awt.focus.Component").setLevel(java.util.logging.Level.FINEST);
+        }
         try {
             // PlasticLookAndFeel.setPlasticTheme(new DesertBlue());
             // UIManager.installLookAndFeel("JGoodies Plastic XP",
@@ -78,7 +84,7 @@ public class FinanceApplication {
         SwingUtilities.invokeLater(instance::showFrame);
 
         try {
-            instance.start();
+            SwingUtilities.invokeLater(instance::initializeFrame);
         }
         catch (Exception ex) {
             logger.error("initialization failed", ex);
@@ -86,60 +92,83 @@ public class FinanceApplication {
     }
 
     private StatusFrame initialFrame;
+    private final WindowType initialFrameType;
     private ServiceContext serviceContext;
     private SwingContext swingContext;
+    private final Long lastAccountId;
 
     private FinanceApplication() {
         new PropertiesPersister(PROPERTIES_FILENAME);
+        lastAccountId = Long.getLong(SystemProperty.LAST_ACCOUNT.key());
+        initialFrameType = lastAccountId == null ? WindowType.ACCOUNTS : WindowType.TRANSACTIONS;
     }
 
     private void showFrame() {
-        initialFrame = new StatusFrame(bundle, WindowType.TRANSACTIONS.getResourcePrefix());
+        initialFrame = new StatusFrame(bundle, initialFrameType.getResourcePrefix());
         initialFrame.setVisible(true);
         initialFrame.disableUI(bundle.getString("configuration.status"));
         Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
     }
 
-    private void start() throws IOException, SQLException {
-        logger.info("starting context");
-        serviceContext = new ServiceContext(connect(Boolean.getBoolean("init-database")));
-        swingContext = new SwingContext(serviceContext);
-        logger.info("done");
-
-        final Account lastAccount = getLastAccount();
-        SwingUtilities.invokeLater(() -> initializeFrame(lastAccount));
-    }
-
-    public static HibernateDaoContext connect(boolean createSchema) throws IOException, SQLException {
-        HibernateDaoContext daoContext = new HibernateDaoContext(loadConnectionProperties());
-        if (createSchema) {
-            new SchemaBuilder(daoContext).createSchemaTables().seedReferenceData();
+    public Optional<DriverService> loadDriver() {
+        ConfigManager configManager = new ConfigManager();
+        Optional<Config> configOption = configManager.get(ConfigManager.CONNECTION_PATH);
+        if (! configOption.isPresent()) {
+            configOption = new ConnectionDialog(initialFrame).showDialog();
+            configOption.ifPresent(config -> configManager.addPath(ConfigManager.CONNECTION_PATH, config).save());
         }
-        return daoContext;
-    }
-
-    public static Properties loadConnectionProperties() throws IOException {
-        return PropertiesLoader.load("connection.properties", DEFAULT_CONNECTION_PROPERTIES);
+        return configOption.map(DriverConfigurationService::forConfig);
     }
 
     private Account getLastAccount() {
-        Long accountId = Long.getLong(SystemProperty.LAST_ACCOUNT.key());
-        return accountId == null ? null : serviceContext.getAccountOperations().getAccount(accountId);
+        return lastAccountId == null ? null : serviceContext.getAccountOperations().getAccount(lastAccountId);
     }
 
-    private void initializeFrame(Account lastAccount) {
+    private void setProgressMessage(String message) {
+        SwingUtilities.invokeLater(() -> initialFrame.setStatusMessage(message));
+    }
+
+    private void initializeFrame() {
+        Optional<DriverService> driverOption = loadDriver();
+        if (driverOption.isPresent()) {
+            new BackgroundRunner<>(BackgroundTask.task(
+                    () -> startContext(driverOption.get()),
+                    this::showFrameOrError)).doTask();
+        }
+        else System.exit(1);
+    }
+
+    private Exception startContext(DriverService driver) {
         try {
-            TransactionsPanel transactionsPanel = (TransactionsPanel) swingContext.getFrameManager().addFrame(initialFrame, WindowType.TRANSACTIONS);
-            if (lastAccount != null) {
-                transactionsPanel.setSelectedAccount(lastAccount);
+            logger.info("starting context");
+            boolean initDatabase = driver.prepareDatabase(this::setProgressMessage);
+            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver.getConnectionProperties(), this::setProgressMessage));
+            swingContext = new SwingContext(serviceContext);
+            logger.info("done");
+            return null;
+        } catch (Exception ex) {
+            logger.error("Error starting context", ex);
+            return ex;
+        }
+    }
+
+    private void showFrameOrError(Exception error) {
+        if (error == null) {
+            if (initialFrameType == WindowType.TRANSACTIONS) {
+                TransactionsPanel transactionsPanel = (TransactionsPanel) swingContext.getFrameManager().addFrame(initialFrame, initialFrameType);
+                final Account lastAccount = getLastAccount();
+                if (lastAccount != null) transactionsPanel.setSelectedAccount(lastAccount);
+                else initialFrame.enableUI();
             }
             else {
+                swingContext.getFrameManager().addSingletonFrame(initialFrameType, initialFrame);
                 initialFrame.enableUI();
             }
         }
-        catch (Throwable ex) {
-            logger.error("Initialization failed", ex);
-            new ExceptionDialog(initialFrame, bundle, "configuration", ex).setVisible(true);
+        else {
+            new ExceptionDialog(initialFrame, error).setVisible(true);
+            initialFrame.setVisible(false);
+            initialFrame.dispose();
         }
     }
 

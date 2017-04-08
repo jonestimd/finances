@@ -13,21 +13,12 @@ public class PropertiesLoaderTest {
     private static final String FILE_PROPERTY = "test.filename";
 
     @Test
-    public void readsSpecifiedFile() throws Exception {
-        String filename = getClass().getResource(TEST_FILE).getPath();
-
-        Properties properties = PropertiesLoader.load(new File(filename));
-
-        assertThat(properties.getProperty("did.it.load")).isEqualTo("yes it did");
-    }
-
-    @Test
     public void readsFileSpecifiedByProperty() throws Exception {
         String defaultFile = getClass().getResource(DEFAULT_FILE).getPath();
         String filename = getClass().getResource(TEST_FILE).getPath();
         System.setProperty(FILE_PROPERTY, filename);
 
-        Properties properties = PropertiesLoader.load(FILE_PROPERTY, new File(defaultFile));
+        Properties properties = new PropertiesLoader(FILE_PROPERTY, new File(defaultFile)).load();
 
         assertThat(properties.getProperty("did.it.load")).isEqualTo("yes it did");
     }
@@ -37,8 +28,23 @@ public class PropertiesLoaderTest {
         String defaultFile = getClass().getResource(DEFAULT_FILE).getPath();
         System.getProperties().remove(FILE_PROPERTY);
 
-        Properties properties = PropertiesLoader.load(FILE_PROPERTY, new File(defaultFile));
+        Properties properties = new PropertiesLoader(FILE_PROPERTY, new File(defaultFile)).load();
 
         assertThat(properties.getProperty("did.it.load")).isEqualTo("no it didn't");
+    }
+
+    @Test
+    public void fileExistsReturnsTrueForExistingFile() throws Exception {
+        String defaultFile = getClass().getResource(DEFAULT_FILE).getPath();
+        PropertiesLoader loader = new PropertiesLoader(FILE_PROPERTY, new File(defaultFile));
+
+        assertThat(loader.fileExists()).isTrue();
+    }
+
+    @Test
+    public void fileExistsReturnsFalseForNonexistentFile() throws Exception {
+        PropertiesLoader loader = new PropertiesLoader(FILE_PROPERTY, new File("unknown"));
+
+        assertThat(loader.fileExists()).isFalse();
     }
 }

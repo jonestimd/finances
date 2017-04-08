@@ -80,7 +80,7 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
     private final List<WeakReference<JMenu>> menus = new ArrayList<>();
 
     private final DomainEventListener<Long, Account> accountEventListener = event -> {
-        if (event.isChange()) { // TODO deleted accounts
+        if (event.isChange() && accountActionMap != null) { // TODO deleted accounts
             updateAccountActions(event);
         }
     };

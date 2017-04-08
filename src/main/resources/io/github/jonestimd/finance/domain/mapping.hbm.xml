@@ -93,16 +93,16 @@
         <property name="name" type="string" length="200" not-null="true" unique-key="payee_ak"/>
     </class>
 
-    <class name="io.github.jonestimd.finance.domain.transaction.TransactionCategory" table="transaction_category">
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionCategory" table="tx_category">
         <id name="id" type="long">
             <generator class="native">
-                <param name="sequence">transaction_category_id_seq</param>
+                <param name="sequence">tx_category_id_seq</param>
             </generator>
         </id>
         &BaseDomain;
         <component name="key" class="io.github.jonestimd.finance.domain.transaction.CategoryKey">
-            <property name="code" type="string" length="50" not-null="true" unique-key="transaction_category_ak"/>
-            <many-to-one name="parent" column="parent_id" foreign-key="tx_type_parent_fk" unique-key="transaction_category_ak"
+            <property name="code" type="string" length="50" not-null="true" unique-key="tx_category_ak"/>
+            <many-to-one name="parent" column="parent_id" foreign-key="tx_type_parent_fk" unique-key="tx_category_ak"
                          lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"/>
         </component>
         <property name="income" type="yes_no" not-null="true"/>
@@ -115,14 +115,14 @@
         <property name="description" type="text"/>
     </class>
 
-    <class name="io.github.jonestimd.finance.domain.transaction.TransactionGroup" table="transaction_group">
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionGroup" table="tx_group">
         <id name="id" type="long">
             <generator class="native">
-                <param name="sequence">transaction_group_id_seq</param>
+                <param name="sequence">tx_group_id_seq</param>
             </generator>
         </id>
         &BaseDomain;
-        <property name="name" type="string" length="50" not-null="true" unique-key="transaction_group_ak"/>
+        <property name="name" type="string" length="50" not-null="true" unique-key="tx_group_ak"/>
         <property name="description" type="text"/>
     </class>
 
@@ -141,20 +141,20 @@
         <property name="saleShares" column="sale_shares" type="big_decimal" precision="19" scale="6" not-null="true"/>
     </class>
 
-    <class name="io.github.jonestimd.finance.domain.transaction.TransactionDetail" table="transaction_detail">
+    <class name="io.github.jonestimd.finance.domain.transaction.TransactionDetail" table="tx_detail">
         <id name="id" type="long">
             <generator class="native">
-                <param name="sequence">transaction_detail_id_seq</param>
+                <param name="sequence">tx_detail_id_seq</param>
             </generator>
         </id>
         &BaseDomain;
-        <many-to-one name="transaction" column="transaction_id" not-null="true" cascade="save-update,merge"
+        <many-to-one name="transaction" column="tx_id" not-null="true" cascade="save-update,merge"
                      lazy="false" foreign-key="tx_detail_tx_fk" class="io.github.jonestimd.finance.domain.transaction.Transaction"/>
         <property name="amount" type="big_decimal" precision="19" scale="2" not-null="true"/>
         <property name="memo" type="string" length="2000"/>
-        <many-to-one name="category" column="transaction_category_id" class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"
+        <many-to-one name="category" column="tx_category_id" class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"
                      lazy="false" foreign-key="tx_detail_tx_type_fk"/>
-        <many-to-one name="group" column="transaction_group_id" cascade="save-update" foreign-key="tx_detail_group_fk"
+        <many-to-one name="group" column="tx_group_id" cascade="save-update" foreign-key="tx_detail_group_fk"
                      lazy="false" class="io.github.jonestimd.finance.domain.transaction.TransactionGroup"/>
         <many-to-one name="relatedDetail" column="related_detail_id" cascade="save-update,merge,delete"
                      class="io.github.jonestimd.finance.domain.transaction.TransactionDetail"
@@ -169,10 +169,10 @@
         <property name="saleLotShares" formula="(select sum(security_lot.sale_shares) from security_lot where id = security_lot.sale_tx_detail_id)"/>
     </class>
 
-    <class name="io.github.jonestimd.finance.domain.transaction.Transaction" table="transaction">
+    <class name="io.github.jonestimd.finance.domain.transaction.Transaction" table="tx">
         <id name="id" type="long">
             <generator class="native">
-                <param name="sequence">transaction_id_seq</param>
+                <param name="sequence">tx_id_seq</param>
             </generator>
         </id>
         &BaseDomain;
@@ -187,7 +187,7 @@
         <many-to-one name="security" column="security_id" foreign-key="tx_security_fk"
                      lazy="false" class="io.github.jonestimd.finance.domain.asset.Security"/>
         <bag name="details" inverse="true" lazy="false" cascade="save-update,merge,delete">
-            <key column="transaction_id" not-null="true"/>
+            <key column="tx_id" not-null="true"/>
             <one-to-many class="io.github.jonestimd.finance.domain.transaction.TransactionDetail"/>
         </bag>
     </class>
@@ -251,7 +251,7 @@
         <map name="categoryMap" table="import_category" lazy="false" cascade="all-delete-orphan">
             <key column="import_file_id" not-null="true" foreign-key="import_category_file_fk"/>
             <map-key column="type_alias" type="string" length="255"/>
-            <many-to-many column="transaction_category_id" foreign-key="import_category_category_fk"
+            <many-to-many column="tx_category_id" foreign-key="import_category_category_fk"
                           class="io.github.jonestimd.finance.domain.transaction.TransactionCategory"/>
         </map>
         <map name="transferAccountMap" table="import_transfer_account" lazy="false" cascade="all-delete-orphan">

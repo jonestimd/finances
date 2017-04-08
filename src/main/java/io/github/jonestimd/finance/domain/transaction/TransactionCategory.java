@@ -49,9 +49,9 @@ import org.hibernate.annotations.Type;
 import static io.github.jonestimd.finance.domain.transaction.SecurityAction.*;
 
 @Entity
-@Table(name = "transaction_category",
-       uniqueConstraints = @UniqueConstraint(name = "transaction_category_key", columnNames = {"parent_id", "code"}))
-@SequenceGenerator(name = "id_generator", sequenceName = "transaction_category_id_seq")
+@Table(name = "tx_category",
+       uniqueConstraints = @UniqueConstraint(name = "tx_category_key", columnNames = {"parent_id", "code"}))
+@SequenceGenerator(name = "id_generator", sequenceName = "tx_category_id_seq")
 @NamedQueries({
     @NamedQuery(name = TransactionCategory.SUMMARY_QUERY,
         query = "select category, (select count(distinct td.transaction) from TransactionDetail td where td.category = category) as useCount from TransactionCategory category"),

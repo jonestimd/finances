@@ -33,8 +33,8 @@ import io.github.jonestimd.finance.domain.transaction.SecurityAction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.apache.log4j.Logger;
 
-// drop table stock_split, transaction_detail, security_lot, `transaction`, payee, transaction_group,
-//      account, transaction_category, security, company, asset
+// drop table stock_split, tx_detail, security_lot, tx, payee, tx_group,
+//      account, tx_category, security, company, asset
 public class SchemaBuilder {
     private static final String CHANGE_USER = "REF_DATA";
     private Logger logger = Logger.getLogger(SchemaBuilder.class);

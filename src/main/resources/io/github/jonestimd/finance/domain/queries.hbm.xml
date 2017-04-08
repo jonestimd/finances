@@ -9,8 +9,8 @@
                 abs(td.amount)*(td.asset_quantity-coalesce(sl.purchase_shares,0))/td.asset_quantity
               else 0 end) costBasis
         , sum(case when td.asset_quantity is null and td.amount > 0 then td.amount else 0 end) dividends
-        from transaction t
-        join transaction_detail td on t.id = td.transaction_id
+        from tx t
+        join tx_detail td on t.id = td.tx_id
         left join (
             select purchase_tx_detail_id, sum(purchase_shares) purchase_shares from security_lot
             group by purchase_tx_detail_id
@@ -30,10 +30,10 @@
       left join company on account.company_id = company.id
       left join (
         select t.account_id, count(distinct t.id) useCount,
-            sum(case tc.amount_type when 'ASSET_VALUE' then 0 else td.amount end) balance
-        from transaction t
-        left join transaction_detail td on t.id = td.transaction_id
-        left join transaction_category tc on td.transaction_category_id = tc.id
+            sum(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance
+        from tx t
+        left join tx_detail td on t.id = td.tx_id
+        left join tx_category tc on td.tx_category_id = tc.id
         group by t.account_id) summary on account.id = summary.account_id
     </sql-query>
     <sql-query name="security.getSummaries">
@@ -79,8 +79,8 @@
         join (
             select t.security_id, count(distinct t.id) useCount, sum(&adjustedShares;) shares
             from account
-            join transaction t on t.account_id = account.id
-            join transaction_detail td on t.id = td.transaction_id
+            join tx t on t.account_id = account.id
+            join tx_detail td on t.id = td.tx_id
             where account.id = :accountId
               and t.security_id is not null
             group by t.security_id
@@ -175,6 +175,18 @@
         </create>
         <drop>drop function if exists adjust_shares</drop>
         <dialect-scope name="org.hibernate.dialect.HSQLDialect"/>
+    </database-object>
+    <database-object>
+        <create>
+            create function adjust_shares(security_id bigint, from_date date, shares decimal(19,6))
+            returns decimal(19,6)
+            language java
+            parameter style java
+            reads sql data
+            external name 'io.github.jonestimd.javadb.DatabaseFunctions.adjustShares'
+        </create>
+        <drop>drop function if exists adjust_shares</drop>
+        <dialect-scope name="org.hibernate.dialect.DerbyTenSevenDialect"/>
     </database-object>
     <database-object>
         <create>

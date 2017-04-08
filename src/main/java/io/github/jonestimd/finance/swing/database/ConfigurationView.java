@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import javax.swing.Action;
@@ -49,6 +49,7 @@ import io.github.jonestimd.swing.validation.ValidatedPasswordField;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
 import io.github.jonestimd.swing.validation.Validator;
 
+import static com.typesafe.config.ConfigValueFactory.*;
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.swing.component.ComponentBinder.*;
@@ -76,8 +77,8 @@ public class ConfigurationView {
 
     private final Action defaultsAction;
 
-    public ConfigurationView(JPanel panel, List<DriverConfigurationService> driverTemplates) {
-        driverComboBox = new BeanListComboBox<>(FormatFactory.format(DriverConfigurationService::getName), driverTemplates);
+    public ConfigurationView(JPanel panel, List<DriverConfigurationService> driverServices) {
+        driverComboBox = new BeanListComboBox<>(FormatFactory.format(DriverConfigurationService::getName), driverServices);
         driverComboBox.addItemListener(this::driverSelected);
 
         directoryField.setSelectedItem(null);
@@ -93,7 +94,7 @@ public class ConfigurationView {
         driverComboBox.setSelectedIndex(0);
 
         GridBagBuilder builder = new GridBagBuilder(panel, LABELS.get(), RESOURCE_PREFIX);
-        builder.append("driver" + NAME_SUFFIX, driverComboBox);
+        builder.append(DRIVER + NAME_SUFFIX, driverComboBox);
         builder.append(DIRECTORY + NAME_SUFFIX, directoryField).addItemListener(this::selectDirectory);
         appendField(builder, HOST.toString(), bind(hostField, setParameter(HOST)));
         appendField(builder, PORT.toString(), bind(portField, this::parsePort, setParameter(PORT)));
@@ -109,14 +110,23 @@ public class ConfigurationView {
     }
 
     private void setDefaults(ActionEvent event) {
-        Map<Field, String> properties = driverComboBox.getSelectedItem().getDefaultValues();
-        properties.entrySet().forEach(entry -> {
+        driverComboBox.getSelectedItem().getDefaultValues().entrySet().forEach(entry -> {
             switch (entry.getKey()) {
-                case DIRECTORY: directoryField.setSelectedItem(new File(entry.getValue())); break; // TODO update suggestion dropdown
-                case HOST: hostField.setText(entry.getValue()); break;
-                case PORT: portField.setText(entry.getValue()); break;
-                case SCHEMA: schemaField.setText(entry.getValue()); break;
-                case USER: userField.setText(entry.getValue()); break;
+                case DIRECTORY:
+                    directoryField.setSelectedItem(new File(entry.getValue()));
+                    break;
+                case HOST:
+                    hostField.setText(entry.getValue());
+                    break;
+                case PORT:
+                    portField.setText(entry.getValue());
+                    break;
+                case SCHEMA:
+                    schemaField.setText(entry.getValue());
+                    break;
+                case USER:
+                    userField.setText(entry.getValue());
+                    break;
             }
         });
     }
@@ -126,7 +136,7 @@ public class ConfigurationView {
     }
 
     private Validator<String> validator(Field field, Validator<String> validator) {
-        return requiredValidator(field).then(validator).when(() -> isRequired(field));
+        return validator(field).then(validator);
     }
 
     private RequiredValidator requiredValidator(Field field) {
@@ -186,7 +196,7 @@ public class ConfigurationView {
 
     private String validatePort(String value) {
         Integer port = parsePort(value);
-        return port == null || port < 0 || port > 0xffff ? INVALID_PORT : null;
+        return ! value.isEmpty() && (port == null || port < 0 || port > 0xffff) ? INVALID_PORT : null;
     }
 
     private boolean isRequired(Field field) {
@@ -199,19 +209,18 @@ public class ConfigurationView {
     }
 
     private String validateConfirmPassword(char[] password) {
-        return isRequired(PASSWORD) && ! Arrays.equals(password, passwordField.getPassword()) ? PASSWORD_MISMATCH : null;
+        return !Arrays.equals(password, passwordField.getPassword()) ? PASSWORD_MISMATCH : null;
     }
 
-    public Config toConfig(String prefix) {
-        DriverConfigurationService configuration = driverComboBox.getSelectedItem();
-        return configuration == null ? null : toConfig(prefix, configuration);
-    }
-
-    private Config toConfig(String prefix, DriverConfigurationService configuration) {
-        Properties properties = new Properties();
-        model.entrySet().forEach(entry -> {
-            if (configuration.isEnabled(entry.getKey())) properties.setProperty(entry.getKey().toString(), entry.getValue());
-        });
-        return ConfigFactory.empty().withValue(prefix, ConfigFactory.parseProperties(properties).root());
+    public Config getConfig() {
+        DriverConfigurationService service = driverComboBox.getSelectedItem();
+        Config config = ConfigFactory.empty()
+                .withValue(DRIVER.toString(), fromAnyRef(service.getName(), "database type"));
+        for (Entry<Field, String> entry : model.entrySet()) {
+            if (service.isEnabled(entry.getKey())) {
+                config = config.withValue(entry.getKey().toString(), fromAnyRef(entry.getValue()));
+            }
+        }
+        return config;
     }
 }

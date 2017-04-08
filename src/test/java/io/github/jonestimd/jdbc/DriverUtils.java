@@ -19,28 +19,31 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.plugin;
+package io.github.jonestimd.jdbc;
 
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
-import com.typesafe.config.Config;
+import static org.mockito.Mockito.*;
 
-public abstract class EmbeddedDriverConnectionService extends DriverConfigurationService {
-
-    protected EmbeddedDriverConnectionService(String name, String dialect, String driverClassName, String urlPrefix) {
-        super(name, dialect, driverClassName, urlPrefix);
+public class DriverUtils {
+    public static Driver mockDriver(String url, Connection connection) throws SQLException {
+        Driver driver = mock(Driver.class);
+        when(driver.acceptsURL(url)).thenReturn(true);
+        when(driver.connect(any(String.class), any(Properties.class))).thenReturn(connection);
+        setDriver(url, driver);
+        return driver;
     }
 
-    @Override
-    public Properties getConnectionProperties(Config config) {
-        Properties properties = new Properties();
-        properties.put("hibernate.dialect", dialect);
-        properties.put("hibernate.connection.driver_class", driverClassName);
-        properties.put("hibernate.connection.url", getJdbcUrl(config));
-        return properties;
-    }
-
-    protected String getJdbcUrl(Config config) {
-        return "jdbc:" + urlPrefix + config.getString(Field.DIRECTORY.toString());
+    public static void setDriver(String url, Driver driver) throws SQLException {
+        try {
+            while (true) DriverManager.deregisterDriver(DriverManager.getDriver(url));
+        } catch (SQLException ex) {
+            // none left
+        }
+        DriverManager.registerDriver(driver);
     }
 }

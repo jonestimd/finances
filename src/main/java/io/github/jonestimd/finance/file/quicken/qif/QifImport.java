@@ -29,6 +29,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import io.github.jonestimd.commandline.CommandLine;
 import io.github.jonestimd.finance.MessageKey;
@@ -37,8 +38,10 @@ import io.github.jonestimd.finance.file.FileImport;
 import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.ServiceContext;
-import io.github.jonestimd.finance.swing.FinanceApplication;
+import io.github.jonestimd.util.PropertiesLoader;
 import org.apache.log4j.Logger;
+
+import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class QifImport implements FileImport { // TODO needs to be a service so the import is a single transaction
     private static final Logger logger = Logger.getLogger(QifImport.class);
@@ -103,7 +106,9 @@ public class QifImport implements FileImport { // TODO needs to be a service so 
         CommandLine commandLine = new CommandLine(args);
         if (commandLine.getInputCount() > 0) {
             try (FileReader qifReader = new FileReader(commandLine.getInput(0))) {
-                HibernateDaoContext daoContext = FinanceApplication.connect(commandLine.hasOption("--init-database"));
+                boolean createSchema = commandLine.hasOption("--init-database");
+                Properties connectionProperies = new PropertiesLoader(CONNECTION_FILE_PROPERTY, DEFAULT_CONNECTION_PROPERTIES).load();
+                HibernateDaoContext daoContext = HibernateDaoContext.connect(createSchema, connectionProperies, logger::info);
                 FileImport qifImport = new QuickenContext(new ServiceContext(daoContext)).newQifImport();
                 qifImport.importFile(qifReader);
             }

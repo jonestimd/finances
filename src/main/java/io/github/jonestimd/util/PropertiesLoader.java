@@ -27,19 +27,28 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
+import io.github.jonestimd.finance.config.ConfigManager;
+
+/**
+ * @deprecated use {@link ConfigManager}
+ */
 public class PropertiesLoader {
-    private PropertiesLoader() {}
+    private final File propertyFile;
 
     /**
      * @param fileProperty System property specifying the file to load
      * @param defaultFile the file to use is the System property isn't set
      */
-    public static Properties load(String fileProperty, File defaultFile) throws IOException {
-        return load(Optional.ofNullable(System.getProperty(fileProperty)).map(File::new).orElse(defaultFile));
+    public PropertiesLoader(String fileProperty, File defaultFile) {
+        this.propertyFile = Optional.ofNullable(System.getProperty(fileProperty)).map(File::new).orElse(defaultFile);
     }
 
-    public static Properties load(File file) throws IOException {
-        try (FileInputStream inputStream = new FileInputStream(file)) {
+    public boolean fileExists() {
+        return propertyFile.exists();
+    }
+
+    public Properties load() throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(propertyFile)) {
             Properties properties = new Properties();
             properties.load(inputStream);
             return properties;

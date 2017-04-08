@@ -21,27 +21,129 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import io.github.jonestimd.util.Streams;
 
-public interface DriverConfigurationService {
-    enum Field {
-        DIRECTORY, HOST, PORT, SCHEMA, USER, PASSWORD;
+/**
+ * The interface for mapping configuration values to Hibernate connection properties.  This interface is used for the
+ * connection settings UI and for parsing connection settings.
+ */
+public abstract class DriverConfigurationService {
+    /** The available configuration settings for a driver. */
+    public enum Field {
+        DRIVER, DIRECTORY, HOST, PORT, SCHEMA, USER, PASSWORD;
 
         public String toString() {
             return name().toLowerCase();
         }
     }
+    protected final String name;
+    protected final String dialect;
+    protected final String driverClassName;
+    protected final String urlPrefix;
 
-    String getName();
+    protected DriverConfigurationService(String name, String dialect, String driverClassName, String urlPrefix) {
+        this.name = name;
+        this.dialect = dialect;
+        this.driverClassName = driverClassName;
+        this.urlPrefix = urlPrefix;
+    }
 
-    boolean isEnabled(Field field);
+    /**
+     * @return a unique name for the database driver.
+     */
+    public String getName() {
+        return name;
+    }
 
-    boolean isRequired(Field field);
+    public boolean isAvailable() {
+        try {
+            Class.forName(driverClassName);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 
-    Properties getConnectionProperties(Config config);
+    /**
+     * @param field a configuration setting
+     * @return true if the setting is used by this database driver
+     */
+    public abstract boolean isEnabled(Field field);
 
-    Map<Field, String> getDefaultValues();
+    /**
+     * @param field a configuration setting
+     * @return true if the setting is required by this database driver
+     */
+    public abstract boolean isRequired(Field field);
+
+    /**
+     * Get the Hibernate connection properties for this driver.
+     * @param config the driver configuration settings
+     * @return Hibernate connection properties
+     */
+    public abstract Properties getConnectionProperties(Config config);
+
+    /**
+     * @return default values for the driver settings
+     */
+    public abstract Map<Field, String> getDefaultValues();
+
+    /**
+     * Ensure the database is ready to be used.  For example, create it if it does not exist.
+     * @param config the connection configuration
+     * @param updateProgress used to provide progress feedback on the UI
+     * @return true if the tables need to be created and initialized
+     */
+    public boolean prepareDatabase(Config config, Consumer<String> updateProgress) throws Exception {
+        return false;
+    }
+
+    /**
+     * Get the list of available drivers.
+     */
+    public static List<DriverConfigurationService> getServices() {
+        return Streams.of(ServiceLoader.load(DriverConfigurationService.class))
+                .filter(DriverConfigurationService::isAvailable)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get an instance of {@link DriverService} based on a driver configuration.  The {@code config}
+     * must include a {@code type} setting that matches the value returned by {@link #getName()} for the driver.
+     * @param config the driver configuration, including the name of the driver service
+     * @return a {@link DriverService} or null if none match the {@code type} in {@code config}
+     */
+    public static DriverService forConfig(Config config) {
+        String driver = config.getString(Field.DRIVER.toString());
+        return getServices().stream().filter(service -> driver.equals(service.getName()))
+                .findFirst()
+                .map(service -> new DriverService(service, config))
+                .orElse(null);
+    }
+
+    public static class DriverService {
+        private final DriverConfigurationService service;
+        private final Config config;
+
+        public DriverService(DriverConfigurationService service, Config config) {
+            this.service = service;
+            this.config = config;
+        }
+
+        public Properties getConnectionProperties() {
+            return service.getConnectionProperties(config);
+        }
+
+        public boolean prepareDatabase(Consumer<String> updateProgress) throws Exception {
+            return service.prepareDatabase(config, updateProgress);
+        }
+    }
 }

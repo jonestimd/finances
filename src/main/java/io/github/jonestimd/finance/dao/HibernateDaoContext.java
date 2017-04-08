@@ -29,8 +29,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 import com.google.common.base.Supplier;
+import com.typesafe.config.ConfigFactory;
 import io.github.jonestimd.finance.dao.hibernate.AccountDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.AccountSummaryEventHandler;
 import io.github.jonestimd.finance.dao.hibernate.CompanyDaoImpl;
@@ -50,6 +52,7 @@ import io.github.jonestimd.finance.dao.hibernate.TransactionCategoryDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionDetailDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionGroupDaoImpl;
+import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.hibernate.AuditInterceptor;
 import io.github.jonestimd.hibernate.InterceptorChain;
 import io.github.jonestimd.hibernate.MappedClassFilter;
@@ -60,7 +63,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.hbm2ddl.Target;
@@ -88,6 +90,15 @@ public class HibernateDaoContext implements DaoRepository {
             new SecuritySummaryEventHandler(EVENT_SOURCE));
     private DomainEventInterceptor eventInterceptor = new DomainEventInterceptor(eventHandlerSupplier);
 
+    public static HibernateDaoContext connect(boolean createSchema, Properties connectionProperies, Consumer<String> updateProgress) throws IOException, SQLException {
+        HibernateDaoContext daoContext = new HibernateDaoContext(connectionProperies);
+        if (createSchema) {
+            updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));
+            new SchemaBuilder(daoContext).createSchemaTables().seedReferenceData();
+        }
+        return daoContext;
+    }
+
     public HibernateDaoContext() throws IOException {
         this(new Properties());
     }
@@ -102,15 +113,9 @@ public class HibernateDaoContext implements DaoRepository {
         new PackageScanner(new MappedClassFilter(), configuration::addAnnotatedClass, "io.github.jonestimd.finance.domain").visitClasses();
 //        configuration.addResource("io/github/jonestimd/finance/domain/mapping.hbm.xml");
         configuration.addResource("io/github/jonestimd/finance/domain/queries.hbm.xml");
-        configuration.setProperty(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-        configuration.setProperty(Environment.DEFAULT_BATCH_FETCH_SIZE, "64");
-        configuration.setProperty(Environment.MAX_FETCH_DEPTH, "5");
-        configuration.setProperty(Environment.STATEMENT_BATCH_SIZE, "20");
-        configuration.setProperty(Environment.CONNECTION_PROVIDER, "org.hibernate.connection.C3P0ConnectionProvider");
-        configuration.setProperty(Environment.C3P0_MIN_SIZE, "5");
-        configuration.setProperty(Environment.C3P0_MAX_SIZE, "20");
-        configuration.setProperty(Environment.C3P0_TIMEOUT, "1800");
-        configuration.setProperty(Environment.FORMAT_SQL, "true");
+        ConfigFactory.load().getConfig("finances.connection.properties").entrySet().forEach(entry -> {
+            configuration.setProperty(entry.getKey(), entry.getValue().unwrapped().toString());
+        });
         for (Entry<Object, Object> entry : connectionProperties.entrySet()) {
             configuration.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
@@ -139,7 +144,10 @@ public class HibernateDaoContext implements DaoRepository {
         if (script != null && script.length > 0) {
             Session session = sessionFactory.openSession();
             try {
-                session.doWork(connection -> executeSchemaScript(connection, script));
+                session.doWork(connection -> {
+                    executeSchemaScript(connection, script);
+                    connection.commit();
+                });
             } finally {
                 session.close();
             }

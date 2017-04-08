@@ -79,7 +79,7 @@ public abstract class ImportFile {
     @JoinTable(name = "import_category",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
             foreignKey = @ForeignKey(name = "import_category_file_fk"),
-            inverseJoinColumns = @JoinColumn(name = "transaction_category_id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "tx_category_id", nullable = false),
             inverseForeignKey = @ForeignKey(name = "import_category_category_fk"))
     @MapKeyColumn(name = "type_alias")
     @org.hibernate.annotations.ForeignKey(name = "import_category_file_fk", inverseName = "import_category_category_fk")

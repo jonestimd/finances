@@ -56,8 +56,8 @@ import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Type;
 
-@Entity @Table(name="transaction") @Inheritance(strategy=InheritanceType.JOINED)
-@SequenceGenerator(name="id_generator", sequenceName="transaction_id_seq")
+@Entity @Table(name="tx") @Inheritance(strategy=InheritanceType.JOINED)
+@SequenceGenerator(name="id_generator", sequenceName="tx_id_seq")
 @NamedQueries({
     @NamedQuery(name = Transaction.REPLACE_PAYEE_QUERY, query =
         "update Transaction set payee.id = :newPayeeId where payee.id in (:oldPayeeIds)"),

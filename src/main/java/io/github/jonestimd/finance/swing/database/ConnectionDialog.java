@@ -22,18 +22,11 @@
 package io.github.jonestimd.finance.swing.database;
 
 import java.awt.Window;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.ServiceLoader;
-
-import javax.swing.JOptionPane;
-import javax.swing.UIManager;
+import java.util.Optional;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigRenderOptions;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.swing.dialog.FormDialog;
-import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -42,29 +35,27 @@ public class ConnectionDialog extends FormDialog {
 
     private final ConfigurationView configView;
 
-    public ConnectionDialog(Window owner, List<DriverConfigurationService> driverTemplates) throws SQLException {
+    public ConnectionDialog(Window owner) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
-        configView = new ConfigurationView(getFormPanel(), driverTemplates);
+        configView = new ConfigurationView(getFormPanel(), DriverConfigurationService.getServices());
         addButton(configView.getDefaultsAction());
     }
 
-    public Config toConfig() {
-        return configView.toConfig("default");
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible) {
+            pack();
+            setLocationRelativeTo(getParent());
+        }
+        super.setVisible(visible);
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-            ServiceLoader<DriverConfigurationService> plugins = ServiceLoader.load(DriverConfigurationService.class);
-            ConnectionDialog dialog = new ConnectionDialog(JOptionPane.getRootFrame(), Streams.toList(plugins));
-            dialog.pack();
-            dialog.setVisible(true);
-            if (!dialog.isCancelled()) {
-                ConfigRenderOptions renderOptions = ConfigRenderOptions.concise().setFormatted(true).setJson(false);
-                System.out.println(dialog.toConfig().root().render(renderOptions));
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public Optional<Config> showDialog() {
+        setVisible(true);
+        return isCancelled() ? Optional.empty() : Optional.of(getConfig());
+    }
+
+    public Config getConfig() {
+        return configView.getConfig();
     }
 }

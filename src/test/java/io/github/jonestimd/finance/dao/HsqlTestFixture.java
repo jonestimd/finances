@@ -45,7 +45,7 @@ public abstract class HsqlTestFixture {
             { 1011L, "N", "Y", "DEBIT_DEPOSIT", COMMISSION_AND_FEES.code(), null, null, TEST_DATE, TEST_USERID, 0, },
             { 1012L, "Y", "Y", "DEBIT_DEPOSIT", DIVIDEND.code(), null, null, TEST_DATE, TEST_USERID, 0, },
     };
-    protected static final QueryBatch TRANSACTION_CATEGORY_BATCH = new QueryBatch("transaction_category", TRANSACTION_CATEGORY_COLUMNS, TRANSACTION_CATEGORY_VALUES);
+    protected static final QueryBatch TRANSACTION_CATEGORY_BATCH = new QueryBatch("tx_category", TRANSACTION_CATEGORY_COLUMNS, TRANSACTION_CATEGORY_VALUES);
 
     private static final String[] ASSET_COLUMNS = { "id", "type", "scale", "name", "symbol", "change_date", "change_user", "version", };
     private static final Object[][] ASSET_VALUES = {
@@ -78,7 +78,7 @@ public abstract class HsqlTestFixture {
             { 1001L, "Group 2", "Group two", TEST_DATE, TEST_USERID, 0, },
     };
     protected static final QueryBatch TRANSACTION_GROUP_BATCH =
-            new QueryBatch("transaction_group", TRANSACTION_GROUP_COLUMNS, TRANSACTION_GROUP_VALUES);
+            new QueryBatch("tx_group", TRANSACTION_GROUP_COLUMNS, TRANSACTION_GROUP_VALUES);
 
     private static final String[] PAYEE_COLUMNS = { "id", "name", "change_date", "change_user", "version", };
     private static final Object[][] PAYEE_VALUES = {
