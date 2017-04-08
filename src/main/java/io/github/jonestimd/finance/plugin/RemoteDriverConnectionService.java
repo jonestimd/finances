@@ -50,18 +50,30 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
     }
 
     @Override
-    public Properties getConnectionProperties(Config config) {
+    public Properties getHibernateProperties(Config config) {
         Properties properties = new Properties();
         properties.put("hibernate.dialect", dialect);
         properties.put("hibernate.connection.driver_class", driverClassName);
         properties.put("hibernate.connection.url", getJdbcUrl(config));
-        properties.put("hibernate.connection.username", config.getString("user"));
-        properties.put("hibernate.connection.password", config.getString("password"));
+        properties.put("hibernate.connection.username", config.getString(USER.toString()));
+        properties.put("hibernate.connection.password", config.getString(PASSWORD.toString()));
         return properties;
     }
 
     protected String getJdbcUrl(Config config) {
-        return "jdbc:" + urlPrefix + config.getString("host") + ":" + config.getString("port") + "/" + config.getString("schema");
+        return "jdbc:" + urlPrefix + config.getString(HOST.toString()) + ":" + config.getString(PORT.toString()) + "/" + config.getString(SCHEMA.toString());
+    }
+
+    @Override
+    protected Properties getConnectionProperties(Config config) {
+        Properties properties = super.getConnectionProperties(config);
+        copySetting(config, USER.toString(), properties);
+        copySetting(config, PASSWORD.toString(), properties);
+        return properties;
+    }
+
+    private void copySetting(Config config, String path, Properties properties) {
+        if (config.hasPath(path)) properties.setProperty(path, config.getString(path));
     }
 
     @Override

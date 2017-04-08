@@ -155,13 +155,13 @@ public class ConfigurationViewTest {
 
     @Test
     public void validatesPasswords() throws Exception {
-        validatesPasswords(true, "", "", REQUIRED, null);
-        validatesPasswords(true, "abc", "", null, MISMATCH);
-        validatesPasswords(true, "", "abc", REQUIRED, MISMATCH);
+        validatesPasswords(true, null, null, REQUIRED, null);
+        validatesPasswords(true, "abc", null, null, MISMATCH);
+        validatesPasswords(true, null, "abc", REQUIRED, MISMATCH);
         validatesPasswords(true, "abc", "abc", null, null);
 
-        validatesPasswords(false, "abc", "", null, MISMATCH);
-        validatesPasswords(false, "", "abc", null, MISMATCH);
+        validatesPasswords(false, "abc", null, null, MISMATCH);
+        validatesPasswords(false, null, "abc", null, MISMATCH);
         validatesPasswords(false, "abc", "abc", null, null);
     }
 

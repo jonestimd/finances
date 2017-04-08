@@ -19,30 +19,25 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.plugin;
+package io.github.jonestimd.finance.swing;
 
-import java.sql.SQLException;
-import java.util.Properties;
-import java.util.function.Consumer;
+public enum ResourceKey {
+    ACCELERATOR(".accelerator"),
+    ICON(".iconImage"),
+    LABEL(".mnemonicAndName"),
+    REQUIRED(".required");
 
-import com.typesafe.config.Config;
+    private String suffix;
 
-public abstract class EmbeddedDriverConnectionService extends DriverConfigurationService {
-
-    protected EmbeddedDriverConnectionService(String name, String dialect, String driverClassName, String urlPrefix) {
-        super(name, dialect, driverClassName, urlPrefix);
+    ResourceKey(String suffix) {
+        this.suffix = suffix;
     }
 
-    @Override
-    public Properties getHibernateProperties(Config config) {
-        Properties properties = new Properties();
-        properties.put("hibernate.dialect", dialect);
-        properties.put("hibernate.connection.driver_class", driverClassName);
-        properties.put("hibernate.connection.url", getJdbcUrl(config));
-        return properties;
+    public String key(Enum<?> key) {
+        return key(key.toString());
     }
 
-    protected String getJdbcUrl(Config config) {
-        return "jdbc:" + urlPrefix + config.getString(Field.DIRECTORY.toString());
+    public String key(String key) {
+        return key + suffix;
     }
 }

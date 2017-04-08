@@ -60,15 +60,15 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     }
 
     @Override
-    public Properties getConnectionProperties(Config config) {
-        Properties properties = super.getConnectionProperties(config);
+    public Properties getHibernateProperties(Config config) {
+        Properties properties = super.getHibernateProperties(config);
         properties.setProperty("hibernate.temp.use_jdbc_metadata_defaults", "false");
         return properties;
     }
 
     @Override
     public boolean prepareDatabase(Config config, Consumer<String> updateProgress) throws Exception {
-        Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+        Class.forName(driverClassName);
         File dbDirectory = new File(config.getString(Field.DIRECTORY.toString()));
         if (dbDirectory.exists() && dbDirectory.listFiles().length == 0) {
             // need to delete the directory so Derby will create the database
@@ -81,11 +81,11 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
             connection.close();
             return true;
         }
-        try (Connection connection = DriverManager.getConnection(getJdbcUrl(config))) {
-            connection.prepareStatement("select * from company").getMetaData();
-        } catch (SQLException ex) {
-            return true;
-        }
-        return false;
+        return super.prepareDatabase(config, updateProgress);
+    }
+
+    @Override
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
+        return ex.getMessage().toLowerCase().equals("table/view 'company' does not exist.") || super.handleException(config, updateProgress, ex);
     }
 }

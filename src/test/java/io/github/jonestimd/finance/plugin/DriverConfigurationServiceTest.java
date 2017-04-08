@@ -21,19 +21,60 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
+import io.github.jonestimd.jdbc.DriverUtils;
 import io.github.jonestimd.util.Streams;
+import junit.framework.Assert;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.fest.assertions.Assertions.*;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DriverConfigurationServiceTest {
+    private final String url = "jdbc:test://myhost.com:1234/myschema";
+    private final TestDriverConfigurationService testService = new TestDriverConfigurationService();
+    @Mock
+    private Consumer<String> updateProgress;
+    @Mock
+    private Driver driver;
+    @Mock
+    private Connection connection;
+    @Mock
+    private PreparedStatement statement;
+
+    @Before
+    public void setDriver() throws Exception {
+        when(driver.acceptsURL(url)).thenReturn(true);
+        when(driver.connect(any(String.class), any(Properties.class))).thenReturn(connection);
+        DriverUtils.setDriver(url, driver);
+    }
+
+    @After
+    public void removeDriver() throws Exception {
+        DriverManager.deregisterDriver(driver);
+    }
+
     @Test
     public void getServices() throws Exception {
         List<DriverConfigurationService> services = DriverConfigurationService.getServices();
@@ -49,7 +90,70 @@ public class DriverConfigurationServiceTest {
 
         DriverService service = DriverConfigurationService.forConfig(config);
 
-        Properties properties = service.getConnectionProperties();
+        Properties properties = service.getHibernateProperties();
         assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.DerbyTenSevenDialect");
+    }
+
+    @Test
+    public void prepareDatabaseReturnsFalseForSuccessfulQuery() throws Exception {
+        when(connection.prepareStatement(anyString())).thenReturn(statement);
+        Config config = ConfigFactory.empty();
+
+        assertThat(testService.prepareDatabase(config, updateProgress)).isFalse();
+
+        verify(connection).prepareStatement("select * from company");
+        verify(connection).close();
+        verify(statement).getMetaData();
+        verifyZeroInteractions(updateProgress);
+    }
+
+    @Test
+    public void prepareDatabaseThrowsExceptionForUnsuccessfulQuery() throws Exception {
+        when(connection.prepareStatement(anyString())).thenReturn(statement);
+        when(statement.getMetaData()).thenThrow(new SQLException("test exception"));
+        Config config = ConfigFactory.empty();
+
+        try {
+            assertThat(testService.prepareDatabase(config, updateProgress)).isTrue();
+            Assert.fail("expected an exception");
+        } catch (SQLException ex) {
+            assertThat(ex.getMessage()).isEqualTo("test exception");
+        }
+
+        verify(connection).prepareStatement("select * from company");
+        verify(connection).close();
+        verify(statement).getMetaData();
+        verifyZeroInteractions(updateProgress);
+    }
+
+    private class TestDriverConfigurationService extends DriverConfigurationService {
+        protected TestDriverConfigurationService() {
+            super("TestDriver", "TestDialect", DriverConfigurationServiceTest.class.getName(), "test://");
+        }
+
+        @Override
+        public boolean isEnabled(Field field) {
+            return field != Field.DIRECTORY;
+        }
+
+        @Override
+        public boolean isRequired(Field field) {
+            return false;
+        }
+
+        @Override
+        public Properties getHibernateProperties(Config config) {
+            return new Properties();
+        }
+
+        @Override
+        public Map<Field, String> getDefaultValues() {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        protected String getJdbcUrl(Config config) {
+            return url;
+        }
     }
 }

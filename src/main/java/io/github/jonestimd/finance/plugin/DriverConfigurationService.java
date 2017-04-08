@@ -21,6 +21,9 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -89,7 +92,7 @@ public abstract class DriverConfigurationService {
      * @param config the driver configuration settings
      * @return Hibernate connection properties
      */
-    public abstract Properties getConnectionProperties(Config config);
+    public abstract Properties getHibernateProperties(Config config);
 
     /**
      * @return default values for the driver settings
@@ -103,7 +106,31 @@ public abstract class DriverConfigurationService {
      * @return true if the tables need to be created and initialized
      */
     public boolean prepareDatabase(Config config, Consumer<String> updateProgress) throws Exception {
+        Class.forName(driverClassName);
+        try (Connection connection = DriverManager.getConnection(getJdbcUrl(config), getConnectionProperties(config))) {
+            connection.prepareStatement("select * from company").getMetaData();
+        } catch (SQLException ex) {
+            return handleException(config, updateProgress, ex);
+        }
         return false;
+    }
+
+    protected abstract String getJdbcUrl(Config config);
+
+    protected Properties getConnectionProperties(Config config) {
+        return new Properties();
+    }
+
+    /**
+     * Perform database setup based on the exception.
+     * @param config the connection configuration
+     * @param updateProgress callback to provide user feedback
+     * @param ex the exception from the query to test for the database existance
+     * @return true if the database is ready for tables to be created
+     * @throws SQLException
+     */
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
+        throw ex;
     }
 
     /**
@@ -138,8 +165,8 @@ public abstract class DriverConfigurationService {
             this.config = config;
         }
 
-        public Properties getConnectionProperties() {
-            return service.getConnectionProperties(config);
+        public Properties getHibernateProperties() {
+            return service.getHibernateProperties(config);
         }
 
         public boolean prepareDatabase(Consumer<String> updateProgress) throws Exception {

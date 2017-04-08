@@ -111,11 +111,11 @@ public class DerbyDriverConnectionServiceTest {
     }
 
     @Test
-    public void getConnectionProperties() throws Exception {
+    public void getHibernateProperties() throws Exception {
         Config config = ConfigFactory.parseMap(new MapBuilder<String, String>()
                 .put("directory", "/home/user/finances").get());
 
-        Properties properties = service.getConnectionProperties(config);
+        Properties properties = service.getHibernateProperties(config);
 
         assertThat(properties).hasSize(4);
         assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.DerbyTenSevenDialect");
@@ -147,6 +147,9 @@ public class DerbyDriverConnectionServiceTest {
         assertThat(output).doesNotExist();
         assertThat(output.getParentFile()).exists();
         assertThat(output.getParentFile()).isDirectory();
+        verify(updateProgress).accept("Creating database...");
+        verify(connection).close();
+        verifyZeroInteractions(statement);
     }
 
     @Test
@@ -154,16 +157,20 @@ public class DerbyDriverConnectionServiceTest {
         new File(output, "log").mkdirs();
         Config config = ConfigFactory.parseMap(singletonMap(DIRECTORY.toString(), output.toString()));
         when(connection.prepareStatement("select * from company")).thenReturn(statement);
-        when(statement.getMetaData()).thenThrow(new SQLException());
+        when(statement.getMetaData()).thenThrow(new SQLException("Table/View 'COMPANY' does not exist."));
 
         assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
 
         assertThat(output).exists();
         assertThat(output).isDirectory();
+        verify(connection).prepareStatement("select * from company");
+        verify(connection).close();
+        verify(statement).getMetaData();
+        verifyZeroInteractions(updateProgress);
     }
 
     @Test
-    public void prepareDatabaseKeepsTestsForTables() throws Exception {
+    public void prepareDatabaseTestsForTables() throws Exception {
         new File(output, "log").mkdirs();
         Config config = ConfigFactory.parseMap(singletonMap(DIRECTORY.toString(), output.toString()));
         when(connection.prepareStatement("select * from company")).thenReturn(statement);
@@ -173,6 +180,10 @@ public class DerbyDriverConnectionServiceTest {
 
         assertThat(output).exists();
         assertThat(output).isDirectory();
+        verify(connection).prepareStatement("select * from company");
+        verify(connection).close();
+        verify(statement).getMetaData();
+        verifyZeroInteractions(updateProgress);
     }
 
     private boolean deleteAll(File file) {

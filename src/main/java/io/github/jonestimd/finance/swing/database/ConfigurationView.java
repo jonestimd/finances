@@ -40,7 +40,7 @@ import com.typesafe.config.ConfigFactory;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.Field;
 import io.github.jonestimd.finance.swing.FormatFactory;
-import io.github.jonestimd.swing.action.ActionAdapter;
+import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.FileSuggestField;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
@@ -52,6 +52,7 @@ import io.github.jonestimd.swing.validation.Validator;
 import static com.typesafe.config.ConfigValueFactory.*;
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.ResourceKey.*;
 import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ConfigurationView {
@@ -61,7 +62,6 @@ public class ConfigurationView {
     private static final String INVALID_PORT = LABELS.getString(RESOURCE_PREFIX + "port.invalid");
     private static final String PASSWORD_REQUIRED = LABELS.getString(RESOURCE_PREFIX + PASSWORD + REQUIRED_SUFFIX);
     private static final String PASSWORD_MISMATCH = LABELS.getString(RESOURCE_PREFIX + "password.mismatch");
-    private static final String NAME_SUFFIX = ".mnemonicAndName";
     public static final String CONFIRM_PASSWORD = "confirmPassword";
 
     private Map<Field, String> model;
@@ -94,19 +94,18 @@ public class ConfigurationView {
         driverComboBox.setSelectedIndex(0);
 
         GridBagBuilder builder = new GridBagBuilder(panel, LABELS.get(), RESOURCE_PREFIX);
-        builder.append(DRIVER + NAME_SUFFIX, driverComboBox);
-        builder.append(DIRECTORY + NAME_SUFFIX, directoryField).addItemListener(this::selectDirectory);
-        appendField(builder, HOST.toString(), bind(hostField, setParameter(HOST)));
-        appendField(builder, PORT.toString(), bind(portField, this::parsePort, setParameter(PORT)));
-        appendField(builder, SCHEMA.toString(), bind(schemaField, setParameter(SCHEMA)));
-        appendField(builder, USER.toString(), bind(userField, setParameter(USER)));
-        appendField(builder, PASSWORD.toString(), bind(passwordField, setParameter(PASSWORD)));
-        appendField(builder, CONFIRM_PASSWORD, confirmField);
+        builder.append(LABEL.key(DRIVER), driverComboBox);
+        builder.append(LABEL.key(DIRECTORY), directoryField).addItemListener(this::selectDirectory);
+        builder.append(LABEL.key(HOST), bind(hostField, setParameter(HOST)));
+        builder.append(LABEL.key(PORT), bind(portField, this::parsePort, setParameter(PORT)));
+        builder.append(LABEL.key(SCHEMA), bind(schemaField, setParameter(SCHEMA)));
+        builder.append(LABEL.key(USER), bind(userField, setParameter(USER)));
+        builder.append(LABEL.key(PASSWORD), bind(passwordField, setParameter(PASSWORD)));
+        builder.append(LABEL.key(CONFIRM_PASSWORD), (JTextComponent) confirmField);
         onChange(passwordField, confirmField::validateValue);
         setModel(new HashMap<>());
 
-        this.defaultsAction = ActionAdapter.forMnemonicAndName(this::setDefaults,
-                LABELS.getString(RESOURCE_PREFIX + "action.defaults.mnemonicAndName"));
+        this.defaultsAction = MnemonicAction.forListener(this::setDefaults, LABELS.get(), RESOURCE_PREFIX + "action.defaults");
     }
 
     private void setDefaults(ActionEvent event) {
@@ -152,7 +151,9 @@ public class ConfigurationView {
             schemaField.setEditable(plugin.isEnabled(SCHEMA));
             userField.setEditable(plugin.isEnabled(USER));
             passwordField.setEditable(plugin.isEnabled(PASSWORD));
+            passwordField.validateValue();
             confirmField.setEditable(plugin.isEnabled(PASSWORD));
+            confirmField.validateValue();
         }
     }
 
@@ -170,10 +171,6 @@ public class ConfigurationView {
         userField.setText(model.get(USER));
         passwordField.setText(model.get(PASSWORD));
         confirmField.setText(model.get(PASSWORD));
-    }
-
-    private void appendField(GridBagBuilder builder, String parameter, JTextComponent field) {
-        builder.append(parameter + NAME_SUFFIX, field);
     }
 
     private void selectDirectory(ItemEvent event) {

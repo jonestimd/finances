@@ -24,6 +24,8 @@ package io.github.jonestimd.finance.config;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
@@ -63,12 +65,20 @@ public class ConfigManager {
         return this;
     }
 
-    public void save() {
+    public void save(boolean isPrivate) {
+        if (!configFile.getParentFile().exists()) configFile.getParentFile().mkdirs();
         ConfigRenderOptions renderOptions = ConfigRenderOptions.concise().setFormatted(true).setJson(false);
         try (FileWriter stream = new FileWriter(configFile)) {
             stream.write(config.root().render(renderOptions));
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+        }
+        if (configFile.exists() && isPrivate) {
+            try {
+                Files.setPosixFilePermissions(configFile.toPath(), PosixFilePermissions.fromString("rw-------"));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }

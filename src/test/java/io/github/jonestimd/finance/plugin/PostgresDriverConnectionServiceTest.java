@@ -79,7 +79,7 @@ public class PostgresDriverConnectionServiceTest {
     }
 
     @Test
-    public void getConnectionProperties() throws Exception {
+    public void getHibernateProperties() throws Exception {
         Config config = ConfigFactory.parseMap(new MapBuilder<String, String>()
                 .put(Field.HOST.toString(), "myhost.com")
                 .put(Field.PORT.toString(), "1234")
@@ -87,7 +87,7 @@ public class PostgresDriverConnectionServiceTest {
                 .put(Field.USER.toString(), "myuser")
                 .put(Field.PASSWORD.toString(), "mypassword").get());
 
-        Properties properties = service.getConnectionProperties(config);
+        Properties properties = service.getHibernateProperties(config);
 
         assertThat(properties).hasSize(5);
         assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.PostgreSQL9Dialect");
@@ -95,12 +95,5 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(properties.getProperty("hibernate.connection.url")).isEqualTo("jdbc:postgresql://myhost.com:1234/myschema");
         assertThat(properties.getProperty("hibernate.connection.username")).isEqualTo("myuser");
         assertThat(properties.getProperty("hibernate.connection.password")).isEqualTo("mypassword");
-    }
-
-    @Test
-    public void prepareDatabaseReturnsFalse() throws Exception {
-        Config config = ConfigFactory.empty();
-
-        assertThat(service.prepareDatabase(config, updateProgress)).isFalse();
     }
 }

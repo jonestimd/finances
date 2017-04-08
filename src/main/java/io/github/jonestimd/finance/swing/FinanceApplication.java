@@ -115,7 +115,7 @@ public class FinanceApplication {
         Optional<Config> configOption = configManager.get(ConfigManager.CONNECTION_PATH);
         if (! configOption.isPresent()) {
             configOption = new ConnectionDialog(initialFrame).showDialog();
-            configOption.ifPresent(config -> configManager.addPath(ConfigManager.CONNECTION_PATH, config).save());
+            configOption.ifPresent(config -> configManager.addPath(ConfigManager.CONNECTION_PATH, config).save(true));
         }
         return configOption.map(DriverConfigurationService::forConfig);
     }
@@ -142,7 +142,7 @@ public class FinanceApplication {
         try {
             logger.info("starting context");
             boolean initDatabase = driver.prepareDatabase(this::setProgressMessage);
-            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver.getConnectionProperties(), this::setProgressMessage));
+            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver.getHibernateProperties(), this::setProgressMessage));
             swingContext = new SwingContext(serviceContext);
             logger.info("done");
             return null;
