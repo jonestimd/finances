@@ -9,7 +9,7 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.Company;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class AccountMenuSortTest {
     private Account createAccount(String companyName, String accountName) {
@@ -31,8 +31,8 @@ public class AccountMenuSortTest {
         List<Account> sorted = new ArrayList<Account>(accounts);
         Collections.sort(sorted, new AccountsMenuSort());
 
-        assertSame(accounts.get(1), sorted.get(0));
-        assertSame(accounts.get(0), sorted.get(1));
+        assertThat(sorted.get(0)).isSameAs(accounts.get(1));
+        assertThat(sorted.get(1)).isSameAs(accounts.get(0));
     }
 
     @Test
@@ -44,8 +44,8 @@ public class AccountMenuSortTest {
         List<Account> sorted = new ArrayList<Account>(accounts);
         Collections.sort(sorted, new AccountsMenuSort());
 
-        assertSame(accounts.get(1), sorted.get(0));
-        assertSame(accounts.get(0), sorted.get(1));
+        assertThat(sorted.get(0)).isSameAs(accounts.get(1));
+        assertThat(sorted.get(1)).isSameAs(accounts.get(0));
     }
 
     @Test
@@ -61,10 +61,10 @@ public class AccountMenuSortTest {
         List<Account> sorted = new ArrayList<Account>(accounts);
         Collections.sort(sorted, new AccountsMenuSort());
 
-        assertSame(accounts.get(3), sorted.get(0));
-        assertSame(accounts.get(5), sorted.get(1));
-        assertSame(accounts.get(2), sorted.get(2));
-        assertSame(accounts.get(1), sorted.get(3));
-        assertSame(accounts.get(0), sorted.get(4));
+        assertThat(sorted.get(0)).isSameAs(accounts.get(3));
+        assertThat(sorted.get(1)).isSameAs(accounts.get(5));
+        assertThat(sorted.get(2)).isSameAs(accounts.get(2));
+        assertThat(sorted.get(3)).isSameAs(accounts.get(1));
+        assertThat(sorted.get(4)).isSameAs(accounts.get(0));
     }
 }

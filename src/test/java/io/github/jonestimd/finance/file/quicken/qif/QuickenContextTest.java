@@ -10,7 +10,7 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.FileImport;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class QuickenContextTest extends QifContextTestFixture {
 
@@ -30,7 +30,7 @@ public class QuickenContextTest extends QifContextTestFixture {
         qifImport.importFile(getReader());
 
         long imported = daoContext.countAll(Transaction.class) - existing;
-        assertEquals(4, imported);
+        assertThat(imported).isEqualTo(4);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class QuickenContextTest extends QifContextTestFixture {
         qifImport.importFile(getReader());
 
         long imported = daoContext.countAll(Transaction.class) - existing;
-        assertEquals(4, imported);
+        assertThat(imported).isEqualTo(4);
     }
 
     @Test
@@ -70,6 +70,6 @@ public class QuickenContextTest extends QifContextTestFixture {
         qifImport.importFile(getReader());
 
         long imported = daoContext.countAll(Security.class) - existing;
-        assertEquals(2, imported);
+        assertThat(imported).isEqualTo(2);
     }
 }

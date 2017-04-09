@@ -21,7 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class SecurityLotDaoImplTest extends HsqlTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {
@@ -63,10 +63,10 @@ public class SecurityLotDaoImplTest extends HsqlTestFixture {
 
         List<SecurityLot> forPurchases = securityLotDao.findLotsForPurchases(purchases.subList(0, 2));
 
-        assertEquals(2, forPurchases.size());
-        assertNotNull(findLot(forPurchases, lots.get(0).getId()));
-        assertNotNull(findLot(forPurchases, lots.get(1).getId()));
-        assertNull(findLot(forPurchases, lots.get(2).getId()));
+        assertThat(forPurchases).hasSize(2);
+        assertThat(findLot(forPurchases, lots.get(0).getId())).isNotNull();
+        assertThat(findLot(forPurchases, lots.get(1).getId())).isNotNull();
+        assertThat(findLot(forPurchases, lots.get(2).getId())).isNull();
     }
 
     private SecurityLot findLot(List<SecurityLot> lots, long id) {

@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class ReferenceIteratorTest {
     @Test
@@ -17,13 +17,13 @@ public class ReferenceIteratorTest {
         references.add(new WeakReference<String>("Three"));
 
         ReferenceIterator<String> iterator = ReferenceIterator.iterator(references);
-        assertTrue(iterator.hasNext());
-        assertEquals("One", iterator.next());
-        assertTrue(iterator.hasNext());
-        assertEquals("Two", iterator.next());
-        assertTrue(iterator.hasNext());
-        assertEquals("Three", iterator.next());
-        assertFalse(iterator.hasNext());
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("One");
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("Two");
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("Three");
+        assertThat(iterator.hasNext()).isFalse();
     }
 
     @Test
@@ -35,12 +35,12 @@ public class ReferenceIteratorTest {
         references.get(1).clear();
 
         ReferenceIterator<String> iterator = ReferenceIterator.iterator(references);
-        assertTrue(iterator.hasNext());
-        assertEquals("One", iterator.next());
-        assertTrue(iterator.hasNext());
-        assertEquals("Three", iterator.next());
-        assertFalse(iterator.hasNext());
-        assertEquals(2, references.size());
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("One");
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("Three");
+        assertThat(iterator.hasNext()).isFalse();
+        assertThat(references).hasSize(2);
     }
 
     @Test
@@ -52,13 +52,13 @@ public class ReferenceIteratorTest {
         references.get(1).clear();
 
         ReferenceIterator<String> iterator = ReferenceIterator.iterator(references);
-        assertTrue(iterator.hasNext());
-        assertEquals("One", iterator.next());
-        assertTrue(iterator.hasNext());
-        assertEquals("Three", iterator.next());
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("One");
+        assertThat(iterator.hasNext()).isTrue();
+        assertThat(iterator.next()).isEqualTo("Three");
         iterator.remove();
-        assertFalse(iterator.hasNext());
-        assertEquals(1, references.size());
-        assertEquals("One", references.get(0).get());
+        assertThat(iterator.hasNext()).isFalse();
+        assertThat(references).hasSize(1);
+        assertThat(references.get(0).get()).isEqualTo("One");
     }
 }

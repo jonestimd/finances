@@ -5,7 +5,7 @@ import java.io.CharArrayReader;
 import org.junit.Test;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class QifReaderTest {
     @Test
@@ -15,10 +15,10 @@ public class QifReaderTest {
 
         QifRecord record = reader.nextRecord();
 
-        assertEquals(3, record.getLines());
-        assertEquals("xxx", record.getValue(NAME));
-        assertEquals("yyy", record.getValue(DATE));
-        assertTrue(record.hasValue(INCOME));
+        assertThat(record.getLines()).isEqualTo(3);
+        assertThat(record.getValue(NAME)).isEqualTo("xxx");
+        assertThat(record.getValue(DATE)).isEqualTo("yyy");
+        assertThat(record.hasValue(INCOME)).isTrue();
     }
 
     @Test
@@ -28,8 +28,8 @@ public class QifReaderTest {
 
         QifRecord record = reader.nextRecord();
 
-        assertTrue(record.hasValue(NAME));
-        assertFalse(record.hasValue(DATE));
+        assertThat(record.hasValue(NAME)).isTrue();
+        assertThat(record.hasValue(DATE)).isFalse();
     }
 
     @Test
@@ -39,7 +39,7 @@ public class QifReaderTest {
 
         QifRecord record = reader.nextRecord();
 
-        assertTrue(record.hasValue(NAME));
-        assertFalse(record.hasValue(DATE));
+        assertThat(record.hasValue(NAME)).isTrue();
+        assertThat(record.hasValue(DATE)).isFalse();
     }
 }

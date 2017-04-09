@@ -2,7 +2,6 @@ package io.github.jonestimd.finance.operations;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +17,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
-import static junit.framework.Assert.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -46,7 +45,7 @@ public class TransactionCategoryOperationsImplTest {
         TransactionCategory expectedType = new TransactionCategory();
         when(transactionCategoryDao.getTransactionCategory(code, subcode)).thenReturn(expectedType);
 
-        assertSame(expectedType, transactionCategoryOperations.getTransactionCategory(code, subcode));
+        assertThat(transactionCategoryOperations.getTransactionCategory(code, subcode)).isSameAs(expectedType);
     }
 
     @Test
@@ -56,15 +55,15 @@ public class TransactionCategoryOperationsImplTest {
         TransactionCategory expectedType = new TransactionCategory();
         when(transactionCategoryDao.getSecurityAction(code)).thenReturn(expectedType);
 
-        assertSame(expectedType, transactionCategoryOperations.getSecurityAction(code));
+        assertThat(transactionCategoryOperations.getSecurityAction(code)).isSameAs(expectedType);
     }
 
     @Test
     public void testGetAllTransactionCategorys() throws Exception {
         daoRepository.expectCommit();
-        when(transactionCategoryDao.getAll()).thenReturn(Collections.<TransactionCategory>emptyList());
+        when(transactionCategoryDao.getAll()).thenReturn(Collections.emptyList());
 
-        assertEquals(0, transactionCategoryOperations.getAllTransactionCategories().size());
+        assertThat(transactionCategoryOperations.getAllTransactionCategories()).isEmpty();
     }
 
     @Test
@@ -73,7 +72,7 @@ public class TransactionCategoryOperationsImplTest {
         TransactionCategory type = new TransactionCategory();
         when(transactionCategoryDao.save(type)).thenReturn(type);
 
-        assertSame(type, transactionCategoryOperations.save(type));
+        assertThat(transactionCategoryOperations.save(type)).isSameAs(type);
 
         verify(transactionCategoryDao).save(type);
     }
@@ -90,9 +89,9 @@ public class TransactionCategoryOperationsImplTest {
         ArgumentCaptor<TransactionCategory> capture = ArgumentCaptor.forClass(TransactionCategory.class);
         verify(transactionCategoryDao).save(capture.capture());
         TransactionCategory type = capture.getValue();
-        assertEquals(description, type.getDescription());
-        assertEquals(code, type.getCode());
-        assertTrue(type.isIncome());
+        assertThat(type.getDescription()).isEqualTo(description);
+        assertThat(type.getCode()).isEqualTo(code);
+        assertThat(type.isIncome()).isTrue();
     }
 
     @Test
@@ -109,7 +108,7 @@ public class TransactionCategoryOperationsImplTest {
 
         ArgumentCaptor<TransactionCategory> capture = ArgumentCaptor.forClass(TransactionCategory.class);
         verify(transactionCategoryDao).save(capture.capture());
-        assertSame(parentType, capture.getValue().getParent());
+        assertThat(capture.getValue().getParent()).isSameAs(parentType);
     }
 
     @Test
@@ -121,10 +120,10 @@ public class TransactionCategoryOperationsImplTest {
 
         try {
             transactionCategoryOperations.getOrCreateTransactionCategory("description", true, parentCode, "code");
-            fail();
+            fail("expected an exception");
         }
         catch (IllegalArgumentException ex) {
-            assertEquals("Unknown transaction category: " + parentCode + '.', ex.getMessage());
+            assertThat(ex.getMessage()).isEqualTo("Unknown transaction category: " + parentCode + '.');
         }
     }
 
@@ -135,16 +134,16 @@ public class TransactionCategoryOperationsImplTest {
         String code = "child";
         when(transactionCategoryDao.getTransactionCategory(code)).thenReturn(existingType);
 
-        assertSame(existingType, transactionCategoryOperations.getOrCreateTransactionCategory("description", true, code));
+        assertThat(transactionCategoryOperations.getOrCreateTransactionCategory("description", true, code)).isSameAs(existingType);
     }
 
     @Test
     public void testGetTransactionCategorySummaries() throws Exception {
         daoRepository.expectCommit();
-        List<TransactionCategorySummary> summaries = Arrays.asList(new TransactionCategorySummary());
+        List<TransactionCategorySummary> summaries = singletonList(new TransactionCategorySummary());
         when(transactionCategoryDao.getTransactionCategorySummaries()).thenReturn(summaries);
 
-        assertSame(summaries, transactionCategoryOperations.getTransactionCategorySummaries());
+        assertThat(transactionCategoryOperations.getTransactionCategorySummaries()).isSameAs(summaries);
     }
 
     @Test

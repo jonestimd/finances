@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ClassConverterTest {
@@ -15,7 +15,7 @@ public class ClassConverterTest {
     public void getTypesIncludesClasses() throws Exception {
         ClassConverter converter = new ClassConverter(null);
 
-        assertTrue(converter.getTypes().contains("Type:Class"));
+        assertThat(converter.getTypes().contains("Type:Class")).isTrue();
     }
 
     @Test
@@ -31,7 +31,7 @@ public class ClassConverterTest {
         ArgumentCaptor<TransactionGroup> capture = ArgumentCaptor.forClass(TransactionGroup.class);
         verify(txGroupOperations).getOrCreateTransactionGroup(capture.capture());
         TransactionGroup group = capture.getValue();
-        assertEquals(record.getValue(NAME), group.getName());
-        assertEquals(record.getValue(DESCRIPTION), group.getDescription());
+        assertThat(group.getName()).isEqualTo(record.getValue(NAME));
+        assertThat(group.getDescription()).isEqualTo(record.getValue(DESCRIPTION));
     }
 }

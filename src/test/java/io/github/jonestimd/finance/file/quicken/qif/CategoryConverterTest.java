@@ -4,7 +4,7 @@ import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import org.junit.Test;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class CategoryConverterTest {
@@ -14,7 +14,7 @@ public class CategoryConverterTest {
 
     @Test
     public void getTypesIncludesCategories() throws Exception {
-        assertTrue(converter.getTypes().contains("Type:Cat"));
+        assertThat(converter.getTypes().contains("Type:Cat")).isTrue();
     }
 
     @Test

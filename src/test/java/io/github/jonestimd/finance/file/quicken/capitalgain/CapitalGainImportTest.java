@@ -36,7 +36,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
@@ -106,7 +106,7 @@ public class CapitalGainImportTest {
         verify(transactionService, times(2)).findPurchasesWithRemainingLots(same(account), same(security1), any(Date.class));
         verify(transactionService, times(1)).findPurchasesWithRemainingLots(same(account), same(security2), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(3, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(3);
         checkLot(sale1, "15", purchase1, "15", lotCapture.getValue());
         checkLot(sale1, "5", purchase2, "5", lotCapture.getValue());
         checkLot(sale2, "10", purchase3, "10", lotCapture.getValue());
@@ -144,7 +144,7 @@ public class CapitalGainImportTest {
 
         verify(transactionService, times(4)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(4, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(4);
         checkLot(sale1, "15", purchase1, "15", lotCapture.getValue());
         checkLot(sale1, "5", purchase3, "5", lotCapture.getValue());
         checkLot(sale2, "9", purchase2, "9", lotCapture.getValue());
@@ -173,7 +173,7 @@ public class CapitalGainImportTest {
 
         verify(transactionService, times(3)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(4, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(4);
         checkLot(sale1, "16.000001", purchase1, "16.000001", lotCapture.getValue());
         checkLot(sale1, "6", purchase4, "6", lotCapture.getValue());
         checkLot(sale2, "7.999999", purchase2, "7.999999", lotCapture.getValue());
@@ -199,7 +199,7 @@ public class CapitalGainImportTest {
 
         verify(transactionService, times(2)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(2, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(2);
         checkLot(sale1, "16", purchase1, "16", lotCapture.getValue());
         checkLot(sale1, "16", purchase3, "16", lotCapture.getValue());
     }
@@ -225,7 +225,7 @@ public class CapitalGainImportTest {
 
         verify(transactionService, times(1)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(4, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(4);
         checkLot(sale1, "25", purchase1, "25", lotCapture.getValue());
         checkLot(sale2, "10", purchase2, "10", lotCapture.getValue());
         checkLot(sale3, "15", purchase1, "15", lotCapture.getValue());
@@ -251,7 +251,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t0.00\t0.00\t0.00\n"));
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(2, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(2);
         checkLot(sale1, "16", purchase1, "16", lotCapture.getValue());
         checkLot(sale1, "16", purchase2, "16", lotCapture.getValue());
     }
@@ -280,7 +280,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t15.000\t01/20/00\t02/28/05\t150.00\t150.00\t0.00\n"));
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(4, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(4);
         checkLot(sale2, "15", purchase2, "15", lotCapture.getValue());
         checkLot(sale2, "16", purchase1, "16", lotCapture.getValue());
         checkLot(sale1, "16", purchase3, "16", lotCapture.getValue());
@@ -309,7 +309,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t20.00\t0.00\n"));
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
-        assertEquals(2, Iterables.size(lotCapture.getValue()));
+        assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(2);
         checkLot(sale1, "16", purchase1, "8", lotCapture.getValue());
         checkLot(sale1, "16", purchase2, "4", lotCapture.getValue());
     }
@@ -394,8 +394,8 @@ public class CapitalGainImportTest {
             fail("expected exception");
         }
         catch (QuickenException ex) {
-            assertEquals("io.github.jonestimd.finance.file.quicken.invalidRecord", ex.getMessageKey());
-            assertArrayEquals(new Object[] {"TSV", 4L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidRecord");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"TSV", 4L});
         }
     }
 
@@ -410,8 +410,8 @@ public class CapitalGainImportTest {
             fail("expected exception");
         }
         catch (QuickenException ex) {
-            assertEquals("io.github.jonestimd.finance.file.quicken.importFailed", ex.getMessageKey());
-            assertArrayEquals(new Object[] {"TXF", 0L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.importFailed");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"TXF", 0L});
         }
     }
 }

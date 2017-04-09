@@ -11,7 +11,7 @@ import io.github.jonestimd.finance.service.ServiceContext;
 import org.junit.Before;
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class TransactionGroupOperationsImplTest {
@@ -33,7 +33,7 @@ public class TransactionGroupOperationsImplTest {
         List<TransactionGroup> groups = new ArrayList<TransactionGroup>();
         when(transactionGroupDao.getAll()).thenReturn(groups);
 
-        assertSame(groups, transactionGroupOperations.getAllTransactionGroups());
+        assertThat(transactionGroupOperations.getAllTransactionGroups()).isSameAs(groups);
     }
 
     @Test
@@ -43,7 +43,7 @@ public class TransactionGroupOperationsImplTest {
         when(transactionGroupDao.getTransactionGroup(null)).thenReturn(null);
         when(transactionGroupDao.save(group)).thenReturn(group);
 
-        assertSame(group, transactionGroupOperations.getOrCreateTransactionGroup(group));
+        assertThat(transactionGroupOperations.getOrCreateTransactionGroup(group)).isSameAs(group);
 
         verify(transactionGroupDao).save(group);
     }
@@ -55,7 +55,7 @@ public class TransactionGroupOperationsImplTest {
         TransactionGroup group = new TransactionGroup();
         when(transactionGroupDao.getTransactionGroup(groupName)).thenReturn(group);
 
-        assertSame(group, transactionGroupOperations.getTransactionGroup(groupName));
+        assertThat(transactionGroupOperations.getTransactionGroup(groupName)).isSameAs(group);
     }
 
     @Test
@@ -66,7 +66,7 @@ public class TransactionGroupOperationsImplTest {
         group.setName("name");
         when(transactionGroupDao.getTransactionGroup(group.getName())).thenReturn(existingGroup);
 
-        assertSame(existingGroup, transactionGroupOperations.getOrCreateTransactionGroup(group));
+        assertThat(transactionGroupOperations.getOrCreateTransactionGroup(group)).isSameAs(existingGroup);
     }
 
     @Test

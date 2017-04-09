@@ -17,7 +17,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class StockSplitDaoImplTest extends TransactionalTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {SECURITY_BATCH};
@@ -43,7 +43,7 @@ public class StockSplitDaoImplTest extends TransactionalTestFixture {
         stockSplitDao.save(createStockSplit(security, DateUtils.addDays(date, -1), 4));
         StockSplit stockSplit = stockSplitDao.save(createStockSplit(security, date, 2));
 
-        assertEquals(stockSplit, stockSplitDao.find(security, date));
+        assertThat(stockSplitDao.find(security, date)).isEqualTo(stockSplit);
     }
 
     @Test
@@ -55,7 +55,7 @@ public class StockSplitDaoImplTest extends TransactionalTestFixture {
             stockSplitDao.save(createStockSplit(security, splitDate, 2));
             fail("expected exception");
         } catch (UndeclaredThrowableException ex) {
-            assertTrue(ExceptionUtils.getRootCause(ex).getMessage().toLowerCase().startsWith("integrity constraint violation"));
+            assertThat(ExceptionUtils.getRootCause(ex).getMessage().toLowerCase()).startsWith("integrity constraint violation");
         }
     }
 

@@ -5,7 +5,7 @@ import java.text.ParseException;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class PayeeFormatTest {
     @Test

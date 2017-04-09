@@ -3,7 +3,6 @@ package io.github.jonestimd.finance.file.quicken.qif;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -21,7 +20,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static org.junit.Assert.*;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -37,7 +37,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
     }
 
     protected void initializeAccountHolder() throws Exception {
-        when(payeeOperations.getAllPayees()).thenReturn(Collections.<Payee>emptyList());
+        when(payeeOperations.getAllPayees()).thenReturn(Collections.emptyList());
         converter = getQifContext().getMoneyTransactionConverter();
         accountHolder = new AccountHolder();
         accountHolder.setAccount(account);
@@ -46,10 +46,10 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
     @Test
     public void getTypesIncludesMoneyTypes() throws Exception {
         initializeAccountHolder();
-        assertTrue(converter.getTypes().contains("Type:Bank"));
-        assertTrue(converter.getTypes().contains("Type:Cash"));
-        assertTrue(converter.getTypes().contains("Type:CCard"));
-        assertTrue(converter.getTypes().contains("Type:Oth L"));
+        assertThat(converter.getTypes().contains("Type:Bank")).isTrue();
+        assertThat(converter.getTypes().contains("Type:Cash")).isTrue();
+        assertThat(converter.getTypes().contains("Type:CCard")).isTrue();
+        assertThat(converter.getTypes().contains("Type:Oth L")).isTrue();
     }
 
     private QifRecord createRecord(String date, String amount, boolean cleared, String payeeName, String category, String memo) {
@@ -81,24 +81,24 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         converter.importRecord(accountHolder, record);
 
-        assertSame(account, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(account);
         verify(transactionService).saveTransaction(saveCapture.capture());
         Transaction transaction = saveCapture.getValue();
-        assertSame(payee, transaction.getPayee());
-        assertSame(account, transaction.getAccount());
-        assertEquals(dateFormat.parse(date), transaction.getDate());
-        assertEquals(new BigDecimal(amount), transaction.getAmount());
-        assertTrue(transaction.isCleared());
-        assertEquals(checkNumber, transaction.getNumber());
+        assertThat(transaction.getPayee()).isSameAs(payee);
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction.getAmount()).isEqualTo(new BigDecimal(amount));
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getNumber()).isEqualTo(checkNumber);
 
         List<TransactionDetail> details = transaction.getDetails();
-        assertEquals(1, details.size());
+        assertThat(details).hasSize(1);
         TransactionDetail detail = details.get(0);
-        assertFalse(detail.isTransfer());
-        assertEquals(new BigDecimal(amount), detail.getAmount());
-        assertSame(TransactionCategory, detail.getCategory());
-        assertSame(groups[0], detail.getGroup());
-        assertEquals(memo, detail.getMemo());
+        assertThat(detail.isTransfer()).isFalse();
+        assertThat(detail.getAmount()).isEqualTo(new BigDecimal(amount));
+        assertThat(detail.getCategory()).isSameAs(TransactionCategory);
+        assertThat(detail.getGroup()).isSameAs(groups[0]);
+        assertThat(detail.getMemo()).isEqualTo(memo);
     }
 
     @Test
@@ -114,8 +114,8 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         Transaction transaction = saveCapture.getValue();
-        assertEquals(date, transaction.getDate());
-        assertFalse(transaction.isCleared());
+        assertThat(transaction.getDate()).isEqualTo(date);
+        assertThat(transaction.isCleared()).isFalse();
     }
 
     @Test
@@ -127,16 +127,15 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         try {
             converter.importRecord(accountHolder, record);
-            fail();
+            fail("expected an exception");
         }
         catch (QuickenException ex) {
-            assertEquals("io.github.jonestimd.finance.file.quicken.invalidDate", ex.getMessageKey());
-            assertArrayEquals(new Object[]{qifDate, 1L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidDate");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[]{qifDate, 1L});
         }
     }
 
-    private QifRecord createSplit(String date, String[] amounts, boolean cleared, String payeeName,
-            String[] categories, String[] memos) {
+    private QifRecord createSplit(String date, String[] amounts, String payeeName, String[] categories, String[] memos) {
         QifRecord record = createRecord(date, amounts[0], true, payeeName, categories[0] , memos[0]);
         for (int i=1; i<categories.length; i++) {
             record.setValue(SPLIT_CATEGORY, categories[i]);
@@ -147,7 +146,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
     }
 
     private List<String> combineValues(QifRecord record, QifField mainCode, QifField splitCode) {
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         values.add(record.getValue(mainCode));
         if (record.hasValue(splitCode)) {
             values.addAll(record.getValues(splitCode));
@@ -156,11 +155,11 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
     }
 
     private List<TransactionCategory> addTransactionCategorys(QifRecord record) throws Exception {
-        List<String> categories = record.isSplit() ? record.getValues(SPLIT_CATEGORY) : Arrays.asList(record.getValue(CATEGORY));
-        List<TransactionCategory> types = new ArrayList<TransactionCategory>();
-        for (int i=0; i<categories.size(); i++) {
-            CategoryParser parser = new CategoryParser(categories.get(i));
-            if (! parser.isTransfer()) {
+        List<String> categories = record.isSplit() ? record.getValues(SPLIT_CATEGORY) : singletonList(record.getValue(CATEGORY));
+        List<TransactionCategory> types = new ArrayList<>();
+        for (String category : categories) {
+            CategoryParser parser = new CategoryParser(category);
+            if (!parser.isTransfer()) {
                 if (parser.getCategoryNames() == null) {
                     types.add(null);
                 }
@@ -176,7 +175,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
     private List<TransactionDetail> addTransfers(TransactionGroup groups[], QifRecord record) throws Exception {
         List<String> categories = combineValues(record, CATEGORY, SPLIT_CATEGORY);
-        List<TransactionDetail> transferDetails = new ArrayList<TransactionDetail>();
+        List<TransactionDetail> transferDetails = new ArrayList<>();
         for (int i=1; i<categories.size(); i++) {
             CategoryParser parser = new CategoryParser(categories.get(i));
             if (parser.isTransfer()) {
@@ -205,7 +204,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { "category:subcategory", "cat1/group", "cat2" };
         String[] memos = { "main memo", "memo1", "memo2" };
         String[] amounts = { "123.45", "120.00", "3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         Payee payee = addPayee(record);
         TransactionGroup[] groups = addTransactionGroups(record);
         List<TransactionCategory> types = addTransactionCategorys(record);
@@ -215,22 +214,22 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         Transaction transaction = saveCapture.getValue();
-        assertSame(payee, transaction.getPayee());
-        assertSame(account, transaction.getAccount());
-        assertEquals(dateFormat.parse(date), transaction.getDate());
-        assertEquals(new BigDecimal(amounts[0]), transaction.getAmount());
-        assertTrue(transaction.isCleared());
-        assertEquals(memos[0], transaction.getMemo());
+        assertThat(transaction.getPayee()).isSameAs(payee);
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction.getAmount()).isEqualTo(new BigDecimal(amounts[0]));
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getMemo()).isEqualTo(memos[0]);
 
         List<TransactionDetail> details = transaction.getDetails();
-        assertEquals(types.size(), details.size());
+        assertThat(details.size()).isEqualTo(types.size());
         for (int i=0; i<details.size(); i++) {
             TransactionDetail detail = details.get(i);
-            assertFalse(detail.isTransfer());
-            assertEquals(new BigDecimal(amounts[i+1]), detail.getAmount());
-            assertSame(types.get(i), detail.getCategory());
-            assertSame(groups[i+1], detail.getGroup());
-            assertEquals(memos[i+1], detail.getMemo());
+            assertThat(detail.isTransfer()).isFalse();
+            assertThat(detail.getAmount()).isEqualTo(new BigDecimal(amounts[i+1]));
+            assertThat(detail.getCategory()).isSameAs(types.get(i));
+            assertThat(detail.getGroup()).isSameAs(groups[i+1]);
+            assertThat(detail.getMemo()).isEqualTo(memos[i+1]);
         }
     }
 
@@ -241,7 +240,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { "category:subcategory", "cat1/group", "cat2" };
         String[] memos = { "main memo", "memo1", "memo2" };
         String[] amounts = { "123.45", "12.00", "3.45" };
-        QifRecord record = createSplit(date, amounts, true, payeeName, categories , memos);
+        QifRecord record = createSplit(date, amounts, payeeName, categories , memos);
         addPayee(record);
         addTransactionCategorys(record);
         addTransactionGroups(record);
@@ -249,12 +248,12 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         try {
             converter.importRecord(accountHolder, record);
-            fail();
+            fail("expected an exception");
         }
         catch (QuickenException ex) {
             verify(transactionService).saveTransaction(any(Transaction.class));
-            assertEquals("io.github.jonestimd.finance.file.quicken.invalidSplit", ex.getMessageKey());
-            assertArrayEquals(new Object[] {new BigDecimal(amounts[0]), new BigDecimal("15.45"), 1L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidSplit");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {new BigDecimal(amounts[0]), new BigDecimal("15.45"), 1L});
         }
     }
 
@@ -273,39 +272,39 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         converter.importRecord(accountHolder, record);
 
-        assertSame(account, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(account);
         verify(transactionService, times(2)).saveTransaction(saveCapture.capture());
         verify(transactionService, times(2)).saveDetail(any(TransactionDetail.class));
-        assertEquals(2, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(2);
         Transaction transaction1 = saveCapture.getAllValues().get(0);
         Transaction transaction2 = saveCapture.getAllValues().get(1);
-        assertSame(payee, transaction1.getPayee());
-        assertSame(payee, transaction2.getPayee());
-        assertSame(account, transaction1.getAccount());
-        assertSame(transferAccount, transaction2.getAccount());
-        assertEquals(dateFormat.parse(date), transaction1.getDate());
-        assertEquals(dateFormat.parse(date), transaction2.getDate());
-        assertEquals(new BigDecimal(amount), transaction1.getAmount().abs());
-        assertEquals(transaction1.getAmount(), transaction2.getAmount().negate());
-        assertTrue(transaction1.isCleared());
-        assertTrue(transaction2.isCleared());
+        assertThat(transaction1.getPayee()).isSameAs(payee);
+        assertThat(transaction2.getPayee()).isSameAs(payee);
+        assertThat(transaction1.getAccount()).isSameAs(account);
+        assertThat(transaction2.getAccount()).isSameAs(transferAccount);
+        assertThat(transaction1.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction2.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction1.getAmount().abs()).isEqualTo(new BigDecimal(amount));
+        assertThat(transaction2.getAmount().negate()).isEqualTo(transaction1.getAmount());
+        assertThat(transaction1.isCleared()).isTrue();
+        assertThat(transaction2.isCleared()).isTrue();
 
-        assertEquals(1, transaction1.getDetails().size());
-        assertEquals(1, transaction2.getDetails().size());
+        assertThat(transaction1.getDetails()).hasSize(1);
+        assertThat(transaction2.getDetails()).hasSize(1);
         TransactionDetail detail1 = transaction1.getDetails().get(0);
         TransactionDetail detail2 = transaction2.getDetails().get(0);
-        assertTrue(detail1.isTransfer());
-        assertTrue(detail2.isTransfer());
-        assertNull(detail1.getCategory());
-        assertNull(detail2.getCategory());
-        assertEquals(new BigDecimal(amount), detail1.getAmount().abs());
-        assertEquals(detail1.getAmount(), detail2.getAmount().negate());
-        assertSame(group, detail1.getGroup());
-        assertSame(group, detail2.getGroup());
-        assertEquals(memo, detail1.getMemo());
-        assertEquals(memo, detail2.getMemo());
-        assertSame(detail1.getRelatedDetail(), detail2);
-        assertSame(detail2.getRelatedDetail(), detail1);
+        assertThat(detail1.isTransfer()).isTrue();
+        assertThat(detail2.isTransfer()).isTrue();
+        assertThat(detail1.getCategory()).isNull();
+        assertThat(detail2.getCategory()).isNull();
+        assertThat(detail1.getAmount().abs()).isEqualTo(new BigDecimal(amount));
+        assertThat(detail2.getAmount().negate()).isEqualTo(detail1.getAmount());
+        assertThat(detail1.getGroup()).isSameAs(group);
+        assertThat(detail2.getGroup()).isSameAs(group);
+        assertThat(detail1.getMemo()).isEqualTo(memo);
+        assertThat(detail2.getMemo()).isEqualTo(memo);
+        assertThat(detail2).isSameAs(detail1.getRelatedDetail());
+        assertThat(detail1).isSameAs(detail2.getRelatedDetail());
     }
 
     @Test
@@ -326,15 +325,15 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         verify(transactionService).deleteTransaction(originalTransaction);
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction updatedTransaction = transferDetail.getTransaction();
-        assertSame(transferDetail.getTransaction(), updatedTransaction);
-        assertEquals(1, updatedTransaction.getDetails().size());
-        assertSame(transferDetail, updatedTransaction.getDetails().get(0));
-        assertEquals("999", updatedTransaction.getNumber());
-        assertSame(payee, updatedTransaction.getPayee());
-        assertTrue(updatedTransaction.isCleared());
-        assertEquals(memo, updatedTransaction.getMemo());
+        assertThat(updatedTransaction).isSameAs(transferDetail.getTransaction());
+        assertThat(updatedTransaction.getDetails()).hasSize(1);
+        assertThat(updatedTransaction.getDetails().get(0)).isSameAs(transferDetail);
+        assertThat(updatedTransaction.getNumber()).isEqualTo("999");
+        assertThat(updatedTransaction.getPayee()).isSameAs(payee);
+        assertThat(updatedTransaction.isCleared()).isTrue();
+        assertThat(updatedTransaction.getMemo()).isEqualTo(memo);
     }
 
     @Test
@@ -358,17 +357,17 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         verify(transactionService).deleteTransaction(originalTransaction);
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction updatedTransaction = saveCapture.getAllValues().get(0);
-        assertSame(updatedTransaction, transferDetail1.getTransaction());
-        assertEquals(2, updatedTransaction.getDetails().size());
-        assertSame(transferDetail1, updatedTransaction.getDetails().get(0));
-        assertSame(transferDetail2, updatedTransaction.getDetails().get(1));
-        assertSame(account, updatedTransaction.getAccount());
-        assertEquals("999", updatedTransaction.getNumber());
-        assertSame(payee, updatedTransaction.getPayee());
-        assertTrue(updatedTransaction.isCleared());
-        assertEquals(memo, updatedTransaction.getMemo());
+        assertThat(transferDetail1.getTransaction()).isSameAs(updatedTransaction);
+        assertThat(updatedTransaction.getDetails()).hasSize(2);
+        assertThat(updatedTransaction.getDetails().get(0)).isSameAs(transferDetail1);
+        assertThat(updatedTransaction.getDetails().get(1)).isSameAs(transferDetail2);
+        assertThat(updatedTransaction.getAccount()).isSameAs(account);
+        assertThat(updatedTransaction.getNumber()).isEqualTo("999");
+        assertThat(updatedTransaction.getPayee()).isSameAs(payee);
+        assertThat(updatedTransaction.isCleared()).isTrue();
+        assertThat(updatedTransaction.getMemo()).isEqualTo(memo);
     }
 
     @Test
@@ -377,7 +376,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { null, "[account1]/group1", "[account2]" };
         String[] memos = { "main memo", "memo1", null };
         String[] amounts = { "123.45", "120.00", "3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         record.setValue(NUMBER, "999");
         Payee payee = addPayee(record);
         TransactionGroup[] groups = addTransactionGroups(record);
@@ -388,22 +387,22 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record);
 
         for (Transaction transaction : expectedDeletes) {
-            assertTrue(transaction.getDetails().isEmpty());
+            assertThat(transaction.getDetails().isEmpty()).isTrue();
         }
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         for (Transaction transaction : expectedDeletes) {
             verify(transactionService).deleteTransaction(transaction);
         }
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction savedTransaction = saveCapture.getAllValues().get(0);
-        assertEquals("999", savedTransaction.getNumber());
-        assertSame(payee, savedTransaction.getPayee());
-        assertTrue(savedTransaction.isCleared());
-        assertEquals(2, savedTransaction.getDetails().size());
-        assertTrue(savedTransaction.getDetails().contains(transferDetails.get(0)));
-        assertTrue(savedTransaction.getDetails().contains(transferDetails.get(1)));
-        assertEquals(memos[0], savedTransaction.getMemo());
+        assertThat(savedTransaction.getNumber()).isEqualTo("999");
+        assertThat(savedTransaction.getPayee()).isSameAs(payee);
+        assertThat(savedTransaction.isCleared()).isTrue();
+        assertThat(savedTransaction.getDetails()).hasSize(2);
+        assertThat(savedTransaction.getDetails().contains(transferDetails.get(0))).isTrue();
+        assertThat(savedTransaction.getDetails().contains(transferDetails.get(1))).isTrue();
+        assertThat(savedTransaction.getMemo()).isEqualTo(memos[0]);
     }
 
     @Test
@@ -412,7 +411,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { null, "[account1]", "[account1]", "[account1]/group" };
         String[] memos = { "main memo", "memo1", null, null };
         String[] amounts = { "124.00", "120.00", "3.45", "0.55" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         record.setValue(NUMBER, "999");
         Payee payee = addPayee(record);
         TransactionGroup[] groups = addTransactionGroups(record);
@@ -426,31 +425,31 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record);
 
         for (Transaction transaction : expectedDeletes) {
-            assertTrue(transaction.getDetails().isEmpty());
+            assertThat(transaction.getDetails().isEmpty()).isTrue();
         }
         verify(transactionService).saveTransaction(saveCapture.capture());
         verify(transactionService).deleteTransaction(expectedDeletes.get(0));
         verify(transactionService, times(2)).saveDetail(any(TransactionDetail.class));
         verify(transactionService).deleteTransaction(expectedDeletes.get(1));
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction savedTransaction = saveCapture.getAllValues().get(0);
-        assertEquals("999", savedTransaction.getNumber());
-        assertSame(payee, savedTransaction.getPayee());
-        assertEquals(memos[0], savedTransaction.getMemo());
-        assertTrue(savedTransaction.isCleared());
-        assertEquals(3, savedTransaction.getDetails().size());
-        assertSame(transferDetails.get(0), savedTransaction.getDetails().get(0));
-        assertEquals("120.00", transferDetails.get(0).getAmount().toString());
-        assertEquals("3.45", savedTransaction.getDetails().get(1).getAmount().toString());
-        assertEquals("0.55", savedTransaction.getDetails().get(2).getAmount().toString());
-        assertEquals(2, firstTransaction.getDetails().size());
-        assertEquals("-120.00", firstTransaction.getDetails().get(0).getAmount().toString());
-        assertEquals("-3.45", firstTransaction.getDetails().get(1).getAmount().toString());
-        assertSame(firstTransaction, savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
-        assertSame(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction(),
-                   savedTransaction.getDetails().get(1).getRelatedDetail().getTransaction());
-        assertNotSame(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction(),
-                   savedTransaction.getDetails().get(2).getRelatedDetail().getTransaction());
+        assertThat(savedTransaction.getNumber()).isEqualTo("999");
+        assertThat(savedTransaction.getPayee()).isSameAs(payee);
+        assertThat(savedTransaction.getMemo()).isEqualTo(memos[0]);
+        assertThat(savedTransaction.isCleared()).isTrue();
+        assertThat(savedTransaction.getDetails()).hasSize(3);
+        assertThat(savedTransaction.getDetails().get(0)).isSameAs(transferDetails.get(0));
+        assertThat(transferDetails.get(0).getAmount().toString()).isEqualTo("120.00");
+        assertThat(savedTransaction.getDetails().get(1).getAmount().toString()).isEqualTo("3.45");
+        assertThat(savedTransaction.getDetails().get(2).getAmount().toString()).isEqualTo("0.55");
+        assertThat(firstTransaction.getDetails()).hasSize(2);
+        assertThat(firstTransaction.getDetails().get(0).getAmount().toString()).isEqualTo("-120.00");
+        assertThat(firstTransaction.getDetails().get(1).getAmount().toString()).isEqualTo("-3.45");
+        assertThat(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction()).isSameAs(firstTransaction);
+        assertThat(savedTransaction.getDetails().get(1).getRelatedDetail().getTransaction())
+                .isSameAs(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
+        assertThat(savedTransaction.getDetails().get(2).getRelatedDetail().getTransaction())
+                .isNotSameAs(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
     }
 
     @Test
@@ -459,7 +458,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { null, "[account1]", "[account1]", "[account1]" };
         String[] memos = { "main memo", "memo1", null, null };
         String[] amounts = { "123.45", "3.45", "123.45", "-3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         record.setValue(NUMBER, "999");
         Payee payee = addPayee(record);
         TransactionGroup[] groups = addTransactionGroups(record);
@@ -473,29 +472,29 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record);
 
         for (Transaction transaction : expectedDeletes) {
-            assertTrue(transaction.getDetails().isEmpty());
+            assertThat(transaction.getDetails().isEmpty()).isTrue();
         }
         verify(transactionService).saveTransaction(saveCapture.capture());
         for (Transaction transaction : expectedDeletes) {
             verify(transactionService).deleteTransaction(transaction);
         }
         verify(transactionService, times(4)).saveDetail(any(TransactionDetail.class));
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction savedTransaction = saveCapture.getAllValues().get(0);
-        assertEquals("999", savedTransaction.getNumber());
-        assertSame(payee, savedTransaction.getPayee());
-        assertEquals(memos[0], savedTransaction.getMemo());
-        assertTrue(savedTransaction.isCleared());
-        assertEquals(3, savedTransaction.getDetails().size());
-        assertSame(transferDetails.get(0), savedTransaction.getDetails().get(0));
-        assertEquals("3.45", transferDetails.get(0).getAmount().toString());
-        assertEquals("123.45", savedTransaction.getDetails().get(1).getAmount().toString());
-        assertEquals("-3.45", savedTransaction.getDetails().get(2).getAmount().toString());
-        assertEquals(3, firstTransaction.getDetails().size());
-        assertEquals("-3.45", firstTransaction.getDetails().get(0).getAmount().toString());
-        assertEquals("-123.45", firstTransaction.getDetails().get(1).getAmount().toString());
-        assertEquals("3.45", firstTransaction.getDetails().get(2).getAmount().toString());
-        assertSame(firstTransaction, savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
+        assertThat(savedTransaction.getNumber()).isEqualTo("999");
+        assertThat(savedTransaction.getPayee()).isSameAs(payee);
+        assertThat(savedTransaction.getMemo()).isEqualTo(memos[0]);
+        assertThat(savedTransaction.isCleared()).isTrue();
+        assertThat(savedTransaction.getDetails()).hasSize(3);
+        assertThat(savedTransaction.getDetails().get(0)).isSameAs(transferDetails.get(0));
+        assertThat(transferDetails.get(0).getAmount().toString()).isEqualTo("3.45");
+        assertThat(savedTransaction.getDetails().get(1).getAmount().toString()).isEqualTo("123.45");
+        assertThat(savedTransaction.getDetails().get(2).getAmount().toString()).isEqualTo("-3.45");
+        assertThat(firstTransaction.getDetails()).hasSize(3);
+        assertThat(firstTransaction.getDetails().get(0).getAmount().toString()).isEqualTo("-3.45");
+        assertThat(firstTransaction.getDetails().get(1).getAmount().toString()).isEqualTo("-123.45");
+        assertThat(firstTransaction.getDetails().get(2).getAmount().toString()).isEqualTo("3.45");
+        assertThat(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction()).isSameAs(firstTransaction);
     }
 
     @Test
@@ -511,24 +510,24 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         converter.importRecord(accountHolder, record);
 
-        assertSame(account, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(account);
         verify(transactionService).saveTransaction(saveCapture.capture());
-        assertEquals(1, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(1);
         Transaction transaction1 = saveCapture.getAllValues().get(0);
-        assertSame(payee, transaction1.getPayee());
-        assertSame(account, transaction1.getAccount());
-        assertEquals(dateFormat.parse(date), transaction1.getDate());
-        assertEquals(new BigDecimal(amount), transaction1.getAmount().abs());
-        assertTrue(transaction1.isCleared());
+        assertThat(transaction1.getPayee()).isSameAs(payee);
+        assertThat(transaction1.getAccount()).isSameAs(account);
+        assertThat(transaction1.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction1.getAmount().abs()).isEqualTo(new BigDecimal(amount));
+        assertThat(transaction1.isCleared()).isTrue();
 
-        assertEquals(1, transaction1.getDetails().size());
+        assertThat(transaction1.getDetails()).hasSize(1);
         TransactionDetail detail1 = transaction1.getDetails().get(0);
-        assertFalse(detail1.isTransfer());
-        assertNull(detail1.getCategory());
-        assertEquals(new BigDecimal(amount), detail1.getAmount().abs());
-        assertSame(group, detail1.getGroup());
-        assertEquals(memo, detail1.getMemo());
-        assertNull(detail1.getRelatedDetail());
+        assertThat(detail1.isTransfer()).isFalse();
+        assertThat(detail1.getCategory()).isNull();
+        assertThat(detail1.getAmount().abs()).isEqualTo(new BigDecimal(amount));
+        assertThat(detail1.getGroup()).isSameAs(group);
+        assertThat(detail1.getMemo()).isEqualTo(memo);
+        assertThat(detail1.getRelatedDetail()).isNull();
     }
 
     @Test
@@ -538,7 +537,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { null, "[account1]", "[account1]", "[account1]" };
         String[] memos = { "main memo", "memo1", null, null };
         String[] amounts = { "123.45", "3.45", "123.45", "-3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         record.setValue(NUMBER, "999");
         Payee payee = addPayee(record);
         when(accountOperations.getAccount(null, "account1")).thenReturn(account1);
@@ -548,27 +547,27 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService, times(2)).saveTransaction(saveCapture.capture());
         verify(transactionService, times(6)).saveDetail(any(TransactionDetail.class));
-        assertEquals(2, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(2);
         Transaction savedTransaction = saveCapture.getAllValues().get(0);
-        assertEquals("999", savedTransaction.getNumber());
-        assertSame(payee, savedTransaction.getPayee());
-        assertTrue(savedTransaction.isCleared());
-        assertEquals(memos[0], savedTransaction.getMemo());
-        assertEquals(3, savedTransaction.getDetails().size());
-        assertEquals("3.45", savedTransaction.getDetails().get(0).getAmount().toString());
-        assertEquals("123.45", savedTransaction.getDetails().get(1).getAmount().toString());
-        assertEquals("-3.45", savedTransaction.getDetails().get(2).getAmount().toString());
-        assertSame(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction(),
-                   savedTransaction.getDetails().get(1).getRelatedDetail().getTransaction());
-        assertSame(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction(),
-                   savedTransaction.getDetails().get(2).getRelatedDetail().getTransaction());
-        assertEquals(1, pendingTransferDetails.getPendingTransferDetails().size());
-        assertSame(savedTransaction.getDetails().get(0).getRelatedDetail(), pendingTransferDetails.remove(
-                account1, account.getName(), savedTransaction.getDate(), new BigDecimal("-123.45"), null));
+        assertThat(savedTransaction.getNumber()).isEqualTo("999");
+        assertThat(savedTransaction.getPayee()).isSameAs(payee);
+        assertThat(savedTransaction.isCleared()).isTrue();
+        assertThat(savedTransaction.getMemo()).isEqualTo(memos[0]);
+        assertThat(savedTransaction.getDetails()).hasSize(3);
+        assertThat(savedTransaction.getDetails().get(0).getAmount().toString()).isEqualTo("3.45");
+        assertThat(savedTransaction.getDetails().get(1).getAmount().toString()).isEqualTo("123.45");
+        assertThat(savedTransaction.getDetails().get(2).getAmount().toString()).isEqualTo("-3.45");
+        assertThat(savedTransaction.getDetails().get(1).getRelatedDetail().getTransaction())
+                .isSameAs(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
+        assertThat(savedTransaction.getDetails().get(2).getRelatedDetail().getTransaction())
+                .isSameAs(savedTransaction.getDetails().get(0).getRelatedDetail().getTransaction());
+        assertThat(pendingTransferDetails.getPendingTransferDetails()).hasSize(1);
+        assertThat(pendingTransferDetails.remove(account1, account.getName(), savedTransaction.getDate(), new BigDecimal("-123.45"), null))
+                .isSameAs(savedTransaction.getDetails().get(0).getRelatedDetail());
     }
 
     private List<Transaction> getTransactions(List<? extends TransactionDetail> details) {
-        List<Transaction> transactions = new ArrayList<Transaction>();
+        List<Transaction> transactions = new ArrayList<>();
         for (TransactionDetail detail : details) {
             transactions.add(detail.getTransaction());
         }
@@ -581,7 +580,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { null, "[account1]/group1", "[account2]" };
         String[] memos = { "main memo", "memo1", null };
         String[] amounts = { "123.45", "120.00", "3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         Payee payee = addPayee(record);
         Account accounts[] = { account, TestDomainUtils.createAccount("account1"), TestDomainUtils.createAccount("account2") };
         when(accountOperations.getAccount(null, "account1")).thenReturn(accounts[1]);
@@ -597,23 +596,23 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
             BigDecimal amount = new BigDecimal(amounts[i]);
             amount = i == 0 ? amount : amount.negate();
             Transaction transaction = findSavedTransaction(amount);
-            assertSame(payee, transaction.getPayee());
-            assertSame(accounts[i], transaction.getAccount());
-            assertEquals(dateFormat.parse(date), transaction.getDate());
-            assertEquals(amount, transaction.getAmount());
-            assertTrue(transaction.isCleared());
-            assertEquals(memos[i], transaction.getMemo());
+            assertThat(transaction.getPayee()).isSameAs(payee);
+            assertThat(transaction.getAccount()).isSameAs(accounts[i]);
+            assertThat(transaction.getDate()).isEqualTo(dateFormat.parse(date));
+            assertThat(transaction.getAmount()).isEqualTo(amount);
+            assertThat(transaction.isCleared()).isTrue();
+            assertThat(transaction.getMemo()).isEqualTo(memos[i]);
         }
 
-        assertEquals(3, saveCapture.getAllValues().size());
+        assertThat(saveCapture.getAllValues()).hasSize(3);
         Transaction transaction = findSavedTransaction(new BigDecimal(amounts[0]));
         List<TransactionDetail> details = transaction.getDetails();
         for (int i=0; i<details.size(); i++) {
             TransactionDetail detail = details.get(i);
-            assertTrue(detail.isTransfer());
-            assertEquals(new BigDecimal(amounts[i+1]), detail.getAmount());
-            assertSame(groups[i+1], detail.getGroup());
-            assertEquals(memos[i+1], detail.getMemo());
+            assertThat(detail.isTransfer()).isTrue();
+            assertThat(detail.getAmount()).isEqualTo(new BigDecimal(amounts[i+1]));
+            assertThat(detail.getGroup()).isSameAs(groups[i+1]);
+            assertThat(detail.getMemo()).isEqualTo(memos[i+1]);
         }
     }
 
@@ -633,7 +632,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         String[] categories = { "category:subcategory", null, "cat2" };
         String[] memos = { "main memo", "memo1", "memo2" };
         String[] amounts = { "123.45", "120.00", "3.45" };
-        QifRecord record = createSplit(date, amounts, true, "Payee", categories , memos);
+        QifRecord record = createSplit(date, amounts, "Payee", categories , memos);
         Payee payee = addPayee(record);
         TransactionGroup[] groups = addTransactionGroups(record);
         List<TransactionCategory> types = addTransactionCategorys(record);
@@ -643,22 +642,22 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
 
         verify(transactionService).saveTransaction(saveCapture.capture());
         Transaction transaction = saveCapture.getValue();
-        assertSame(payee, transaction.getPayee());
-        assertSame(account, transaction.getAccount());
-        assertEquals(dateFormat.parse(date), transaction.getDate());
-        assertEquals(new BigDecimal(amounts[0]), transaction.getAmount());
-        assertTrue(transaction.isCleared());
-        assertEquals(memos[0], transaction.getMemo());
+        assertThat(transaction.getPayee()).isSameAs(payee);
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(dateFormat.parse(date));
+        assertThat(transaction.getAmount()).isEqualTo(new BigDecimal(amounts[0]));
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getMemo()).isEqualTo(memos[0]);
 
         List<TransactionDetail> details = transaction.getDetails();
-        assertEquals(types.size(), details.size());
+        assertThat(details.size()).isEqualTo(types.size());
         for (int i=0; i<details.size(); i++) {
             TransactionDetail detail = details.get(i);
-            assertFalse(detail.isTransfer());
-            assertEquals(new BigDecimal(amounts[i+1]), detail.getAmount());
-            assertSame(types.get(i), detail.getCategory());
-            assertSame(groups[i+1], detail.getGroup());
-            assertEquals(memos[i+1], detail.getMemo());
+            assertThat(detail.isTransfer()).isFalse();
+            assertThat(detail.getAmount()).isEqualTo(new BigDecimal(amounts[i+1]));
+            assertThat(detail.getCategory()).isSameAs(types.get(i));
+            assertThat(detail.getGroup()).isSameAs(groups[i+1]);
+            assertThat(detail.getMemo()).isEqualTo(memos[i+1]);
         }
     }
 }

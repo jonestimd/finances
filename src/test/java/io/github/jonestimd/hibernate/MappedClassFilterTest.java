@@ -5,27 +5,27 @@ import javax.persistence.MappedSuperclass;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class MappedClassFilterTest {
     @Test
     public void testClassWithEntityIsTrue() throws Exception {
-        assertTrue(new MappedClassFilter().test(EntityClass.class));
+        assertThat(new MappedClassFilter().test(EntityClass.class)).isTrue();
     }
 
     @Test
     public void testEntitySubclassIsFalse() throws Exception {
-        assertFalse(new MappedClassFilter().test(EntitySubclass.class));
+        assertThat(new MappedClassFilter().test(EntitySubclass.class)).isFalse();
     }
 
     @Test
     public void testClassWithMappedSupperClassIsTrue() throws Exception {
-        assertTrue(new MappedClassFilter().test(MappedSuper.class));
+        assertThat(new MappedClassFilter().test(MappedSuper.class)).isTrue();
     }
 
     @Test
     public void testClassWithoutMappingIsFalse() throws Exception {
-        assertFalse(new MappedClassFilter().test(Object.class));
+        assertThat(new MappedClassFilter().test(Object.class)).isFalse();
     }
 
     @Entity

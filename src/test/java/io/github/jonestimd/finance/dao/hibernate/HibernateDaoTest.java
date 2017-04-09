@@ -12,7 +12,7 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.junit.Before;
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class HibernateDaoTest {
@@ -36,7 +36,7 @@ public class HibernateDaoTest {
         when(criteria.setFetchMode("association", FetchMode.JOIN)).thenReturn(criteria);
         when(criteria.list()).thenReturn(expectedResult);
 
-        assertSame(expectedResult, dao.getAll("association"));
+        assertThat(dao.getAll("association")).isSameAs(expectedResult);
 
         verify(sessionFactory, atLeastOnce()).getCurrentSession();
         verify(criteria).setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
@@ -53,7 +53,7 @@ public class HibernateDaoTest {
         Object result = dao.get(id);
 
         verify(sessionFactory, atLeastOnce()).getCurrentSession();
-        assertSame(expectedResult, result);
+        assertThat(result).isSameAs(expectedResult);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class HibernateDaoTest {
 
         verify(sessionFactory, atLeastOnce()).getCurrentSession();
         verify(session).saveOrUpdate(expectedResult);
-        assertSame(expectedResult, result);
+        assertThat(result).isSameAs(expectedResult);
     }
 
     @Test
@@ -76,7 +76,7 @@ public class HibernateDaoTest {
         verify(sessionFactory, atLeastOnce()).getCurrentSession();
         verify(session).saveOrUpdate(inObjects.get(0));
         verify(session).saveOrUpdate(inObjects.get(1));
-        assertSame(inObjects, result);
+        assertThat(result).isSameAs(inObjects);
     }
 
     @Test

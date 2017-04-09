@@ -10,7 +10,7 @@ import org.hibernate.Hibernate;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CompanyDaoImplTest extends HsqlTestFixture {
     private CompanyDao companyDao;
@@ -28,6 +28,6 @@ public class CompanyDaoImplTest extends HsqlTestFixture {
     public void testAccountsIsLazy() throws Exception {
         Company company = companyDao.get(1000L);
 
-        assertFalse(Hibernate.isInitialized(company.getAccounts()));
+        assertThat(Hibernate.isInitialized(company.getAccounts())).isFalse();
     }
 }

@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class SecurityConverterTest {
@@ -16,7 +16,7 @@ public class SecurityConverterTest {
 
     @Test
     public void getTypesIncludesSecurity() throws Exception {
-        assertTrue(converter.getTypes().contains("Type:Security"));
+        assertThat(converter.getTypes().contains("Type:Security")).isTrue();
     }
 
     @Test
@@ -31,9 +31,9 @@ public class SecurityConverterTest {
         ArgumentCaptor<Security> capture = ArgumentCaptor.forClass(Security.class);
         verify(securityOperations).createIfUnique(capture.capture());
         Security security = capture.getValue();
-        assertEquals(record.getValue(TYPE), security.getType());
-        assertEquals(record.getValue(NAME), security.getName());
-        assertEquals(record.getValue(SECURITY_SYMBOL), security.getSymbol());
-        assertEquals(AssetType.SECURITY.getDefaultScale(), security.getScale());
+        assertThat(security.getType()).isEqualTo(record.getValue(TYPE));
+        assertThat(security.getName()).isEqualTo(record.getValue(NAME));
+        assertThat(security.getSymbol()).isEqualTo(record.getValue(SECURITY_SYMBOL));
+        assertThat(security.getScale()).isEqualTo(AssetType.SECURITY.getDefaultScale());
     }
 }

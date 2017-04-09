@@ -16,7 +16,7 @@ import org.mockito.stubbing.Answer;
 
 import static io.github.jonestimd.finance.domain.account.AccountType.*;
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -31,7 +31,7 @@ public class AccountConverterTest extends QifTestFixture {
 
     @Test
     public void getTypesContainsAccounts() throws Exception {
-        assertTrue(new AccountConverter(null, null, null).getTypes().contains("Account"));
+        assertThat(new AccountConverter(null, null, null).getTypes().contains("Account")).isTrue();
     }
 
     @Test
@@ -55,10 +55,10 @@ public class AccountConverterTest extends QifTestFixture {
 
         verify(accountOperations).save(saveCapture.capture());
         Account savedAccount = accountHolder.getAccount();
-        assertSame(savedAccount, saveCapture.getValue());
-        assertSame(currency, savedAccount.getCurrency());
-        assertEquals(record.getValue(NAME), savedAccount.getName());
-        assertEquals(record.getValue(DESCRIPTION), savedAccount.getDescription());
+        assertThat(saveCapture.getValue()).isSameAs(savedAccount);
+        assertThat(savedAccount.getCurrency()).isSameAs(currency);
+        assertThat(savedAccount.getName()).isEqualTo(record.getValue(NAME));
+        assertThat(savedAccount.getDescription()).isEqualTo(record.getValue(DESCRIPTION));
     }
 
     private void stubSaveAccount() {
@@ -88,9 +88,9 @@ public class AccountConverterTest extends QifTestFixture {
 
             verify(accountOperations).save(saveCapture.capture());
             Account savedAccount = accountHolder.getAccount();
-            assertSame(savedAccount, saveCapture.getValue());
-            assertSame(currency, savedAccount.getCurrency());
-            assertEquals(entry.getKey(), savedAccount.getType());
+            assertThat(saveCapture.getValue()).isSameAs(savedAccount);
+            assertThat(savedAccount.getCurrency()).isSameAs(currency);
+            assertThat(savedAccount.getType()).isEqualTo(entry.getKey());
         }
     }
 
@@ -133,6 +133,6 @@ public class AccountConverterTest extends QifTestFixture {
 
         converter.importRecord(accountHolder, record);
 
-        assertSame(savedAccount, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(savedAccount);
     }
 }

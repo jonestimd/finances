@@ -15,7 +15,7 @@ import io.github.jonestimd.finance.file.quicken.qif.QifRecord;
 import org.junit.Test;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -35,9 +35,9 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
     }
 
     private void checkDetail(TransactionDetail detail, TransactionCategory type, double amount, String memo) {
-        assertSame(type, detail.getCategory());
-        assertEquals(amount, detail.getAmount().doubleValue(), 0d);
-        assertEquals(memo, detail.getMemo());
+        assertThat(detail.getCategory()).isSameAs(type);
+        assertThat(detail.getAmount().doubleValue()).isCloseTo(amount, within(0d));
+        assertThat(detail.getMemo()).isEqualTo(memo);
     }
 
     @Test
@@ -52,15 +52,15 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("Buy").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
-        assertEquals(BigDecimal.TEN, transaction.getDetails().get(0).getAssetQuantity());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getDetails().get(0).getAssetQuantity()).isEqualTo(BigDecimal.TEN);
 
-        assertEquals(2, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(2);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), buyType, -100, null);
         checkDetail(transaction.getDetails().get(1), commissionType, -3, null);
@@ -78,15 +78,15 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("Sell").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
-        assertEquals(BigDecimal.TEN.negate(), transaction.getDetails().get(0).getAssetQuantity());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getDetails().get(0).getAssetQuantity()).isEqualTo(BigDecimal.TEN.negate());
 
-        assertEquals(2, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(2);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), sellType, 106d, null);
         checkDetail(transaction.getDetails().get(1), commissionType, -3d, null);
@@ -101,15 +101,15 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("Div").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
         assertThat(transaction.getDetails().get(0).getAssetQuantity()).isNull();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), divType, 123d, null);
     }
@@ -123,14 +123,14 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("IntInc").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), interestType, 12.30d, null);
     }
@@ -146,18 +146,18 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("MiscInc").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
         assertThat(transaction.getDetails().get(0).getAssetQuantity()).isNull();
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), type, 12.30d, "memo");
-        assertNull(transaction.getDetails().get(0).getGroup());
+        assertThat(transaction.getDetails().get(0).getGroup()).isNull();
     }
 
     @Test
@@ -174,17 +174,17 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("MiscInc").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), type, 12.30d, "memo");
-        assertSame(group, transaction.getDetails().get(0).getGroup());
+        assertThat(transaction.getDetails().get(0).getGroup()).isSameAs(group);
     }
 
     @Test
@@ -201,17 +201,17 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("MiscInc").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), type, 12.30d, "memo");
-        assertSame(group, transaction.getDetails().get(0).getGroup());
+        assertThat(transaction.getDetails().get(0).getGroup()).isSameAs(group);
     }
 
     @Test
@@ -225,14 +225,14 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("MiscExp").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), type, -12.30d, "memo");
     }
@@ -247,15 +247,15 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("ShrsIn").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
-        assertEquals(BigDecimal.TEN, transaction.getDetails().get(0).getAssetQuantity());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getDetails().get(0).getAssetQuantity()).isEqualTo(BigDecimal.TEN);
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), shrsInType, -103d, null);
     }
@@ -270,15 +270,15 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("ShrsOut").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertSame(account, transaction.getAccount());
-        assertEquals(record.getDate(DATE), transaction.getDate());
-        assertEquals("memo", transaction.getMemo());
-        assertTrue(transaction.isCleared());
-        assertEquals(BigDecimal.TEN.negate(), transaction.getDetails().get(0).getAssetQuantity());
+        assertThat(transaction.getAccount()).isSameAs(account);
+        assertThat(transaction.getDate()).isEqualTo(record.getDate(DATE));
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.isCleared()).isTrue();
+        assertThat(transaction.getDetails().get(0).getAssetQuantity()).isEqualTo(BigDecimal.TEN.negate());
 
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), shrsOutType, 103d, null);
     }
@@ -295,11 +295,11 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("ReinvDiv").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertEquals(BigDecimal.TEN, transaction.getDetails().get(1).getAssetQuantity());
+        assertThat(transaction.getDetails().get(1).getAssetQuantity()).isEqualTo(BigDecimal.TEN);
 
-        assertEquals(3, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(3);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), divType, 103d, null);
         checkDetail(transaction.getDetails().get(1), reinvestType, -100d, null);
@@ -318,11 +318,11 @@ public class MultiActionSecurityHandlerTest extends HandlerTestFixture<MultiActi
 
         List<Transaction> transactions = getHandler("ReinvInt").convertRecord(account, record);
 
-        assertEquals(1, transactions.size());
+        assertThat(transactions).hasSize(1);
         Transaction transaction = transactions.get(0);
-        assertEquals(BigDecimal.TEN, transaction.getDetails().get(1).getAssetQuantity());
+        assertThat(transaction.getDetails().get(1).getAssetQuantity()).isEqualTo(BigDecimal.TEN);
 
-        assertEquals(3, transaction.getDetails().size());
+        assertThat(transaction.getDetails()).hasSize(3);
         assertThat(transaction.getSecurity()).isSameAs(security);
         checkDetail(transaction.getDetails().get(0), interestType, 103d, null);
         checkDetail(transaction.getDetails().get(1), reinvestType, -100d, null);

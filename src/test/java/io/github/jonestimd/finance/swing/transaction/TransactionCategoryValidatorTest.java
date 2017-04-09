@@ -2,41 +2,41 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionCategoryValidatorTest {
     @Test
     public void testValidateCode() throws Exception {
         TransactionCategoryValidator validator = new TransactionCategoryValidator(false);
-        assertEquals("Category code must not be blank.", validator.validate(":"));
-        assertEquals("Category code must not be blank.", validator.validate(":a"));
-        assertEquals("Category code must not be blank.", validator.validate("a:"));
-        assertEquals("Category code must not be blank.", validator.validate("a:a"));
-        assertEquals("Category code must not be blank.", validator.validate(" "));
+        assertThat(validator.validate(":")).isEqualTo("Category code must not be blank.");
+        assertThat(validator.validate(":a")).isEqualTo("Category code must not be blank.");
+        assertThat(validator.validate("a:")).isEqualTo("Category code must not be blank.");
+        assertThat(validator.validate("a:a")).isEqualTo("Category code must not be blank.");
+        assertThat(validator.validate(" ")).isEqualTo("Category code must not be blank.");
 
-        assertNull(validator.validate("a "));
-        assertNull(validator.validate(" a"));
-        assertNull(validator.validate(" a "));
-        assertNull(validator.validate("a"));
+        assertThat(validator.validate("a ")).isNull();
+        assertThat(validator.validate(" a")).isNull();
+        assertThat(validator.validate(" a ")).isNull();
+        assertThat(validator.validate("a")).isNull();
     }
 
     @Test
     public void testValidateNestedCodes() throws Exception {
         TransactionCategoryValidator validator = new TransactionCategoryValidator(true);
-        assertEquals("Category codes must not be blank.", validator.validate(":"));
-        assertEquals("Category codes must not be blank.", validator.validate("a:a:"));
-        assertEquals("Category codes must not be blank.", validator.validate(":a:a"));
-        assertEquals("Category codes must not be blank.", validator.validate("a:  :a"));
-        assertEquals("Category codes must not be blank.", validator.validate(":a:"));
-        assertEquals("Category codes must not be blank.", validator.validate(" :a"));
-        assertEquals("Category codes must not be blank.", validator.validate(" : "));
-        assertEquals("Category codes must not be blank.", validator.validate("a: "));
+        assertThat(validator.validate(":")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate("a:a:")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate(":a:a")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate("a:  :a")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate(":a:")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate(" :a")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate(" : ")).isEqualTo("Category codes must not be blank.");
+        assertThat(validator.validate("a: ")).isEqualTo("Category codes must not be blank.");
 
-        assertNull(validator.validate(""));
-        assertNull(validator.validate(" a "));
-        assertNull(validator.validate(" a : a "));
-        assertNull(validator.validate("a : a: a"));
-        assertNull(validator.validate("a: a:a"));
-        assertNull(validator.validate("a:a:a"));
+        assertThat(validator.validate("")).isNull();
+        assertThat(validator.validate(" a ")).isNull();
+        assertThat(validator.validate(" a : a ")).isNull();
+        assertThat(validator.validate("a : a: a")).isNull();
+        assertThat(validator.validate("a: a:a")).isNull();
+        assertThat(validator.validate("a:a:a")).isNull();
     }
 }

@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.same;
@@ -27,7 +27,7 @@ public class PayeeOperationsImplTest {
         Payee expectedPayee = new Payee();
         when(payeeDao.getPayee(name)).thenReturn(expectedPayee);
 
-        assertSame(expectedPayee, payeeOperations.getPayee(name));
+        assertThat(payeeOperations.getPayee(name)).isSameAs(expectedPayee);
     }
 
     @Test
@@ -36,11 +36,11 @@ public class PayeeOperationsImplTest {
         Payee expectedPayee = new Payee();
         when(payeeDao.save(any(Payee.class))).thenReturn(expectedPayee);
 
-        assertSame(expectedPayee, payeeOperations.createPayee(payeeName));
+        assertThat(payeeOperations.createPayee(payeeName)).isSameAs(expectedPayee);
 
         ArgumentCaptor<Payee> capture = ArgumentCaptor.forClass(Payee.class);
         verify(payeeDao).save(capture.capture());
-        assertEquals(payeeName, capture.getValue().getName());
+        assertThat(capture.getValue().getName()).isEqualTo(payeeName);
     }
 
     @Test

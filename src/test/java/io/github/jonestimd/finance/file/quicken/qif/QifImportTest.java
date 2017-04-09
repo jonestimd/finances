@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.isA;
@@ -39,10 +39,10 @@ public class QifImportTest {
     }
 
     private List<RecordConverter> createConverterMocks(String ... types) throws Exception {
-        List<RecordConverter> converterMocks = new ArrayList<RecordConverter>(types.length);
-        for (int i=0; i<types.length; i++) {
+        List<RecordConverter> converterMocks = new ArrayList<>(types.length);
+        for (String type : types) {
             RecordConverter mock = mock(RecordConverter.class);
-            when(mock.getTypes()).thenReturn(Collections.singleton(types[i]));
+            when(mock.getTypes()).thenReturn(Collections.singleton(type));
             converterMocks.add(mock);
         }
         return converterMocks;
@@ -62,10 +62,10 @@ public class QifImportTest {
         ArgumentCaptor<QifRecord> capture1 = ArgumentCaptor.forClass(QifRecord.class);
         verify(converters.get(0)).importRecord(isA(AccountHolder.class), capture0.capture());
         verify(converters.get(1)).importRecord(isA(AccountHolder.class), capture1.capture());
-        assertTrue(capture0.getValue().hasValue(NAME));
-        assertFalse(capture0.getValue().hasValue(DATE));
-        assertTrue(capture1.getValue().hasValue(DATE));
-        assertFalse(capture1.getValue().hasValue(NAME));
+        assertThat(capture0.getValue().hasValue(NAME)).isTrue();
+        assertThat(capture0.getValue().hasValue(DATE)).isFalse();
+        assertThat(capture1.getValue().hasValue(DATE)).isTrue();
+        assertThat(capture1.getValue().hasValue(NAME)).isFalse();
     }
 
     @Test
@@ -104,11 +104,11 @@ public class QifImportTest {
 
         try {
             qifImport.importFile(new CharArrayReader(input.toCharArray()));
-            fail();
+            fail("expected an exception");
         }
         catch (QuickenException ex) {
-            assertEquals("io.github.jonestimd.finance.file.quicken.invalidRecord", ex.getMessageKey());
-            assertArrayEquals(new Object[] {"QIF", 2L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidRecord");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"QIF", 2L});
         }
     }
 
@@ -124,9 +124,9 @@ public class QifImportTest {
 
         try {
             qifImport.importFile(new CharArrayReader(input.toCharArray()));
-            fail();
+            fail("expected an exception");
         } catch (QuickenException ex) {
-            assertSame(cause, ex);
+            assertThat(ex).isSameAs(cause);
         }
     }
 
@@ -140,11 +140,11 @@ public class QifImportTest {
 
         try {
             qifImport.importFile(reader);
-            fail();
+            fail("expected an exception");
         } catch (QuickenException ex) {
-            assertSame(cause, ex.getCause());
-            assertEquals("io.github.jonestimd.finance.file.quicken.importFailed", ex.getMessageKey());
-            assertArrayEquals(new Object[] {"QIF", 1L}, ex.getMessageArgs());
+            assertThat(ex.getCause()).isSameAs(cause);
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.importFailed");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"QIF", 1L});
         }
     }
 }

@@ -17,7 +17,7 @@ import io.github.jonestimd.mockito.MockitoHelper;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -33,7 +33,7 @@ public class AccountOperationsImplTest {
 
         List<Account> accounts = accountOperations.getAllAccounts();
 
-        assertSame(expectedAccounts, accounts);
+        assertThat(accounts).isSameAs(expectedAccounts);
     }
 
     @Test
@@ -43,7 +43,7 @@ public class AccountOperationsImplTest {
 
         List<Company> companies = accountOperations.getAllCompanies();
 
-        assertSame(expectedCompanies, companies);
+        assertThat(companies).isSameAs(expectedCompanies);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class AccountOperationsImplTest {
 
         Account account = accountOperations.getAccount(null, accountName);
 
-        assertSame(expectedAccount, account);
+        assertThat(account).isSameAs(expectedAccount);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class AccountOperationsImplTest {
         Account expectedAccount = new Account();
         when(accountDao.save(account)).thenReturn(expectedAccount);
 
-        assertSame(expectedAccount, accountOperations.save(account));
+        assertThat(accountOperations.save(account)).isSameAs(expectedAccount);
 
         verify(accountDao).save(account);
     }
@@ -74,7 +74,7 @@ public class AccountOperationsImplTest {
         Company expectedCompany = new Company();
         when(companyDao.save(company)).thenReturn(expectedCompany);
 
-        assertSame(expectedCompany, accountOperations.save(company));
+        assertThat(accountOperations.save(company)).isSameAs(expectedCompany);
 
         verify(companyDao).save(company);
     }
@@ -85,7 +85,7 @@ public class AccountOperationsImplTest {
         List<Company> expectedCompanies = Collections.singletonList(new Company());
         when(companyDao.saveAll(companies)).thenReturn(expectedCompanies);
 
-        assertSame(expectedCompanies, accountOperations.saveCompanies(companies));
+        assertThat(accountOperations.saveCompanies(companies)).isSameAs(expectedCompanies);
 
         verify(companyDao).saveAll(companies);
     }

@@ -8,7 +8,7 @@ import org.hibernate.Transaction;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class TransactionInterceptorTest {
@@ -104,7 +104,7 @@ public class TransactionInterceptorTest {
             fail("expected exception");
         }
         catch (RuntimeException ex) {
-            assertSame(exception, ex);
+            assertThat(ex).isSameAs(exception);
         }
 
         verify(transaction1).begin();
@@ -125,7 +125,7 @@ public class TransactionInterceptorTest {
             fail("expected exception");
         }
         catch (Throwable ex) {
-            assertSame(exception, ex);
+            assertThat(ex).isSameAs(exception);
         }
 
         verify(transaction1).begin();

@@ -334,9 +334,7 @@ public class MysqlDriverConnectionServiceTest {
 
     private Config defaultConfig() {
         Properties properties = new Properties();
-        service.getDefaultValues().entrySet().stream().forEach(entry -> {
-            properties.setProperty(entry.getKey().toString(), entry.getValue());
-        });
+        service.getDefaultValues().entrySet().forEach(entry -> properties.setProperty(entry.getKey().toString(), entry.getValue()));
         return ConfigFactory.parseProperties(properties);
     }
 

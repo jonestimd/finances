@@ -11,17 +11,17 @@ import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class AccountNameValidatorTest {
     @Test
     public void testNameIsRequired() throws Exception {
         AccountNameValidator validator = new AccountNameValidator();
-        ArrayList<AccountSummary> accounts = new ArrayList<AccountSummary>();
+        ArrayList<AccountSummary> accounts = new ArrayList<>();
 
-        assertEquals("The account name must not be blank.", validator.validate(null, null, accounts));
-        assertEquals("The account name must not be blank.", validator.validate(null, " ", accounts));
-        assertNull(validator.validate(null, "account", accounts));
+        assertThat(validator.validate(null, null, accounts)).isEqualTo("The account name must not be blank.");
+        assertThat(validator.validate(null, " ", accounts)).isEqualTo("The account name must not be blank.");
+        assertThat(validator.validate(null, "account", accounts)).isNull();
     }
 
     @Test
@@ -37,18 +37,18 @@ public class AccountNameValidatorTest {
                 createAccount(company2, "account1"),
                 createAccount(null, "account1"));
 
-        assertEquals("The account name must be unique for the selected company.", validator.validate(account, "account1", accounts));
-        assertEquals("The account name must be unique for the selected company.", validator.validate(account, "aCCount1", accounts));
-        assertNull(validator.validate(account, "account2", accounts));
+        assertThat(validator.validate(account, "account1", accounts)).isEqualTo("The account name must be unique for the selected company.");
+        assertThat(validator.validate(account, "aCCount1", accounts)).isEqualTo("The account name must be unique for the selected company.");
+        assertThat(validator.validate(account, "account2", accounts)).isNull();
 
         account.getTransactionAttribute().setCompany(company1);
-        assertEquals("The account name must be unique for the selected company.", validator.validate(account, "account1", accounts));
-        assertEquals("The account name must be unique for the selected company.", validator.validate(account, "aCCount2", accounts));
+        assertThat(validator.validate(account, "account1", accounts)).isEqualTo("The account name must be unique for the selected company.");
+        assertThat(validator.validate(account, "aCCount2", accounts)).isEqualTo("The account name must be unique for the selected company.");
 
         account.getTransactionAttribute().setCompany(company2);
-        assertNull("The account name must be unique for the selected company.", validator.validate(account, "account3", accounts));
-        assertNull("The account name must be unique for the selected company.", validator.validate(account, "aCCount3", accounts));
-        assertEquals("The account name must be unique for the selected company.", validator.validate(account, "account1", accounts));
+        assertThat(validator.validate(account, "account3", accounts)).as("The account name must be unique for the selected company.").isNull();
+        assertThat(validator.validate(account, "aCCount3", accounts)).as("The account name must be unique for the selected company.").isNull();
+        assertThat(validator.validate(account, "account1", accounts)).isEqualTo("The account name must be unique for the selected company.");
     }
 
     private AccountSummary createAccount(Company company, String accountName) {

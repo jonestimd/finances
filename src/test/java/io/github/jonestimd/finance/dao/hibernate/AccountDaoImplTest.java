@@ -16,7 +16,7 @@ import org.hibernate.Hibernate;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class AccountDaoImplTest extends HsqlTestFixture {
 
@@ -40,12 +40,12 @@ public class AccountDaoImplTest extends HsqlTestFixture {
         String name = "Cash";
         Account account = accountDao.getAccount(null, name);
 
-        assertEquals(1052, account.getId().intValue());
-        assertSame(AccountType.CASH, account.getType());
-        assertEquals(name, account.getName());
-        assertEquals("Cash Account", account.getDescription());
-        assertFalse(account.isClosed());
-        assertNull(account.getCompany());
+        assertThat(account.getId().intValue()).isEqualTo(1052);
+        assertThat(account.getType()).isSameAs(AccountType.CASH);
+        assertThat(account.getName()).isEqualTo(name);
+        assertThat(account.getDescription()).isEqualTo("Cash Account");
+        assertThat(account.isClosed()).isFalse();
+        assertThat(account.getCompany()).isNull();
     }
 
     @Test
@@ -61,7 +61,7 @@ public class AccountDaoImplTest extends HsqlTestFixture {
         accountDao.removeAccountsFromCompanies(Arrays.asList(company));
 
         account = accountDao.get(account.getId());
-        assertNull(account.getCompany());
+        assertThat(account.getCompany()).isNull();
     }
 
     @Test
@@ -69,7 +69,7 @@ public class AccountDaoImplTest extends HsqlTestFixture {
         List<Account> accounts = accountDao.getAll();
 
         for (Account account : accounts) {
-            assertTrue(Hibernate.isInitialized(account.getCompany()));
+            assertThat(Hibernate.isInitialized(account.getCompany())).isTrue();
         }
     }
 
@@ -77,7 +77,7 @@ public class AccountDaoImplTest extends HsqlTestFixture {
     public void getAccountSummaries() throws Exception {
         List<AccountSummary> accounts = accountDao.getAccountSummaries();
 
-        assertFalse(accounts.isEmpty());
-        assertEquals(AccountSummary.class, accounts.get(0).getClass());
+        assertThat(accounts.isEmpty()).isFalse();
+        assertThat(accounts.get(0).getClass()).isEqualTo(AccountSummary.class);
     }
 }

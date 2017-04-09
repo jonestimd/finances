@@ -9,18 +9,18 @@ import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.file.quicken.QuickenRecord;
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class QifRecordTest {
     @Test
     public void flagValuesForEmptyValues() {
         QifRecord record = new QifRecord(1L);
 
-        assertFalse(record.isOption());
-        assertFalse(record.isControl());
-        assertTrue(record.isEmpty());
-        assertFalse(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isFalse();
+        assertThat(record.isEmpty()).isTrue();
+        assertThat(record.isComplete()).isFalse();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -28,11 +28,11 @@ public class QifRecordTest {
         QifRecord record = new QifRecord(1L);
         record.setValue(QuickenRecord.END, "");
 
-        assertFalse(record.isOption());
-        assertFalse(record.isControl());
-        assertTrue(record.isEmpty());
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isFalse();
+        assertThat(record.isEmpty()).isTrue();
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -40,11 +40,11 @@ public class QifRecordTest {
         QifRecord record = new QifRecord(1L);
         record.setValue(QifField.CONTROL, "Type:Bank");
 
-        assertFalse(record.isOption());
-        assertTrue(record.isControl());
-        assertFalse(record.isEmpty());
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isTrue();
+        assertThat(record.isEmpty()).isFalse();
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -52,11 +52,11 @@ public class QifRecordTest {
         QifRecord record = new QifRecord(1L);
         record.setValue(QifField.CONTROL, "Clear:Autoswitch");
 
-        assertTrue(record.isOption());
-        assertTrue(record.isControl());
-        assertFalse(record.isEmpty());
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isOption()).isTrue();
+        assertThat(record.isControl()).isTrue();
+        assertThat(record.isEmpty()).isFalse();
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -65,11 +65,11 @@ public class QifRecordTest {
         record.setValue(QifField.NAME, "xxx");
         record.setValue(QuickenRecord.END, "");
 
-        assertFalse(record.isOption());
-        assertFalse(record.isControl());
-        assertFalse(record.isEmpty());
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isFalse();
+        assertThat(record.isEmpty()).isFalse();
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -78,11 +78,11 @@ public class QifRecordTest {
         record.setValue(QifField.NAME, "xxx");
         record.setValue(QifField.DESCRIPTION, "yyy");
 
-        assertFalse(record.isOption());
-        assertFalse(record.isControl());
-        assertFalse(record.isEmpty());
-        assertFalse(record.isComplete());
-        assertFalse(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isFalse();
+        assertThat(record.isEmpty()).isFalse();
+        assertThat(record.isComplete()).isFalse();
+        assertThat(record.isValid()).isFalse();
     }
 
     @Test
@@ -91,11 +91,11 @@ public class QifRecordTest {
         record.setValue(QifField.NAME, "xxx");
         record.setValue(QifField.CONTROL, "Type:Bank");
 
-        assertFalse(record.isOption());
-        assertTrue(record.isControl());
-        assertFalse(record.isEmpty());
-        assertTrue(record.isComplete());
-        assertFalse(record.isValid());
+        assertThat(record.isOption()).isFalse();
+        assertThat(record.isControl()).isTrue();
+        assertThat(record.isEmpty()).isFalse();
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isFalse();
     }
 
     @Test
@@ -106,10 +106,10 @@ public class QifRecordTest {
 
         List<String> values = record.getValues(QifField.SPLIT_AMOUNT);
 
-        assertEquals(2, record.getLines());
-        assertEquals(2, values.size());
-        assertEquals("one", values.get(0));
-        assertEquals("two", values.get(1));
+        assertThat(record.getLines()).isEqualTo(2);
+        assertThat(values).hasSize(2);
+        assertThat(values.get(0)).isEqualTo("one");
+        assertThat(values.get(1)).isEqualTo("two");
     }
 
     @Test
@@ -125,13 +125,13 @@ public class QifRecordTest {
         }
         record.setValue(QuickenRecord.END, "");
 
-        assertTrue(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_CATEGORY).size());
-        assertTrue(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_MEMO).size()+1);
-        assertEquals(Arrays.asList(categories), record.getValues(QifField.SPLIT_CATEGORY));
-        assertEquals(Arrays.asList(memos), record.getValues(QifField.SPLIT_MEMO));
+        assertThat(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_CATEGORY).size()).isTrue();
+        assertThat(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_MEMO).size()+1).isTrue();
+        assertThat(record.getValues(QifField.SPLIT_CATEGORY)).isEqualTo(Arrays.asList(categories));
+        assertThat(record.getValues(QifField.SPLIT_MEMO)).isEqualTo(Arrays.asList(memos));
 
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -147,13 +147,13 @@ public class QifRecordTest {
         }
         record.setValue(QuickenRecord.END, "");
 
-        assertTrue(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_CATEGORY).size());
-        assertEquals(0, record.getValues(QifField.SPLIT_MEMO).size());
-        assertEquals(Arrays.asList(categories), record.getValues(QifField.SPLIT_CATEGORY));
-        assertEquals(Arrays.asList(memos), record.getValues(QifField.SPLIT_MEMO));
+        assertThat(record.getValues(QifField.SPLIT_AMOUNT).size() == record.getValues(QifField.SPLIT_CATEGORY).size()).isTrue();
+        assertThat(record.getValues(QifField.SPLIT_MEMO)).isEmpty();
+        assertThat(record.getValues(QifField.SPLIT_CATEGORY)).isEqualTo(Arrays.asList(categories));
+        assertThat(record.getValues(QifField.SPLIT_MEMO)).isEqualTo(Arrays.asList(memos));
 
-        assertTrue(record.isComplete());
-        assertTrue(record.isValid());
+        assertThat(record.isComplete()).isTrue();
+        assertThat(record.isValid()).isTrue();
     }
 
     @Test
@@ -169,7 +169,7 @@ public class QifRecordTest {
     private void testDateParsing(String date, Date expected) throws QuickenException {
         QifRecord record = new QifRecord(1L);
         record.setValue(QifField.DATE, date);
-        assertEquals(expected, record.getDate(QifField.DATE));
+        assertThat(record.getDate(QifField.DATE)).isEqualTo(expected);
     }
 
     @Test
@@ -188,7 +188,7 @@ public class QifRecordTest {
     private void testBigDecimalParsing(String value, Double expected) {
         QifRecord record = new QifRecord(1L);
         record.setValue(QifField.AMOUNT, value);
-        assertEquals(expected, record.getBigDecimal(QifField.AMOUNT).doubleValue(), 0d);
+        assertThat(record.getBigDecimal(QifField.AMOUNT).doubleValue()).isCloseTo(expected, within(0d));
     }
 
     @Test
@@ -207,7 +207,7 @@ public class QifRecordTest {
     private void testBigDecimalSplitParsing(String value, Double expected) {
         QifRecord record = new QifRecord(1L);
         record.setValue(QifField.SPLIT_AMOUNT, value);
-        assertEquals(expected, record.getBigDecimals(QifField.SPLIT_AMOUNT).get(0).doubleValue());
+        assertThat(record.getBigDecimals(QifField.SPLIT_AMOUNT).get(0).doubleValue()).isEqualTo(expected);
     }
 
     @Test
@@ -216,12 +216,12 @@ public class QifRecordTest {
         record.setValue(QifField.AMOUNT, "100.00");
         record.setValue(QifField.SPLIT_AMOUNT, "100.00");
 
-        assertFalse(record.isSplit());
+        assertThat(record.isSplit()).isFalse();
     }
 
     @Test
     public void getBigDecimalDefaultsToZero() throws Exception {
-        assertEquals(0d, new QifRecord(1L).getBigDecimal(QifField.AMOUNT).doubleValue(), 0d);
+        assertThat(new QifRecord(1L).getBigDecimal(QifField.AMOUNT).doubleValue()).isCloseTo(0d, within(0d));
     }
 
     @Test
@@ -235,9 +235,9 @@ public class QifRecordTest {
         }
         record.setValue(QuickenRecord.END, "");
 
-        assertEquals(444d, record.getCategoryAmount(0).doubleValue(), 0d);
-        assertEquals(222d, record.getCategoryAmount(1).doubleValue(), 0d);
-        assertEquals(444d, record.getCategoryAmount(2).doubleValue(), 0d);
-        assertEquals(555d, record.getCategoryAmount(3).doubleValue(), 0d);
+        assertThat(record.getCategoryAmount(0).doubleValue()).isCloseTo(444d, within(0d));
+        assertThat(record.getCategoryAmount(1).doubleValue()).isCloseTo(222d, within(0d));
+        assertThat(record.getCategoryAmount(2).doubleValue()).isCloseTo(444d, within(0d));
+        assertThat(record.getCategoryAmount(3).doubleValue()).isCloseTo(555d, within(0d));
     }
 }

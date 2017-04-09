@@ -10,7 +10,7 @@ import io.github.jonestimd.finance.domain.transaction.PayeeSummary;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class PayeeDaoImplTest extends HsqlTestFixture {
     private PayeeDao payeeDao;
@@ -28,15 +28,15 @@ public class PayeeDaoImplTest extends HsqlTestFixture {
     public void getPayeeMatchesName() throws Exception {
         Payee result = payeeDao.getPayee("Payee 1");
 
-        assertEquals(1000, (long)result.getId());
-        assertEquals("Payee 1", result.getName());
+        assertThat((long)result.getId()).isEqualTo(1000);
+        assertThat(result.getName()).isEqualTo("Payee 1");
     }
 
     @Test
     public void getPayeeSummaries() throws Exception {
         List<PayeeSummary> payees = payeeDao.getPayeeSummaries();
 
-        assertFalse(payees.isEmpty());
-        assertEquals(PayeeSummary.class, payees.get(0).getClass());
+        assertThat(payees.isEmpty()).isFalse();
+        assertThat(payees.get(0).getClass()).isEqualTo(PayeeSummary.class);
     }
 }

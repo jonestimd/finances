@@ -10,7 +10,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionGroupSummary;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionGroupDaoImplTest extends HsqlTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {
@@ -33,16 +33,16 @@ public class TransactionGroupDaoImplTest extends HsqlTestFixture {
         String name = "Group 2";
         TransactionGroup group = transactionGroupDao.getTransactionGroup(name);
 
-        assertEquals(1001, group.getId().intValue());
-        assertEquals(name, group.getName());
-        assertEquals("Group two", group.getDescription());
+        assertThat(group.getId().intValue()).isEqualTo(1001);
+        assertThat(group.getName()).isEqualTo(name);
+        assertThat(group.getDescription()).isEqualTo("Group two");
     }
 
     @Test
     public void getTrannsactionGroupSummaries() throws Exception {
         List<TransactionGroupSummary> groups = transactionGroupDao.getTransactionGroupSummaries();
 
-        assertFalse(groups.isEmpty());
-        assertEquals(TransactionGroupSummary.class, groups.get(0).getClass());
+        assertThat(groups.isEmpty()).isFalse();
+        assertThat(groups.get(0).getClass()).isEqualTo(TransactionGroupSummary.class);
     }
 }

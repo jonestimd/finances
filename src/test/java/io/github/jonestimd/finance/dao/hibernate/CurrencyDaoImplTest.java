@@ -8,7 +8,7 @@ import io.github.jonestimd.finance.dao.HsqlTestFixture;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CurrencyDaoImplTest extends HsqlTestFixture {
     private CurrencyDao currencyDao;
@@ -24,7 +24,7 @@ public class CurrencyDaoImplTest extends HsqlTestFixture {
 
     @Test
     public void getCurrencyByCode() throws Exception {
-        assertEquals("USD", currencyDao.getCurrency("USD").getName());
-        assertNull(currencyDao.getCurrency("xxx"));
+        assertThat(currencyDao.getCurrency("USD").getName()).isEqualTo("USD");
+        assertThat(currencyDao.getCurrency("xxx")).isNull();
     }
 }

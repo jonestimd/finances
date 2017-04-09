@@ -19,17 +19,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class AccountTableModelTest {
     private DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
     private AccountTableModel model = new AccountTableModel(domainEventPublisher);
-    private List<TableModelEvent> events = new ArrayList<TableModelEvent>();
-    private TableModelListener listener = new TableModelListener() {
-        public void tableChanged(TableModelEvent e) {
-            events.add(e);
-        }
-    };
+    private List<TableModelEvent> events = new ArrayList<>();
+    private TableModelListener listener = event -> events.add(event);
     private Account account1 = new AccountBuilder().nextId().name("account1").get();
 
     @Before
@@ -49,13 +45,13 @@ public class AccountTableModelTest {
 
         model.setValueAt(new Company(), 0, 1);
 
-        assertEquals(2, events.size());
-        assertEquals("company change event", 1, events.get(0).getColumn());
-        assertEquals("company change event", 0, events.get(0).getFirstRow());
-        assertEquals("company change event", 0, events.get(0).getLastRow());
-        assertEquals("name change event", 2, events.get(1).getColumn());
-        assertEquals("name change event", 0, events.get(1).getFirstRow());
-        assertEquals("name change event", Integer.MAX_VALUE, events.get(1).getLastRow());
+        assertThat(events).hasSize(2);
+        assertThat(events.get(0).getColumn()).as("company change event").isEqualTo(1);
+        assertThat(events.get(0).getFirstRow()).as("company change event").isEqualTo(0);
+        assertThat(events.get(0).getLastRow()).as("company change event").isEqualTo(0);
+        assertThat(events.get(1).getColumn()).as("name change event").isEqualTo(2);
+        assertThat(events.get(1).getFirstRow()).as("name change event").isEqualTo(0);
+        assertThat(events.get(1).getLastRow()).as("name change event").isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -63,25 +59,25 @@ public class AccountTableModelTest {
         model.addRow(createAccount(null));
         model.addRow(createAccount("account name"));
 
-        assertNull("closed", model.validateAt(0, 0));
-        assertNull("company", model.validateAt(0, 1));
-        assertEquals("name", "The account name must not be blank.", model.validateAt(0, 2));
-        assertEquals("type", "The account type is required.", model.validateAt(0, 3));
-        assertNull("description", model.validateAt(0, 4));
+        assertThat(model.validateAt(0, 0)).as("closed").isNull();
+        assertThat(model.validateAt(0, 1)).as("company").isNull();
+        assertThat(model.validateAt(0, 2)).as("name").isEqualTo("The account name must not be blank.");
+        assertThat(model.validateAt(0, 3)).as("type").isEqualTo("The account type is required.");
+        assertThat(model.validateAt(0, 4)).as("description").isNull();
 
         model.setValueAt("account name2", 0, 2);
-        assertNull(model.validateAt(0, 2));
+        assertThat(model.validateAt(0, 2)).isNull();
 
         model.setValueAt("account name2", 1, 2);
-        assertNull(model.validateAt(0, 2));
-        assertEquals("The account name must be unique for the selected company.", model.validateAt(1, 2));
+        assertThat(model.validateAt(0, 2)).isNull();
+        assertThat(model.validateAt(1, 2)).isEqualTo("The account name must be unique for the selected company.");
 
         model.setValueAt(new Company(), 0, 1);
-        assertNull(model.validateAt(0, 2));
-        assertNull(model.validateAt(1, 2));
+        assertThat(model.validateAt(0, 2)).isNull();
+        assertThat(model.validateAt(1, 2)).isNull();
 
         model.setValueAt(AccountType.BANK, 0, 3);
-        assertNull(model.validateAt(0, 3));
+        assertThat(model.validateAt(0, 3)).isNull();
     }
 
     @Test
@@ -90,29 +86,29 @@ public class AccountTableModelTest {
         model.addRow(createAccount(null));
         model.addRow(createAccount("account 2"));
         model.commit();
-        assertTrue(model.isCellEditable(0, 0));
-        assertTrue(model.isCellEditable(0, 1));
-        assertTrue(model.isCellEditable(0, 2));
-        assertTrue(model.isCellEditable(0, 3));
-        assertTrue(model.isCellEditable(0, 4));
-        assertTrue(model.isCellEditable(1, 0));
-        assertTrue(model.isCellEditable(1, 1));
-        assertTrue(model.isCellEditable(1, 2));
-        assertTrue(model.isCellEditable(1, 3));
-        assertTrue(model.isCellEditable(1, 4));
+        assertThat(model.isCellEditable(0, 0)).isTrue();
+        assertThat(model.isCellEditable(0, 1)).isTrue();
+        assertThat(model.isCellEditable(0, 2)).isTrue();
+        assertThat(model.isCellEditable(0, 3)).isTrue();
+        assertThat(model.isCellEditable(0, 4)).isTrue();
+        assertThat(model.isCellEditable(1, 0)).isTrue();
+        assertThat(model.isCellEditable(1, 1)).isTrue();
+        assertThat(model.isCellEditable(1, 2)).isTrue();
+        assertThat(model.isCellEditable(1, 3)).isTrue();
+        assertThat(model.isCellEditable(1, 4)).isTrue();
 
         model.setValueAt("account 1", 0, 2);
 
-        assertTrue(model.isCellEditable(0, 0));
-        assertTrue(model.isCellEditable(0, 1));
-        assertTrue(model.isCellEditable(0, 2));
-        assertTrue(model.isCellEditable(0, 3));
-        assertTrue(model.isCellEditable(0, 4));
-        assertFalse(model.isCellEditable(1, 0));
-        assertFalse(model.isCellEditable(1, 1));
-        assertFalse(model.isCellEditable(1, 2));
-        assertFalse(model.isCellEditable(1, 3));
-        assertFalse(model.isCellEditable(1, 4));
+        assertThat(model.isCellEditable(0, 0)).isTrue();
+        assertThat(model.isCellEditable(0, 1)).isTrue();
+        assertThat(model.isCellEditable(0, 2)).isTrue();
+        assertThat(model.isCellEditable(0, 3)).isTrue();
+        assertThat(model.isCellEditable(0, 4)).isTrue();
+        assertThat(model.isCellEditable(1, 0)).isFalse();
+        assertThat(model.isCellEditable(1, 1)).isFalse();
+        assertThat(model.isCellEditable(1, 2)).isFalse();
+        assertThat(model.isCellEditable(1, 3)).isFalse();
+        assertThat(model.isCellEditable(1, 4)).isFalse();
     }
 
     private AccountSummary createAccount(String name) {

@@ -15,7 +15,7 @@ import io.github.jonestimd.finance.file.quicken.QuickenException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class SecurityTransactionConverterTest extends QifTestFixture {
@@ -37,7 +37,7 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
 
     @Test
     public void getTypesIncludesInvestmentTypes() throws Exception {
-        assertTrue(new SecurityTransactionConverter(null, null).getTypes().contains("Type:Invst"));
+        assertThat(new SecurityTransactionConverter(null, null).getTypes().contains("Type:Invst")).isTrue();
     }
 
     @Test
@@ -51,8 +51,8 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
 
             fail("expected exception");
         } catch (QuickenException ex) {
-            assertEquals("io.github.jonestimd.finance.file.quicken.unknownSecurityAction", ex.getMessageKey());
-            assertArrayEquals(new Object[] {"unknown", 1L}, ex.getMessageArgs());
+            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.unknownSecurityAction");
+            assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"unknown", 1L});
         }
     }
 
@@ -70,10 +70,10 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record2);
 
         ArgumentCaptor<List<Transaction>> saveCapture = captureSaveTransactions(2);
-        assertSame(currentAccount, accountHolder.getAccount());
-        assertEquals(2, saveCapture.getAllValues().size());
-        assertNull(saveCapture.getAllValues().get(0).get(0).getSecurity());
-        assertSame(security, saveCapture.getAllValues().get(1).get(0).getSecurity());
+        assertThat(accountHolder.getAccount()).isSameAs(currentAccount);
+        assertThat(saveCapture.getAllValues()).hasSize(2);
+        assertThat(saveCapture.getAllValues().get(0).get(0).getSecurity()).isNull();
+        assertThat(saveCapture.getAllValues().get(1).get(0).getSecurity()).isSameAs(security);
     }
 
     @SuppressWarnings("deprecation")
@@ -113,16 +113,16 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record);
 
         ArgumentCaptor<List<Transaction>> saveCapture = captureSaveTransactions(1);
-        assertSame(currentAccount, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(currentAccount);
         List<Transaction> savedTransactions = saveCapture.getValue();
-        assertEquals(1, savedTransactions.size());
+        assertThat(savedTransactions).hasSize(1);
         Transaction transaction = savedTransactions.get(0);
-        assertSame(security, transaction.getSecurity());
-        assertEquals("memo", transaction.getMemo());
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getSecurity()).isSameAs(security);
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.getDetails()).hasSize(1);
         TransactionDetail detail = transaction.getDetails().get(0);
-        assertSame(TransactionCategory, detail.getCategory());
-        assertEquals(10.0d, detail.getAmount().doubleValue(), 0d);
+        assertThat(detail.getCategory()).isSameAs(TransactionCategory);
+        assertThat(detail.getAmount().doubleValue()).isCloseTo(10.0d, within(0d));
     }
 
     @Test
@@ -135,15 +135,15 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
         converter.importRecord(accountHolder, record);
 
         ArgumentCaptor<List<Transaction>> saveCapture = captureSaveTransactions(1);
-        assertSame(currentAccount, accountHolder.getAccount());
+        assertThat(accountHolder.getAccount()).isSameAs(currentAccount);
         List<Transaction> savedTransactions = saveCapture.getValue();
-        assertEquals(1, savedTransactions.size());
+        assertThat(savedTransactions).hasSize(1);
         Transaction transaction = savedTransactions.get(0);
-        assertSame(security, transaction.getSecurity());
-        assertEquals("memo", transaction.getMemo());
-        assertEquals(1, transaction.getDetails().size());
+        assertThat(transaction.getSecurity()).isSameAs(security);
+        assertThat(transaction.getMemo()).isEqualTo("memo");
+        assertThat(transaction.getDetails()).hasSize(1);
         TransactionDetail detail = transaction.getDetails().get(0);
-        assertSame(TransactionCategory, detail.getCategory());
-        assertEquals(-10.0d, detail.getAmount().doubleValue(), 0d);
+        assertThat(detail.getCategory()).isSameAs(TransactionCategory);
+        assertThat(detail.getAmount().doubleValue()).isCloseTo(-10.0d, within(0d));
     }
 }

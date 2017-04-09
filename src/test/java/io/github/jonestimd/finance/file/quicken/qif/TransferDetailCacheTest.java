@@ -11,7 +11,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransferDetailCacheTest {
     private TransferDetailCache transferDetailCache = new TransferDetailCache();
@@ -25,12 +25,12 @@ public class TransferDetailCacheTest {
         TransactionDetail detail2 = createTransfer(account1, account2, "543.21", null);
         transferDetailCache.add(detail2);
 
-        assertSame(detail1, transferDetailCache.remove(
-                account1, account2.getName(), detail1.getTransaction().getDate(), detail1.getAmount(), null));
-        assertSame(detail2, transferDetailCache.remove(
-                account1, account2.getName(), detail2.getTransaction().getDate(), detail2.getAmount(), null));
+        assertThat(transferDetailCache.remove(
+                account1, account2.getName(), detail1.getTransaction().getDate(), detail1.getAmount(), null)).isSameAs(detail1);
+        assertThat(transferDetailCache.remove(
+                account1, account2.getName(), detail2.getTransaction().getDate(), detail2.getAmount(), null)).isSameAs(detail2);
 
-        assertEquals(0, transferDetailCache.getPendingTransferDetails().size());
+        assertThat(transferDetailCache.getPendingTransferDetails()).isEmpty();
     }
 
     @Test
@@ -43,12 +43,12 @@ public class TransferDetailCacheTest {
         TransactionDetail detail2 = createTransfer(account1, account2, "123.45", group);
         transferDetailCache.add(detail2);
 
-        assertSame(detail1, transferDetailCache.remove(
-                account1, account2.getName(), detail1.getTransaction().getDate(), detail1.getAmount(), null));
-        assertSame(detail2, transferDetailCache.remove(
-                account1, account2.getName(), detail2.getTransaction().getDate(), detail2.getAmount(), group));
+        assertThat(transferDetailCache.remove(
+                account1, account2.getName(), detail1.getTransaction().getDate(), detail1.getAmount(), null)).isSameAs(detail1);
+        assertThat(transferDetailCache.remove(
+                account1, account2.getName(), detail2.getTransaction().getDate(), detail2.getAmount(), group)).isSameAs(detail2);
 
-        assertEquals(0, transferDetailCache.getPendingTransferDetails().size());
+        assertThat(transferDetailCache.getPendingTransferDetails()).isEmpty();
     }
 
     @Test
@@ -61,7 +61,7 @@ public class TransferDetailCacheTest {
         transferDetailCache.add(detail1);
         transferDetailCache.add(detail2);
 
-        assertEquals(2, transferDetailCache.getPendingTransferDetails().size());
+        assertThat(transferDetailCache.getPendingTransferDetails()).hasSize(2);
     }
 
     @Test
@@ -75,11 +75,11 @@ public class TransferDetailCacheTest {
 
         List<TransactionDetail> pendingTransferDetails = transferDetailCache.getPendingTransferDetails();
 
-        assertEquals(2, pendingTransferDetails.size());
-        assertTrue(pendingTransferDetails.contains(detail1));
-        assertTrue(pendingTransferDetails.contains(detail2));
+        assertThat(pendingTransferDetails).hasSize(2);
+        assertThat(pendingTransferDetails.contains(detail1)).isTrue();
+        assertThat(pendingTransferDetails.contains(detail2)).isTrue();
         pendingTransferDetails.clear();
-        assertEquals(2, transferDetailCache.getPendingTransferDetails().size());
+        assertThat(transferDetailCache.getPendingTransferDetails()).hasSize(2);
     }
 
     private TransactionDetail createTransfer(Account account1, Account account2, String amount, TransactionGroup group) {
