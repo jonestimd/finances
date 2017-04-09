@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class DomainMapperTest {
     @Test
@@ -61,7 +61,7 @@ public class DomainMapperTest {
 
         assertThat(mapper.get("bean3")).isNull();
 
-        assertThat(beans).excludes((TestBean) null);
+        assertThat(beans).doesNotContain((TestBean) null);
     }
 
     private static class TestBean {

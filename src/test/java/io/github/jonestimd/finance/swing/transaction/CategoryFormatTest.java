@@ -3,7 +3,7 @@ package io.github.jonestimd.finance.swing.transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CategoryFormatTest {
     private CategoryFormat format = new CategoryFormat();

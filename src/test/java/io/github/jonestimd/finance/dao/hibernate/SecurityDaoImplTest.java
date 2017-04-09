@@ -20,7 +20,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class SecurityDaoImplTest extends TransactionalTestFixture {
     private SecurityDao securityDao;

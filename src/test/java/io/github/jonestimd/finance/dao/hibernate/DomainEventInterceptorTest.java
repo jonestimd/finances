@@ -5,7 +5,7 @@ import io.github.jonestimd.finance.domain.event.DomainEventHolder;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class DomainEventInterceptorTest {
     private final EventHandlerEventHolder handler = new EventBuilder(this);

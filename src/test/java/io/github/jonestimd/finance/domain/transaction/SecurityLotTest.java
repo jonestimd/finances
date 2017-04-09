@@ -13,7 +13,7 @@ import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class SecurityLotTest {
     private final Date splitDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH), -1);

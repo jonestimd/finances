@@ -11,7 +11,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class PdfFieldValueExtractorTest {
     private final ImportField dateField = new ImportFieldBuilder().label("Date:").rightEdge(10f).get();

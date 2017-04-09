@@ -8,7 +8,7 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.operations.PayeeOperations;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class PayeeCacheTest {
@@ -31,7 +31,7 @@ public class PayeeCacheTest {
 
         verify(payeeOperations).getAllPayees();
         verifyNoMoreInteractions(payeeOperations);
-        assertThat(payees).containsOnly(cachePayees.toArray());
+        assertThat(payees).containsOnly(cachePayees.toArray(new Payee[cachePayees.size()]));
     }
 
     @Test

@@ -26,7 +26,7 @@ import org.hibernate.TransientObjectException;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionDaoImpTest extends TransactionalTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {

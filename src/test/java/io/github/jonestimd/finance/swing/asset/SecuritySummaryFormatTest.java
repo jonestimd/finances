@@ -7,7 +7,7 @@ import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class SecuritySummaryFormatTest {
     private final SecuritySummaryFormat format = new SecuritySummaryFormat();

@@ -16,7 +16,7 @@ import org.junit.Test;
 
 import static io.github.jonestimd.finance.file.quicken.qif.QifField.*;
 import static junit.framework.Assert.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 //TODO test qif-context by using SecurityTransactionConverter

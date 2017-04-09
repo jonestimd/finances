@@ -20,7 +20,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class SecurityLotDaoImplTest extends HsqlTestFixture {

@@ -13,7 +13,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategorySummary
 import io.github.jonestimd.swing.table.model.BeanListTableModel;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CategoryKeyTableCellEditorTest {
     private CategoryKeyTableCellEditor editor = new CategoryKeyTableCellEditor();

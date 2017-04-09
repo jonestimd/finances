@@ -5,7 +5,7 @@ import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionTypeFormatTest {
     private final TransactionTypeFormat format = new TransactionTypeFormat();

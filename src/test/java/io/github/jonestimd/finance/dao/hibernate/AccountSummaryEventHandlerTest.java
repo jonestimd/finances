@@ -12,7 +12,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class AccountSummaryEventHandlerTest {
     private static final String[] TRANSACTION_PROPERTIES = {"id", Transaction.ACCOUNT};

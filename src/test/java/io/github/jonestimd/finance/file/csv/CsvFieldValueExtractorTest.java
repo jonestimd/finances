@@ -8,7 +8,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CsvFieldValueExtractorTest {
     private final ImportField payeeField = new ImportFieldBuilder().label("Payee").get();

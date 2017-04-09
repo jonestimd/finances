@@ -21,26 +21,110 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.awt.Component;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import javax.swing.JButton;
+import javax.swing.SwingUtilities;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.Field;
+import io.github.jonestimd.finance.swing.database.SuperUserDialog;
+import io.github.jonestimd.jdbc.DriverUtils;
+import io.github.jonestimd.swing.validation.ValidatedPasswordField;
+import io.github.jonestimd.swing.validation.ValidatedTextField;
+import io.github.jonestimd.util.JavaPredicates;
+import org.assertj.swing.core.BasicRobot;
+import org.assertj.swing.core.ComponentFinder;
+import org.assertj.swing.core.GenericTypeMatcher;
+import org.assertj.swing.core.Robot;
+import org.assertj.swing.dependency.jsr305.Nonnull;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.fest.assertions.Assertions.*;
+import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MysqlDriverConnectionServiceTest {
     private final MySqlDriverConnectionService service = new MySqlDriverConnectionService();
     @Mock
     private Consumer<String> updateProgress;
+    @Mock
+    private Driver driver;
+    @Mock
+    private Connection userConnection;
+    @Mock
+    private Connection superConnection;
+    @Mock
+    private PreparedStatement dbTestStatement;
+
+    private Map<String, PreparedStatement> preparedStatements = new HashMap<>();
+    private List<Statement> statements = new ArrayList<>();
+
+    private Robot robot;
+
+    @Before
+    public void setDriver() throws Exception {
+        final String url = "jdbc:mysql://localhost:3306/finances";
+        final String superUrl = "jdbc:mysql://localhost:3306";
+        preparedStatements.clear();
+        statements.clear();
+        when(driver.acceptsURL(url)).thenReturn(true);
+        when(driver.acceptsURL(superUrl)).thenReturn(true);
+        when(driver.connect(eq(url), any(Properties.class))).thenReturn(userConnection);
+        when(driver.connect(eq(superUrl), any(Properties.class))).thenReturn(superConnection);
+        when(userConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+        when(superConnection.createStatement()).thenAnswer(this::addStatement);
+        when(superConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+        DriverUtils.setDriver(url, driver);
+        robot = BasicRobot.robotWithNewAwtHierarchy();
+    }
+
+    private PreparedStatement addPreparedStatement(InvocationOnMock invocationOnMock) {
+        String query = (String) invocationOnMock.getArguments()[0];
+        if (query.equals("select * from company")) return dbTestStatement;
+        PreparedStatement preparedStatement = mock(PreparedStatement.class);
+        preparedStatements.put(query, preparedStatement);
+        return preparedStatement;
+    }
+
+    private Statement addStatement(InvocationOnMock invocationOnMock) {
+        Statement statement = mock(Statement.class);
+        statements.add(statement);
+        return statement;
+    }
+
+    @After
+    public void clearDriver() throws Exception {
+        DriverManager.deregisterDriver(driver);
+        robot.cleanUp();
+    }
 
     @Test
     public void getName() throws Exception {
@@ -53,7 +137,7 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(service.isEnabled(Field.HOST)).isTrue();
         assertThat(service.isEnabled(Field.PORT)).isTrue();
         assertThat(service.isEnabled(Field.SCHEMA)).isTrue();
-        assertThat(service.isEnabled(Field.USER)).isTrue();
+        assertThat(service.isEnabled(USER)).isTrue();
         assertThat(service.isEnabled(Field.PASSWORD)).isTrue();
     }
 
@@ -63,7 +147,7 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(service.isRequired(Field.HOST)).isTrue();
         assertThat(service.isRequired(Field.PORT)).isTrue();
         assertThat(service.isRequired(Field.SCHEMA)).isTrue();
-        assertThat(service.isRequired(Field.USER)).isTrue();
+        assertThat(service.isRequired(USER)).isTrue();
         assertThat(service.isRequired(Field.PASSWORD)).isTrue();
     }
 
@@ -75,7 +159,7 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(values.get(Field.HOST)).isEqualTo("localhost");
         assertThat(values.get(Field.PORT)).isEqualTo("3306");
         assertThat(values.get(Field.SCHEMA)).isEqualTo("finances");
-        assertThat(values.get(Field.USER)).isEqualTo("finances");
+        assertThat(values.get(USER)).isEqualTo("finances");
     }
 
     @Test
@@ -84,7 +168,7 @@ public class MysqlDriverConnectionServiceTest {
                 .put(Field.HOST.toString(), "myhost.com")
                 .put(Field.PORT.toString(), "1234")
                 .put(Field.SCHEMA.toString(), "myschema")
-                .put(Field.USER.toString(), "myuser")
+                .put(USER.toString(), "myuser")
                 .put(Field.PASSWORD.toString(), "mypassword").get());
 
         Properties properties = service.getHibernateProperties(config);
@@ -95,5 +179,203 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(properties.getProperty("hibernate.connection.url")).isEqualTo("jdbc:mysql://myhost.com:1234/myschema");
         assertThat(properties.getProperty("hibernate.connection.username")).isEqualTo("myuser");
         assertThat(properties.getProperty("hibernate.connection.password")).isEqualTo("mypassword");
+    }
+
+    private void verifyTestDatabaseQuery() throws SQLException {
+        verify(userConnection).prepareStatement("select * from company");
+        verify(dbTestStatement).getMetaData();
+    }
+
+    private void verifyPreparedStatement(Connection connection, String query, String... parameters) throws Exception {
+        assertThat(preparedStatements).hasSize(1);
+        verify(connection).prepareStatement(query);
+        for (int i = 0; i < parameters.length; i++) {
+            verify(preparedStatements.get(query)).setString(i + 1, parameters[i]);
+        }
+    }
+
+    private void verifyCloseConnections() throws SQLException {
+        verify(userConnection).close();
+        verify(superConnection).close();
+        for (PreparedStatement statement : preparedStatements.values()) {
+            verify(statement).close();
+        }
+        for (Statement statement : statements) {
+            verify(statement).close();
+        }
+    }
+
+    @Test
+    public void prepareDatabaseThrowsUnknownException() throws Exception {
+        Config config = defaultConfig();
+        when(dbTestStatement.getMetaData()).thenThrow(new SQLException("unexpected error"));
+
+        try {
+            service.prepareDatabase(config, updateProgress);
+            fail("expected an exception");
+        } catch (SQLException ex) {
+            assertThat(ex.getMessage()).isEqualTo("unexpected error");
+        }
+
+        assertThat(preparedStatements).isEmpty();
+        assertThat(statements).isEmpty();
+        verifyTestDatabaseQuery();
+        verifyZeroInteractions(superConnection);
+        verify(userConnection).close();
+    }
+
+    @Test
+    public void unknownDatabaseCreatesSchema() throws Exception {
+        Config config = defaultConfig();
+        when(dbTestStatement.getMetaData()).thenThrow(new SQLException("unknown database finances"));
+
+        assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
+
+        assertThat(preparedStatements).isEmpty();
+        verify(updateProgress).accept("Creating database...");
+        verifyTestDatabaseQuery();
+        verify(superConnection).createStatement();
+        verifyCreateDatabase(config);
+        verifyCloseConnections();
+    }
+
+    @Test
+    public void cancelSuperUserDialogThrowsException() throws Exception {
+        Config config = defaultConfig();
+        SQLException exception = new SQLException("access denied");
+        when(dbTestStatement.getMetaData()).thenThrow(exception);
+        PrepareDatabaseRunner runner = new PrepareDatabaseRunner(config);
+
+        SwingUtilities.invokeLater(runner);
+        cancelSuperUserDialog(robot.finder());
+
+        while (! runner.complete) Thread.yield();
+        assertThat(runner.createTables).isFalse();
+        assertThat(runner.thrownException).isSameAs(exception);
+        verifyTestDatabaseQuery();
+    }
+
+    private void cancelSuperUserDialog(ComponentFinder finder) throws Exception {
+        SuperUserDialog dialog = finder.findByType(SuperUserDialog.class);
+        JButton button = finder.find(dialog, buttonMatcher("Cancel"));
+        SwingUtilities.invokeAndWait(button::doClick);
+    }
+
+    @Test
+    public void accessDeniedCreatesUserWithoutPassword() throws Exception {
+        testCreateUserWithoutPassword("access denied for user 'finances'@'%'");
+    }
+
+    @Test
+    public void tableDoesntExistCreatesUserWithoutPassword() throws Exception {
+        testCreateUserWithoutPassword("table finances.company' doesn't exist");
+    }
+    private void testCreateUserWithoutPassword(String errorMessage) throws Exception {
+        Config config = defaultConfig();
+        when(dbTestStatement.getMetaData()).thenThrow(new SQLException(errorMessage));
+        PrepareDatabaseRunner runner = new PrepareDatabaseRunner(config);
+
+        SwingUtilities.invokeLater(runner);
+        enterSuperUser(robot.finder());
+
+        while (! runner.complete) Thread.yield();
+        if (runner.thrownException != null) runner.thrownException.printStackTrace();
+        assertThat(runner.createTables).isTrue();
+        assertThat(runner.thrownException).isNull();
+        verify(updateProgress).accept("Creating database...");
+        verifyTestDatabaseQuery();
+        verifyPreparedStatement(superConnection, "create user if not exists ?", config.getString(USER.toString()));
+        verify(superConnection).createStatement();
+        verifyCreateDatabase(config);
+        verifyCloseConnections();
+    }
+
+    @Test
+    public void accessDeniedCreatesUserWithPassword() throws Exception {
+        Config config = defaultConfig().withValue(PASSWORD.toString(), ConfigValueFactory.fromAnyRef("password"));
+        when(dbTestStatement.getMetaData()).thenThrow(new SQLException("access denied"));
+        PrepareDatabaseRunner runner = new PrepareDatabaseRunner(config);
+
+        SwingUtilities.invokeLater(runner);
+        enterSuperUser(robot.finder());
+
+        while (! runner.complete) Thread.yield();
+        if (runner.thrownException != null) runner.thrownException.printStackTrace();
+        assertThat(runner.createTables).isTrue();
+        assertThat(runner.thrownException).isNull();
+        verify(updateProgress).accept("Creating database...");
+        verifyTestDatabaseQuery();
+        verifyPreparedStatement(superConnection, "create user if not exists ? identified by ?",
+                config.getString(USER.toString()), config.getString(PASSWORD.toString()));
+        verify(superConnection).createStatement();
+        verifyCreateDatabase(config);
+        verifyCloseConnections();
+    }
+
+    private void verifyCreateDatabase(Config config) throws SQLException {
+        assertThat(statements).hasSize(1);
+        verify(statements.get(0)).execute("create database if not exists " + config.getString(SCHEMA.toString()));
+        verify(statements.get(0)).execute("grant all on " + config.getString(SCHEMA.toString()) + ".* to " + config.getString(USER.toString()));
+    }
+
+    private void enterSuperUser(ComponentFinder finder) throws Exception {
+        SuperUserDialog dialog = finder.findByType(SuperUserDialog.class);
+        ValidatedTextField userField = finder.findByType(dialog, ValidatedTextField.class);
+        Collection<ValidatedPasswordField> passwordFields = finder.findAll(dialog, matcher(ValidatedPasswordField.class));
+        JButton saveButton = finder.find(dialog, buttonMatcher("Save"));
+        SwingUtilities.invokeAndWait(() -> {
+            userField.setText("superuser");
+            for (ValidatedPasswordField field : passwordFields) {
+                field.setText("superpassword");
+            }
+            saveButton.doClick();
+        });
+    }
+
+    private Config defaultConfig() {
+        Properties properties = new Properties();
+        service.getDefaultValues().entrySet().stream().forEach(entry -> {
+            properties.setProperty(entry.getKey().toString(), entry.getValue());
+        });
+        return ConfigFactory.parseProperties(properties);
+    }
+
+    private <T extends Component> GenericTypeMatcher<T> matcher(Class<T> componentType) {
+        return matcher(componentType, JavaPredicates.alwaysTrue());
+    }
+
+    private GenericTypeMatcher<JButton> buttonMatcher(String text) {
+        return matcher(JButton.class, button -> button.getText().equals(text));
+    }
+
+    private <T extends Component> GenericTypeMatcher<T> matcher(Class<T> componentType, Predicate<T> condition) {
+        return new GenericTypeMatcher<T>(componentType) {
+            @Override
+            protected boolean isMatching(@Nonnull T component) {
+                return condition.test(component);
+            }
+        };
+    }
+
+    private class PrepareDatabaseRunner implements Runnable {
+        private final Config config;
+        private volatile Exception thrownException;
+        private volatile boolean complete = false;
+        private volatile boolean createTables;
+
+        private PrepareDatabaseRunner(Config config) {
+            this.config = config;
+        }
+
+        @Override
+        public void run() {
+            try {
+                createTables = service.prepareDatabase(config, updateProgress);
+            } catch (Exception e) {
+                thrownException = e;
+            } finally {
+                complete = true;
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package io.github.jonestimd.finance.dao.hibernate;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.google.common.base.Function;
@@ -11,11 +12,21 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import io.github.jonestimd.finance.swing.event.EventType;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class EventBuilderTest {
-    private static final Function<DomainEvent, Class<?>> GET_CLASS = input -> input.getDomainClass();
+    private static final Function<DomainEvent, Class<?>> GET_CLASS = DomainEvent::getDomainClass;
     private static final Function<DomainEvent, EventType> GET_TYPE = DomainEvent::getType;
+
+    @SuppressWarnings("unchecked")
+    private Collection<Transaction> getTransactions(DomainEvent<?, ?> event) {
+        return (Collection<Transaction>) event.getDomainObjects();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Collection<TransactionDetail> getDetails(DomainEvent<?, ?> event) {
+        return (Collection<TransactionDetail>) event.getDomainObjects();
+    }
 
     @Test
     public void addedTransaction() throws Exception {
@@ -28,7 +39,7 @@ public class EventBuilderTest {
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getDomainClass()).isEqualTo(Transaction.class);
         assertThat(events.get(0).getType()).isEqualTo(EventType.ADDED);
-        assertThat(events.get(0).getDomainObjects()).containsOnly(transaction);
+        assertThat(getTransactions(events.get(0))).containsOnly(transaction);
     }
 
     @Test
@@ -43,10 +54,10 @@ public class EventBuilderTest {
         assertThat(events).hasSize(2);
         assertThat(events.get(0).getDomainClass()).isEqualTo(TransactionDetail.class);
         assertThat(events.get(0).getType()).isEqualTo(EventType.ADDED);
-        assertThat(events.get(0).getDomainObjects()).containsOnly(detail);
+        assertThat(getDetails(events.get(0))).containsOnly(detail);
         assertThat(events.get(1).getDomainClass()).isEqualTo(Transaction.class);
         assertThat(events.get(1).getType()).isEqualTo(EventType.CHANGED);
-        assertThat(events.get(1).getDomainObjects()).containsOnly(detail.getTransaction());
+        assertThat(getTransactions(events.get(1))).containsOnly(detail.getTransaction());
     }
 
     @Test
@@ -60,7 +71,7 @@ public class EventBuilderTest {
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getDomainClass()).isEqualTo(Transaction.class);
         assertThat(events.get(0).getType()).isEqualTo(EventType.CHANGED);
-        assertThat(events.get(0).getDomainObjects()).containsOnly(transaction);
+        assertThat(getTransactions(events.get(0))).containsOnly(transaction);
     }
 
     @Test
@@ -104,9 +115,9 @@ public class EventBuilderTest {
         assertThat(events).hasSize(2);
         assertThat(events.get(0).getDomainClass()).isEqualTo(Transaction.class);
         assertThat(events.get(0).getType()).isEqualTo(EventType.CHANGED);
-        assertThat(events.get(0).getDomainObjects()).containsOnly(transaction);
+        assertThat(getTransactions(events.get(0))).containsOnly(transaction);
         assertThat(events.get(1).getDomainClass()).isEqualTo(TransactionDetail.class);
         assertThat(events.get(1).getType()).isEqualTo(EventType.DELETED);
-        assertThat(events.get(1).getDomainObjects()).containsOnly(detail);
+        assertThat(getDetails(events.get(1))).containsOnly(detail);
     }
 }

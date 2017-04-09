@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import com.google.common.base.Joiner;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CsvParserTest {
     @Test

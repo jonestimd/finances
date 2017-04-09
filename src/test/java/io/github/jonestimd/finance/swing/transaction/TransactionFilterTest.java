@@ -14,7 +14,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionFilterTest {
     @Test

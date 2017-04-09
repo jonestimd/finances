@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class CachingMethodInterceptorTest {

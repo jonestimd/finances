@@ -48,7 +48,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.database.ConfigurationView.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)

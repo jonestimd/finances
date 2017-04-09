@@ -9,7 +9,7 @@ import io.github.jonestimd.finance.domain.fileimport.pdf.PdfImportFile;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class ImportFileDaoTest extends TransactionalTestFixture {
     private static final String TEST_PDF_IMPORT = "test PDF import";

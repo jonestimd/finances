@@ -5,7 +5,7 @@ import java.text.ParseException;
 import io.github.jonestimd.finance.domain.account.Company;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class CompanyFormatTest {
     @Test

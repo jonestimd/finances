@@ -33,7 +33,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.anyLong;

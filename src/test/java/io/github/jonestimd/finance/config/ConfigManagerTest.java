@@ -29,7 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class ConfigManagerTest {
     private String userHome;

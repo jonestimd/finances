@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.typesafe.config.ConfigFactory.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class RequestFactoryTest {

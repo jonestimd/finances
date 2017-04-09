@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class CompositeEventHandlerTest {

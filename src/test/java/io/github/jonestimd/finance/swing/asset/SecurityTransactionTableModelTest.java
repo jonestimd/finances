@@ -14,7 +14,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.*;

@@ -5,7 +5,7 @@ import java.util.Properties;
 
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class PropertiesLoaderTest {
     private static final String TEST_FILE = "PropertiesLoaderTest.properties";

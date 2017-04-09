@@ -23,7 +23,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.domain.fileimport.AmountFormat.*;
 import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)

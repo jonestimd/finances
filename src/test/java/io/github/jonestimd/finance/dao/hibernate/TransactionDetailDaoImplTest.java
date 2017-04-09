@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static io.github.jonestimd.finance.domain.transaction.SecurityAction.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {
@@ -114,11 +114,11 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
         assertThat(withoutLots.size()).isEqualTo(new HashSet<>(withoutLots).size()).as("no duplicates");
         List<Object> withoutLotIds = Lists.transform(withoutLots, UniqueId::getId);
         assertThat(withoutLotIds).contains(getIds(saleWithoutLot1.getDetails()));
-        assertThat(withoutLotIds).excludes(getIds(saleWithoutLot2.getDetails())).as("wrong security");
-        assertThat(withoutLotIds).excludes(getIds(saleWithoutLot3.getDetails())).as("wrong date");
+        assertThat(withoutLotIds).doesNotContain(getIds(saleWithoutLot2.getDetails())).as("wrong security");
+        assertThat(withoutLotIds).doesNotContain(getIds(saleWithoutLot3.getDetails())).as("wrong date");
         assertThat(withoutLotIds).contains(getIds(sharesOutWithoutLot.getDetails()));
-        assertThat(withoutLotIds).excludes(getIds(buy.getDetails()));
-        assertThat(withoutLotIds).excludes(saleWithLot.getDetails().get(0).getId());
+        assertThat(withoutLotIds).doesNotContain(getIds(buy.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(saleWithLot.getDetails().get(0).getId());
         assertThat(withoutLotIds).contains(saleWithLot.getDetails().get(1).getId());
     }
 
@@ -165,13 +165,13 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
         assertThat(withoutLots.size()).isEqualTo(new HashSet<>(withoutLots).size()).as("no duplicates");
         List<Object> withoutLotIds = Lists.transform(withoutLots, UniqueId::getId);
         assertThat(withoutLotIds).contains(getIds(buyWithoutLot1.getDetails().subList(0, 2)));
-        assertThat(withoutLotIds).excludes(getIds(buyWithoutLot1.getDetails().subList(2, 4)));
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithoutLot1.getDetails().subList(2, 4)));
         assertThat(withoutLotIds).contains(getIds(sharesInWithoutLot.getDetails()));
-        assertThat(withoutLotIds).excludes(getIds(buyWithWrongAccount.getDetails())).as("purchase from wrong account");
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithWrongAccount.getDetails())).as("purchase from wrong account");
         assertThat(withoutLotIds).contains(getIds(sharesInWithZeroAmount.getDetails())).as("purchase with wrong price");
-        assertThat(withoutLotIds).excludes(getIds(buyWithNoShares.getDetails())).as("purchase with no available shares");
-        assertThat(withoutLotIds).excludes(getIds(sellWithLot.getDetails())).as("sale");
-        assertThat(withoutLotIds).excludes(getIds(sharesOutWithoutLot.getDetails())).as("shares out");
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithNoShares.getDetails())).as("purchase with no available shares");
+        assertThat(withoutLotIds).doesNotContain(getIds(sellWithLot.getDetails())).as("sale");
+        assertThat(withoutLotIds).doesNotContain(getIds(sharesOutWithoutLot.getDetails())).as("shares out");
         assertThat(withoutLotIds).contains(getIds(buyWithLot2.getDetails()));
     }
 
@@ -219,14 +219,14 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
         assertThat(withoutLots.size()).isEqualTo(new HashSet<>(withoutLots).size()).as("no duplicates");
         List<Object> withoutLotIds = Lists.transform(withoutLots, UniqueId::getId);
         assertThat(withoutLotIds).contains(getIds(buyWithoutLot1.getDetails().subList(0, 2)));
-        assertThat(withoutLotIds).excludes(getIds(buyWithoutLot1.getDetails().subList(2, 4)));
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithoutLot1.getDetails().subList(2, 4)));
         assertThat(withoutLotIds).contains(getIds(sharesInWithoutLot.getDetails()));
-        assertThat(withoutLotIds).excludes(getIds(buyWithWrongAccount.getDetails())).as("purchase from wrong account");
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithWrongAccount.getDetails())).as("purchase from wrong account");
         assertThat(withoutLotIds).contains(getIds(sharesInWithZeroAmount.getDetails())).as("purchase with wrong price");
-        assertThat(withoutLotIds).excludes(getIds(buyWithNoShares.getDetails())).as("purchase with no available shares");
-        assertThat(withoutLotIds).excludes(getIds(sellWithLot.getDetails())).as("sale");
-        assertThat(withoutLotIds).excludes(getIds(sharesOutWithoutLot.getDetails())).as("shares out");
-        assertThat(withoutLotIds).excludes(getIds(buyWithLot2.getDetails())).as("after sell date");
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithNoShares.getDetails())).as("purchase with no available shares");
+        assertThat(withoutLotIds).doesNotContain(getIds(sellWithLot.getDetails())).as("sale");
+        assertThat(withoutLotIds).doesNotContain(getIds(sharesOutWithoutLot.getDetails())).as("shares out");
+        assertThat(withoutLotIds).doesNotContain(getIds(buyWithLot2.getDetails())).as("after sell date");
     }
 
     @Test

@@ -19,7 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import static junit.framework.Assert.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class TransactionCategoryOperationsImplTest {

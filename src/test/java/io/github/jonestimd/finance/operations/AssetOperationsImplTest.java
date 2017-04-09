@@ -19,8 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import static org.fest.assertions.Assertions.*;
-import static org.fest.assertions.Fail.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class AssetOperationsImplTest {
@@ -104,7 +103,7 @@ public class AssetOperationsImplTest {
 
         try {
             assetOperations.createIfUnique(stock);
-            fail();
+            fail("expected an exception");
         }
         catch (IllegalArgumentException ex) {
             assertThat(ex.getMessage()).isEqualTo("Imported type for security xxx doesn't match the existing value.");

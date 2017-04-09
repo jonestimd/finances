@@ -9,7 +9,7 @@ import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class SecurityTest {
     @Test

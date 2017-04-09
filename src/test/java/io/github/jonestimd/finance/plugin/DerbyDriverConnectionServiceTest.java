@@ -46,7 +46,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static java.util.Collections.*;
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 

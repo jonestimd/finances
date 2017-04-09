@@ -11,7 +11,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class DownloadContextTest {
     private final Config config = ConfigFactory.parseString("{ url = \"http://example.com\", output.path = /home/user/downloads, saveAs = \"%1$s.pdf\" }");

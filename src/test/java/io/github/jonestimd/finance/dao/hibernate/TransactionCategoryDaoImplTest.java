@@ -12,7 +12,7 @@ import io.github.jonestimd.util.Streams;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.fest.assertions.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class TransactionCategoryDaoImplTest extends HsqlTestFixture {
     private static final QueryBatch[] SETUP_BATCH = {
