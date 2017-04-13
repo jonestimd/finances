@@ -220,4 +220,26 @@
         <drop>drop function if exists adjust_shares</drop>
         <dialect-scope name="org.hibernate.dialect.MySQL5InnoDBDialect"/>
     </database-object>
+    <database-object>
+        <create>
+            create function adjust_shares(security_id bigint, from_date timestamp, shares decimal(19,6))
+                returns decimal(19,6) as $$
+            declare
+              curs cursor for
+                select ss.shares_out, ss.shares_in
+                from stock_split ss
+                where ss.security_id = security_id and ss.date >= from_date;
+            begin
+              if shares is not null then
+                for split in curs loop
+                  shares := shares * split.shares_out / split.shares_in;
+                end loop;
+              end if;
+              return shares;
+            end;
+            $$ language plpgsql stable
+        </create>
+        <drop>drop function if exists adjust_shares</drop>
+        <dialect-scope name="org.hibernate.dialect.PostgreSQL9Dialect"/>
+    </database-object>
 </hibernate-mapping>

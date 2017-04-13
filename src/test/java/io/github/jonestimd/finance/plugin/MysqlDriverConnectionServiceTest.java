@@ -231,7 +231,7 @@ public class MysqlDriverConnectionServiceTest {
 
         assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
 
-        assertThat(preparedStatements).isEmpty();
+        verifyPreparedStatement(superConnection, "create user if not exists ?", config.getString(USER.toString()));
         verify(updateProgress).accept("Creating database...");
         verifyTestDatabaseQuery();
         verify(superConnection).createStatement();

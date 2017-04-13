@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.plugin;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -30,11 +29,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 
-import javax.swing.JOptionPane;
-
 import com.typesafe.config.Config;
-import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.finance.swing.database.SuperUserDialog;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 
@@ -51,42 +46,22 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
     }
 
     @Override
-    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
-        Properties connectionProperties = getConnectionProperties(config);
-        if (needSuperUser(ex.getMessage().toLowerCase()) && getSuperUser(ex.getMessage(), connectionProperties)) {
-            setupDatabase(config, connectionProperties, updateProgress, true);
-            return true;
-        }
-        if (ex.getMessage().toLowerCase().startsWith("unknown database")) {
-            setupDatabase(config, connectionProperties, updateProgress, false);
-            return true;
-        }
-        return super.handleException(config, updateProgress, ex);
+    protected boolean needToCreateDatabase(String message) {
+        return message.startsWith("unknown database") || needSuperUser(message);
     }
 
-    private boolean needSuperUser(String message) {
+    @Override
+    protected boolean needSuperUser(String message) {
         return message.startsWith("access denied") || message.endsWith(".company' doesn't exist");
     }
 
-    private boolean getSuperUser(String message, Properties connectionProperties) {
-        SuperUserDialog dialog = new SuperUserDialog(JOptionPane.getRootFrame(), message);
-        dialog.pack();
-        dialog.setVisible(true);
-        connectionProperties.setProperty(USER.toString(), dialog.getUser());
-        connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
-        return !dialog.isCancelled();
+    @Override
+    protected void setupDatabase(Config config, String jdbcUrl, Properties connectionProperties, Consumer<String> updateProgress) throws SQLException {
+        super.setupDatabase(config, withoutSchema(jdbcUrl), connectionProperties, updateProgress);
     }
 
-    private void setupDatabase(Config config, Properties connectionProperties, Consumer<String> updateProgress, boolean createUser) throws SQLException {
-        updateProgress.accept(BundleType.LABELS.getString("database.status.creatingDatabase"));
-        String jdbcUrl = withoutSchema(getJdbcUrl(config));
-        try (Connection connection = DriverManager.getConnection(jdbcUrl, connectionProperties)) {
-            if (createUser) createUser(config, connection);
-            createSchema(config, connection);
-        }
-    }
-
-    private void createUser(Config config, Connection connection) throws SQLException {
+    @Override
+    protected void createUser(Config config, Connection connection) throws SQLException {
         boolean withPassword = config.hasPath(PASSWORD.toString());
         StringBuilder sql = new StringBuilder("create user if not exists ?");
         if (withPassword) sql.append(" identified by ?");
@@ -97,7 +72,8 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
         }
     }
 
-    private void createSchema(Config config, Connection connection) throws SQLException {
+    @Override
+    protected void createSchema(Config config, Connection connection) throws SQLException {
         String schema = config.getString(SCHEMA.toString());
         String user = config.getString(USER.toString());
         try (Statement statement = connection.createStatement()) {

@@ -21,12 +21,20 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
+
+import javax.swing.JOptionPane;
 
 import com.typesafe.config.Config;
+import io.github.jonestimd.finance.swing.BundleType;
+import io.github.jonestimd.finance.swing.database.SuperUserDialog;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static java.util.Arrays.*;
@@ -63,6 +71,44 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
     protected String getJdbcUrl(Config config) {
         return "jdbc:" + urlPrefix + config.getString(HOST.toString()) + ":" + config.getString(PORT.toString()) + "/" + config.getString(SCHEMA.toString());
     }
+
+    @Override
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
+        Properties connectionProperties = getConnectionProperties(config);
+        String message = ex.getMessage().toLowerCase();
+        if (needToCreateDatabase(message) && (! needSuperUser(message) || getSuperUser(ex.getMessage(), connectionProperties))) {
+            setupDatabase(config, getJdbcUrl(config), connectionProperties, updateProgress);
+            return true;
+        }
+        return ignoreError(message) || super.handleException(config, updateProgress, ex);
+    }
+
+    protected boolean ignoreError(String message) {
+        return false;
+    }
+
+    protected abstract boolean needToCreateDatabase(String message);
+    protected abstract boolean needSuperUser(String message);
+
+    private boolean getSuperUser(String message, Properties connectionProperties) {
+        SuperUserDialog dialog = new SuperUserDialog(JOptionPane.getRootFrame(), message);
+        dialog.pack();
+        dialog.setVisible(true);
+        connectionProperties.setProperty(USER.toString(), dialog.getUser());
+        connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
+        return !dialog.isCancelled();
+    }
+
+    protected void setupDatabase(Config config, String jdbcUrl, Properties connectionProperties, Consumer<String> updateProgress) throws SQLException {
+        updateProgress.accept(BundleType.LABELS.getString("database.status.creatingDatabase"));
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, connectionProperties)) {
+            createUser(config, connection);
+            createSchema(config, connection);
+        }
+    }
+
+    protected abstract void createUser(Config config, Connection connection) throws SQLException;
+    protected abstract void createSchema(Config config, Connection connection) throws SQLException;
 
     @Override
     protected Properties getConnectionProperties(Config config) {
