@@ -26,6 +26,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +35,11 @@ import java.util.function.Consumer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.jdbc.DriverUtils;
 import io.github.jonestimd.util.Streams;
-import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +49,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -95,6 +97,19 @@ public class DriverConfigurationServiceTest {
     }
 
     @Test
+    public void getHibernateProperties() throws Exception {
+        Config config = ConfigFactory.empty()
+                .withValue("hibernate.query.startup_check", ConfigValueFactory.fromAnyRef(false))
+                .withValue("hibernate.format_sql", ConfigValueFactory.fromAnyRef(true));
+
+        Properties properties = testService.getHibernateProperties(config);
+
+        assertThat(properties).hasSize(2);
+        assertThat(properties.get("hibernate.query.startup_check")).isEqualTo("false");
+        assertThat(properties.get("hibernate.format_sql")).isEqualTo("true");
+    }
+
+    @Test
     public void prepareDatabaseReturnsFalseForSuccessfulQuery() throws Exception {
         when(connection.prepareStatement(anyString())).thenReturn(statement);
         Config config = ConfigFactory.empty();
@@ -115,7 +130,7 @@ public class DriverConfigurationServiceTest {
 
         try {
             assertThat(testService.prepareDatabase(config, updateProgress)).isTrue();
-            Assert.fail("expected an exception");
+            fail("expected an exception");
         } catch (SQLException ex) {
             assertThat(ex.getMessage()).isEqualTo("test exception");
         }
@@ -139,11 +154,6 @@ public class DriverConfigurationServiceTest {
         @Override
         public boolean isRequired(Field field) {
             return false;
-        }
-
-        @Override
-        public Properties getHibernateProperties(Config config) {
-            return new Properties();
         }
 
         @Override

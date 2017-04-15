@@ -59,7 +59,7 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
 
     @Override
     public Properties getHibernateProperties(Config config) {
-        Properties properties = new Properties();
+        Properties properties = super.getHibernateProperties(config);
         properties.put("hibernate.dialect", dialect);
         properties.put("hibernate.connection.driver_class", driverClassName);
         properties.put("hibernate.connection.url", getJdbcUrl(config));

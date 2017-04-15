@@ -21,16 +21,21 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.config;
 
+import java.awt.Window;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
+import java.util.Properties;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
+import io.github.jonestimd.finance.swing.database.ConnectionDialog;
 
 public class ConfigManager {
     public static final String CONFIG_FILE_PROPERTY = "config";
@@ -80,5 +85,29 @@ public class ConfigManager {
                 throw new RuntimeException(ex);
             }
         }
+    }
+
+    public DriverService loadDriver() {
+        return loadDriver(null).get();
+    }
+
+    public Optional<DriverService> loadDriver(Window initialFrame) {
+        Optional<Config> configOption = get(ConfigManager.CONNECTION_PATH);
+        if (! configOption.isPresent() && initialFrame != null) {
+            configOption = new ConnectionDialog(initialFrame).showDialog();
+            configOption.ifPresent(config -> addPath(ConfigManager.CONNECTION_PATH, config).save(true));
+        }
+        return configOption.map(DriverConfigurationService::forConfig);
+    }
+
+    public static Properties asProperties(Config config, String path) {
+        final String prefix = path + ".";
+        final Properties properties = new Properties();
+        if (config.hasPath(path)) {
+            config.getConfig(path).entrySet().forEach(entry -> {
+                properties.setProperty(prefix + entry.getKey(), entry.getValue().unwrapped().toString());
+            });
+        }
+        return properties;
     }
 }

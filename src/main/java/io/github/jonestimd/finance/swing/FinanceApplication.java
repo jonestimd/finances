@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.swing;
 
 import java.awt.Insets;
-import java.io.File;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -30,15 +29,12 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.typesafe.config.Config;
 import io.github.jonestimd.finance.SystemProperty;
 import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.account.Account;
-import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.service.ServiceContext;
-import io.github.jonestimd.finance.swing.database.ConnectionDialog;
 import io.github.jonestimd.finance.swing.transaction.TransactionsPanel;
 import io.github.jonestimd.swing.BackgroundRunner;
 import io.github.jonestimd.swing.BackgroundTask;
@@ -47,8 +43,6 @@ import io.github.jonestimd.swing.window.StatusFrame;
 import org.apache.log4j.Logger;
 
 public class FinanceApplication {
-    public static final File DEFAULT_CONNECTION_PROPERTIES = new File(System.getProperty("user.home"), ".finances/connection.properties");
-    public static final String CONNECTION_FILE_PROPERTY = "connection.properties";
     private static final String PROPERTIES_FILENAME = ".finances/finances.properties";
     private static final ResourceBundle bundle = BundleType.LABELS.get();
     private static final Logger logger = Logger.getLogger(FinanceApplication.class);
@@ -110,16 +104,6 @@ public class FinanceApplication {
         Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
     }
 
-    public Optional<DriverService> loadDriver() {
-        ConfigManager configManager = new ConfigManager();
-        Optional<Config> configOption = configManager.get(ConfigManager.CONNECTION_PATH);
-        if (! configOption.isPresent()) {
-            configOption = new ConnectionDialog(initialFrame).showDialog();
-            configOption.ifPresent(config -> configManager.addPath(ConfigManager.CONNECTION_PATH, config).save(true));
-        }
-        return configOption.map(DriverConfigurationService::forConfig);
-    }
-
     private Account getLastAccount() {
         return lastAccountId == null ? null : serviceContext.getAccountOperations().getAccount(lastAccountId);
     }
@@ -129,7 +113,7 @@ public class FinanceApplication {
     }
 
     private void initializeFrame() {
-        Optional<DriverService> driverOption = loadDriver();
+        Optional<DriverService> driverOption = new ConfigManager().loadDriver(initialFrame);
         if (driverOption.isPresent()) {
             new BackgroundRunner<>(BackgroundTask.task(
                     () -> startContext(driverOption.get()),

@@ -22,9 +22,13 @@
 package io.github.jonestimd.finance.config;
 
 import java.io.File;
+import java.util.Properties;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
+import io.github.jonestimd.finance.plugin.DerbyDriverConnectionService;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,5 +106,28 @@ public class ConfigManagerTest {
 
         assertThat(manager.get("unknown").isPresent()).isTrue();
         assertThat(manager.get("unknown").get().getString("setting")).isEqualTo("value");
+    }
+
+    @Test
+    public void loadDriverUsesConfigurationFile() throws Exception {
+        String path = getClass().getResource("driver.conf").getPath();
+        ConfigManager config = new ConfigManager("config", path);
+
+        DriverService service = config.loadDriver();
+
+        assertThat(service.getDriverService()).isInstanceOf(DerbyDriverConnectionService.class);
+    }
+
+    @Test
+    public void asProperties() throws Exception {
+        Config config = ConfigFactory.empty()
+                .withValue("hibernate.query.startup_check", ConfigValueFactory.fromAnyRef(false))
+                .withValue("hibernate.format_sql", ConfigValueFactory.fromAnyRef(true));
+
+        Properties properties = ConfigManager.asProperties(config, "hibernate");
+
+        assertThat(properties).hasSize(2);
+        assertThat(properties.get("hibernate.query.startup_check")).isEqualTo("false");
+        assertThat(properties.get("hibernate.format_sql")).isEqualTo("true");
     }
 }

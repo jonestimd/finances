@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.util.Streams;
 
 /**
@@ -39,6 +40,8 @@ import io.github.jonestimd.util.Streams;
  * connection settings UI and for parsing connection settings.
  */
 public abstract class DriverConfigurationService {
+    private static final String HIBERNATE_PATH = "hibernate";
+
     /** The available configuration settings for a driver. */
     public enum Field {
         DRIVER, DIRECTORY, HOST, PORT, SCHEMA, USER, PASSWORD;
@@ -92,7 +95,9 @@ public abstract class DriverConfigurationService {
      * @param config the driver configuration settings
      * @return Hibernate connection properties
      */
-    public abstract Properties getHibernateProperties(Config config);
+    public Properties getHibernateProperties(Config config) {
+        return ConfigManager.asProperties(config, HIBERNATE_PATH);
+    }
 
     /**
      * @return default values for the driver settings
@@ -163,6 +168,10 @@ public abstract class DriverConfigurationService {
         public DriverService(DriverConfigurationService service, Config config) {
             this.service = service;
             this.config = config;
+        }
+
+        public DriverConfigurationService getDriverService() {
+            return service;
         }
 
         public Properties getHibernateProperties() {
