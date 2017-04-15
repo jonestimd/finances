@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.plugin;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -97,6 +98,10 @@ public abstract class DriverConfigurationService {
      */
     public Properties getHibernateProperties(Config config) {
         return ConfigManager.asProperties(config, HIBERNATE_PATH);
+    }
+
+    public List<String> getHibernateResources() {
+        return Collections.emptyList();
     }
 
     /**
@@ -176,6 +181,10 @@ public abstract class DriverConfigurationService {
 
         public Properties getHibernateProperties() {
             return service.getHibernateProperties(config);
+        }
+
+        public List<String> getHibernateResources() {
+            return service.getHibernateResources();
         }
 
         public boolean prepareDatabase(Consumer<String> updateProgress) throws Exception {

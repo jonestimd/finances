@@ -73,7 +73,7 @@ public class FileImportOperationsImpl implements FileImportOperations { // TODO 
         fileChooser.getActionMap().get("viewTypeDetails").actionPerformed(null);
         fileChooser.showOpenDialog(JOptionPane.getRootFrame());
         try {
-            DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver().getHibernateProperties());
+            DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver());
             ServiceContext serviceContext = new ServiceContext(daoContext);
             FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
             for (File file : fileChooser.getSelectedFiles()) {

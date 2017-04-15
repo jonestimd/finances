@@ -40,6 +40,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import io.github.jonestimd.commandline.CommandLine;
 import io.github.jonestimd.finance.MessageKey;
+import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.file.FileImport;
@@ -90,16 +91,8 @@ public class CapitalGainImport implements FileImport {
     }
 
     private <K> void putInDateMap(K key, Date date, Map<K, Map<Date, List<CapitalGain>>> parentMap, CapitalGain record) throws QuickenException {
-        Map<Date, List<CapitalGain>> dateMap = parentMap.get(key);
-        if (dateMap == null) {
-            dateMap = new HashMap<>();
-            parentMap.put(key, dateMap);
-        }
-        List<CapitalGain> records = dateMap.get(date);
-        if (records == null) {
-            records = new ArrayList<>();
-            dateMap.put(date, records);
-        }
+        Map<Date, List<CapitalGain>> dateMap = parentMap.computeIfAbsent(key, k -> new HashMap<>());
+        List<CapitalGain> records = dateMap.computeIfAbsent(date, k -> new ArrayList<>());
         records.add(record);
     }
 
@@ -114,7 +107,7 @@ public class CapitalGainImport implements FileImport {
             }
             try (FileReader txfReader = new FileReader(commandLine.getInput(0))) {
                 messageHelper.getLogger().getParent().setLevel(Level.DEBUG);
-                ServiceContext serviceContext = new ServiceContext(new HibernateDaoContext());
+                ServiceContext serviceContext = new ServiceContext(new HibernateDaoContext(new ConfigManager().loadDriver()));
                 SwingContext swingContext = new SwingContext(serviceContext);
                 FileImport txfImport = new QuickenContext(serviceContext)
                         .newTxfImport(new LotAllocationDialog(JOptionPane.getRootFrame(), swingContext.getTableFactory()));

@@ -21,18 +21,17 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.dao;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.function.Consumer;
 
 import com.google.common.base.Supplier;
 import com.typesafe.config.ConfigFactory;
+import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.hibernate.AccountDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.AccountSummaryEventHandler;
 import io.github.jonestimd.finance.dao.hibernate.CompanyDaoImpl;
@@ -52,6 +51,7 @@ import io.github.jonestimd.finance.dao.hibernate.TransactionCategoryDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionDetailDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.TransactionGroupDaoImpl;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.hibernate.AuditInterceptor;
 import io.github.jonestimd.hibernate.InterceptorChain;
@@ -90,8 +90,8 @@ public class HibernateDaoContext implements DaoRepository {
             new SecuritySummaryEventHandler(EVENT_SOURCE));
     private DomainEventInterceptor eventInterceptor = new DomainEventInterceptor(eventHandlerSupplier);
 
-    public static HibernateDaoContext connect(boolean createSchema, Properties connectionProperies, Consumer<String> updateProgress) throws IOException, SQLException {
-        HibernateDaoContext daoContext = new HibernateDaoContext(connectionProperies);
+    public static HibernateDaoContext connect(boolean createSchema, DriverService driverService, Consumer<String> updateProgress) throws IOException, SQLException {
+        HibernateDaoContext daoContext = new HibernateDaoContext(driverService);
         if (createSchema) {
             updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));
             new SchemaBuilder(daoContext).createSchemaTables().seedReferenceData();
@@ -99,24 +99,20 @@ public class HibernateDaoContext implements DaoRepository {
         return daoContext;
     }
 
-    public HibernateDaoContext() throws IOException {
-        this(new Properties());
-    }
-
-    public HibernateDaoContext(Properties connectionProperties) {
-        buildSessionFactory(connectionProperties);
+    public HibernateDaoContext(DriverService driverService) {
+        buildSessionFactory(driverService);
         buildDaos();
     }
 
-    private void buildSessionFactory(Properties connectionProperties) {
+    private void buildSessionFactory(DriverService driverService) {
         configuration = new Configuration();
         new PackageScanner(new MappedClassFilter(), configuration::addAnnotatedClass, "io.github.jonestimd.finance.domain").visitClasses();
 //        configuration.addResource("io/github/jonestimd/finance/domain/mapping.hbm.xml");
         configuration.addResource("io/github/jonestimd/finance/domain/queries.hbm.xml");
-        ConfigFactory.load().getConfig("finances.connection.properties").entrySet().forEach(entry -> {
-            configuration.setProperty(entry.getKey(), entry.getValue().unwrapped().toString());
-        });
-        for (Entry<Object, Object> entry : connectionProperties.entrySet()) {
+        driverService.getHibernateResources().forEach(configuration::addResource);
+        ConfigFactory.load().getConfig("finances.connection.properties").entrySet()
+                .forEach(entry -> configuration.setProperty(entry.getKey(), entry.getValue().unwrapped().toString()));
+        for (Entry<Object, Object> entry : driverService.getHibernateProperties().entrySet()) {
             configuration.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
         configuration.setInterceptor(new InterceptorChain(eventInterceptor, new AuditInterceptor()));
@@ -257,9 +253,8 @@ public class HibernateDaoContext implements DaoRepository {
 
     public static void main(String[] args) {
         try {
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(args[0]));
-            HibernateDaoContext context = new HibernateDaoContext(properties);
+            DriverService driverService = new ConfigManager("config", args[0]).loadDriver();
+            HibernateDaoContext context = new HibernateDaoContext(driverService);
 //            Stream.of(context.schemaCreationScript()).forEach(System.out::println);
             new SchemaUpdate(context.configuration).execute(Target.SCRIPT);
         } catch (Exception ex) {

@@ -67,7 +67,7 @@ public class FileDownload {
             FileDownload download = new FileDownload(config, context, buildClient(config));
             download.downloadNewStatements();
             if (args.length > 1) {
-                DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver().getHibernateProperties());
+                DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver());
                 ServiceContext serviceContext = new ServiceContext(daoContext);
                 FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
                 for (File file : context.getStatements()) {

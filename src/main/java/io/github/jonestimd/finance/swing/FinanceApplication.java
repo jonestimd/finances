@@ -126,7 +126,7 @@ public class FinanceApplication {
         try {
             logger.info("starting context");
             boolean initDatabase = driver.prepareDatabase(this::setProgressMessage);
-            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver.getHibernateProperties(), this::setProgressMessage));
+            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver, this::setProgressMessage));
             swingContext = new SwingContext(serviceContext);
             logger.info("done");
             return null;

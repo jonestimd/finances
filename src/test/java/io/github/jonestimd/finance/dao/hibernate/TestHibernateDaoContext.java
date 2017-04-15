@@ -1,30 +1,51 @@
 package io.github.jonestimd.finance.dao.hibernate;
 
 import java.sql.Connection;
-import java.util.Properties;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.dao.TestDaoRepository;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
+import io.github.jonestimd.finance.plugin.EmbeddedDriverConnectionService;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Projections;
 
+import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
+
 public class TestHibernateDaoContext extends HibernateDaoContext implements TestDaoRepository {
-    public static final Properties CONNECTION_PROPERTIES = new Properties();
-    static {
-        CONNECTION_PROPERTIES.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
-        CONNECTION_PROPERTIES.put("hibernate.connection.driver_class", "org.hsqldb.jdbcDriver");
-        CONNECTION_PROPERTIES.put("hibernate.connection.url", "jdbc:hsqldb:mem:finances");
-        CONNECTION_PROPERTIES.put("hibernate.connection.username", "sa");
-        CONNECTION_PROPERTIES.put("hibernate.connection.password", "");
+    private static final Config CONFIG = ConfigFactory.empty().withValue(DIRECTORY.toString(), ConfigValueFactory.fromAnyRef("finances"));
+    private static class HsqlDriverConfigurationService extends EmbeddedDriverConnectionService {
+        public HsqlDriverConfigurationService() {
+            super("Hsql", "org.hibernate.dialect.HSQLDialect", "org.hsqldb.jdbcDriver", "hsqldb:mem:");
+        }
+
+        @Override
+        public boolean isEnabled(Field field) {
+            return false;
+        }
+
+        @Override
+        public boolean isRequired(Field field) {
+            return false;
+        }
+
+        @Override
+        public Map<Field, String> getDefaultValues() {
+            return Collections.emptyMap();
+        }
     }
 
     private org.hibernate.Transaction transaction;
 
     public TestHibernateDaoContext() {
-        super(CONNECTION_PROPERTIES);
+        super(new DriverService(new HsqlDriverConfigurationService(), CONFIG));
     }
 
     @Override

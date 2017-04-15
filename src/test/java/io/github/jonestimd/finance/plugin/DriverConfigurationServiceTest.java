@@ -110,6 +110,11 @@ public class DriverConfigurationServiceTest {
     }
 
     @Test
+    public void getHibernateResourcesReturnsEmptyList() throws Exception {
+        assertThat(testService.getHibernateResources()).isEmpty();
+    }
+
+    @Test
     public void prepareDatabaseReturnsFalseForSuccessfulQuery() throws Exception {
         when(connection.prepareStatement(anyString())).thenReturn(statement);
         Config config = ConfigFactory.empty();

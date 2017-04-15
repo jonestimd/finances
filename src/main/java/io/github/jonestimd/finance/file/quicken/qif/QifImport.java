@@ -38,6 +38,7 @@ import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.file.FileImport;
 import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
+import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.service.ServiceContext;
 import org.apache.log4j.Logger;
 
@@ -105,8 +106,8 @@ public class QifImport implements FileImport { // TODO needs to be a service so 
         if (commandLine.getInputCount() > 0) {
             try (FileReader qifReader = new FileReader(commandLine.getInput(0))) {
                 boolean createSchema = commandLine.hasOption("--init-database");
-                Properties connectionProperies = new ConfigManager().loadDriver().getHibernateProperties();
-                HibernateDaoContext daoContext = HibernateDaoContext.connect(createSchema, connectionProperies, logger::info);
+                DriverService driver = new ConfigManager().loadDriver();
+                HibernateDaoContext daoContext = HibernateDaoContext.connect(createSchema, driver, logger::info);
                 FileImport qifImport = new QuickenContext(new ServiceContext(daoContext)).newQifImport();
                 qifImport.importFile(qifReader);
             }
