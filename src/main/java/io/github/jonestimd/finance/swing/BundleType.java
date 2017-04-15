@@ -30,7 +30,7 @@ import io.github.jonestimd.swing.ColorFactory;
 
 public enum BundleType implements Supplier<ResourceBundle> {
     LABELS("io.github.jonestimd.finance.ComponentLabels"),
-    MESSAGES("io.github.jonestimd.finance.ExceptionMessages"),
+    MESSAGES("io.github.jonestimd.finance.Messages"),
     REFERENCE("io.github.jonestimd.finance.ReferenceData"),
     QUICKEN_CAPITAL_GAIN("io.github.jonestimd.finance.file.quicken.CapitalGain");
 

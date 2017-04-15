@@ -21,6 +21,7 @@
 // SOFTWARE.
 package io.github.jonestimd.finance;
 
+@Deprecated
 public enum MessageKey {
     UNEXPECTED_EXCEPTION("io.github.jonestimd.finance.unexpectedException");
 

@@ -24,10 +24,12 @@ package io.github.jonestimd.util;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
+import io.github.jonestimd.function.MessageConsumer;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-public class MessageHelper {
+@Deprecated
+public class MessageHelper implements MessageConsumer {
     private final ResourceBundle bundle;
     private final String keyPrefix;
     private final Logger logger;
@@ -91,5 +93,15 @@ public class MessageHelper {
 
     public void errorLocalized(String messageKey, Throwable throwable, Object ...args) {
         logger.l7dlog(Level.ERROR, getMessageKey(messageKey), args, throwable);
+    }
+
+    /**
+     * Log an INFO message.
+     * @param messageKey the resource bundle key for the message format
+     * @param args the message arguments
+     */
+    @Override
+    public void accept(String messageKey, Object... args) {
+        infoLocalized(messageKey, args);
     }
 }

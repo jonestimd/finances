@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,11 +37,16 @@ public class SecurityTransactionConverter implements RecordConverter {
     private static final String RECORD_TYPE = "Type:Invst";
 
     private TransactionService transactionService;
-    private Map<String, SecurityTransactionHandler> actionHandlers = new HashMap<String, SecurityTransactionHandler>();
+    private Map<String, SecurityTransactionHandler> actionHandlers = new HashMap<>();
 
     public SecurityTransactionConverter(TransactionService transactionService, Map<String, SecurityTransactionHandler> actionHandlers) {
         this.transactionService = transactionService;
         this.actionHandlers = actionHandlers;
+    }
+
+    @Override
+    public String getStatusKey() {
+        return "import.qif.securityTransaction.converter.status";
     }
 
     public Set<String> getTypes() {

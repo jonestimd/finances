@@ -21,11 +21,13 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.quicken.qif;
 
+import java.util.function.Consumer;
+
 import io.github.jonestimd.finance.domain.account.Account;
 
 public class AccountHolder {
-
     private Account account;
+    private Consumer<Account> accountChangeConsumer;
 
     public Account getAccount() {
         return account;
@@ -33,5 +35,14 @@ public class AccountHolder {
 
     public void setAccount(Account account) {
         this.account = account;
+        if (accountChangeConsumer != null) accountChangeConsumer.accept(account);
+    }
+
+    public void onAcountChange(Consumer<Account> consumer) {
+        this.accountChangeConsumer = consumer;
+    }
+
+    public String getAccountName() {
+        return account == null ? "" : account.getName();
     }
 }

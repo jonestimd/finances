@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
+import io.github.jonestimd.function.MessageConsumer;
 import io.github.jonestimd.util.MessageHelper;
 import org.apache.log4j.Level;
 
@@ -68,7 +69,7 @@ public class CapitalGainImport implements FileImport {
         this.lotValidator = new LotValidator(lotAllocationDialog);
     }
 
-    public void importFile(Reader reader) throws QuickenException, IOException {
+    public void importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
         CapitalGainReader tsvReader = new CapitalGainReader(reader);
 
         try {
@@ -83,7 +84,7 @@ public class CapitalGainImport implements FileImport {
             if (! saleLots.isEmpty()) {
                 transactionService.saveSecurityLots(Iterables.filter(saleLots, IS_LOT_NOT_EMPTY));
             }
-            messageHelper.infoLocalized("importSummary", recordLotMap.size(), ignoreCount, recordCount+ignoreCount);
+            updateProgress.accept("importSummary", recordLotMap.size(), ignoreCount, recordCount+ignoreCount);
         }
         catch (IOException ex) {
             throw new QuickenException("importFailed", ex, "TXF", tsvReader.getLineNumber());
@@ -111,7 +112,7 @@ public class CapitalGainImport implements FileImport {
                 SwingContext swingContext = new SwingContext(serviceContext);
                 FileImport txfImport = new QuickenContext(serviceContext)
                         .newTxfImport(new LotAllocationDialog(JOptionPane.getRootFrame(), swingContext.getTableFactory()));
-                txfImport.importFile(txfReader);
+                txfImport.importFile(txfReader, messageHelper);
             }
             catch (FileNotFoundException ex) {
                 messageHelper.error(ex.getMessage(), null);

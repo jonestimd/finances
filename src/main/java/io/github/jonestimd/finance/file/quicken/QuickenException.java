@@ -21,13 +21,16 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.quicken;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.jonestimd.LocalizedException;
 import io.github.jonestimd.finance.swing.BundleType;
 
 public class QuickenException extends LocalizedException {
-    private static final String KEY_PREFIX = "io.github.jonestimd.finance.file.quicken.";
+    private static final String KEY_PREFIX = "import.qif.";
 
-    public QuickenException(String messageKey, Object ... messageArgs) { // TODO prefix qif. on QIF message keys
+    public QuickenException(String messageKey, Object ... messageArgs) {
         super(KEY_PREFIX + messageKey, messageArgs);
     }
 
@@ -37,5 +40,22 @@ public class QuickenException extends LocalizedException {
 
     protected String getMessageFormat(String messageKey) {
         return BundleType.MESSAGES.getString(messageKey);
+    }
+
+    public List<String> getMessages() {
+        List<String> messages = new ArrayList<>();
+        for (Throwable ex = this; ex instanceof QuickenException; ex = ex.getCause()) {
+            messages.add(ex.getMessage());
+            if (ex.getCause() != null && ! (ex.getCause() instanceof QuickenException) && ex.getCause().getMessage() != null) {
+                messages.add(ex.getCause().getMessage());
+            }
+        }
+        return messages;
+    }
+
+    public Throwable getRootCause() {
+        Throwable root = this;
+        while (root instanceof QuickenException) root = root.getCause();
+        return root;
     }
 }

@@ -35,6 +35,7 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
@@ -51,6 +52,7 @@ import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
+import io.github.jonestimd.finance.swing.QifImportAction;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
@@ -64,6 +66,7 @@ import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 
+import static io.github.jonestimd.finance.swing.BundleType.LABELS;
 import static io.github.jonestimd.finance.swing.account.AccountTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
@@ -76,6 +79,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
 
     private Action openAction;
     private Action companyAction;
+    private Action qifImportAction;
 
     public AccountsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
                          WindowEventPublisher<WindowType> windowEventPublisher) {
@@ -89,7 +93,16 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         openAction = new FrameAction<>(bundle, "account.action.open", windowEventPublisher, new TransactionsWindowEvent(this));
         openAction.setEnabled(false);
         companyAction = new CompanyDialogAction(tableFactory);
+        qifImportAction = new QifImportAction(serviceLocator);
         TableFactory.addDoubleClickHandler(getTable(), this::tableDoubleClicked);
+    }
+
+    @Override
+    protected void initializeMenu(JMenuBar menuBar) {
+        super.initializeMenu(menuBar);
+        final JMenu menu = ComponentFactory.newMenu(LABELS.get(), "menu.file.mnemonicAndName");
+        menu.add(new JMenuItem(qifImportAction));
+        menuBar.add(menu, 0);
     }
 
     @Override

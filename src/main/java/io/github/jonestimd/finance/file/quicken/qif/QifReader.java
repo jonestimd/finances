@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.quicken.qif;
 
-import java.io.IOException;
 import java.io.Reader;
 
 import io.github.jonestimd.finance.file.quicken.QuickenReader;
@@ -32,7 +31,7 @@ import org.apache.log4j.Logger;
 public class QifReader extends QuickenReader<QifRecord> {
     private Logger logger = Logger.getLogger(QifReader.class);
 
-    public QifReader(Reader reader) throws IOException {
+    public QifReader(Reader reader) {
         super(reader);
     }
 
@@ -42,7 +41,7 @@ public class QifReader extends QuickenReader<QifRecord> {
 
     protected void validateLine(String line) {
         if (QifField.fromCode(line.charAt(0)) == null && logger.isEnabledFor(Level.WARN)) {
-            logger.warn(BundleType.MESSAGES.formatMessage("io.github.jonestimd.finance.file.quicken.unknownQifFieldCode", line));
+            logger.warn(BundleType.MESSAGES.formatMessage("import.qif.unknownQifFieldCode", line));
         }
     }
 }

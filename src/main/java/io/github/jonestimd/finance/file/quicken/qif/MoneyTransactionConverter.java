@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -66,8 +66,13 @@ public class MoneyTransactionConverter implements RecordConverter {
         this.pendingTransferDetails = pendingTransferDetails;
     }
 
+    @Override
+    public String getStatusKey() {
+        return "import.qif.moneyTransaction.converter.status";
+    }
+
     public Set<String> getTypes() {
-        return new HashSet<String>(Arrays.asList(RECORD_TYPES));
+        return new HashSet<>(Arrays.asList(RECORD_TYPES));
     }
 
     private void createDetail(Transaction transaction, String category, String memo, BigDecimal amount, BigDecimal categoryAmount) {
@@ -94,7 +99,7 @@ public class MoneyTransactionConverter implements RecordConverter {
         else {
             unmergeCombinedSplitTransfer(detail, amount);
             Transaction pendingTransaction = detail.getTransaction();
-            transaction.addDetails(new ArrayList<TransactionDetail>(pendingTransaction.getDetails()));
+            transaction.addDetails(new ArrayList<>(pendingTransaction.getDetails()));
             transactionService.deleteTransaction(pendingTransaction);
         }
     }

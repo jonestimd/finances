@@ -29,7 +29,7 @@ public abstract class QuickenReader<T extends QuickenRecord> {
     private BufferedReader reader;
     private long lineNumber = 1L;
 
-    public QuickenReader(Reader reader) throws IOException {
+    public QuickenReader(Reader reader) {
         this.reader = new BufferedReader(reader);
     }
 

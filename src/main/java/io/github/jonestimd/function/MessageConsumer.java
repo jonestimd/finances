@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,35 +19,26 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd;
+package io.github.jonestimd.function;
 
 import java.text.MessageFormat;
+import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
-public abstract class LocalizedException extends RuntimeException {
+public interface MessageConsumer {
+    /**
+     * Output a message.
+     * @param pattern the resource bundle key for the message format
+     * @param args the message arguments
+     */
+    void accept(String pattern, Object... args);
 
-    private Object[] messageArgs;
-
-    protected LocalizedException(String messageKey, Object... messageArgs) {
-        super(messageKey);
-        this.messageArgs = messageArgs;
+    /**
+     * Create a {@code MessageConsumer} that formats messages and passes them to a {@link Consumer}.
+     * @param bundle source of the message formats
+     * @param consumer receiver of the formatted messages
+     */
+    static MessageConsumer forBundle(ResourceBundle bundle, Consumer<String> consumer) {
+        return (key, args) -> consumer.accept(MessageFormat.format(bundle.getString(key), args));
     }
-
-    protected LocalizedException(String messageKey, Throwable cause, Object... messageArgs) {
-        super(messageKey, cause);
-        this.messageArgs = messageArgs;
-    }
-
-    public Object[] getMessageArgs() {
-        return messageArgs;
-    }
-
-    public String getMessageKey() {
-        return super.getMessage();
-    }
-
-    public String getMessage() {
-        return MessageFormat.format(getMessageFormat(super.getMessage()), messageArgs);
-    }
-
-    protected abstract String getMessageFormat(String messageKey);
 }

@@ -48,6 +48,11 @@ public class AccountConverter implements RecordConverter {
         this.accountOperations = accountOperations;
     }
 
+    @Override
+    public String getStatusKey() {
+        return "import.qif.account.converter.status";
+    }
+
     public void importRecord(AccountHolder accountHolder, QifRecord record) {
         String name = record.getValue(QifField.NAME);
         Account account = accountOperations.getAccount(null, name);

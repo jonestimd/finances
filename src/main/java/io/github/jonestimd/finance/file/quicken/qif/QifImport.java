@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,37 +21,25 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.quicken.qif;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.Reader;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
-import io.github.jonestimd.commandline.CommandLine;
-import io.github.jonestimd.finance.MessageKey;
-import io.github.jonestimd.finance.config.ConfigManager;
-import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.file.FileImport;
-import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
-import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
-import io.github.jonestimd.finance.service.ServiceContext;
+import io.github.jonestimd.function.MessageConsumer;
 import org.apache.log4j.Logger;
 
-public class QifImport implements FileImport { // TODO needs to be a service so the import is a single transaction
-    private static final Logger logger = Logger.getLogger(QifImport.class);
-
+public class QifImport implements FileImport {
+    private Logger logger = Logger.getLogger(QifImport.class);
     private Map<String, RecordConverter> converterMap;
 
     private AccountHolder accountHolder = new AccountHolder();
     private RecordConverter currentConverter;
 
     public QifImport(Collection<RecordConverter> converters) {
-        this.converterMap = new HashMap<String, RecordConverter>();
+        this.converterMap = new HashMap<>();
         for (RecordConverter converter : converters) {
             for (String type : converter.getTypes()) {
                 converterMap.put(type, converter);
@@ -59,14 +47,9 @@ public class QifImport implements FileImport { // TODO needs to be a service so 
         }
     }
 
-    private void debug(String pattern, Object ... args) { // TODO externalize messages
-        if (logger.isDebugEnabled()) {
-            logger.debug(MessageFormat.format(pattern, args));
-        }
-    }
-
-    public void importFile(Reader reader) throws QuickenException, IOException {
+    public void importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
         QifReader qifReader = new QifReader(reader);
+        accountHolder.onAcountChange(account -> updateProgress.accept("import.qif.switch.account.status", account.getName()));
 
         int importCount = 0;
         int ignoreCount = 0;
@@ -76,11 +59,13 @@ public class QifImport implements FileImport { // TODO needs to be a service so 
                     throw new QuickenException("invalidRecord", "QIF", record.getStartingLine());
                 }
                 if (record.isOption()) {
-                    debug("ignoring option: !{0}", record.getControlValue());
+                    updateProgress.accept("import.qif.ignoredOption", record.getControlValue());
                 }
                 else {
                     if (record.isControl()) {
                         currentConverter = converterMap.get(record.getControlValue());
+                        if (currentConverter == null) updateProgress.accept("import.qif.ignoredControl", record.getControlValue());
+                        else updateProgress.accept(currentConverter.getStatusKey(), accountHolder.getAccountName());
                     }
                     else if (currentConverter != null) {
                         currentConverter.importRecord(accountHolder, record);
@@ -91,53 +76,13 @@ public class QifImport implements FileImport { // TODO needs to be a service so 
                     }
                 }
             }
-            debug("imported {0} records, ignored {1} records", importCount, ignoreCount);
-        }
-        catch (QuickenException ex) {
+            updateProgress.accept("import.qif.summary", importCount, ignoreCount);
+        } catch (QuickenException ex) {
+            logger.error("Quicken import failed", ex);
             throw ex;
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
+            logger.error("Quicken import failed", ex);
             throw new QuickenException("importFailed", ex, "QIF", qifReader.getLineNumber());
         }
-    }
-
-    public static void main(String[] args) {
-        CommandLine commandLine = new CommandLine(args);
-        if (commandLine.getInputCount() > 0) {
-            try (FileReader qifReader = new FileReader(commandLine.getInput(0))) {
-                boolean createSchema = commandLine.hasOption("--init-database");
-                DriverService driver = new ConfigManager().loadDriver();
-                HibernateDaoContext daoContext = HibernateDaoContext.connect(createSchema, driver, logger::info);
-                FileImport qifImport = new QuickenContext(new ServiceContext(daoContext)).newQifImport();
-                qifImport.importFile(qifReader);
-            }
-            catch (FileNotFoundException ex) {
-                logger.error(ex.getMessage());
-            }
-            catch (QuickenException ex) {
-                while (ex != null) {
-                    logger.error(ex.getMessage());
-                    if (ex.getCause() instanceof QuickenException) {
-                        ex = (QuickenException) ex.getCause();
-                    }
-                    else {
-                        if (ex.getCause() != null) {
-                            logger.error(ex.getCause().getMessage(), ex.getCause());
-                        }
-                        break;
-                    }
-                }
-            }
-            catch (Throwable throwable) {
-                logger.error(MessageKey.UNEXPECTED_EXCEPTION.key(), throwable);
-            }
-        }
-        else {
-            printUsage();
-        }
-    }
-
-    private static void printUsage() {
-        System.out.println("usage: java " + QifImport.class.getName() + " qif_file");
     }
 }
