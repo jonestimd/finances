@@ -37,6 +37,8 @@ public class PayeeTableModel extends TransactionSummaryTableModel<Payee, PayeeSu
             TransactionSummaryColumnAdapter.COUNT_ADAPTER);
     public static final int NAME_INDEX = 0;
 
+    // need strong reference to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Payee> domainEventListener = event -> {
         if (event.isAdd()) {
             for (Payee payee : event.getDomainObjects()) {

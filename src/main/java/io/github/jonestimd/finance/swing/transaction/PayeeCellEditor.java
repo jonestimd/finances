@@ -47,8 +47,10 @@ import io.github.jonestimd.util.Streams;
 public class PayeeCellEditor extends EditableComboBoxCellEditor<Payee> {
     private static final String LOADING_MESSAGE_KEY = "table.transaction.payee.initialize";
     private final PayeeOperations payeeOperations;
-    // need references to event listeners to avoid garbage collection
+    // need strong references to event listeners to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final ComboBoxDomainEventListener<Long, Payee> payeeEventListener = new ComboBoxDomainEventListener<>(getComboBox());
+    @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Transaction> transactionEventListener = new DomainEventListener<Long, Transaction>() {
         @Override
         public void onDomainEvent(DomainEvent<Long, Transaction> event) {

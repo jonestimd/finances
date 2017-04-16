@@ -35,7 +35,8 @@ import io.github.jonestimd.swing.validation.Validator;
 
 public class TransactionGroupCellEditor extends EditableComboBoxCellEditor<TransactionGroup> {
     private final TransactionGroupOperations transactionGroupOperations;
-    // need a reference to avoid garbage collection
+    // need a strong reference to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final ComboBoxDomainEventListener<Long, TransactionGroup> domainEventListener = new ComboBoxDomainEventListener<>(getComboBox());
 
     public TransactionGroupCellEditor(final ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
