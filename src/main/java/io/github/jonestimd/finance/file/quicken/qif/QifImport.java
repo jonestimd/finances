@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.github.jonestimd.finance.file.FileImport;
+import io.github.jonestimd.finance.file.ImportSummary;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.function.MessageConsumer;
 import org.apache.log4j.Logger;
@@ -47,7 +48,7 @@ public class QifImport implements FileImport {
         }
     }
 
-    public void importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
+    public ImportSummary importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
         QifReader qifReader = new QifReader(reader);
         accountHolder.onAcountChange(account -> updateProgress.accept("import.qif.switch.account.status", account.getName()));
 
@@ -76,7 +77,7 @@ public class QifImport implements FileImport {
                     }
                 }
             }
-            updateProgress.accept("import.qif.summary", importCount, ignoreCount);
+            return new ImportSummary(importCount, ignoreCount);
         } catch (QuickenException ex) {
             logger.error("Quicken import failed", ex);
             throw ex;

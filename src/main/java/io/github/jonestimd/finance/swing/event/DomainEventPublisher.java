@@ -87,7 +87,8 @@ public class DomainEventPublisher {
         }
 
         public boolean handlesEvent(DomainEvent<?, ?> event) {
-            return domainClass.isAssignableFrom(event.getDomainClass());
+            Class<?> domainClass = event.getDomainClass();
+            return domainClass == null || this.domainClass.isAssignableFrom(domainClass);
         }
 
         public void sendEvent(DomainEvent<ID, T> event) {

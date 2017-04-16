@@ -27,8 +27,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
@@ -39,10 +37,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.file.ImportSummary;
 import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.ServiceLocator;
+import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.function.MessageConsumer;
+import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
@@ -55,12 +57,14 @@ public class QifImportAction extends MnemonicAction {
     private final ServiceLocator serviceLocator;
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter fileFilter = new FileNameExtensionFilter("Quicken Import Format", "qif", "QIF");
+    private final DomainEventPublisher eventPublisher;
 
-    public QifImportAction(ServiceLocator serviceLocator) {
+    public QifImportAction(ServiceLocator serviceLocator, DomainEventPublisher eventPublisher) {
         super(LABELS.get(), "menu.file.import.qif");
         this.serviceLocator = serviceLocator;
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.addChoosableFileFilter(fileFilter);
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -70,34 +74,13 @@ public class QifImportAction extends MnemonicAction {
         if (result == JFileChooser.APPROVE_OPTION) {
             StatusFrame window = ComponentTreeUtils.findAncestor((JComponent) event.getSource(), StatusFrame.class);
             File selectedFile = fileChooser.getSelectedFile();
-            window.disableUI("Reading " + selectedFile.getName() + "...");
-            CompletableFuture.runAsync(() -> importFile(selectedFile, window))
-                    .whenCompleteAsync((x, ex) -> onComplete(window, ex), SwingUtilities::invokeLater);
-        }
-    }
-
-    private void importFile(File selectedFile, StatusFrame window) {
-        MessageConsumer updateProgress = MessageConsumer.forBundle(MESSAGES.get(), setStatusMessage(window));
-        try (FileReader qifReader = new FileReader(selectedFile)) {
-            new QuickenContext(serviceLocator).newQifImport().importFile(qifReader, updateProgress);
-        } catch (IOException ex) {
-            throw new QuickenException("unexpectedException", ex);
+            window.disableUI(MESSAGES.formatMessage("import.qif.start.status", selectedFile.getName()));
+            BackgroundTask.run(new ImportTask(selectedFile, window), window);
         }
     }
 
     private Consumer<String> setStatusMessage(StatusFrame window) {
         return message -> SwingUtilities.invokeLater(() -> window.setStatusMessage(message));
-    }
-
-    private void onComplete(StatusFrame window, Throwable ex) {
-        if (ex instanceof CompletionException) ex = ex.getCause();
-        if (ex instanceof QuickenException) {
-            showQuickenException(window, (QuickenException) ex);
-        }
-        else if (ex != null) {
-            new ExceptionDialog(window, ex).setVisible(true);
-        }
-        window.enableUI(); // TODO refresh open windows
     }
 
     private void showQuickenException(StatusFrame window, QuickenException ex) {
@@ -116,5 +99,45 @@ public class QifImportAction extends MnemonicAction {
             return builder.replace(builder.length() - 4, builder.length(), "</html>").toString();
         }
         return messages.get(0);
+    }
+
+    private class ImportTask implements BackgroundTask<ImportSummary> {
+        private final File selectedFile;
+        private final StatusFrame window;
+
+        private ImportTask(File selectedFile, StatusFrame window) {
+            this.selectedFile = selectedFile;
+            this.window = window;
+        }
+
+        @Override
+        public String getStatusMessage() {
+            return MESSAGES.formatMessage("import.qif.start.status", selectedFile.getName());
+        }
+
+        @Override
+        public ImportSummary performTask() {
+            MessageConsumer updateProgress = MessageConsumer.forBundle(MESSAGES.get(), setStatusMessage(window));
+            try (FileReader qifReader = new FileReader(selectedFile)) {
+                return new QuickenContext(serviceLocator).newQifImport().importFile(qifReader, updateProgress);
+            } catch (IOException ex) {
+                throw new QuickenException("unexpectedException", ex);
+            }
+        }
+
+        @Override
+        public void updateUI(ImportSummary summary) {
+            JOptionPane.showMessageDialog(window, MESSAGES.formatMessage("import.qif.summary", summary.getImported(), summary.getIgnored()));
+            eventPublisher.publishEvent(new DomainEvent<>(this));
+        }
+
+        @Override
+        public boolean handleException(Throwable ex) {
+            if (ex instanceof QuickenException) {
+                showQuickenException(window, (QuickenException) ex);
+                return true;
+            }
+            return false;
+        }
     }
 }

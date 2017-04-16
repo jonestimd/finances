@@ -26,5 +26,5 @@ import java.io.Reader;
 import io.github.jonestimd.function.MessageConsumer;
 
 public interface FileImport {
-    void importFile(Reader reader, MessageConsumer updateProgress);
+    ImportSummary importFile(Reader reader, MessageConsumer updateProgress);
 }

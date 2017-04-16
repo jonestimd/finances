@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,20 +19,32 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.domain;
+package io.github.jonestimd.finance.file;
 
-import java.util.Objects;
+public class ImportSummary {
+    private final int imported;
+    private final int ignored;
+    private final int totalRecords;
 
-public interface UniqueId<T> {
-    final String ID = "id";
-
-    T getId();
-
-    default boolean isNew() {
-        return getId() == null;
+    public ImportSummary(int imported, int ignored) {
+        this(imported, ignored, imported + ignored);
     }
 
-    static <T> boolean isSameId(UniqueId<T> u1, UniqueId<T> u2) {
-        return u1 != null && u2 != null && Objects.equals(u1.getId(), u2.getId());
+    public ImportSummary(int imported, int ignored, int totalRecords) {
+        this.imported = imported;
+        this.ignored = ignored;
+        this.totalRecords = totalRecords;
+    }
+
+    public int getImported() {
+        return imported;
+    }
+
+    public int getIgnored() {
+        return ignored;
+    }
+
+    public int getTotalRecords() {
+        return totalRecords;
     }
 }

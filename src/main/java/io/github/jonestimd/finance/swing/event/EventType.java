@@ -22,8 +22,14 @@
 package io.github.jonestimd.finance.swing.event;
 
 public enum EventType {
+    /** The specified entities have been added. */
     ADDED,
+    /** The specified entities have been deleted. */
     DELETED,
+    /** The specified entities have been modified. */
     CHANGED,
-    REPLACED;
+    /** The specified entities have been replaced (merged). */
+    REPLACED,
+    /** Unspecified changes have occurred.  Need to reload the data. */
+    RELOAD;
 }

@@ -44,6 +44,7 @@ import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.file.FileImport;
+import io.github.jonestimd.finance.file.ImportSummary;
 import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.ServiceContext;
@@ -69,7 +70,7 @@ public class CapitalGainImport implements FileImport {
         this.lotValidator = new LotValidator(lotAllocationDialog);
     }
 
-    public void importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
+    public ImportSummary importFile(Reader reader, MessageConsumer updateProgress) throws QuickenException {
         CapitalGainReader tsvReader = new CapitalGainReader(reader);
 
         try {
@@ -85,6 +86,7 @@ public class CapitalGainImport implements FileImport {
                 transactionService.saveSecurityLots(Iterables.filter(saleLots, IS_LOT_NOT_EMPTY));
             }
             updateProgress.accept("importSummary", recordLotMap.size(), ignoreCount, recordCount+ignoreCount);
+            return new ImportSummary(recordLotMap.size(), ignoreCount, recordCount + ignoreCount);
         }
         catch (IOException ex) {
             throw new QuickenException("importFailed", ex, "TXF", tsvReader.getLineNumber());

@@ -45,6 +45,17 @@ public class DomainEvent<ID, T extends UniqueId<ID>> extends EventObject {
         return Streams.of(items).collect(Collectors.groupingBy(UniqueId::getId, ImmutableCollector.toList()));
     }
 
+    /**
+     * Create a {@link EventType#RELOAD} event for all domain classes.
+     */
+    public DomainEvent(Object source) {
+        super(source);
+        this.type = EventType.RELOAD;
+        this.domainObjects = Collections.emptyMap();
+        this.replacement = null;
+        this.domainClass = null;
+    }
+
     public DomainEvent(Object source, EventType type, T domainObject, Class<T> domainClass) {
         this(source, type, Collections.singletonMap(domainObject.getId(), Collections.singletonList(domainObject)), null, domainClass);
     }
@@ -53,6 +64,9 @@ public class DomainEvent<ID, T extends UniqueId<ID>> extends EventObject {
         this(source, type, index(domainObjects), null, domainClass);
     }
 
+    /**
+     * Create a {@link EventType#REPLACED} event.
+     */
     public DomainEvent(Object source, Iterable<T> domainObjects, T replacement, Class<T> domainClass) {
         this(source, EventType.REPLACED, index(domainObjects), replacement, domainClass);
     }
@@ -83,6 +97,10 @@ public class DomainEvent<ID, T extends UniqueId<ID>> extends EventObject {
 
     public boolean isReplace() {
         return type == EventType.REPLACED;
+    }
+
+    public boolean isReload() {
+        return type == EventType.RELOAD;
     }
 
     public Class<T> getDomainClass() {

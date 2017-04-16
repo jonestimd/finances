@@ -29,6 +29,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
@@ -39,8 +40,10 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 
 import com.google.common.collect.Iterables;
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -61,6 +64,8 @@ import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
+import io.github.jonestimd.swing.ComponentTreeUtils;
+import io.github.jonestimd.swing.StatusIndicator;
 import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.window.FrameAction;
@@ -77,7 +82,9 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private final DomainEventPublisher eventPublisher;
     // need strong reference to avoid garbage collection
     @SuppressWarnings("FieldCanBeLocal")
-    private final DomainEventListener<Long, Company> companyDomainEventListener = this::onDomainEvent;
+    private final DomainEventListener<Long, Company> companyDomainEventListener = this::onCompanyDomainEvent;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final DomainEventListener<Long, Account> accountDomainEventListener = this::onAccountDomainEvent;
 
     private Action openAction;
     private Action companyAction;
@@ -91,11 +98,12 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         this.eventPublisher = domainEventPublisher;
         this.companyCellEditor = new CompanyCellEditor(serviceLocator);
         domainEventPublisher.register(Company.class, companyDomainEventListener);
+        domainEventPublisher.register(Account.class, accountDomainEventListener);
         getTable().getColumn(AccountColumnAdapter.COMPANY_ADAPTER).setCellEditor(companyCellEditor);
         openAction = new FrameAction<>(bundle, "account.action.open", windowEventPublisher, new TransactionsWindowEvent(this));
         openAction.setEnabled(false);
         companyAction = new CompanyDialogAction(tableFactory);
-        qifImportAction = new QifImportAction(serviceLocator);
+        qifImportAction = new QifImportAction(serviceLocator, eventPublisher);
         TableFactory.addDoubleClickHandler(getTable(), this::tableDoubleClicked);
     }
 
@@ -123,9 +131,21 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         menu.add(new JMenuItem(companyAction));
     }
 
-    private void onDomainEvent(DomainEvent<Long, Company> event) {
+    private void onCompanyDomainEvent(DomainEvent<Long, Company> event) {
         if (event.isAdd()) {
             companyCellEditor.addListItems(event.getDomainObjects());
+        }
+    }
+
+    private void onAccountDomainEvent(DomainEvent<Long, Account> event) {
+        if (event.isReload()) {
+            StatusIndicator indicator = ComponentTreeUtils.findAncestor(this, StatusIndicator.class);
+            indicator.disableUI(LABELS.getString("account.action.reload.status.initialize"));
+            CompletableFuture.supplyAsync(this::getTableData)
+                    .thenAcceptAsync(accounts -> {
+                        getTableModel().appendMissing(accounts, UniqueId::isSameId);
+                        indicator.enableUI();
+                    }, SwingUtilities::invokeLater);
         }
     }
 
