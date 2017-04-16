@@ -3,6 +3,7 @@ package io.github.jonestimd.finance.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -108,7 +109,7 @@ public abstract class HsqlTestFixture {
     public void initDatabase() throws Exception {
         daoContext = daoRepositorySupplier.get();
         if (initializedClasses.isEmpty()) {
-            new SchemaBuilder(daoContext).createSchemaTables();
+            new SchemaBuilder(daoContext).createSchemaTables(Collections.emptyList());
         }
         // TODO tear down the database after each test?
         // only run insert queries once per subclass

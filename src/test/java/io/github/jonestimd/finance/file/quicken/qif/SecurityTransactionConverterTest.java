@@ -51,7 +51,7 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
 
             fail("expected exception");
         } catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.unknownSecurityAction");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.unknownSecurityAction");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"unknown", 1L});
         }
     }

@@ -42,7 +42,7 @@ public class TransferHandlerTest extends HandlerTestFixture<TransferHandler> {
             fail("expected an exception");
         }
         catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidDate");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.invalidDate");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[]{qifDate, 1L});
         }
     }

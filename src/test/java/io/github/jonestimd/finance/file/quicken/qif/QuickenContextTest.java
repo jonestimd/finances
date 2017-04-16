@@ -1,6 +1,6 @@
 package io.github.jonestimd.finance.file.quicken.qif;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import io.github.jonestimd.finance.domain.account.AccountType;
@@ -8,14 +8,17 @@ import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.FileImport;
+import io.github.jonestimd.function.MessageConsumer;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class QuickenContextTest extends QifContextTestFixture {
+    private MessageConsumer messageConsumer = mock(MessageConsumer.class);
 
     protected List<QueryBatch> getInsertQueries() {
-        return Arrays.asList(ASSET_BATCH);
+        return Collections.singletonList(ASSET_BATCH);
     }
 
     @Test
@@ -27,7 +30,7 @@ public class QuickenContextTest extends QifContextTestFixture {
         FileImport qifImport = qifContext.newQifImport();
         long existing = daoContext.countAll(Transaction.class);
 
-        qifImport.importFile(getReader());
+        qifImport.importFile(getReader(), messageConsumer);
 
         long imported = daoContext.countAll(Transaction.class) - existing;
         assertThat(imported).isEqualTo(4);
@@ -54,7 +57,7 @@ public class QuickenContextTest extends QifContextTestFixture {
         FileImport qifImport = qifContext.newQifImport();
         long existing = daoContext.countAll(Transaction.class);
 
-        qifImport.importFile(getReader());
+        qifImport.importFile(getReader(), messageConsumer);
 
         long imported = daoContext.countAll(Transaction.class) - existing;
         assertThat(imported).isEqualTo(4);
@@ -67,7 +70,7 @@ public class QuickenContextTest extends QifContextTestFixture {
         FileImport qifImport = qifContext.newQifImport();
         long existing = daoContext.countAll(Security.class);
 
-        qifImport.importFile(getReader());
+        qifImport.importFile(getReader(), messageConsumer);
 
         long imported = daoContext.countAll(Security.class) - existing;
         assertThat(imported).isEqualTo(2);

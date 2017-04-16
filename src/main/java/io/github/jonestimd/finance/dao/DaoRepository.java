@@ -22,11 +22,12 @@
 package io.github.jonestimd.finance.dao;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import io.github.jonestimd.finance.dao.hibernate.DomainEventRecorder;
 
 public interface DaoRepository {
-    void generateSchema() throws SQLException;
+    void generateSchema(List<String> postCreateScript) throws SQLException;
 
     <I,T extends I> I transactional(T target, Class<I> iface);
 

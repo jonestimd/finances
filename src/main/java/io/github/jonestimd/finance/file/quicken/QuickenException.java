@@ -25,7 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.jonestimd.LocalizedException;
-import io.github.jonestimd.finance.swing.BundleType;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class QuickenException extends LocalizedException {
     private static final String KEY_PREFIX = "import.qif.";
@@ -39,7 +40,7 @@ public class QuickenException extends LocalizedException {
     }
 
     protected String getMessageFormat(String messageKey) {
-        return BundleType.MESSAGES.getString(messageKey);
+        return MESSAGES.optionalString(messageKey).orElse(messageKey);
     }
 
     public List<String> getMessages() {

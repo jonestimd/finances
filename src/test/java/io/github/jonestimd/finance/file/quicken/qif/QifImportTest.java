@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.github.jonestimd.finance.file.quicken.QuickenException;
+import io.github.jonestimd.function.MessageConsumer;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -20,6 +21,7 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.*;
 
 public class QifImportTest {
+    private MessageConsumer messageConsumer = mock(MessageConsumer.class);
 
     @Test
     public void converterCalledForTransactionRecord() throws Exception {
@@ -28,7 +30,7 @@ public class QifImportTest {
         List<RecordConverter> converters = createConverterMocks(type);
         QifImport qifImport = new QifImport(converters);
 
-        qifImport.importFile(new CharArrayReader(input.toCharArray()));
+        qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
 
         RecordConverter converter = converters.get(0);
         verify(converter).importRecord(isA(AccountHolder.class), isA(QifRecord.class));
@@ -56,7 +58,7 @@ public class QifImportTest {
         List<RecordConverter> converters = createConverterMocks(type1, type2);
         QifImport qifImport = new QifImport(converters);
 
-        qifImport.importFile(new CharArrayReader(input.toCharArray()));
+        qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
 
         ArgumentCaptor<QifRecord> capture0 = ArgumentCaptor.forClass(QifRecord.class);
         ArgumentCaptor<QifRecord> capture1 = ArgumentCaptor.forClass(QifRecord.class);
@@ -76,7 +78,7 @@ public class QifImportTest {
         List<RecordConverter> converters = createConverterMocks(type);
         QifImport qifImport = new QifImport(converters);
 
-        qifImport.importFile(new CharArrayReader(input.toCharArray()));
+        qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
 
         RecordConverter converter = converters.get(0);
         verify(converter, times(3)).importRecord(isA(AccountHolder.class), isA(QifRecord.class));
@@ -89,7 +91,7 @@ public class QifImportTest {
         List<RecordConverter> converters = createConverterMocks(type);
         QifImport qifImport = new QifImport(converters);
 
-        qifImport.importFile(new CharArrayReader(input.toCharArray()));
+        qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
 
         RecordConverter converter = converters.get(0);
         verify(converter).importRecord(isA(AccountHolder.class), isA(QifRecord.class));
@@ -103,11 +105,11 @@ public class QifImportTest {
         QifImport qifImport = new QifImport(converters);
 
         try {
-            qifImport.importFile(new CharArrayReader(input.toCharArray()));
+            qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
             fail("expected an exception");
         }
         catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidRecord");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.invalidRecord");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"QIF", 2L});
         }
     }
@@ -123,7 +125,7 @@ public class QifImportTest {
         QifImport qifImport = new QifImport(converters);
 
         try {
-            qifImport.importFile(new CharArrayReader(input.toCharArray()));
+            qifImport.importFile(new CharArrayReader(input.toCharArray()), messageConsumer);
             fail("expected an exception");
         } catch (QuickenException ex) {
             assertThat(ex).isSameAs(cause);
@@ -139,11 +141,11 @@ public class QifImportTest {
         QifImport qifImport = new QifImport(converters);
 
         try {
-            qifImport.importFile(reader);
+            qifImport.importFile(reader, messageConsumer);
             fail("expected an exception");
         } catch (QuickenException ex) {
             assertThat(ex.getCause()).isSameAs(cause);
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.importFailed");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.importFailed");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"QIF", 1L});
         }
     }

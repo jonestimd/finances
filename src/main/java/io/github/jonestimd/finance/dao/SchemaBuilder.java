@@ -44,8 +44,8 @@ public class SchemaBuilder {
         this.daoRepository = daoContext;
     }
 
-    public SchemaBuilder createSchemaTables() throws SQLException {
-        daoRepository.generateSchema();
+    public SchemaBuilder createSchemaTables(List<String> postCreateScript) throws SQLException {
+        daoRepository.generateSchema(postCreateScript);
         return this;
     }
 

@@ -35,8 +35,13 @@ import java.util.function.Consumer;
 import com.typesafe.config.Config;
 import io.github.jonestimd.finance.swing.BundleType;
 
+import static java.util.Collections.*;
+
 public class DerbyDriverConnectionService extends EmbeddedDriverConnectionService {
     protected static final List<String> DEFAULT_PATH = Arrays.asList(System.getProperty("user.home"), ".finances", "database");
+    private static final List<String> POST_CREATE_SCHEMA_SCRIPT = unmodifiableList(Arrays.asList(
+            "drop index related_detail_uk",
+            "alter table tx_detail add constraint related_detail_uk unique (related_detail_id)"));
 
     public DerbyDriverConnectionService() {
         super("Derby", "org.hibernate.dialect.DerbyTenSevenDialect", "org.apache.derby.jdbc.EmbeddedDriver", "derby:directory:");
@@ -87,5 +92,10 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     @Override
     protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
         return ex.getMessage().toLowerCase().equals("table/view 'company' does not exist.") || super.handleException(config, updateProgress, ex);
+    }
+
+    @Override
+    public List<String> getPostCreateSchemaScript() {
+        return POST_CREATE_SCHEMA_SCRIPT;
     }
 }

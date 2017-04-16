@@ -26,12 +26,14 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
+import io.github.jonestimd.function.MessageConsumer;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -55,6 +57,8 @@ public class CapitalGainImportTest {
             return purchaseMap.get((Date) invocation.getArguments()[2]);
         }
     };
+    @Mock
+    private MessageConsumer messageConsumer;
     @Captor
     private ArgumentCaptor<Iterable<SecurityLot>> lotCapture;
 
@@ -75,7 +79,7 @@ public class CapitalGainImportTest {
     public void versionRecordIgnored() throws Exception {
         CapitalGainImport txfImport = new CapitalGainImport(transactionService, lotAllocationDialog);
 
-        txfImport.importFile(createReader(COLUMN_NAMES));
+        txfImport.importFile(createReader(COLUMN_NAMES), messageConsumer);
     }
 
     @Test
@@ -99,7 +103,7 @@ public class CapitalGainImportTest {
             "X\tSecurity 1\t15.000\t01/20/00\t02/28/05\t150.00\t75.00\t0.00\n" +
         	"X\tSecurity 1\t22.222\t01/20/00\t02/28/05\t234.56\t123.45\t0.00\n" +
         	"X\tSecurity A\t10.000\t01/20/91\t02/28/99\t33.33\t11.10\t0.00\n" +
-        	"X\tSecurity 1\t5.000\t01/20/01\t02/28/05\t50.00\t50.00\t0.00\n"));
+        	"X\tSecurity 1\t5.000\t01/20/01\t02/28/05\t50.00\t50.00\t0.00\n"),messageConsumer);
 
         verify(transactionService).findSecuritySalesWithoutLots(eq("Security 1"), any(Date.class));
         verify(transactionService).findSecuritySalesWithoutLots(eq("Security A"), any(Date.class));
@@ -140,7 +144,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t15.000\t01/20/00\t02/28/05\t150.00\t75.00\t0.00\n" +
                 "X\tSecurity 1\t9.000\t01/20/91\t02/28/05\t108.00\t11.11\t0.00\n" +
                 "X\tSecurity 1\t5.000\t01/20/92\t02/28/05\t50.00\t11.11\t0.00\n" +
-                "X\tSecurity 1\t6.000\t01/20/01\t02/28/05\t72.00\t50.00\t0.00\n"));
+                "X\tSecurity 1\t6.000\t01/20/01\t02/28/05\t72.00\t50.00\t0.00\n"), messageConsumer);
 
         verify(transactionService, times(4)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
@@ -169,7 +173,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t75.00\t0.00\n" +
                 "X\tSecurity 1\t8.000\t01/20/91\t02/28/05\t160.00\t22.22\t0.00\n" +
                 "X\tSecurity 1\t3.000\t01/20/91\t02/28/05\t60.00\t11.11\t0.00\n" +
-                "X\tSecurity 1\t6.000\t01/20/01\t02/28/05\t60.00\t50.00\t0.00\n"));
+                "X\tSecurity 1\t6.000\t01/20/01\t02/28/05\t60.00\t50.00\t0.00\n"), messageConsumer);
 
         verify(transactionService, times(3)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
@@ -195,7 +199,7 @@ public class CapitalGainImportTest {
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t80.00\t0.00\n" +
-                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"));
+                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"), messageConsumer);
 
         verify(transactionService, times(2)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
@@ -221,7 +225,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t25.000\t01/20/91\t02/28/05\t25.00\t25.00\t0.00\n" +
                 "X\tSecurity 1\t20.000\t01/20/91\t02/28/05\t20.00\t20.00\t0.00\n" +
                 "X\tSecurity 1\t10.000\t01/20/91\t02/28/05\t10.00\t10.00\t0.00\n" +
-                "X\tSecurity 1\t15.000\t01/20/91\t02/28/05\t15.00\t15.00\t0.00\n"));
+                "X\tSecurity 1\t15.000\t01/20/91\t02/28/05\t15.00\t15.00\t0.00\n"), messageConsumer);
 
         verify(transactionService, times(1)).findPurchasesWithRemainingLots(same(account), same(security), any(Date.class));
         verify(transactionService).saveSecurityLots(lotCapture.capture());
@@ -248,7 +252,7 @@ public class CapitalGainImportTest {
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t0.00\t0.00\t0.00\n" +
-                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t0.00\t0.00\t0.00\n"));
+                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t0.00\t0.00\t0.00\n"), messageConsumer);
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
         assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(2);
@@ -277,7 +281,7 @@ public class CapitalGainImportTest {
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t160.00\t0.00\n" +
                 "X\tSecurity 1\t15.000\t01/20/91\t02/28/05\t225.00\t75.00\t0.00\n" +
                 "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t240.00\t80.00\t0.00\n" +
-                "X\tSecurity 1\t15.000\t01/20/00\t02/28/05\t150.00\t150.00\t0.00\n"));
+                "X\tSecurity 1\t15.000\t01/20/00\t02/28/05\t150.00\t150.00\t0.00\n"), messageConsumer);
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
         assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(4);
@@ -306,7 +310,7 @@ public class CapitalGainImportTest {
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t40.00\t0.00\n" +
-                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t20.00\t0.00\n"));
+                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t20.00\t0.00\n"), messageConsumer);
 
         verify(transactionService).saveSecurityLots(lotCapture.capture());
         assertThat(Iterables.size(lotCapture.getValue())).isEqualTo(2);
@@ -322,7 +326,7 @@ public class CapitalGainImportTest {
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t80.00\t0.00\n" +
-                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"));
+                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"), messageConsumer);
     }
 
     @Test
@@ -340,7 +344,7 @@ public class CapitalGainImportTest {
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t80.00\t0.00\n" +
-                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"));
+                "X\tSecurity 1\t16.000\t01/20/91\t02/28/05\t160.00\t80.00\t0.00\n"), messageConsumer);
     }
 
     private void expectFindPurchases(Security security) {
@@ -390,11 +394,11 @@ public class CapitalGainImportTest {
             txfImport.importFile(createReader(COLUMN_NAMES +
                     "\t\n" +
             		"\t\n" +
-            		"Account x\t\t\n"));
+            		"Account x\t\t\n"), messageConsumer);
             fail("expected exception");
         }
         catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidRecord");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.invalidRecord");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"TSV", 4L});
         }
     }
@@ -406,11 +410,11 @@ public class CapitalGainImportTest {
         CapitalGainImport txfImport = new CapitalGainImport(transactionService, lotAllocationDialog);
 
         try {
-            txfImport.importFile(reader);
+            txfImport.importFile(reader, messageConsumer);
             fail("expected exception");
         }
         catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.importFailed");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.importFailed");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {"TXF", 0L});
         }
     }

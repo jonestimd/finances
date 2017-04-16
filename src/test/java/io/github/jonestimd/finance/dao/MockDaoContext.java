@@ -3,6 +3,7 @@ package io.github.jonestimd.finance.dao;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.List;
 
 import io.github.jonestimd.finance.dao.hibernate.DomainEventRecorder;
 import io.github.jonestimd.finance.domain.TestDomainUtils;
@@ -88,7 +89,7 @@ public class MockDaoContext implements DaoRepository {
     private Transaction transaction = mock(Transaction.class);
 
     @Override
-    public void generateSchema() throws SQLException {
+    public void generateSchema(List<String> postCreateScript) throws SQLException {
         throw new UnsupportedOperationException();
     }
 

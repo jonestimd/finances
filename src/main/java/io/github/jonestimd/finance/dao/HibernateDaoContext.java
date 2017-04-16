@@ -26,6 +26,8 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
@@ -94,7 +96,7 @@ public class HibernateDaoContext implements DaoRepository {
         HibernateDaoContext daoContext = new HibernateDaoContext(driverService);
         if (createSchema) {
             updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));
-            new SchemaBuilder(daoContext).createSchemaTables().seedReferenceData();
+            new SchemaBuilder(daoContext).createSchemaTables(driverService.getPostCreateSchemaScript()).seedReferenceData();
         }
         return daoContext;
     }
@@ -135,18 +137,17 @@ public class HibernateDaoContext implements DaoRepository {
     }
 
     @Override
-    public void generateSchema() throws SQLException {
+    public void generateSchema(List<String> postCreateScript) throws SQLException {
         String[] script = schemaCreationScript();
-        if (script != null && script.length > 0) {
-            Session session = sessionFactory.openSession();
-            try {
-                session.doWork(connection -> {
-                    executeSchemaScript(connection, script);
-                    connection.commit();
-                });
-            } finally {
-                session.close();
-            }
+        Session session = sessionFactory.openSession();
+        try {
+            session.doWork(connection -> {
+                executeSchemaScript(connection, Arrays.asList(script));
+                if (! postCreateScript.isEmpty()) executeSchemaScript(connection, postCreateScript);
+                connection.commit();
+            });
+        } finally {
+            session.close();
         }
     }
 
@@ -154,7 +155,7 @@ public class HibernateDaoContext implements DaoRepository {
         return configuration.generateSchemaCreationScript(Dialect.getDialect(configuration.getProperties()));
     }
 
-    private void executeSchemaScript(Connection connection, String[] sqlScript) throws SQLException {
+    private void executeSchemaScript(Connection connection, List<String> sqlScript) throws SQLException {
         try (Statement stmt = connection.createStatement()) {
             for (String sqlStmt : sqlScript) {
                 executeSchemaStatement(stmt, sqlStmt);

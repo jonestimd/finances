@@ -131,6 +131,10 @@ public abstract class DriverConfigurationService {
         return new Properties();
     }
 
+    public List<String> getPostCreateSchemaScript() {
+        return Collections.emptyList();
+    }
+
     /**
      * Perform database setup based on the exception.
      * @param config the connection configuration
@@ -189,6 +193,10 @@ public abstract class DriverConfigurationService {
 
         public boolean prepareDatabase(Consumer<String> updateProgress) throws Exception {
             return service.prepareDatabase(config, updateProgress);
+        }
+
+        public List<String> getPostCreateSchemaScript() {
+            return service.getPostCreateSchemaScript();
         }
     }
 }

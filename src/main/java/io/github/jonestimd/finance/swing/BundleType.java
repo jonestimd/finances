@@ -23,6 +23,8 @@ package io.github.jonestimd.finance.swing;
 
 import java.awt.Color;
 import java.text.MessageFormat;
+import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import com.google.common.base.Supplier;
@@ -46,6 +48,14 @@ public enum BundleType implements Supplier<ResourceBundle> {
 
     public String getString(String key) {
         return bundle.getString(key);
+    }
+
+    public Optional<String> optionalString(String key) {
+        try {
+            return Optional.of(bundle.getString(key));
+        } catch (MissingResourceException ex) {
+            return Optional.empty();
+        }
     }
 
     public int getInt(String key) {

@@ -130,7 +130,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
             fail("expected an exception");
         }
         catch (QuickenException ex) {
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidDate");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.invalidDate");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[]{qifDate, 1L});
         }
     }
@@ -252,7 +252,7 @@ public class MoneyTransactionConverterTest extends QifTestFixture {
         }
         catch (QuickenException ex) {
             verify(transactionService).saveTransaction(any(Transaction.class));
-            assertThat(ex.getMessageKey()).isEqualTo("io.github.jonestimd.finance.file.quicken.invalidSplit");
+            assertThat(ex.getMessageKey()).isEqualTo("import.qif.invalidSplit");
             assertThat(ex.getMessageArgs()).isEqualTo(new Object[] {new BigDecimal(amounts[0]), new BigDecimal("15.45"), 1L});
         }
     }
