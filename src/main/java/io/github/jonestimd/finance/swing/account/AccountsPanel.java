@@ -75,6 +75,8 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private final AssetOperations assetOperations;
     private final CompanyCellEditor companyCellEditor;
     private final DomainEventPublisher eventPublisher;
+    // need strong reference to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Company> companyDomainEventListener = this::onDomainEvent;
 
     private Action openAction;

@@ -31,25 +31,29 @@ import io.github.jonestimd.finance.domain.event.DomainEvent;
 import org.apache.log4j.Logger;
 
 /**
+ * This class publishes {@link DomainEvent}s to registered listeners.  This class only maintains
+ * {@link WeakReference}s to the listeners.  <strong>Once there are no strong refereces to a listener, it will no
+ * longer receive events.</strong>
+ * <p>
  * This class is not thread-safe.  It is intendend for use only on the AWT event thread.
  */
 public class DomainEventPublisher {
     private static final Logger logger = Logger.getLogger(DomainEventPublisher.class);
     private List<EventListener<?, ?>> listeners = new ArrayList<>();
 
+    /**
+     * Register a listener for domain events.
+     */
     public <ID, T extends UniqueId<ID>> void register(Class<T> domainClass, DomainEventListener<ID, T> listener) {
         logger.debug("register " + domainClass.getSimpleName() + ", " + listener);
-        listeners.add(new EventListener<ID, T>(domainClass, listener));
+        listeners.add(new EventListener<>(domainClass, listener));
     }
 
+    /**
+     * Unregister a listener for domain events.
+     */
     public <ID, T extends UniqueId<ID>> void unregister(Class<T> domainClass, DomainEventListener<ID, T> listener) {
-        Iterator<EventListener<?, ?>> iterator = listeners.iterator();
-        while (iterator.hasNext()) {
-            EventListener<?, ?> eventListener = iterator.next();
-            if (eventListener.listener.get() == null || eventListener.domainClass == domainClass && eventListener.listener.get() == listener) {
-                iterator.remove();
-            }
-        }
+        listeners.removeIf(eventListener -> eventListener.isInactive() || eventListener.matches(domainClass, listener));
     }
 
     @SuppressWarnings("unchecked")
@@ -57,13 +61,11 @@ public class DomainEventPublisher {
         Iterator<EventListener<?, ?>> iterator = listeners.iterator();
         while (iterator.hasNext()) {
             EventListener<?, ?> eventListener = iterator.next();
-            if (eventListener.listener.get() == null) {
+            if (eventListener.isInactive()) {
                 logger.debug("reaped " + eventListener.domainClass.getSimpleName());
                 iterator.remove();
             }
-            else if (eventListener.domainClass.isAssignableFrom(event.getDomainClass())) {
-                DomainEventListener.class.cast(eventListener.listener.get()).onDomainEvent(event);
-            }
+            else if (eventListener.handlesEvent(event)) eventListener.sendEvent(DomainEvent.class.cast(event));
         }
     }
 
@@ -73,7 +75,23 @@ public class DomainEventPublisher {
 
         public EventListener(Class<T> domainClass, DomainEventListener<ID, T> listener) {
             this.domainClass = domainClass;
-            this.listener = new WeakReference<DomainEventListener<ID, T>>(listener);
+            this.listener = new WeakReference<>(listener);
+        }
+
+        public boolean isInactive() {
+            return listener.get() == null;
+        }
+
+        public boolean matches(Class<?> domainClass, DomainEventListener<?,?> listener) {
+            return this.domainClass == domainClass && this.listener.get() == listener;
+        }
+
+        public boolean handlesEvent(DomainEvent<?, ?> event) {
+            return domainClass.isAssignableFrom(event.getDomainClass());
+        }
+
+        public void sendEvent(DomainEvent<ID, T> event) {
+            listener.get().onDomainEvent(event);
         }
     }
 }
