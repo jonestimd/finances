@@ -37,15 +37,21 @@ public class DatabaseFunctions {
 
     /** HSQL version of the stored function */
     public static BigDecimal adjustShares(Connection connection, Long securityId, Date fromDate, BigDecimal shares) throws SQLException {
-        try (PreparedStatement ps = connection.prepareStatement(SELECT_SPLITS)) {
-            ps.setLong(1, securityId);
-            ps.setDate(2, fromDate);
-            if (ps.execute()) {
-                try (ResultSet resultSet = ps.getResultSet()) {
-                    while (resultSet.next()) {
-                        shares = shares.multiply(resultSet.getBigDecimal("shares_out")).divide(resultSet.getBigDecimal("shares_in"));
-                    }
-                }
+        if (shares != null) {
+            try (PreparedStatement ps = connection.prepareStatement(SELECT_SPLITS)) {
+                ps.setLong(1, securityId);
+                ps.setDate(2, fromDate);
+                shares = adjustShares(shares, ps);
+            }
+        }
+        return shares;
+    }
+
+    private static BigDecimal adjustShares(BigDecimal shares, PreparedStatement ps) throws SQLException {
+        try (ResultSet resultSet = ps.executeQuery()) {
+            while (resultSet.next()) {
+                shares = shares.multiply(resultSet.getBigDecimal("shares_out"))
+                        .divide(resultSet.getBigDecimal("shares_in"), BigDecimal.ROUND_HALF_UP);
             }
         }
         return shares;

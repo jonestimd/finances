@@ -31,9 +31,15 @@ public class DatabaseFunctionsTest {
     private final Long securityId = new Random().nextLong();
 
     @Test
+    public void adjustSharesReturnsNullForNull() throws Exception {
+        assertThat(DatabaseFunctions.adjustShares(null, null, null, null)).isNull();
+    }
+
+    @Test
     public void adjustSharesReturnsInputWhenNoSplits() throws Exception {
         when(connection.prepareStatement(anyString())).thenReturn(statement);
-        when(statement.execute()).thenReturn(false);
+        when(statement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(false);
 
         BigDecimal adjustedShares = DatabaseFunctions.adjustShares(connection, securityId, fromDate, BigDecimal.TEN);
 
@@ -41,14 +47,12 @@ public class DatabaseFunctionsTest {
         verify(connection).prepareStatement(DatabaseFunctions.SELECT_SPLITS);
         verify(statement).setLong(1, securityId);
         verify(statement).setDate(2, fromDate);
-        verifyZeroInteractions(resultSet);
     }
 
     @Test
     public void adjustSharesMultipliesSharesBySplits() throws Exception {
         when(connection.prepareStatement(anyString())).thenReturn(statement);
-        when(statement.execute()).thenReturn(true);
-        when(statement.getResultSet()).thenReturn(resultSet);
+        when(statement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getBigDecimal("shares_out")).thenReturn(new BigDecimal(2));
         when(resultSet.getBigDecimal("shares_in")).thenReturn(new BigDecimal(1));
@@ -65,8 +69,7 @@ public class DatabaseFunctionsTest {
     public void adjustSharesGetsConnectionForDerby() throws Exception {
         Driver driver = DriverUtils.mockDriver("jdbc:default:connection", connection);
         when(connection.prepareStatement(anyString())).thenReturn(statement);
-        when(statement.execute()).thenReturn(true);
-        when(statement.getResultSet()).thenReturn(resultSet);
+        when(statement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getBigDecimal("shares_out")).thenReturn(new BigDecimal(2));
         when(resultSet.getBigDecimal("shares_in")).thenReturn(new BigDecimal(1));
