@@ -31,20 +31,19 @@ import io.github.jonestimd.finance.dao.TransactionDetailDao;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategorySummary;
-import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.util.MessageHelper;
 import io.github.jonestimd.util.Streams;
 import org.apache.commons.lang.StringUtils;
 
+import static io.github.jonestimd.finance.swing.BundleType.*;
+
 public class TransactionCategoryOperationsImpl implements TransactionCategoryOperations {
+    public static final String UNKNOWN_TRANSACTION_CATEGORY = "import.qif.unknownTransactionCategory";
     private final TransactionCategoryDao transactionCategoryDao;
     private final TransactionDetailDao transactionDetailDao;
-    private MessageHelper messageHelper;
 
     public TransactionCategoryOperationsImpl(TransactionCategoryDao TransactionCategoryDao, TransactionDetailDao transactionDetailDao) {
         this.transactionCategoryDao = TransactionCategoryDao;
         this.transactionDetailDao = transactionDetailDao;
-        this.messageHelper = new MessageHelper(BundleType.MESSAGES.get(), getClass());
     }
 
     @Cacheable
@@ -79,7 +78,7 @@ public class TransactionCategoryOperationsImpl implements TransactionCategoryOpe
                 String[] parentCodes = Arrays.asList(codes).subList(0, codes.length-1).toArray(new String[codes.length-1]);
                 TransactionCategory parent = transactionCategoryDao.getTransactionCategory(parentCodes);
                 if (parent == null) {
-                    throw new IllegalArgumentException(messageHelper.getMessage("unknownTransactionCategory",
+                    throw new IllegalArgumentException(MESSAGES.formatMessage(UNKNOWN_TRANSACTION_CATEGORY,
                             StringUtils.join(parentCodes, ':')));
                 }
                 type.setParent(parent);

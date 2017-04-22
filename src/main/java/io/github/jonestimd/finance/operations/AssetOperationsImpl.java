@@ -37,20 +37,19 @@ import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
 import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
-import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.util.MessageHelper;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class AssetOperationsImpl implements AssetOperations {
+    private static final String SECURITY_TYPE_MISMATCH = "import.qif.securityTypeMismatch";
     private final CurrencyDao currencyDao;
     private final SecurityDao securityDao;
     private final StockSplitDao stockSplitDao;
-    private final MessageHelper messageHelper;
 
     public AssetOperationsImpl(DaoRepository daoRepository) {
         this.currencyDao = daoRepository.getCurrencyDao();
         this.securityDao = daoRepository.getSecurityDao();
         this.stockSplitDao = daoRepository.getStockSplitDao();
-        this.messageHelper = new MessageHelper(BundleType.MESSAGES.get(), getClass());
     }
 
     public Currency getCurrency(String code) {
@@ -81,7 +80,7 @@ public class AssetOperationsImpl implements AssetOperations {
     public Security createIfUnique(Security security) {
         Security existingSecurity = securityDao.getSecurity(security.getSymbol());
         if (existingSecurity != null && ! existingSecurity.getType().equals(security.getType())) {
-            throw new IllegalArgumentException(messageHelper.getMessage("securityTypeMismatch", security.getSymbol()));
+            throw new IllegalArgumentException(MESSAGES.formatMessage(SECURITY_TYPE_MISMATCH, security.getSymbol()));
         }
         return existingSecurity == null ? securityDao.save(security) : existingSecurity;
     }

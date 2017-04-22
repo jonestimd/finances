@@ -25,7 +25,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -49,7 +48,8 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.util.MessageHelper;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Assigns purchases to {@link SecurityLot}s based on records from a Quicken capital gains report.
@@ -60,23 +60,23 @@ import io.github.jonestimd.util.MessageHelper;
 public class PurchaseMatcher {
     private static final BigDecimal PURCHASE_SHARES_ERROR = new BigDecimal("0.0005");
     private static final BigDecimal PURCHASE_PRICE_ERROR = new BigDecimal("0.5");
+    private static final String MISSING_PURCHASE = "import.capitalgain.missingPurchase";
     private static Comparator<TransactionDetail> REMAINING_SHARES_DESCENDING = (p1, p2) -> p2.getRemainingShares().compareTo(p1.getRemainingShares());
-    private static Ordering<Entry<CapitalGain, ?>> SHARES_DESCENDING = Ordering.from(new Comparator<Entry<CapitalGain, ?>>() {
-        public int compare(Entry<CapitalGain, ?> o1, Entry<CapitalGain, ?> o2) {
-            try {
-                return o2.getKey().getShares().compareTo(o1.getKey().getShares());
-            }
-            catch (QuickenException e) {
-                throw new RuntimeException(e);
-            }
+    private static Ordering<Entry<CapitalGain, ?>> SHARES_DESCENDING = Ordering.from((o1, o2) -> {
+        try {
+            return o2.getKey().getShares().compareTo(o1.getKey().getShares());
+        }
+        catch (QuickenException e) {
+            throw new RuntimeException(e);
         }
     });
-    private final MessageHelper messageHelper = new MessageHelper(BundleType.MESSAGES.get(), PurchaseMatcher.class);
+    private final Logger logger = Logger.getLogger(getClass());
     private TransactionService transactionService;
     private Set<SecurityLot> saleLots = new HashSet<>();
 
     public PurchaseMatcher(TransactionService transactionService) {
         this.transactionService = transactionService;
+        this.logger.setResourceBundle(BundleType.MESSAGES.get());
     }
 
     public Set<SecurityLot> assignPurchases(Map<CapitalGain, SecurityLot> recordLotMap) throws QuickenException {
@@ -98,14 +98,18 @@ public class PurchaseMatcher {
     private void assignPurchasesToLots(Map<CapitalGain, SecurityLot> recordMap, List<TransactionDetail> purchases) throws QuickenException {
         for (Entry<CapitalGain, SecurityLot> entry : SHARES_DESCENDING.sortedCopy(recordMap.entrySet())) {
             List<TransactionDetail> samePrice = Lists.newArrayList(Iterables.filter(purchases, new SamePrice(entry.getKey(), entry.getValue().getSecurity())));
-            Collections.sort(samePrice, REMAINING_SHARES_DESCENDING);
+            samePrice.sort(REMAINING_SHARES_DESCENDING);
             BigDecimal adjustedShares = adjustShares(entry.getKey(), entry.getValue().getSecurity());
             if (! findExactMatch(entry.getKey(), adjustedShares, samePrice, entry.getValue()) && ! findRemainingShares(entry.getKey(), adjustedShares, samePrice, entry.getValue())) {
-                messageHelper.infoLocalized("missingPurchase", entry.getValue().getSecurity().getName(), entry.getKey().getPurchaseDate());
+                logInfo(MISSING_PURCHASE, entry.getValue().getSecurity().getName(), entry.getKey().getPurchaseDate());
                 saleLots.add(entry.getValue());
             }
             samePrice.forEach(purchase -> saleLots.add(new SecurityLot(purchase, entry.getValue().getSale(), BigDecimal.ZERO)));
         }
+    }
+
+    private void logInfo(String messageKey, Object ...args) {
+        logger.l7dlog(Level.INFO, messageKey, args, null);
     }
 
     private boolean findExactMatch(CapitalGain txfRecord, BigDecimal adjustedShares, Collection<TransactionDetail> purchases, SecurityLot lot) throws QuickenException {

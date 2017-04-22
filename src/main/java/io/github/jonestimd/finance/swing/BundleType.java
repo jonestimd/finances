@@ -38,7 +38,7 @@ public enum BundleType implements Supplier<ResourceBundle> {
 
     private final ResourceBundle bundle;
 
-    private BundleType(String basename) {
+    BundleType(String basename) {
         this.bundle = ResourceBundle.getBundle(basename);
     }
 

@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.file.quicken.capitalgain;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,7 +40,8 @@ import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.subset.SubsetSum;
-import io.github.jonestimd.util.MessageHelper;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Creates {@link SecurityLot}s based on records from a Quicken capital gains report.
@@ -50,28 +52,27 @@ import io.github.jonestimd.util.MessageHelper;
 public class SaleMatcher {
     private static final BigDecimal IMPORT_SHARES_ERROR = new BigDecimal("0.0005");
     private static final BigDecimal IMPORT_AMOUNT_ERROR = new BigDecimal("0.005");
-    private final MessageHelper messageHelper = new MessageHelper(BundleType.MESSAGES.get(), SaleMatcher.class);
-    private static final Comparator<Collection<?>> SIZE_ASCENDING = new Comparator<Collection<?>>() {
-        public int compare(Collection<?> o1, Collection<?> o2) {
-            return o1.size() - o2.size();
-        }
-    };
+    private static final String MISSING_SALE = "import.capitalgain.missingSale";
+    private static final String NO_LOTS_FOR_SALE = "import.capitalgain.noLotsForSale";
+    private final Logger logger = Logger.getLogger(getClass());
+    private static final Comparator<Collection<?>> SIZE_ASCENDING = Comparator.comparingInt(Collection::size);
 
-    private Map<CapitalGain, SecurityLot> recordLotMap = new HashMap<CapitalGain, SecurityLot>();
+    private Map<CapitalGain, SecurityLot> recordLotMap = new HashMap<>();
     private TransactionService transactionService;
 
     public SaleMatcher(TransactionService transactionService) {
         this.transactionService = transactionService;
+        logger.setResourceBundle(BundleType.MESSAGES.get());
     }
 
     public Map<CapitalGain, SecurityLot> assignSales(Map<String, Map<Date, List<CapitalGain>>> saleMap) throws QuickenException {
         for (Entry<String, Map<Date, List<CapitalGain>>> securityEntry : saleMap.entrySet()) {
-            messageHelper.debug("sales for {0}: {1}", securityEntry.getKey(), securityEntry.getValue().size());
+            logDebug("sales for {0}: {1}", securityEntry.getKey(), securityEntry.getValue().size());
             for (Entry<Date, List<CapitalGain>> dateEntry : securityEntry.getValue().entrySet()) {
-                messageHelper.debug("  {0,date,MM/dd/yyyy}: {1} lots", dateEntry.getKey(), dateEntry.getValue().size());
+                logDebug("  {0,date,MM/dd/yyyy}: {1} lots", dateEntry.getKey(), dateEntry.getValue().size());
                 List<TransactionDetail> salesWithoutLots = transactionService.findSecuritySalesWithoutLots(securityEntry.getKey(), dateEntry.getKey());
                 if (salesWithoutLots.isEmpty()) {
-                    messageHelper.infoLocalized("missingSale", securityEntry.getKey(), dateEntry.getKey());
+                    logInfo(MISSING_SALE, securityEntry.getKey(), dateEntry.getKey());
                 }
                 else {
                     moveZeroAmountsToEnd(salesWithoutLots);
@@ -82,6 +83,16 @@ public class SaleMatcher {
             }
         }
         return recordLotMap;
+    }
+
+    private void logInfo(String messageKey, Object ... args) {
+        logger.l7dlog(Level.INFO, messageKey, args, null);
+    }
+
+    private void logDebug(String messageFormat, Object ...args) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(MessageFormat.format(messageFormat, args));
+        }
     }
 
     private void moveZeroAmountsToEnd(List<TransactionDetail> sales) {
@@ -100,7 +111,7 @@ public class SaleMatcher {
         List<CapitalGain> saleLots = getLots(txfRecords, sale);
         if (saleLots.isEmpty()) { // TODO display dialog?
             Transaction transaction = sale.getTransaction();
-            messageHelper.infoLocalized("noLotsForSale", transaction.getSecurity().getName(), transaction.getDate());
+            logInfo(NO_LOTS_FOR_SALE, transaction.getSecurity().getName(), transaction.getDate());
         }
         for (CapitalGain record : saleLots) {
             SecurityLot lot = new SecurityLot();
@@ -117,7 +128,7 @@ public class SaleMatcher {
         BigDecimal assetQuantity = sale.getAssetQuantity().negate();
         boolean zeroAmount = BigDecimal.ZERO.compareTo(sale.getAmount()) == 0;
         List<List<CapitalGain>> subsets = SubsetSum.subsets(assetQuantity, IMPORT_SHARES_ERROR, dateLots, CapitalGain.SHARES_ADAPTER, -1);
-        Collections.sort(subsets, SIZE_ASCENDING);
+        subsets.sort(SIZE_ASCENDING);
         for (List<CapitalGain> subset : subsets) {
             if (zeroAmount || isSaleAmountEqual(subset, sale.getTransaction().getAmount())) {
                 return subset;

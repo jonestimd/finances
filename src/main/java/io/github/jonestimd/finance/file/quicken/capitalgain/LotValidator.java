@@ -42,29 +42,17 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
-import io.github.jonestimd.util.MessageHelper;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 public class LotValidator {
-    private static final Function<SecurityLot, TransactionDetail> PURCHASE_FUNCTION = new Function<SecurityLot, TransactionDetail>() {
-        public TransactionDetail apply(SecurityLot from) {
-            return from.getPurchase();
-        }
-    };
-    private static final Function<SecurityLot, TransactionDetail> SALE_FUNCTION = new Function<SecurityLot, TransactionDetail>() {
-        public TransactionDetail apply(SecurityLot from) {
-            return from.getSale();
-        }
-    };
-    private static final Function<SecurityLot, BigDecimal> PURCHASE_SHARES_FUNCTION = new Function<SecurityLot, BigDecimal>() {
-        public BigDecimal apply(SecurityLot from) {
-            return from.getPurchaseShares();
-        }
-    };
-    private final MessageHelper messageHelper = new MessageHelper(BundleType.MESSAGES.get(), LotValidator.class);
+    private static final String INCOMPLETE_LOTS = "import.capitalgain.incompleteLots";
+    private final Logger logger = Logger.getLogger(getClass());
     private final LotAllocationDialog lotAllocationDialog;
 
     public LotValidator(LotAllocationDialog lotAllocationDialog) {
         this.lotAllocationDialog = lotAllocationDialog;
+        logger.setResourceBundle(BundleType.MESSAGES.get());
     }
 
     public void validateLots(Collection<SecurityLot> saleLots) throws QuickenException {
@@ -73,19 +61,23 @@ public class LotValidator {
     }
 
     private Collection<SaleAccumulator> createSaleAccumulators(Collection<SecurityLot> lots) {
-        Multimap<TransactionDetail, SecurityLot> saleLots = Multimaps.index(lots, SALE_FUNCTION);
-        List<SaleAccumulator> saleAccumulators = new ArrayList<SaleAccumulator>(saleLots.asMap().size());
+        Multimap<TransactionDetail, SecurityLot> saleLots = Multimaps.index(lots, SecurityLot::getSale);
+        List<SaleAccumulator> saleAccumulators = new ArrayList<>(saleLots.asMap().size());
         for (Entry<TransactionDetail, Collection<SecurityLot>> entry : saleLots.asMap().entrySet()) {
             if (isAllPurchasesAssigned(entry.getValue())) {
                 saleAccumulators.add(new SaleAccumulator(entry.getKey(), entry.getValue()));
             }
             else {
                 Transaction transaction = entry.getKey().getTransaction();
-                messageHelper.infoLocalized("incompleteLots", transaction.getSecurity().getName(), transaction.getDate());
+                logInfo(INCOMPLETE_LOTS, transaction.getSecurity().getName(), transaction.getDate());
                 lots.removeAll(entry.getValue());
             }
         }
         return saleAccumulators;
+    }
+
+    private void logInfo(String messageKey, Object ... args) {
+        logger.l7dlog(Level.INFO, messageKey, args, null);
     }
 
     private boolean validateSaleLots(Collection<SaleAccumulator> accumulators, Collection<SecurityLot> saleLots) throws QuickenException {
@@ -103,11 +95,7 @@ public class LotValidator {
 
     private boolean showLotAllocationDialog(final SaleAccumulator accumulator, final Collection<SecurityLot> saleLots) throws QuickenException {
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                    lotAllocationDialog.show(accumulator.getSale(), saleLots);
-                }
-            });
+            SwingUtilities.invokeAndWait(() -> lotAllocationDialog.show(accumulator.getSale(), saleLots));
         }
         catch (InterruptedException ex) {
             throw new QuickenException("unexpectedException", ex);
@@ -128,9 +116,9 @@ public class LotValidator {
     }
 
     private boolean validatePurchaseLots(Collection<SecurityLot> lots) throws QuickenException {
-        for (Entry<TransactionDetail, Collection<SecurityLot>> entry : Multimaps.index(lots, PURCHASE_FUNCTION).asMap().entrySet()) {
+        for (Entry<TransactionDetail, Collection<SecurityLot>> entry : Multimaps.index(lots, SecurityLot::getPurchase).asMap().entrySet()) {
             BigDecimal assetQuantity = entry.getKey().getAssetQuantity().abs();
-            BigDecimal totalShares = getShares(entry.getValue(), PURCHASE_SHARES_FUNCTION);
+            BigDecimal totalShares = getShares(entry.getValue(), SecurityLot::getPurchaseShares);
             if (assetQuantity.compareTo(totalShares) < 0) {
                 return false;
             }
@@ -148,7 +136,7 @@ public class LotValidator {
 
     public class SaleAccumulator {
         private final TransactionDetail sale;
-        private final List<SecurityLot> lots = new ArrayList<SecurityLot>();
+        private final List<SecurityLot> lots = new ArrayList<>();
         private BigDecimal unallocatedShares;
 
         public SaleAccumulator(TransactionDetail sale, Collection<SecurityLot> lots) {
