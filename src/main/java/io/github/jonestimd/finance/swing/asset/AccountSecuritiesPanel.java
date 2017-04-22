@@ -76,7 +76,7 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
 //            }
 //        }
         reloadHandler = new ReloadEventHandler<>(this, RELOAD_MESSAGE_KEY,
-                assetOperations::getSecuritySummariesByAccount, tableModel, SecuritySummary::isSameIds);
+                assetOperations::getSecuritySummariesByAccount, this::getTableModel, SecuritySummary::isSameIds);
         domainEventPublisher.register(SecuritySummary.class, reloadHandler);
     }
 
@@ -98,6 +98,10 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
         JToolBar toolBar = ComponentFactory.newMenuToolBar();
         toolBar.add(ComponentFactory.newToolbarButton(reloadAction));
         return toolBar;
+    }
+
+    private AccountSecurityTableModel getTableModel() {
+        return table.getModel();
     }
 
     private class ReloadActionHandler extends BackgroundAction<List<SecuritySummary>> {

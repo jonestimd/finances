@@ -42,13 +42,13 @@ public class ReloadEventHandler<ID, T extends UniqueId<ID>> implements DomainEve
     private final Component component;
     private final BackgroundTask<List<T>> task;
 
-    public ReloadEventHandler(Component component, String messageKey, Supplier<List<T>> getTableData, BeanTableModel<T> tableModel) {
-        this(component, messageKey, getTableData, tableModel, UniqueId::isSameId);
+    public ReloadEventHandler(Component component, String messageKey, Supplier<List<T>> getTableData, Supplier<BeanTableModel<T>> modelSupplier) {
+        this(component, messageKey, getTableData, modelSupplier, UniqueId::isSameId);
     }
 
-    public ReloadEventHandler(Component component, String messageKey, Supplier<List<T>> getTableData, BeanTableModel<T> tableModel, BiPredicate<T, T> isEqual) {
+    public ReloadEventHandler(Component component, String messageKey, Supplier<List<T>> getTableData, Supplier<BeanTableModel<T>> modelSupplier, BiPredicate<T, T> isEqual) {
         this.component = component;
-        this.task = BackgroundTask.task(LABELS.getString(messageKey), getTableData, beans -> tableModel.updateBeans(beans, isEqual));
+        this.task = BackgroundTask.task(LABELS.getString(messageKey), getTableData, beans -> modelSupplier.get().updateBeans(beans, isEqual));
     }
 
     @Override

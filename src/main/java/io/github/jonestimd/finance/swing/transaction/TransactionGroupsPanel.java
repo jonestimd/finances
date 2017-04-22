@@ -44,7 +44,7 @@ public class TransactionGroupsPanel extends TransactionSummaryTablePanel<Transac
     private final TransactionGroupOperations transactionGroupOperations;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, TransactionGroupSummary> reloadHandler =
-            new ReloadEventHandler<>(this, "transactionGroup.action.reload.status.initialize", this::getTableData, getTableModel());
+            new ReloadEventHandler<>(this, "transactionGroup.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public TransactionGroupsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(), NAME_INDEX), "transactionGroup");

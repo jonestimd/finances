@@ -49,7 +49,7 @@ public class PayeesPanel extends TransactionSummaryTablePanel<Payee, PayeeSummar
     private final Action mergeAction;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, PayeeSummary> reloadHandler =
-            new ReloadEventHandler<>(this, "payee.action.reload.status.initialize", this::getTableData, getTableModel());
+            new ReloadEventHandler<>(this, "payee.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee");

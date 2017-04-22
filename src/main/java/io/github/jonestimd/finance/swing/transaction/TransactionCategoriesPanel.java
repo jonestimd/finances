@@ -52,7 +52,7 @@ public class TransactionCategoriesPanel extends TransactionSummaryTablePanel<Tra
     private final Action mergeAction;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, TransactionCategorySummary> reloadHandler =
-            new ReloadEventHandler<>(this, "category.action.reload.status.initialize", this::getTableData, getTableModel());
+            new ReloadEventHandler<>(this, "category.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category");

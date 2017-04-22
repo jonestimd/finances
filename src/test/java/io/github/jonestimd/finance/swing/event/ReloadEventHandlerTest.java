@@ -70,9 +70,13 @@ public class ReloadEventHandlerTest extends SwingRobotTest {
         if (window.isVisible()) SwingUtilities.invokeAndWait(window::dispose);
     }
 
+    private BeanTableModel<Account> getTableModel() {
+        return tableModel;
+    }
+
     @Test
     public void doesNothingIfComponentNotShowing() throws Exception {
-        ReloadEventHandler<Long, Account> handler = new ReloadEventHandler<>(new JPanel(), MESSAGE_KEY, supplier, tableModel);
+        ReloadEventHandler<Long, Account> handler = new ReloadEventHandler<>(new JPanel(), MESSAGE_KEY, supplier, this::getTableModel);
 
         handler.onDomainEvent(new DomainEvent<>(this));
 
@@ -129,7 +133,7 @@ public class ReloadEventHandlerTest extends SwingRobotTest {
 
     private ReloadEventHandler<Long, Account> showWindow() throws InterruptedException, InvocationTargetException {
         SwingUtilities.invokeAndWait(() -> window.setVisible(true));
-        return new ReloadEventHandler<>(window.getContentPane(), MESSAGE_KEY, supplier, tableModel);
+        return new ReloadEventHandler<>(window.getContentPane(), MESSAGE_KEY, supplier, this::getTableModel);
     }
 
     private void waitForEnableUI() {

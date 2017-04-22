@@ -81,7 +81,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private final DomainEventListener<Long, Company> companyDomainEventListener = this::onCompanyDomainEvent;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, AccountSummary> reloadHandler =
-            new ReloadEventHandler<>(this, "account.action.reload.status.initialize", this::getTableData, getTableModel());
+            new ReloadEventHandler<>(this, "account.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     private Action openAction;
     private Action companyAction;

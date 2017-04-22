@@ -201,7 +201,7 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
         if (!transaction.getAccount().getId().equals(account.getId())) {
             removeBean(transaction);
         } else if (indexOf(transaction) < 0) {
-            addBean(insertionIndex(transaction), transaction);
+            addBean(getInsertionIndex(transaction), transaction);
         }
     }
 
@@ -257,7 +257,8 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
         }
     }
 
-    private int insertionIndex(Transaction bean) {
+    @Override
+    protected int getInsertionIndex(Transaction bean) {
         for (int i = 0; i < getBeanCount(); i++) {
             if (getBean(i).getId() == null || DATE_SORT.compare(getBean(i), bean) >= 0) {
                 return i;

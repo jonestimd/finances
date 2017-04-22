@@ -30,6 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.text.Format;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.Box;
@@ -62,6 +63,7 @@ import io.github.jonestimd.finance.swing.asset.SecurityTransactionTableModel;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.event.SingletonWindowEvent;
 import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.action.AutofillTask;
@@ -88,6 +90,7 @@ import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class TransactionsPanel extends MenuActionPanel implements AccountSelector, HighlightText {
     private static final AccountFormat ACCOUNT_FORMAT = new AccountFormat();
+    private static final String LOADING_MESSAGE_KEY = "action.refreshTransactions.status.initialize";
     private final Format currencyFormat = FormatFactory.currencyFormat();
     private final TransactionService transactionService;
     private final AssetOperations assetOperations;
@@ -115,6 +118,8 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
             }
         }
     };
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, Transaction> reloadHandler;
     private final TableModelListener tableModelListener = new TableModelListener() {
         @Override
         public void tableChanged(TableModelEvent e) {
@@ -151,6 +156,8 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
         FocusAction.install(filterField, transactionTable, LABELS.get(), "table.filterField.accelerator");
         this.saveAllAction = new SaveAllAction(transactionTable, transactionService, domainEventPublisher);
         this.refreshAction = new RefreshAction(transactionTable, transactionService);
+        this.reloadHandler = new ReloadEventHandler<>(this, LOADING_MESSAGE_KEY, this::getTransactions, transactionTable::getModel);
+        eventPublisher.register(Transaction.class, this.reloadHandler);
         buildPanel();
     }
 
@@ -165,6 +172,15 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
     private void installTableAction(Object key, KeyStroke keyStroke, Action action) {
         transactionTable.getActionMap().put(key, action);
         transactionTable.getInputMap().put(keyStroke, key);
+    }
+
+    private List<Transaction> getTransactions() {
+        try {
+            return transactionService.getTransactions(transactionTable.getModel().getAccount().getId());
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override

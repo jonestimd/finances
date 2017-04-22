@@ -67,7 +67,7 @@ public class SecuritiesPanel extends TransactionSummaryTablePanel<Security, Secu
     };
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, SecuritySummary> reloadHandler =
-            new ReloadEventHandler<>(this, "security.action.reload.status.initialize", this::getTableData, getTableModel());
+            new ReloadEventHandler<>(this, "security.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public SecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
                            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory) {
