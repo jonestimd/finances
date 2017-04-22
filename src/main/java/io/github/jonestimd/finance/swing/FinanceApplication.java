@@ -150,7 +150,7 @@ public class FinanceApplication {
             }
         }
         else {
-            new ExceptionDialog(initialFrame, error).setVisible(true);
+            ExceptionDialog.show(initialFrame, error);
             initialFrame.setVisible(false);
             initialFrame.dispose();
         }
@@ -159,7 +159,7 @@ public class FinanceApplication {
     private static class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         public void uncaughtException(Thread t, Throwable ex) {
             logger.error("unexpected exception", ex);
-            new ExceptionDialog(JOptionPane.getRootFrame(), ex).setVisible(true);
+            ExceptionDialog.show(JOptionPane.getRootFrame(), ex);
         }
     }
 }
