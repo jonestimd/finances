@@ -29,7 +29,6 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
@@ -40,10 +39,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
 
 import com.google.common.collect.Iterables;
-import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -61,17 +58,16 @@ import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.StatusIndicator;
 import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 
-import static io.github.jonestimd.finance.swing.BundleType.LABELS;
+import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.account.AccountTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
@@ -84,7 +80,8 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Company> companyDomainEventListener = this::onCompanyDomainEvent;
     @SuppressWarnings("FieldCanBeLocal")
-    private final DomainEventListener<Long, Account> accountDomainEventListener = this::onAccountDomainEvent;
+    private final ReloadEventHandler<Long, AccountSummary> reloadHandler =
+            new ReloadEventHandler<>(this, "account.action.reload.status.initialize", this::getTableData, getTableModel());
 
     private Action openAction;
     private Action companyAction;
@@ -98,7 +95,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         this.eventPublisher = domainEventPublisher;
         this.companyCellEditor = new CompanyCellEditor(serviceLocator);
         domainEventPublisher.register(Company.class, companyDomainEventListener);
-        domainEventPublisher.register(Account.class, accountDomainEventListener);
+        domainEventPublisher.register(AccountSummary.class, reloadHandler);
         getTable().getColumn(AccountColumnAdapter.COMPANY_ADAPTER).setCellEditor(companyCellEditor);
         openAction = new FrameAction<>(bundle, "account.action.open", windowEventPublisher, new TransactionsWindowEvent(this));
         openAction.setEnabled(false);
@@ -134,18 +131,6 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private void onCompanyDomainEvent(DomainEvent<Long, Company> event) {
         if (event.isAdd()) {
             companyCellEditor.addListItems(event.getDomainObjects());
-        }
-    }
-
-    private void onAccountDomainEvent(DomainEvent<Long, Account> event) {
-        if (event.isReload()) {
-            StatusIndicator indicator = ComponentTreeUtils.findAncestor(this, StatusIndicator.class);
-            indicator.disableUI(LABELS.getString("account.action.reload.status.initialize"));
-            CompletableFuture.supplyAsync(this::getTableData)
-                    .thenAcceptAsync(accounts -> {
-                        getTableModel().appendMissing(accounts, UniqueId::isSameId);
-                        indicator.enableUI();
-                    }, SwingUtilities::invokeLater);
         }
     }
 

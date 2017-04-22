@@ -42,6 +42,7 @@ import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.BackgroundAction;
 import io.github.jonestimd.swing.component.MenuActionPanel;
@@ -50,9 +51,12 @@ import io.github.jonestimd.swing.table.sort.SectionTableRowSorter;
 
 public class AccountSecuritiesPanel extends MenuActionPanel {
     private static final String RESOURCE_GROUP = "accountSecurities";
+    public static final String RELOAD_MESSAGE_KEY = "accountSecurities.action.reload.status.initialize";
     private final AssetOperations assetOperations;
     private final SectionTable<SecuritySummary, AccountSecurityTableModel> table;
     private Action reloadAction;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, SecuritySummary> reloadHandler;
 
     public AccountSecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
                                   Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory) {
@@ -71,6 +75,9 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
 //                addSummaries((TableSummary) extension);
 //            }
 //        }
+        reloadHandler = new ReloadEventHandler<>(this, RELOAD_MESSAGE_KEY,
+                assetOperations::getSecuritySummariesByAccount, tableModel, SecuritySummary::isSameIds);
+        domainEventPublisher.register(SecuritySummary.class, reloadHandler);
     }
 
     @Override
@@ -110,7 +117,7 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
 
         @Override
         public void updateUI(List<SecuritySummary> result) {
-            table.getModel().setSecuritySummaries(result);
+            table.getModel().setBeans(result);
         }
     }
 }

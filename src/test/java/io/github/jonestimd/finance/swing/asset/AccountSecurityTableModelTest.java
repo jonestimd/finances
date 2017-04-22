@@ -1,11 +1,13 @@
 package io.github.jonestimd.finance.swing.asset;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -28,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static io.github.jonestimd.mockito.MockitoHelper.matches;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -52,7 +55,7 @@ public class AccountSecurityTableModelTest {
 
     @Test
     public void notEditable() throws Exception {
-        model.put(account1, new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
+        model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
         for (int rowIndex = 0; rowIndex < model.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < model.getColumnCount(); columnIndex++) {
                 assertThat(model.isCellEditable(rowIndex, columnIndex)).isFalse();
@@ -80,7 +83,7 @@ public class AccountSecurityTableModelTest {
 
     @Test
     public void domainEventUpdatesRow() throws Exception {
-        model.put(account1, new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
+        model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
         SecuritySummary summary = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
 
         domainEventPublisher.publishEvent(newEvent(summary));
@@ -94,8 +97,8 @@ public class AccountSecurityTableModelTest {
 
     @Test
     public void domainEventRemoveRowWithNoTransactions() throws Exception {
-        model.put(account1, new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
-        model.put(account1, new SecuritySummary(security2, 1L, BigDecimal.ONE, account1));
+        model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
+        model.put(account1.getId(), new SecuritySummary(security2, 1L, BigDecimal.ONE, account1));
         SecuritySummary summary = new SecuritySummary(security1, -1L, BigDecimal.ONE.negate(), account1);
 
         domainEventPublisher.publishEvent(newEvent(summary));
@@ -114,9 +117,9 @@ public class AccountSecurityTableModelTest {
     @Test
     public void securityDomainEventUpdatesRows() throws Exception {
         Account account2 = new AccountBuilder().nextId().company(company).name("account2").get();
-        model.put(account1, new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
-        model.put(account1, new SecuritySummary(security2, 1L, BigDecimal.ONE, account1));
-        model.put(account2, new SecuritySummary(security1, 1L, BigDecimal.ONE, account2));
+        model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
+        model.put(account1.getId(), new SecuritySummary(security2, 1L, BigDecimal.ONE, account1));
+        model.put(account2.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account2));
         reset(modelListener);
 
         Security updated = new SecurityBuilder(security1).name("new Name").get();
@@ -133,9 +136,9 @@ public class AccountSecurityTableModelTest {
         Account account2 = new AccountBuilder().nextId().company(company).name("account2").get();
         SecuritySummary summary1 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
         SecuritySummary summary2 = new SecuritySummary(security2, 1L, BigDecimal.ONE, account1);
-        model.put(account1, summary1);
-        model.put(account1, summary2);
-        model.put(account2, new SecuritySummary(security1, 1L, BigDecimal.ONE, account2));
+        model.put(account1.getId(), summary1);
+        model.put(account1.getId(), summary2);
+        model.put(account2.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account2));
         reset(modelListener);
 
         Account updated = new AccountBuilder(account1).name("new Name").get();
@@ -156,9 +159,9 @@ public class AccountSecurityTableModelTest {
         SecuritySummary summary1 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
         SecuritySummary summary2 = new SecuritySummary(security2, 1L, BigDecimal.ONE, account1);
         SecuritySummary summary3 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account2);
-        model.put(account1, summary1);
-        model.put(account1, summary2);
-        model.put(account2, summary3);
+        model.put(account1.getId(), summary1);
+        model.put(account1.getId(), summary2);
+        model.put(account2.getId(), summary3);
         reset(modelListener);
 
         Company updated = new CompanyBuilder(company).name("new name").get();
@@ -172,6 +175,35 @@ public class AccountSecurityTableModelTest {
         verify(modelListener).tableChanged(matches(new TableModelEvent(model, 2, 4, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT)));
         verify(modelListener).tableChanged(matches(new TableModelEvent(model, 0, 1, TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE)));
         verify(modelListener).tableChanged(matches(new TableModelEvent(model, 3, 4, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT)));
+    }
+
+    @Test
+    public void setBeansUpdatesAccountMap() throws Exception {
+        Account account2 = new AccountBuilder().nextId().company(company).name("account2").get();
+        SecuritySummary summary1 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
+        SecuritySummary summary2 = new SecuritySummary(security2, 1L, BigDecimal.ONE, account1);
+        SecuritySummary summary3 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account2);
+
+        model.setBeans(Arrays.asList(summary1, summary2, summary3));
+
+        assertThat(model.getSectionName(0)).isEqualTo(account1.qualifiedName(": "));
+        assertThat(model.getSectionName(3)).isEqualTo(account2.qualifiedName(": "));
+    }
+
+    @Test
+    public void updateBeansUpdatesAccountMap() throws Exception {
+        Account account2 = new AccountBuilder().nextId().company(company).name("account2").get();
+        Account account2b = new AccountBuilder().id(account2.getId()).company(company).name("account2 updated").get();
+        SecuritySummary summary1 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
+        SecuritySummary summary2 = new SecuritySummary(security2, 1L, BigDecimal.ONE, account1);
+        SecuritySummary summary3 = new SecuritySummary(security1, 1L, BigDecimal.ONE, account2);
+        SecuritySummary summary3b = new SecuritySummary(security1, 1L, BigDecimal.ONE, account2b);
+        model.setBeans(Arrays.asList(summary1, summary2, summary3));
+
+        model.updateBeans(singletonList(summary3b), SecuritySummary::isSameIds);
+
+        assertThat(model.getSectionName(0)).isEqualTo(account1.qualifiedName(": "));
+        assertThat(model.getSectionName(3)).isEqualTo(account2b.qualifiedName(": "));
     }
 
     private DomainEvent<Long, SecuritySummary> newEvent(SecuritySummary summary) {

@@ -13,6 +13,11 @@ public class AccountBuilder {
         this.account.setName(account.getName());
     }
 
+    public AccountBuilder id(long id) {
+        TestDomainUtils.setId(account, id);
+        return this;
+    }
+
     public AccountBuilder nextId() {
         TestDomainUtils.setId(account);
         return this;

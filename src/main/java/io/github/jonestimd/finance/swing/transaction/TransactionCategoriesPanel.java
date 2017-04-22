@@ -40,6 +40,7 @@ import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.MergeAction;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 
@@ -49,12 +50,16 @@ import static org.apache.commons.lang.StringUtils.*;
 public class TransactionCategoriesPanel extends TransactionSummaryTablePanel<TransactionCategory, TransactionCategorySummary> {
     private final TransactionCategoryOperations transactionCategoryOperations;
     private final Action mergeAction;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, TransactionCategorySummary> reloadHandler =
+            new ReloadEventHandler<>(this, "category.action.reload.status.initialize", this::getTableData, getTableModel());
 
     public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category");
         this.transactionCategoryOperations = serverLocator.getTransactionCategoryOperations();
         this.mergeAction = new MergeAction<>(TransactionCategory.class, "mergeCategories", getTable(), new TransactionTypeFormat(), TransactionCategorySummary::getCategory,
                 transactionCategoryOperations, domainEventPublisher, this::isMergeDisabled);
+        domainEventPublisher.register(TransactionCategorySummary.class, reloadHandler);
         getTable().getColumn(TransactionCategoryColumnAdapter.KEY_ADAPTER).setCellRenderer(new FormatTableCellRenderer(new CategoryKeyFormat(), FinanceTableFactory.HIGHLIGHTER));
         getTable().getColumn(TransactionCategoryColumnAdapter.KEY_ADAPTER).setCellEditor(new CategoryKeyTableCellEditor());
     }
@@ -83,7 +88,7 @@ public class TransactionCategoriesPanel extends TransactionSummaryTablePanel<Tra
 
     @Override
     protected boolean isDeleteEnabled(List<TransactionCategorySummary> selectionMinusPendingDeletes) {
-        return super.isDeleteEnabled(selectionMinusPendingDeletes) && ! selectionMinusPendingDeletes.stream().anyMatch(this::isLockedOrHasChildren);
+        return super.isDeleteEnabled(selectionMinusPendingDeletes) && selectionMinusPendingDeletes.stream().noneMatch(this::isLockedOrHasChildren);
     }
 
     private boolean isLockedOrHasChildren(TransactionCategorySummary summary) {

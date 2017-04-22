@@ -38,6 +38,7 @@ import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.MergeAction;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
 
 import static org.apache.commons.lang.StringUtils.*;
@@ -46,12 +47,16 @@ import static org.apache.commons.lang.StringUtils.*;
 public class PayeesPanel extends TransactionSummaryTablePanel<Payee, PayeeSummary> {
     private final PayeeOperations payeeOperations;
     private final Action mergeAction;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, PayeeSummary> reloadHandler =
+            new ReloadEventHandler<>(this, "payee.action.reload.status.initialize", this::getTableData, getTableModel());
 
     public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee");
         this.payeeOperations = serviceLocator.getPayeeOperations();
         mergeAction = new MergeAction<>(Payee.class, "mergePayees", getTable(), new PayeeFormat(),
                 PayeeSummary::getPayee, payeeOperations, domainEventPublisher);
+        domainEventPublisher.register(PayeeSummary.class, reloadHandler);
     }
 
     @Override

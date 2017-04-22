@@ -31,7 +31,6 @@ import java.util.function.Predicate;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -65,31 +64,14 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
 
     private final Map<Long, Account> accountMap;
     // need references to domain event listeners to avoid garbage collection
-    private final DomainEventListener<Long, SecuritySummary> summaryEventListener = event -> event.getDomainObjects().forEach(AccountSecurityTableModel.this::updateShares);
-    private final DomainEventListener<Long, Security> securityEventListener = event -> {
-        if (event.isChange()) {
-            getBeans().stream().filter(event::containsAttribute)
-                    .forEach(summary -> updateSecurity(summary, event.getDomainObject(summary.getSecurity().getId())));
-        }
-    };
-    private final DomainEventListener<Long, Account> accountEventListener = event -> {
-        if (event.isChange()) {
-            event.getDomainObjects().forEach(AccountSecurityTableModel.this::updateAccount);
-        }
-    };
-    private final DomainEventListener<Long, Company> companyEventListener = new DomainEventListener<Long, Company>() {
-        @Override
-        public void onDomainEvent(DomainEvent<Long, Company> event) {
-            if (event.isChange()) {
-                accountMap.values().stream().filter(account -> account.getCompany() != null).forEach(account -> {
-                    if (event.contains(account.getCompany())) {
-                        accountMap.get(account.getId()).setCompany(event.getDomainObject(account.getCompanyId()));
-                        putAll(account.getId(), removeAll(account.getId()));
-                    }
-                });
-            }
-        }
-    };
+    @SuppressWarnings("FieldCanBeLocal")
+    private final DomainEventListener<Long, SecuritySummary> summaryEventListener = event -> event.getDomainObjects().forEach(this::updateShares);
+    @SuppressWarnings("FieldCanBeLocal")
+    private final DomainEventListener<Long, Security> securityEventListener = this::onSecurityChange;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final DomainEventListener<Long, Account> accountEventListener = this::onAccountChange;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final DomainEventListener<Long, Company> companyEventListener = this::onCompanyChange;
 
     public AccountSecurityTableModel(DomainEventPublisher domainEventPublisher, Iterable<? extends TableDataProvider<SecuritySummary>> tableDataProviders) {
         this(domainEventPublisher, tableDataProviders, new HashMap<>());
@@ -97,12 +79,39 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
 
     private AccountSecurityTableModel(DomainEventPublisher domainEventPublisher, Iterable<? extends TableDataProvider<SecuritySummary>> tableDataProviders,
                                       final Map<Long, Account> accountMap) {
-        super(ADAPTERS, tableDataProviders, input -> accountMap.get(input).qualifiedName(": "));
+        super(ADAPTERS, tableDataProviders, SecuritySummary::getAccountId, accountId -> {
+            Account account = accountMap.get(accountId);
+            return account != null ? account.qualifiedName(": ") : "";
+        });
         this.accountMap = accountMap;
         domainEventPublisher.register(SecuritySummary.class, summaryEventListener);
         domainEventPublisher.register(Security.class, securityEventListener);
         domainEventPublisher.register(Account.class, accountEventListener);
         domainEventPublisher.register(Company.class, companyEventListener);
+    }
+
+    private void onSecurityChange(DomainEvent<Long, Security> event) {
+        if (event.isChange()) {
+            getBeans().stream().filter(event::containsAttribute).forEach(
+                    summary -> updateSecurity(summary, event.getDomainObject(summary.getSecurity().getId())));
+        }
+    }
+
+    private void onAccountChange(DomainEvent<Long, Account> event) {
+        if (event.isChange()) {
+            event.getDomainObjects().forEach(this::updateAccount);
+        }
+    }
+
+    private void onCompanyChange(DomainEvent<Long, Company> event) {
+        if (event.isChange()) {
+            accountMap.values().stream().filter(account -> account.getCompany() != null).forEach(account -> {
+                if (event.contains(account.getCompany())) {
+                    accountMap.get(account.getId()).setCompany(event.getDomainObject(account.getCompanyId()));
+                    putAll(account.getId(), removeAll(account.getId()));
+                }
+            });
+        }
     }
 
     private void updateShares(SecuritySummary summary) {
@@ -112,7 +121,7 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
         }
         else {
             accountMap.put(summary.getAccount().getId(), summary.getAccount());
-            put(summary.getAccount(), summary);
+            put(summary.getAccountId(), summary);
         }
     }
 
@@ -150,24 +159,22 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
         return false;
     }
 
-    public void setSecuritySummaries(List<SecuritySummary> summaries) {
-        Set<Account> accounts = Streams.unique(summaries, SecuritySummary::getAccount);
+    @Override
+    public void setBeans(Multimap<Long, SecuritySummary> beans) {
+        Set<Account> accounts = Streams.unique(beans.values(), SecuritySummary::getAccount);
         accountMap.putAll(Streams.uniqueIndex(accounts, UniqueId::getId));
-        super.setBeans(Multimaps.index(summaries, SecuritySummary::getAccountId));
+        super.setBeans(beans);
     }
 
     @Override
-    public void setBeans(Multimap<Long, SecuritySummary> beans) {
-        throw new UnsupportedOperationException("use setSecuritySummaries()");
-    }
-
-    public void put(Account account, SecuritySummary summary) {
-        accountMap.put(account.getId(), account);
-        super.put(account.getId(), summary);
+    protected void setBean(int rowIndex, SecuritySummary bean) {
+        accountMap.put(bean.getAccountId(), bean.getAccount());
+        super.setBean(rowIndex, bean);
     }
 
     @Override
     public void put(Long group, SecuritySummary bean) {
-        throw new UnsupportedOperationException("use put with account");
+        accountMap.put(group, bean.getAccount());
+        super.put(group, bean);
     }
 }

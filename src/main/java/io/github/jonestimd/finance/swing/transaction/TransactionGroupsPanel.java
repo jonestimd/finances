@@ -33,6 +33,7 @@ import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 
 import static io.github.jonestimd.finance.swing.transaction.TransactionGroupTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
@@ -41,10 +42,14 @@ import static org.apache.commons.lang.StringUtils.*;
 // TODO listen for new transaction groups
 public class TransactionGroupsPanel extends TransactionSummaryTablePanel<TransactionGroup, TransactionGroupSummary> {
     private final TransactionGroupOperations transactionGroupOperations;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, TransactionGroupSummary> reloadHandler =
+            new ReloadEventHandler<>(this, "transactionGroup.action.reload.status.initialize", this::getTableData, getTableModel());
 
     public TransactionGroupsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
         super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(), NAME_INDEX), "transactionGroup");
         this.transactionGroupOperations = serviceLocator.getTransactionGroupOperations();
+        domainEventPublisher.register(TransactionGroupSummary.class, reloadHandler);
     }
 
     @Override

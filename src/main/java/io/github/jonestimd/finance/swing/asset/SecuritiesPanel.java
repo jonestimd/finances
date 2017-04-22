@@ -45,6 +45,7 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
+import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.DialogAction;
@@ -64,6 +65,9 @@ public class SecuritiesPanel extends TransactionSummaryTablePanel<Security, Secu
             getRowSorter().allRowsChanged();
         }
     };
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ReloadEventHandler<Long, SecuritySummary> reloadHandler =
+            new ReloadEventHandler<>(this, "security.action.reload.status.initialize", this::getTableData, getTableModel());
 
     public SecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
                            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory) {
@@ -76,6 +80,7 @@ public class SecuritiesPanel extends TransactionSummaryTablePanel<Security, Secu
             }
         }
         hideZeroSharesAction.putValue(Action.SELECTED_KEY, Boolean.TRUE);
+        domainEventPublisher.register(SecuritySummary.class, reloadHandler);
     }
 
     @Override

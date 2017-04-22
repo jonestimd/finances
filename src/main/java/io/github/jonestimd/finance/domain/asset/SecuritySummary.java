@@ -23,6 +23,7 @@ package io.github.jonestimd.finance.domain.asset;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Objects;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.transaction.TransactionSummary;
@@ -121,5 +122,10 @@ public class SecuritySummary extends TransactionSummary<Security> {
 
     public static boolean isNotEmpty(SecuritySummary summary) {
         return summary != null && summary.getShares().compareTo(BigDecimal.ZERO) != 0;
+    }
+
+    public boolean isSameIds(SecuritySummary that) {
+        return Objects.equals(this.getAccountId(), that.getAccountId())
+                && Objects.equals(this.getSecurity().getId(), that.getSecurity().getId());
     }
 }
