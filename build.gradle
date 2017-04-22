@@ -42,6 +42,7 @@ dependencies {
         exclude group: 'org.jboss.logging', module: 'jboss-logging-annotations'
     }
     runtime( group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1' ) { transitive = false }
+    runtime( group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.6.1' ) { transitive = false }
     runtime( group: 'org.objenesis', name: 'objenesis', version: '1.2' )
     runtime( group: 'org.javassist', name: 'javassist', version: '3.18.1-GA' )
     runtime( group: 'mysql', name: 'mysql-connector-java', version: '5.1.6' )
