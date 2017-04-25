@@ -34,7 +34,6 @@ import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.transaction.action.ImportFileAction;
-import io.github.jonestimd.swing.BackgroundRunner;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.util.Streams;
@@ -57,7 +56,7 @@ public class ImportFileMenuFactory {
         if (importFileActions == null) {
             accountListeners.add(accountListener);
             if (accountListeners.size() == 1) {
-                new BackgroundRunner<>(BackgroundTask.task(serviceLocator.getImportFileDao()::getAll, this::createMenus)).doTask();
+                BackgroundTask.task(serviceLocator.getImportFileDao()::getAll, this::createMenus).run();
             }
         }
         else {

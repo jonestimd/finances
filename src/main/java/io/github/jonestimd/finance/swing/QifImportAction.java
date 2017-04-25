@@ -75,7 +75,7 @@ public class QifImportAction extends MnemonicAction {
             StatusFrame window = ComponentTreeUtils.findAncestor((JComponent) event.getSource(), StatusFrame.class);
             File selectedFile = fileChooser.getSelectedFile();
             window.disableUI(MESSAGES.formatMessage("import.qif.start.status", selectedFile.getName()));
-            BackgroundTask.run(new ImportTask(selectedFile, window), window);
+            new ImportTask(selectedFile, window).run(window);
         }
     }
 
@@ -101,7 +101,7 @@ public class QifImportAction extends MnemonicAction {
         return messages.get(0);
     }
 
-    private class ImportTask implements BackgroundTask<ImportSummary> {
+    private class ImportTask extends BackgroundTask<ImportSummary> {
         private final File selectedFile;
         private final StatusFrame window;
 

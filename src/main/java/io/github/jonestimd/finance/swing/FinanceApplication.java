@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing;
 
 import java.awt.Insets;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -36,7 +37,6 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.swing.transaction.TransactionsPanel;
-import io.github.jonestimd.swing.BackgroundRunner;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
 import io.github.jonestimd.swing.window.StatusFrame;
@@ -115,14 +115,12 @@ public class FinanceApplication {
     private void initializeFrame() {
         Optional<DriverService> driverOption = new ConfigManager().loadDriver(initialFrame);
         if (driverOption.isPresent()) {
-            new BackgroundRunner<>(BackgroundTask.task(
-                    () -> startContext(driverOption.get()),
-                    this::showFrameOrError)).doTask();
+            BackgroundTask.task(() -> startContext(driverOption.get()), this::showFrame, this::showError).run();
         }
         else System.exit(1);
     }
 
-    private Exception startContext(DriverService driver) {
+    private Void startContext(DriverService driver) {
         try {
             logger.info("starting context");
             boolean initDatabase = driver.prepareDatabase(this::setProgressMessage);
@@ -130,30 +128,32 @@ public class FinanceApplication {
             swingContext = new SwingContext(serviceContext);
             logger.info("done");
             return null;
+        } catch (RuntimeException ex) {
+            throw ex;
         } catch (Exception ex) {
-            logger.error("Error starting context", ex);
-            return ex;
+            throw new RuntimeException(ex);
         }
     }
 
-    private void showFrameOrError(Exception error) {
-        if (error == null) {
-            if (initialFrameType == WindowType.TRANSACTIONS) {
-                TransactionsPanel transactionsPanel = (TransactionsPanel) swingContext.getFrameManager().addFrame(initialFrame, initialFrameType);
-                final Account lastAccount = getLastAccount();
-                if (lastAccount != null) transactionsPanel.setSelectedAccount(lastAccount);
-                else initialFrame.enableUI();
-            }
-            else {
-                swingContext.getFrameManager().addSingletonFrame(initialFrameType, initialFrame);
-                initialFrame.enableUI();
-            }
+    private void showFrame(Void notUsed) {
+        if (initialFrameType == WindowType.TRANSACTIONS) {
+            TransactionsPanel transactionsPanel = (TransactionsPanel) swingContext.getFrameManager().addFrame(initialFrame, initialFrameType);
+            final Account lastAccount = getLastAccount();
+            if (lastAccount != null) transactionsPanel.setSelectedAccount(lastAccount);
+            else initialFrame.enableUI();
         }
         else {
-            ExceptionDialog.show(initialFrame, error);
-            initialFrame.setVisible(false);
-            initialFrame.dispose();
+            swingContext.getFrameManager().addSingletonFrame(initialFrameType, initialFrame);
+            initialFrame.enableUI();
         }
+    }
+
+    private boolean showError(Throwable error) {
+        logger.error("Error starting context", error);
+        ExceptionDialog.show(initialFrame, error);
+        initialFrame.setVisible(false);
+        initialFrame.dispose();
+        return true;
     }
 
     private static class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {

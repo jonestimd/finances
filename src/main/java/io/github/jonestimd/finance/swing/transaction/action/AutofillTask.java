@@ -21,22 +21,21 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.transaction.action;
 
+import java.util.concurrent.CompletableFuture;
+
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
-import io.github.jonestimd.swing.BackgroundRunner;
 import io.github.jonestimd.swing.BackgroundTask;
 
-public class AutofillTask implements BackgroundTask<Transaction> {
+public class AutofillTask extends BackgroundTask<Transaction> {
     private final TransactionService transactionService;
     private final Transaction transaction;
     private final TransactionTable table;
 
-    public static void execute(TransactionService transactionService, Transaction transaction, TransactionTable table) {
-        if (transaction.isUnsavedAndEmpty()) {
-            new BackgroundRunner<Transaction>(new AutofillTask(transactionService, transaction, table), table).doTask();
-        }
+    public static CompletableFuture<Transaction> execute(TransactionService transactionService, Transaction transaction, TransactionTable table) {
+        return transaction.isUnsavedAndEmpty() ? new AutofillTask(transactionService, transaction, table).run(table) : null;
     }
 
     public AutofillTask(TransactionService transactionService, Transaction transaction, TransactionTable table) {
@@ -69,5 +68,10 @@ public class AutofillTask implements BackgroundTask<Transaction> {
             table.selectLastTransaction(1);
             table.selectAmountColumn();
         }
+    }
+
+    @Override
+    public boolean handleException(Throwable th) {
+        return false;
     }
 }

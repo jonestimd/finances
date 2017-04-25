@@ -22,6 +22,7 @@ import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
+import io.github.jonestimd.swing.window.StatusFrame;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +34,8 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommitActionTest {
+    @Mock
+    private StatusFrame frame;
     @Mock
     private TransactionTable transactionTable;
     @Mock
@@ -114,12 +117,14 @@ public class CommitActionTest {
         commitAction.actionPerformed(null);
         waitForUI();
 
+        verify(transactionTable, atLeastOnce()).isShowing();
         verify(transactionTable).getSelectedTransaction();
         verify(transactionTable, atLeastOnce()).getModel();
         verify(transactionTable).convertRowIndexToView(rowIndex);
         verify(transactionTable).getParent();
         verify(transactionTable).addHierarchyListener(any(HierarchyListener.class));
-        verify(transactionTable).selectLastTransaction();
+        verify(transactionTable, timeout(1000)).selectLastTransaction();
+        verify(transactionTable, atLeastOnce()).getModel();
         verify(tableModel).addEmptyTransaction();
         verifyNoMoreInteractions(transactionTable);
         verify(transactionService).saveTransaction(any(TransactionUpdate.class));
@@ -143,13 +148,15 @@ public class CommitActionTest {
         commitAction.actionPerformed(null);
         waitForUI();
 
+        verify(transactionTable, atLeastOnce()).isShowing();
         verify(transactionTable).getSelectedTransaction();
         verify(transactionTable, atLeastOnce()).getModel();
         verify(transactionTable).convertRowIndexToView(rowIndex);
         verify(transactionTable).getParent();
         verify(transactionTable).addHierarchyListener(any(HierarchyListener.class));
-        verify(transactionTable).getSelectedRowCount();
-        verify(transactionTable).nextTransaction(viewIndex);
+        verify(transactionTable, timeout(1000)).getSelectedRowCount();
+        verify(transactionTable, timeout(1000)).nextTransaction(viewIndex);
+        verify(transactionTable, atLeastOnce()).getModel();
         verify(tableModel, times(0)).addEmptyTransaction();
         verifyNoMoreInteractions(transactionTable);
         verify(transactionService).saveTransaction(any(TransactionUpdate.class));
@@ -174,13 +181,15 @@ public class CommitActionTest {
         commitAction.actionPerformed(null);
         waitForUI();
 
+        verify(transactionTable, atLeastOnce()).isShowing();
         verify(transactionTable).getSelectedTransaction();
         verify(transactionTable, atLeastOnce()).getModel();
         verify(transactionTable).convertRowIndexToView(rowIndex);
         verify(transactionTable).getParent();
         verify(transactionTable).addHierarchyListener(any(HierarchyListener.class));
-        verify(transactionTable).getSelectedRowCount();
-        verify(transactionTable).selectRowAt(viewIndex);
+        verify(transactionTable, timeout(1000)).getSelectedRowCount();
+        verify(transactionTable, timeout(1000)).selectRowAt(viewIndex);
+        verify(transactionTable, atLeastOnce()).getModel();
         verifyNoMoreInteractions(transactionTable);
         verify(transactionService).deleteTransaction(transaction);
     }
@@ -204,13 +213,15 @@ public class CommitActionTest {
         commitAction.actionPerformed(null);
         waitForUI();
 
+        verify(transactionTable, atLeastOnce()).isShowing();
         verify(transactionTable).getSelectedTransaction();
         verify(transactionTable, atLeastOnce()).getModel();
         verify(transactionTable).convertRowIndexToView(rowIndex);
         verify(transactionTable).getParent();
         verify(transactionTable).addHierarchyListener(any(HierarchyListener.class));
-        verify(transactionTable).getSelectedRowCount();
-        verify(transactionTable).selectRowAt(viewIndex);
+        verify(transactionTable, timeout(1000)).getSelectedRowCount();
+        verify(transactionTable, timeout(1000)).selectRowAt(viewIndex);
+        verify(transactionTable, atLeastOnce()).getModel();
         verifyNoMoreInteractions(transactionTable);
         verify(transactionService).deleteTransaction(transaction);
     }

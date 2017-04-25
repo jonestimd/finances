@@ -26,7 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,6 @@ import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.SingletonWindowEvent;
-import io.github.jonestimd.swing.BackgroundRunner;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
@@ -79,6 +77,7 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
     private final List<MenuAction> menuActions = new ArrayList<>();
     private final List<WeakReference<JMenu>> menus = new ArrayList<>();
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Account> accountEventListener = event -> {
         if (event.isChange() && accountActionMap != null) { // TODO deleted accounts
             updateAccountActions(event);
@@ -117,12 +116,20 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
         accountsMenu.addSeparator();
         menus.add(new WeakReference<>(accountsMenu));
         if (accountActionMap == null) {
-            new BackgroundRunner<>(new LoadAccountsHandler()).doTask();
+            BackgroundTask.task(accountOperations::getAllAccounts, this::updateMenus).run();
         }
         else {
             addAccounts(accountsMenu);
         }
         return accountsMenu;
+    }
+
+    private void updateMenus(List<Account> accounts) {
+        accountActionMap = new HashMap<>();
+        for (Account account : accounts) {
+            accountActionMap.put(account.getId(), new AccountAction(account));
+        }
+        updateMenus();
     }
 
     public Action createViewAccountsAction(JComponent source) {
@@ -184,7 +191,7 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
 
     private List<AccountAction> getSortedAccountActions() {
         List<AccountAction> accountActions = new ArrayList<>(accountActionMap.values());
-        Collections.sort(accountActions, ACTION_ORDERING);
+        accountActions.sort(ACTION_ORDERING);
         return accountActions;
     }
 
@@ -204,24 +211,6 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
         public void actionPerformed(ActionEvent e) {
             updateMenus();
             System.setProperty(HIDE_CLOSED_ACCOUNTS_PROPERTY, Boolean.toString(filterModel.isSelected()));
-        }
-    }
-
-    private class LoadAccountsHandler implements BackgroundTask<List<Account>> {
-        public List<Account> performTask() {
-            return accountOperations.getAllAccounts();
-        }
-
-        public void updateUI(List<Account> accounts) {
-            accountActionMap = new HashMap<>();
-            for (Account account : accounts) {
-                accountActionMap.put(account.getId(), new AccountAction(account));
-            }
-            updateMenus();
-        }
-
-        public String getStatusMessage() {
-            return null;
         }
     }
 
