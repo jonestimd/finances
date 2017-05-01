@@ -36,7 +36,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 import io.github.jonestimd.collection.MapBuilder;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
