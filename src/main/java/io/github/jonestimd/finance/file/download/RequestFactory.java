@@ -36,6 +36,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 import io.github.jonestimd.collection.MapBuilder;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
@@ -44,6 +45,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.log4j.Logger;
 
 public class RequestFactory {
     private static final Map<String, ContentType> CONTENT_TYPE_MAP = Collections.unmodifiableMap(
@@ -56,6 +58,7 @@ public class RequestFactory {
             .put("get", this::get)
             .put("post", this::post).get();
 
+    private final Logger logger = Logger.getLogger(getClass());
     private final DownloadContext context;
 
     public RequestFactory(DownloadContext context) {
@@ -70,6 +73,7 @@ public class RequestFactory {
                 request.setHeader(unquote(entry.getKey()), context.render(entry.getValue().unwrapped().toString(), fileKeys));
             }
         }
+        logger.info(request);
         return request;
     }
 
