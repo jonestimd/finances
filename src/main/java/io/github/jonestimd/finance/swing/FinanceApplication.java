@@ -21,13 +21,11 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing;
 
-import java.awt.Insets;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import io.github.jonestimd.finance.SystemProperty;
 import io.github.jonestimd.finance.config.ConnectionConfig;
@@ -35,6 +33,7 @@ import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.service.ServiceContext;
+import io.github.jonestimd.finance.swing.laf.LookAndFeelConfig;
 import io.github.jonestimd.finance.swing.transaction.TransactionsPanel;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
@@ -53,27 +52,7 @@ public class FinanceApplication {
         if (Boolean.getBoolean("debug-focus")) {
             java.util.logging.Logger.getLogger("java.awt.focus.Component").setLevel(java.util.logging.Level.FINEST);
         }
-        try {
-            // PlasticLookAndFeel.setPlasticTheme(new DesertBlue());
-            // UIManager.installLookAndFeel("JGoodies Plastic XP",
-            // PlasticXPLookAndFeel.class.getName());
-            // UIManager.setLookAndFeel("com.jgoodies.looks.windows.WindowsLookAndFeel");
-            UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-            // UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticLookAndFeel");
-            // com.jgoodies.looks.plastic.Plastic3DLookAndFeel
-            // com.jgoodies.looks.windows.WindowsLookAndFeel
-            // UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-            // UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-            // UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-
-            // Fix insets for combo box in a table. Required because ComboBoxCellEditor sets JComboBox.isTableCellEditor to false.
-            // May need to change if not using JGoodies Plastic Looks
-            UIManager.getDefaults().put("ComboBox.editorInsets", new Insets(0, 0, 0, 0));
-        }
-        catch (Exception ex) {
-            logger.warn("Failed to set look and feel", ex);
-        }
-        UIManager.getDefaults().addResourceBundle(UiOverrideBundle.class.getName());
+        LookAndFeelConfig.load();
 
         logger.info("starting Swing");
         final FinanceApplication instance = new FinanceApplication();
