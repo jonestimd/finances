@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
-import io.github.jonestimd.finance.config.ConfigManager;
+import io.github.jonestimd.finance.config.ConnectionConfig;
 import io.github.jonestimd.util.Streams;
 
 /**
@@ -97,7 +97,7 @@ public abstract class DriverConfigurationService {
      * @return Hibernate connection properties
      */
     public Properties getHibernateProperties(Config config) {
-        return ConfigManager.asProperties(config, HIBERNATE_PATH);
+        return ConnectionConfig.asProperties(config, HIBERNATE_PATH);
     }
 
     public List<String> getHibernateResources() {

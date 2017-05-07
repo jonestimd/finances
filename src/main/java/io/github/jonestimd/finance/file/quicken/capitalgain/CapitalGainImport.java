@@ -38,7 +38,6 @@ import javax.swing.UIManager;
 
 import com.google.common.base.Predicate;
 import io.github.jonestimd.commandline.CommandLine;
-import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.file.FileImport;
@@ -54,7 +53,9 @@ import io.github.jonestimd.util.Streams;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class CapitalGainImport implements FileImport {
     private static final Predicate<SecurityLot> IS_LOT_NOT_EMPTY = input -> BigDecimal.ZERO.compareTo(input.getPurchaseShares()) != 0;
@@ -111,7 +112,7 @@ public class CapitalGainImport implements FileImport {
             }
             try (FileReader txfReader = new FileReader(commandLine.getInput(0))) {
                 logger.getParent().setLevel(Level.DEBUG);
-                ServiceContext serviceContext = new ServiceContext(new HibernateDaoContext(new ConfigManager().loadDriver()));
+                ServiceContext serviceContext = new ServiceContext(new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG));
                 SwingContext swingContext = new SwingContext(serviceContext);
                 FileImport txfImport = new QuickenContext(serviceContext)
                         .newTxfImport(new LotAllocationDialog(JOptionPane.getRootFrame(), swingContext.getTableFactory()));

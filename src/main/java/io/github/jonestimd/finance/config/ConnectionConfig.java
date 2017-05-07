@@ -37,19 +37,19 @@ import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
 import io.github.jonestimd.finance.swing.database.ConnectionDialog;
 
-public class ConfigManager {
-    public static final String CONFIG_FILE_PROPERTY = "config";
-    public static final String DEFAULT_CONFIG_FILE = "~/.finances/finances.conf";
+public class ConnectionConfig {
+    public static final String CONNECTION_FILE_PROPERTY = "connection";
+    public static final String DEFAULT_CONFIG_FILE = "~/.finances/connection.conf";
     public static final String CONNECTION_PATH = "connection.default";
 
     private final File configFile;
     private Config config;
 
-    public ConfigManager() {
-        this(CONFIG_FILE_PROPERTY, DEFAULT_CONFIG_FILE);
+    public ConnectionConfig() {
+        this(CONNECTION_FILE_PROPERTY, DEFAULT_CONFIG_FILE);
     }
 
-    public ConfigManager(String fileProperty, String defaultFile) {
+    protected ConnectionConfig(String fileProperty, String defaultFile) {
         String fileName = System.getProperty(fileProperty, defaultFile);
         if (fileName.startsWith("~/")) fileName = System.getProperty("user.home") + fileName.substring(1);
         this.configFile = new File(fileName);
@@ -65,7 +65,7 @@ public class ConfigManager {
         return config.hasPath(path) ? Optional.of(config.getConfig(path)) : Optional.empty();
     }
 
-    public ConfigManager addPath(String path, Config config) {
+    public ConnectionConfig addPath(String path, Config config) {
         this.config = this.config.withValue(path, config.root());
         return this;
     }
@@ -92,10 +92,10 @@ public class ConfigManager {
     }
 
     public Optional<DriverService> loadDriver(Window initialFrame) {
-        Optional<Config> configOption = get(ConfigManager.CONNECTION_PATH);
+        Optional<Config> configOption = get(ConnectionConfig.CONNECTION_PATH);
         if (! configOption.isPresent() && initialFrame != null) {
             configOption = new ConnectionDialog(initialFrame).showDialog();
-            configOption.ifPresent(config -> addPath(ConfigManager.CONNECTION_PATH, config).save(true));
+            configOption.ifPresent(config -> addPath(ConnectionConfig.CONNECTION_PATH, config).save(true));
         }
         return configOption.map(DriverConfigurationService::forConfig);
     }

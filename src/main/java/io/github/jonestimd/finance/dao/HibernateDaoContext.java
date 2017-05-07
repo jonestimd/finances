@@ -32,8 +32,8 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import com.google.common.base.Supplier;
-import com.typesafe.config.ConfigFactory;
-import io.github.jonestimd.finance.config.ConfigManager;
+import com.typesafe.config.Config;
+import io.github.jonestimd.finance.config.ApplicationConfig;
 import io.github.jonestimd.finance.dao.hibernate.AccountDaoImpl;
 import io.github.jonestimd.finance.dao.hibernate.AccountSummaryEventHandler;
 import io.github.jonestimd.finance.dao.hibernate.CompanyDaoImpl;
@@ -69,6 +69,8 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.hbm2ddl.Target;
 
+import static io.github.jonestimd.finance.swing.FinanceApplication.*;
+
 public class HibernateDaoContext implements DaoRepository {
     private static final String EVENT_SOURCE = "Services";
     private final Logger logger = Logger.getLogger(HibernateDaoContext.class);
@@ -92,8 +94,9 @@ public class HibernateDaoContext implements DaoRepository {
             new SecuritySummaryEventHandler(EVENT_SOURCE));
     private DomainEventInterceptor eventInterceptor = new DomainEventInterceptor(eventHandlerSupplier);
 
-    public static HibernateDaoContext connect(boolean createSchema, DriverService driverService, Consumer<String> updateProgress) throws IOException, SQLException {
-        HibernateDaoContext daoContext = new HibernateDaoContext(driverService);
+    public static HibernateDaoContext connect(boolean createSchema, DriverService driverService, Config config, Consumer<String> updateProgress)
+            throws IOException, SQLException {
+        HibernateDaoContext daoContext = new HibernateDaoContext(driverService, config);
         if (createSchema) {
             updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));
             new SchemaBuilder(daoContext).createSchemaTables(driverService.getPostCreateSchemaScript()).seedReferenceData();
@@ -101,18 +104,18 @@ public class HibernateDaoContext implements DaoRepository {
         return daoContext;
     }
 
-    public HibernateDaoContext(DriverService driverService) {
-        buildSessionFactory(driverService);
+    public HibernateDaoContext(DriverService driverService, Config config) {
+        buildSessionFactory(driverService, config);
         buildDaos();
     }
 
-    private void buildSessionFactory(DriverService driverService) {
+    private void buildSessionFactory(DriverService driverService, Config config) {
         configuration = new Configuration();
         new PackageScanner(new MappedClassFilter(), configuration::addAnnotatedClass, "io.github.jonestimd.finance.domain").visitClasses();
 //        configuration.addResource("io/github/jonestimd/finance/domain/mapping.hbm.xml");
         configuration.addResource("io/github/jonestimd/finance/domain/queries.hbm.xml");
         driverService.getHibernateResources().forEach(configuration::addResource);
-        ConfigFactory.load().getConfig("finances.connection.properties").entrySet()
+        config.getConfig("finances.connection.properties").entrySet()
                 .forEach(entry -> configuration.setProperty(entry.getKey(), entry.getValue().unwrapped().toString()));
         for (Entry<Object, Object> entry : driverService.getHibernateProperties().entrySet()) {
             configuration.setProperty((String) entry.getKey(), (String) entry.getValue());
@@ -254,8 +257,8 @@ public class HibernateDaoContext implements DaoRepository {
 
     public static void main(String[] args) {
         try {
-            DriverService driverService = new ConfigManager("config", args[0]).loadDriver();
-            HibernateDaoContext context = new HibernateDaoContext(driverService);
+            DriverService driverService = CONNECTION_CONFIG.loadDriver();
+            HibernateDaoContext context = new HibernateDaoContext(driverService, ApplicationConfig.CONFIG);
 //            Stream.of(context.schemaCreationScript()).forEach(System.out::println);
             new SchemaUpdate(context.configuration).execute(Target.SCRIPT);
         } catch (Exception ex) {

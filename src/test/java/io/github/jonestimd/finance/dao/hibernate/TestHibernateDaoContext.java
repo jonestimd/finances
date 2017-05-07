@@ -45,7 +45,7 @@ public class TestHibernateDaoContext extends HibernateDaoContext implements Test
     private org.hibernate.Transaction transaction;
 
     public TestHibernateDaoContext() {
-        super(new DriverService(new HsqlDriverConfigurationService(), CONFIG));
+        super(new DriverService(new HsqlDriverConfigurationService(), CONFIG), ConfigFactory.load());
     }
 
     @Override

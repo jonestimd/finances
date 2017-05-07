@@ -30,7 +30,6 @@ import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.operations.FileImportOperationsImpl;
@@ -47,6 +46,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+
+import static io.github.jonestimd.finance.config.ApplicationConfig.*;
+import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class FileDownload {
     private static final Logger LOGGER = Logger.getLogger(FileDownload.class);
@@ -67,7 +69,7 @@ public class FileDownload {
             FileDownload download = new FileDownload(config, context, buildClient(config));
             download.downloadNewStatements();
             if (args.length > 1) {
-                DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver());
+                DaoRepository daoContext = new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG);
                 ServiceContext serviceContext = new ServiceContext(daoContext);
                 FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
                 for (File file : context.getStatements()) {

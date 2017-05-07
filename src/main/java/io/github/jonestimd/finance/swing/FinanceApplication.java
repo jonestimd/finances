@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.swing;
 
 import java.awt.Insets;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -31,7 +30,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import io.github.jonestimd.finance.SystemProperty;
-import io.github.jonestimd.finance.config.ConfigManager;
+import io.github.jonestimd.finance.config.ConnectionConfig;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.DriverService;
@@ -42,7 +41,10 @@ import io.github.jonestimd.swing.dialog.ExceptionDialog;
 import io.github.jonestimd.swing.window.StatusFrame;
 import org.apache.log4j.Logger;
 
+import static io.github.jonestimd.finance.config.ApplicationConfig.*;
+
 public class FinanceApplication {
+    public static final ConnectionConfig CONNECTION_CONFIG = new ConnectionConfig();
     private static final String PROPERTIES_FILENAME = ".finances/finances.properties";
     private static final ResourceBundle bundle = BundleType.LABELS.get();
     private static final Logger logger = Logger.getLogger(FinanceApplication.class);
@@ -113,7 +115,7 @@ public class FinanceApplication {
     }
 
     private void initializeFrame() {
-        Optional<DriverService> driverOption = new ConfigManager().loadDriver(initialFrame);
+        Optional<DriverService> driverOption = CONNECTION_CONFIG.loadDriver(initialFrame);
         if (driverOption.isPresent()) {
             BackgroundTask.task(() -> startContext(driverOption.get()), this::showFrame, this::showError).run();
         }
@@ -124,7 +126,7 @@ public class FinanceApplication {
         try {
             logger.info("starting context");
             boolean initDatabase = driver.prepareDatabase(this::setProgressMessage);
-            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver, this::setProgressMessage));
+            serviceContext = new ServiceContext(HibernateDaoContext.connect(initDatabase, driver, CONFIG, this::setProgressMessage));
             swingContext = new SwingContext(serviceContext);
             logger.info("done");
             return null;

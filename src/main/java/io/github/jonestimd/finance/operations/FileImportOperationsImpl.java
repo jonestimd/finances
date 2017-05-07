@@ -29,7 +29,6 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import io.github.jonestimd.finance.config.ConfigManager;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.dao.ImportFileDao;
@@ -38,6 +37,9 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.service.TransactionService;
+
+import static io.github.jonestimd.finance.config.ApplicationConfig.*;
+import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class FileImportOperationsImpl implements FileImportOperations { // TODO move to client (import action?)
     private final ImportFileDao importFileDao;
@@ -73,7 +75,7 @@ public class FileImportOperationsImpl implements FileImportOperations { // TODO 
         fileChooser.getActionMap().get("viewTypeDetails").actionPerformed(null);
         fileChooser.showOpenDialog(JOptionPane.getRootFrame());
         try {
-            DaoRepository daoContext = new HibernateDaoContext(new ConfigManager().loadDriver());
+            DaoRepository daoContext = new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG);
             ServiceContext serviceContext = new ServiceContext(daoContext);
             FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
             for (File file : fileChooser.getSelectedFiles()) {

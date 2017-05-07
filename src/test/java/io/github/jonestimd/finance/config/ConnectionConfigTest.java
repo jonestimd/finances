@@ -35,7 +35,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.*;
 
-public class ConfigManagerTest {
+public class ConnectionConfigTest {
     private String userHome;
 
     @Before
@@ -46,18 +46,18 @@ public class ConfigManagerTest {
 
     @After
     public void resetProperties() {
-        System.clearProperty(ConfigManager.CONFIG_FILE_PROPERTY);
+        System.clearProperty(ConnectionConfig.CONNECTION_FILE_PROPERTY);
         System.setProperty("user.home", userHome);
     }
 
     @Test
     public void loadsFileSpecifiedByConfigProperty() throws Exception {
         String path = getClass().getResource("finances.conf").getPath();
-        System.setProperty(ConfigManager.CONFIG_FILE_PROPERTY, path);
+        System.setProperty(ConnectionConfig.CONNECTION_FILE_PROPERTY, path);
 
-        ConfigManager manager = new ConfigManager();
+        ConnectionConfig manager = new ConnectionConfig();
 
-        assertThat(manager.get(ConfigManager.CONNECTION_PATH).get().getString("type")).isEqualTo("Specific");
+        assertThat(manager.get(ConnectionConfig.CONNECTION_PATH).get().getString("type")).isEqualTo("Specific");
     }
 
     @Test
@@ -65,9 +65,9 @@ public class ConfigManagerTest {
         String path = getClass().getResource("finances.conf").getPath();
         System.setProperty("user.home", new File(path).getParent());
 
-        ConfigManager manager = new ConfigManager();
+        ConnectionConfig manager = new ConnectionConfig();
 
-        assertThat(manager.get(ConfigManager.CONNECTION_PATH).get().getString("type")).isEqualTo("Default");
+        assertThat(manager.get(ConnectionConfig.CONNECTION_PATH).get().getString("type")).isEqualTo("Default");
     }
 
     @Test
@@ -75,7 +75,7 @@ public class ConfigManagerTest {
         String path = getClass().getResource("/log4j.test.properties").getPath();
         System.setProperty("user.home", new File(path).getParent());
 
-        ConfigManager manager = new ConfigManager();
+        ConnectionConfig manager = new ConnectionConfig();
 
         assertThat(manager.root().entrySet()).isEmpty();
     }
@@ -83,7 +83,7 @@ public class ConfigManagerTest {
     @Test
     public void getReturnsEmptyOptionForMissingPath() throws Exception {
         String path = getClass().getResource("test.conf").getPath();
-        ConfigManager manager = new ConfigManager("x", path);
+        ConnectionConfig manager = new ConnectionConfig("x", path);
 
         assertThat(manager.get("unknown").isPresent()).isFalse();
     }
@@ -91,7 +91,7 @@ public class ConfigManagerTest {
     @Test
     public void getReturnsOptionForPath() throws Exception {
         String path = getClass().getResource("test.conf").getPath();
-        ConfigManager manager = new ConfigManager("x", path);
+        ConnectionConfig manager = new ConnectionConfig("x", path);
 
         assertThat(manager.get("connection").isPresent()).isTrue();
     }
@@ -99,7 +99,7 @@ public class ConfigManagerTest {
     @Test
     public void addPathAddsToConfiguration() throws Exception {
         String path = getClass().getResource("test.conf").getPath();
-        ConfigManager manager = new ConfigManager("x", path);
+        ConnectionConfig manager = new ConnectionConfig("x", path);
         assertThat(manager.get("unknown").isPresent()).isFalse();
 
         manager.addPath("unknown", ConfigFactory.empty().withValue("setting", ConfigValueFactory.fromAnyRef("value")));
@@ -111,7 +111,7 @@ public class ConfigManagerTest {
     @Test
     public void loadDriverUsesConfigurationFile() throws Exception {
         String path = getClass().getResource("driver.conf").getPath();
-        ConfigManager config = new ConfigManager("config", path);
+        ConnectionConfig config = new ConnectionConfig("config", path);
 
         DriverService service = config.loadDriver();
 
@@ -124,7 +124,7 @@ public class ConfigManagerTest {
                 .withValue("hibernate.query.startup_check", ConfigValueFactory.fromAnyRef(false))
                 .withValue("hibernate.format_sql", ConfigValueFactory.fromAnyRef(true));
 
-        Properties properties = ConfigManager.asProperties(config, "hibernate");
+        Properties properties = ConnectionConfig.asProperties(config, "hibernate");
 
         assertThat(properties).hasSize(2);
         assertThat(properties.get("hibernate.query.startup_check")).isEqualTo("false");
