@@ -34,6 +34,7 @@ import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -249,6 +250,9 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
     @Override
     protected void initializeMenu(JMenuBar menuBar) {
         JToolBar toolbar = ComponentFactory.newMenuToolBar();
+        if (toolbar.getLayout().getClass().getSimpleName().equals("SynthToolBarLayoutManager")) {
+            toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.LINE_AXIS));
+        }
         menuBar.add(createTransactionsMenu(toolbar), 0);
         menuBar.add(accountsMenuFactory.createAccountsMenu(), 0);
         menuBar.add(createFileMenu(), 0);
