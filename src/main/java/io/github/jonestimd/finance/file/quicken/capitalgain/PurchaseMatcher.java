@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@ import org.apache.log4j.Logger;
 public class PurchaseMatcher {
     private static final BigDecimal PURCHASE_SHARES_ERROR = new BigDecimal("0.0005");
     private static final BigDecimal PURCHASE_PRICE_ERROR = new BigDecimal("0.5");
-    private static final String MISSING_PURCHASE = "import.capitalgain.missingPurchase";
+    private static final String MISSING_PURCHASE = "import.capitalGains.missingPurchase";
     private static Comparator<TransactionDetail> REMAINING_SHARES_DESCENDING = (p1, p2) -> p2.getRemainingShares().compareTo(p1.getRemainingShares());
     private static Ordering<Entry<CapitalGain, ?>> SHARES_DESCENDING = Ordering.from((o1, o2) -> {
         try {

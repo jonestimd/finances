@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class CapitalGainReader {
     private final BufferedReader reader;
-    private final List<String> columns = new ArrayList<String>();
+    private final List<String> columns = new ArrayList<>();
     private long lineNumber = 0L;
 
     public CapitalGainReader(Reader reader) {
@@ -50,7 +50,7 @@ public class CapitalGainReader {
     public CapitalGainRecord nextRecord() throws IOException {
         String line = nextLine();
         if (line != null) {
-            Map<String, String> values = new HashMap<String, String>();
+            Map<String, String> values = new HashMap<>();
             int i = 0;
             for (String value : line.split("\t")) {
                 values.put(columns.get(i++), value);

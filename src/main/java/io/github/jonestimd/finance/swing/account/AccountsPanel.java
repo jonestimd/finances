@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
+import io.github.jonestimd.finance.swing.CapitalGainsImportAction;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.QifImportAction;
 import io.github.jonestimd.finance.swing.WindowType;
@@ -86,6 +87,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private Action openAction;
     private Action companyAction;
     private Action qifImportAction;
+    private Action capitalGainsImportAction;
 
     public AccountsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
                          WindowEventPublisher<WindowType> windowEventPublisher) {
@@ -101,6 +103,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         openAction.setEnabled(false);
         companyAction = new CompanyDialogAction(tableFactory);
         qifImportAction = new QifImportAction(serviceLocator, eventPublisher);
+        capitalGainsImportAction = new CapitalGainsImportAction(serviceLocator, tableFactory, eventPublisher);
         TableFactory.addDoubleClickHandler(getTable(), this::tableDoubleClicked);
     }
 
@@ -109,6 +112,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         super.initializeMenu(menuBar);
         final JMenu menu = ComponentFactory.newMenu(LABELS.get(), "menu.file.mnemonicAndName");
         menu.add(new JMenuItem(qifImportAction));
+        menu.add(new JMenuItem(capitalGainsImportAction));
         menuBar.add(menu, 0);
     }
 

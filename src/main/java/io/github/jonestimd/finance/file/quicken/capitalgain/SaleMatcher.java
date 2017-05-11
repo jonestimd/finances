@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,8 +52,9 @@ import org.apache.log4j.Logger;
 public class SaleMatcher {
     private static final BigDecimal IMPORT_SHARES_ERROR = new BigDecimal("0.0005");
     private static final BigDecimal IMPORT_AMOUNT_ERROR = new BigDecimal("0.005");
-    private static final String MISSING_SALE = "import.capitalgain.missingSale";
-    private static final String NO_LOTS_FOR_SALE = "import.capitalgain.noLotsForSale";
+    private static final String MESSAGE_PREFIX = "import.capitalGains";
+    private static final String MISSING_SALE = MESSAGE_PREFIX + ".missingSale";
+    private static final String NO_LOTS_FOR_SALE = MESSAGE_PREFIX + ".noLotsForSale";
     private final Logger logger = Logger.getLogger(getClass());
     private static final Comparator<Collection<?>> SIZE_ASCENDING = Comparator.comparingInt(Collection::size);
 

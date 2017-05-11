@@ -21,8 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.quicken.capitalgain;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -33,33 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-
 import com.google.common.base.Predicate;
-import io.github.jonestimd.commandline.CommandLine;
-import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.file.FileImport;
 import io.github.jonestimd.finance.file.ImportSummary;
-import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
-import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.service.TransactionService;
-import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
 import io.github.jonestimd.function.MessageConsumer;
 import io.github.jonestimd.util.Streams;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import static io.github.jonestimd.finance.config.ApplicationConfig.*;
-import static io.github.jonestimd.finance.swing.BundleType.*;
-import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class CapitalGainImport implements FileImport {
     private static final Predicate<SecurityLot> IS_LOT_NOT_EMPTY = input -> BigDecimal.ZERO.compareTo(input.getPurchaseShares()) != 0;
-    private static final Logger logger = Logger.getLogger(CapitalGainImport.class);
+    private static final String MESSAGE_PREFIX = "import.capitalGains";
     private final TransactionService transactionService;
     private final Map<String, Map<Date, List<CapitalGain>>> saleMap = new HashMap<>();
     private final LotValidator lotValidator;
@@ -86,7 +70,7 @@ public class CapitalGainImport implements FileImport {
             if (! saleLots.isEmpty()) {
                 transactionService.saveSecurityLots(Streams.filter(saleLots, IS_LOT_NOT_EMPTY));
             }
-            updateProgress.accept("import.capitalgain.importSummary", recordLotMap.size(), ignoreCount, recordCount+ignoreCount);
+            updateProgress.accept(MESSAGE_PREFIX + ".importSummary", recordLotMap.size(), ignoreCount, recordCount+ignoreCount);
             return new ImportSummary(recordLotMap.size(), ignoreCount, recordCount + ignoreCount);
         }
         catch (IOException ex) {
@@ -98,57 +82,5 @@ public class CapitalGainImport implements FileImport {
         Map<Date, List<CapitalGain>> dateMap = parentMap.computeIfAbsent(key, k -> new HashMap<>());
         List<CapitalGain> records = dateMap.computeIfAbsent(date, k -> new ArrayList<>());
         records.add(record);
-    }
-
-    public static void main(String[] args) {
-        logger.setResourceBundle(MESSAGES.get());
-        CommandLine commandLine = new CommandLine(args);
-        if (commandLine.getInputCount() > 0) {
-            try {
-                UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-            }
-            catch (Exception e) {
-                logger.warn("failed to set look and feel");
-            }
-            try (FileReader txfReader = new FileReader(commandLine.getInput(0))) {
-                logger.getParent().setLevel(Level.DEBUG);
-                ServiceContext serviceContext = new ServiceContext(new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG));
-                SwingContext swingContext = new SwingContext(serviceContext);
-                FileImport txfImport = new QuickenContext(serviceContext)
-                        .newTxfImport(new LotAllocationDialog(JOptionPane.getRootFrame(), swingContext.getTableFactory()));
-                txfImport.importFile(txfReader, CapitalGainImport::logInfo);
-            }
-            catch (FileNotFoundException ex) {
-                logger.error(ex.getMessage());
-            }
-            catch (QuickenException ex) {
-                while (ex != null) {
-                    logger.error(ex.getMessage());
-                    if (ex.getCause() instanceof QuickenException) {
-                        ex = (QuickenException) ex.getCause();
-                    }
-                    else {
-                        if (ex.getCause() != null) {
-                            logger.error(ex.getCause().getMessage(), ex.getCause());
-                        }
-                        break;
-                    }
-                }
-            }
-            catch (Throwable throwable) {
-                logger.error(MESSAGES.getString("unexpectedException"), throwable);
-            }
-        }
-        else {
-            printUsage();
-        }
-    }
-
-    private static void logInfo(String messageKey, Object ...args) {
-        logger.l7dlog(Level.INFO, messageKey, args, null);
-    }
-
-    private static void printUsage() {
-        System.out.println("usage: java " + CapitalGainImport.class.getName() + " scd_file txf_file");
     }
 }

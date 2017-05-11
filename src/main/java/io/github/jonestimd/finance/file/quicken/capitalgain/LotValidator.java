@@ -46,7 +46,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class LotValidator {
-    private static final String INCOMPLETE_LOTS = "import.capitalgain.incompleteLots";
+    private static final String INCOMPLETE_LOTS = "import.capitalGains.incompleteLots";
     private final Logger logger = Logger.getLogger(getClass());
     private final LotAllocationDialog lotAllocationDialog;
 

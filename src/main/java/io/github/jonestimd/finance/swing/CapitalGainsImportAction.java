@@ -43,6 +43,7 @@ import io.github.jonestimd.finance.file.quicken.QuickenContext;
 import io.github.jonestimd.finance.file.quicken.QuickenException;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
 import io.github.jonestimd.function.MessageConsumer;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
@@ -52,21 +53,23 @@ import io.github.jonestimd.swing.window.StatusFrame;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class QifImportAction extends MnemonicAction {
-    public static final String MESSAGE_PREFIX = "import.qif";
+public class CapitalGainsImportAction extends MnemonicAction {
+    public static final String MESSAGE_PREFIX = "import.capitalGains";
     public static final String RESOURCE_PREFIX = "action." + MESSAGE_PREFIX;
     public static final String ERROR_DIALOG_TITLE = RESOURCE_PREFIX + ".failed.title";
     private final ServiceLocator serviceLocator;
-    private final JFileChooser fileChooser = new JFileChooser();
-    private final FileFilter fileFilter = new FileNameExtensionFilter("Quicken Import Format", "qif", "QIF");
+    private final FinanceTableFactory tableFactory;
     private final DomainEventPublisher eventPublisher;
+    private final JFileChooser fileChooser = new JFileChooser();
+    private final FileFilter fileFilter = new FileNameExtensionFilter("Tab Separated Values", "txt", "TXT", "tsv", "TSV");
 
-    public QifImportAction(ServiceLocator serviceLocator, DomainEventPublisher eventPublisher) {
+    public CapitalGainsImportAction(ServiceLocator serviceLocator, FinanceTableFactory tableFactory, DomainEventPublisher eventPublisher) {
         super(LABELS.get(), RESOURCE_PREFIX);
         this.serviceLocator = serviceLocator;
+        this.tableFactory = tableFactory;
+        this.eventPublisher = eventPublisher;
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.addChoosableFileFilter(fileFilter);
-        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -120,10 +123,12 @@ public class QifImportAction extends MnemonicAction {
         @Override
         public ImportSummary performTask() {
             MessageConsumer updateProgress = MessageConsumer.forBundle(MESSAGES.get(), setStatusMessage(window));
-            try (FileReader qifReader = new FileReader(selectedFile)) {
-                return new QuickenContext(serviceLocator).newQifImport().importFile(qifReader, updateProgress);
+            try (FileReader reader = new FileReader(selectedFile)) {
+                return new QuickenContext(serviceLocator)
+                        .newCapitalGainsImport(new LotAllocationDialog(window, tableFactory))
+                        .importFile(reader, updateProgress);
             } catch (IOException ex) {
-                throw new QuickenException("unexpectedException", ex);
+                throw new RuntimeException(ex);
             }
         }
 
