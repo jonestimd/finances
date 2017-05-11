@@ -52,7 +52,7 @@ public class ConnectionConfigTest {
 
     @Test
     public void loadsFileSpecifiedByConfigProperty() throws Exception {
-        String path = getClass().getResource("finances.conf").getPath();
+        String path = getClass().getResource("connection.conf").getPath();
         System.setProperty(ConnectionConfig.CONNECTION_FILE_PROPERTY, path);
 
         ConnectionConfig manager = new ConnectionConfig();
@@ -62,7 +62,7 @@ public class ConnectionConfigTest {
 
     @Test
     public void loadDefaultFileIfPropertyNotSet() throws Exception {
-        String path = getClass().getResource("finances.conf").getPath();
+        String path = getClass().getResource("connection.conf").getPath();
         System.setProperty("user.home", new File(path).getParent());
 
         ConnectionConfig manager = new ConnectionConfig();
