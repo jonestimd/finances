@@ -23,8 +23,10 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -41,13 +43,16 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.ComboBoxDomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.component.EditableComboBoxCellEditor;
+import io.github.jonestimd.util.Streams;
+
+import static io.github.jonestimd.util.JavaPredicates.*;
 
 public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<TransactionType> {
     private static final String NEXT_TYPE_ELEMENT = "next type element";
     private static final String LOADING_MESSAGE_KEY = "table.transaction.detail.type.initialize";
     private final AccountOperations accountOperations;
     private final TransactionCategoryOperations transactionCategoryOperations;
-    // need a reference to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal") // need a reference to avoid garbage collection
     private final ComboBoxDomainEventListener<Long, TransactionType> domainEventListener = new ComboBoxDomainEventListener<>(getComboBox());
 
     public TransactionTypeCellEditor(final ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
@@ -67,8 +72,24 @@ public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<Transa
         return types;
     }
 
+    protected Stream<TransactionCategory> getCategories() {
+        return Streams.of(getComboBoxModel()).skip(1) // null
+                .filter(not(TransactionType::isTransfer))
+                .map(TransactionCategory.class::cast);
+    }
+
     protected TransactionType saveItem(TransactionType type) {
-        return type;
+        TransactionCategory category = (TransactionCategory) type;
+        return setKey(category, category.getCode());
+    }
+
+    private TransactionCategory setKey(TransactionCategory category, String text) {
+        try {
+            category.setKey(new CategoryKeyFormat(getCategories()).parseObject(text));
+            return category;
+        } catch (ParseException ex) {
+            return null;
+        }
     }
 
     private class NextTypeElementAction extends AbstractAction {
@@ -76,15 +97,23 @@ public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<Transa
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            String text = ((JTextField) e.getSource()).getText();
             TransactionType type = getComboBox().getSelectedItem();
-            if (type instanceof TransactionCategory) {
-                TransactionCategory category = (TransactionCategory) type;
-                setEditorText((JTextField) e.getSource(), new TransactionCategory(category, ""));
-            } else if (type instanceof Account) {
-                Account account = (Account) type;
-                if (account.getCompany() != null) {
-                    setEditorText((JTextField) e.getSource(), new Account(account.getCompany(), ""));
+            if (format.format(type).startsWith(text)) {
+                if (type instanceof TransactionCategory) {
+                    TransactionCategory category = (TransactionCategory) type;
+                    setEditorText((JTextField) e.getSource(), new TransactionCategory(category, ""));
                 }
+                else if (type instanceof Account) {
+                    Account account = (Account) type;
+                    if (account.getCompany() != null) {
+                        setEditorText((JTextField) e.getSource(), new Account(account.getCompany(), ""));
+                    }
+                }
+            }
+            else {
+                TransactionCategory parent = setKey(new TransactionCategory(), text);
+                if (parent != null) getComboBox().setSelectedItem(new TransactionCategory(parent, ""));
             }
         }
 

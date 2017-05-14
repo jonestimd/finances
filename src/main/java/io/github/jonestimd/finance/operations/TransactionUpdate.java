@@ -25,17 +25,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 
 public class TransactionUpdate {
     private final Transaction transaction;
     private final List<TransactionDetail> deletes = new ArrayList<>();
-    
+    private List<TransactionCategory> newCategories;
+
+
     public TransactionUpdate(Transaction transaction) {
-        this(transaction, Collections.<TransactionDetail>emptyList());
+        this(transaction, Collections.emptyList());
     }
 
     public TransactionUpdate(Transaction transaction, Collection<TransactionDetail> deletes) {
@@ -63,5 +67,28 @@ public class TransactionUpdate {
 
     public boolean isDeleteAllDetails() {
         return transaction.getDetails().size() == deletes.size();
+    }
+
+    private void updateNewCategories(TransactionCategory category, int insertAt, Consumer<TransactionCategory> onExists) {
+        int index = newCategories.indexOf(category);
+        if (index < 0) {
+            newCategories.add(insertAt, category);
+            if (category.getParent() != null && category.getParent().getId() == null) {
+                updateNewCategories(category.getParent(), insertAt, category::setParent);
+            }
+        }
+        else onExists.accept(newCategories.get(index));
+    }
+
+    public List<TransactionCategory> getNewCategories() {
+        if (newCategories == null) {
+            newCategories = new ArrayList<>();
+            for (TransactionDetail detail : transaction.getDetails()) {
+                if (!deletes.contains(detail) && detail.getCategory() != null && detail.getCategory().getId() == null) {
+                    updateNewCategories(detail.getCategory(), newCategories.size(), detail::setCategory);
+                }
+            }
+        }
+        return newCategories;
     }
 }

@@ -54,7 +54,7 @@ public class TransactionTypeFormat extends Format implements IconSource {
     public Object parseObject(String source, ParsePosition pos) {
         TransactionCategory category = new TransactionCategory();
         category.setCode(source);
-        pos.setIndex(source.length());
+        pos.setIndex(source.length() + 1);
         return category;
     }
 

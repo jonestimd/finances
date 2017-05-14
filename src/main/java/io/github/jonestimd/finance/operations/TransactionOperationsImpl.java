@@ -30,6 +30,7 @@ import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.PayeeDao;
 import io.github.jonestimd.finance.dao.SecurityDao;
 import io.github.jonestimd.finance.dao.SecurityLotDao;
+import io.github.jonestimd.finance.dao.TransactionCategoryDao;
 import io.github.jonestimd.finance.dao.TransactionDao;
 import io.github.jonestimd.finance.dao.TransactionDetailDao;
 import io.github.jonestimd.finance.domain.account.Account;
@@ -44,11 +45,12 @@ import io.github.jonestimd.util.Streams;
 import static io.github.jonestimd.util.JavaPredicates.*;
 
 public class TransactionOperationsImpl implements TransactionOperations {
-    private TransactionDao transactionDao;
-    private TransactionDetailDao transactionDetailDao;
-    private PayeeDao payeeDao;
-    private SecurityDao securityDao;
-    private SecurityLotDao securityLotDao;
+    private final TransactionDao transactionDao;
+    private final TransactionDetailDao transactionDetailDao;
+    private final PayeeDao payeeDao;
+    private final SecurityDao securityDao;
+    private final SecurityLotDao securityLotDao;
+    private final TransactionCategoryDao categoryDao;
 
     public TransactionOperationsImpl(DaoRepository daoRepository) {
         this.transactionDao = daoRepository.getTransactionDao();
@@ -56,6 +58,7 @@ public class TransactionOperationsImpl implements TransactionOperations {
         this.payeeDao = daoRepository.getPayeeDao();
         this.securityDao = daoRepository.getSecurityDao();
         this.securityLotDao = daoRepository.getSecurityLotDao();
+        this.categoryDao = daoRepository.getTransactionCategoryDao();
     }
 
     public <T extends Iterable<Transaction>> T saveTransactions(T transactions) {
@@ -108,6 +111,7 @@ public class TransactionOperationsImpl implements TransactionOperations {
         Transaction transaction = transactionUpdate.getTransaction();
         persistPayee(transaction.getPayee());
         persistSecurity(transaction.getSecurity());
+        transactionUpdate.getNewCategories().forEach(categoryDao::save);
         transaction.getDetails().removeIf(TransactionDetail::isUnsavedAndEmpty);
         if (transaction.getId() != null) {
             Transaction persisted = transactionDao.merge(transaction);

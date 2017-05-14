@@ -23,13 +23,11 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JToolBar;
 
-import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.event.CategoryEvent;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
@@ -92,9 +90,11 @@ public class TransactionCategoriesPanel extends TransactionSummaryTablePanel<Tra
     }
 
     private boolean isLockedOrHasChildren(TransactionCategorySummary summary) {
-        return ! summary.isNew() && (summary.isLocked() || getTableData().stream().map(TransactionCategorySummary::getCategory)
-                .map(TransactionCategory::getParent).filter(Objects::nonNull).map(UniqueId::getId)
-                .anyMatch(summary.getId()::equals));
+        return ! summary.isNew() && (summary.isLocked() || getTableModel().getBeans().stream()
+                .anyMatch(other -> {
+                    TransactionCategory parent = other.getCategory().getParent();
+                    return parent != null && parent.getId().equals(summary.getId());
+                }));
     }
 
     @Override

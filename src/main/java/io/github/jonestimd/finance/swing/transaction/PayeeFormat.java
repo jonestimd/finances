@@ -38,7 +38,7 @@ public class PayeeFormat extends Format {
 
     public Object parseObject(String source, ParsePosition pos) {
         if (source != null && source.trim().length() > 0) {
-            pos.setIndex(source.length());
+            pos.setIndex(source.length() + 1);
             return new Payee(source.trim());
         }
         return null;

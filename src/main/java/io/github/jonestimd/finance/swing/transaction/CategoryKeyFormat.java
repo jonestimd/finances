@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,34 +23,52 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.text.FieldPosition;
 import java.text.Format;
+import java.text.ParseException;
 import java.text.ParsePosition;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.domain.transaction.CategoryKey;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.swing.BundleType;
+import io.github.jonestimd.util.Streams;
 
 public class CategoryKeyFormat extends Format {
-    private static final String SEPARATOR = BundleType.LABELS.getString("io.github.jonestimd.finance.category.code.separator");
-    private final boolean trailingSeparator;
+    public static final String SEPARATOR = BundleType.LABELS.getString("io.github.jonestimd.finance.category.code.separator");
+    private final Map<CategoryKey, TransactionCategory> categoryMap;
 
     public CategoryKeyFormat() {
-        this(false);
+        this(Stream.empty());
     }
 
-    public CategoryKeyFormat(boolean trailingSeparator) {
-        this.trailingSeparator = trailingSeparator;
+    public CategoryKeyFormat(Stream<TransactionCategory> categories) {
+        this.categoryMap = Streams.uniqueIndex(categories, TransactionCategory::getKey);
     }
 
     public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
         if (obj instanceof CategoryKey) {
             toAppendTo.append(((CategoryKey) obj).qualifiedName(SEPARATOR));
         }
-        if (trailingSeparator) {
-            toAppendTo.append(SEPARATOR);
-        }
         return toAppendTo;
     }
 
     public Object parseObject(String source, ParsePosition pos) {
-        throw new UnsupportedOperationException();
+        TransactionCategory category = null;
+        int offset = 0;
+        for (String code : source.split(SEPARATOR, -1)) {
+            if (code.trim().isEmpty()) {
+                pos.setErrorIndex(offset);
+                return null;
+            }
+            offset += code.length() + 1;
+            category = categoryMap.getOrDefault(new CategoryKey(category, code.trim()), new TransactionCategory(category, code.trim()));
+        }
+        pos.setIndex(offset);
+        return category.getKey();
+    }
+
+    @Override
+    public CategoryKey parseObject(String source) throws ParseException {
+        return (CategoryKey) super.parseObject(source);
     }
 }

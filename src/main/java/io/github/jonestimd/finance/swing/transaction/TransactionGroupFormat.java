@@ -40,7 +40,7 @@ public class TransactionGroupFormat extends Format {
     public Object parseObject(String source, ParsePosition pos) {
         TransactionGroup group = new TransactionGroup();
         group.setName(source);
-        pos.setIndex(source.length());
+        pos.setIndex(source.length() + 1);
         return group;
     }
 

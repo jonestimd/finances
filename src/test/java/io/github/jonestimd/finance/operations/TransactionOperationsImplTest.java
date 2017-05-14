@@ -14,6 +14,7 @@ import io.github.jonestimd.finance.dao.MockDaoContext;
 import io.github.jonestimd.finance.dao.PayeeDao;
 import io.github.jonestimd.finance.dao.SecurityDao;
 import io.github.jonestimd.finance.dao.SecurityLotDao;
+import io.github.jonestimd.finance.dao.TransactionCategoryDao;
 import io.github.jonestimd.finance.dao.TransactionDao;
 import io.github.jonestimd.finance.dao.TransactionDetailDao;
 import io.github.jonestimd.finance.domain.TestDomainUtils;
@@ -43,6 +44,7 @@ public class TransactionOperationsImplTest {
     private MockDaoContext daoRepository = new MockDaoContext();
     private TransactionDao transactionDao = daoRepository.getTransactionDao();
     private TransactionDetailDao transactionDetailDao = daoRepository.getTransactionDetailDao();
+    private TransactionCategoryDao categoryDao = daoRepository.getTransactionCategoryDao();
     private PayeeDao payeeDao = daoRepository.getPayeeDao();
     private SecurityDao securityDao = daoRepository.getSecurityDao();
     private SecurityLotDao securityLotDao = daoRepository.getSecurityLotDao();
@@ -71,7 +73,7 @@ public class TransactionOperationsImplTest {
         InOrder inOrder = inOrder(payeeDao, transactionDao);
         inOrder.verify(payeeDao).save(same(payee));
         inOrder.verify(transactionDao).save(transaction);
-        verifyNoMoreInteractions(transactionDao, transactionDetailDao, payeeDao, securityLotDao);
+        verifyNoMoreInteractions(transactionDao, transactionDetailDao, categoryDao, payeeDao, securityLotDao);
     }
 
     @Test
@@ -86,6 +88,20 @@ public class TransactionOperationsImplTest {
 
         InOrder inOrder = inOrder(securityDao, transactionDao);
         inOrder.verify(securityDao).save(same(newSecurity));
+        inOrder.verify(transactionDao).save(transaction);
+        verifyNoMoreInteractions(transactionDao, transactionDetailDao, categoryDao, securityDao, securityLotDao);
+    }
+
+    @Test
+    public void saveTransactionPersistsNewCategories() throws Exception {
+        daoRepository.expectCommit();
+        TransactionDetail detail = new TransactionDetailBuilder().category("category").amount(BigDecimal.TEN).get();
+        Transaction transaction = new TransactionBuilder().details(detail).get();
+
+        transactionOperations.saveTransaction(new TransactionUpdate(transaction));
+
+        InOrder inOrder = inOrder(categoryDao, transactionDao);
+        inOrder.verify(categoryDao).save(same(detail.getCategory()));
         inOrder.verify(transactionDao).save(transaction);
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityDao, securityLotDao);
     }

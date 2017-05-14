@@ -38,7 +38,7 @@ public class SecurityFormat extends Format {
     }
 
     public Object parseObject(String source, ParsePosition pos) {
-        pos.setIndex(source.length());
+        pos.setIndex(source.length() + 1);
         Security security = new Security();
         security.setName(source);
         return security;

@@ -52,4 +52,9 @@ public class TransactionCategoryTableModel extends TransactionSummaryTableModel<
             }
         }
     }
+
+    @Override
+    protected TransactionCategorySummary newSummary(TransactionCategory category) {
+        return new TransactionCategorySummary(category, 1L);
+    }
 }

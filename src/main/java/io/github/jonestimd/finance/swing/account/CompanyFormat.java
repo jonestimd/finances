@@ -38,7 +38,7 @@ public class CompanyFormat extends Format {
 
     public Object parseObject(String source, ParsePosition pos) {
         if (source != null && source.trim().length() > 0) {
-            pos.setIndex(source.length());
+            pos.setIndex(source.length() + 1);
             Company company = new Company();
             company.setName(source.trim());
             return company;

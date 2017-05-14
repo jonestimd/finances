@@ -2,12 +2,23 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.text.ParseException;
 
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.*;
 
 public class PayeeFormatTest {
+    @Test
+    public void formatIgnoresNull() throws Exception {
+        assertThat(new PayeeFormat().format(null)).isEqualTo("");
+    }
+
+    @Test
+    public void formatReturnsName() throws Exception {
+        assertThat(new PayeeFormat().format(new Payee("name"))).isEqualTo("name");
+    }
+
     @Test
     public void parseNullThrowsException() throws Exception {
         try {

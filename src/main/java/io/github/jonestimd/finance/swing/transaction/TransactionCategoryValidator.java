@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,20 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.transaction;
 
-import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
-import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.swing.validation.Validator;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class TransactionCategoryValidator implements Validator<String> {
     private static final String CODE_PATTERN = " *[^: ][^:]*";
-    private ResourceBundle bundle = BundleType.LABELS.get();
     private Pattern pattern;
     private String message;
 
     public TransactionCategoryValidator(boolean nestedCode) {
         pattern = nestedCode ? Pattern.compile("(" + CODE_PATTERN + "(:" + CODE_PATTERN + ")*)?") : Pattern.compile(CODE_PATTERN);
-        message = bundle.getString("validation.transactionCategory." + (nestedCode ? "invalidNestedCodes" : "invalidCode"));
+        message = LABELS.getString("validation.transactionCategory." + (nestedCode ? "invalidNestedCodes" : "invalidCode"));
     }
 
     public String validate(String value) {

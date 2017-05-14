@@ -30,7 +30,8 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-public class TransactionSummaryTableModel<T extends Comparable<? super T> & UniqueId<Long>, S extends TransactionSummary<T>> extends ValidatedBeanListTableModel<S> {
+public abstract class TransactionSummaryTableModel<T extends Comparable<? super T> & UniqueId<Long>, S extends TransactionSummary<T>> extends ValidatedBeanListTableModel<S> {
+    @SuppressWarnings("FieldCanBeLocal") // need strong reference to avoid garbage collection
     private final DomainEventListener<Long, T> domainEventListener = event -> {
         if (event.isDelete()) {
             removeAll(getBeans().stream().filter(event::containsAttribute)::iterator);
@@ -39,6 +40,11 @@ public class TransactionSummaryTableModel<T extends Comparable<? super T> & Uniq
             long delta = getBeans().stream().filter(event::containsAttribute).mapToLong(this::resetCount).sum();
             updateCount(event.getReplacement(), delta);
         }
+        else if (event.isAdd()) {
+            for (T bean : event.getDomainObjects()) {
+                addRow(newSummary(bean));
+            }
+        }
     };
 
     public TransactionSummaryTableModel(List<? extends ColumnAdapter<? super S, ?>> columnAdapters, Class<T> summaryAttributeClass,
@@ -46,6 +52,8 @@ public class TransactionSummaryTableModel<T extends Comparable<? super T> & Uniq
         super(columnAdapters);
         domainEventPublisher.register(summaryAttributeClass, domainEventListener);
     }
+
+    protected abstract S newSummary(T bean);
 
     /**
      * @return summary count for the row.

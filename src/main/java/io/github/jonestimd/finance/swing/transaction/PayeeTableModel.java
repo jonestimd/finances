@@ -27,7 +27,6 @@ import java.util.List;
 
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.PayeeSummary;
-import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
 
@@ -37,18 +36,12 @@ public class PayeeTableModel extends TransactionSummaryTableModel<Payee, PayeeSu
             TransactionSummaryColumnAdapter.COUNT_ADAPTER);
     public static final int NAME_INDEX = 0;
 
-    // need strong reference to avoid garbage collection
-    @SuppressWarnings("FieldCanBeLocal")
-    private final DomainEventListener<Long, Payee> domainEventListener = event -> {
-        if (event.isAdd()) {
-            for (Payee payee : event.getDomainObjects()) {
-                addRow(new PayeeSummary(payee, 1, new Date()));
-            }
-        }
-    };
-
     public PayeeTableModel(DomainEventPublisher domainEventPublisher) {
         super(ADAPTERS, Payee.class, domainEventPublisher);
-        domainEventPublisher.register(Payee.class, domainEventListener);
+    }
+
+    @Override
+    protected PayeeSummary newSummary(Payee payee) {
+        return new PayeeSummary(payee, 1, new Date());
     }
 }

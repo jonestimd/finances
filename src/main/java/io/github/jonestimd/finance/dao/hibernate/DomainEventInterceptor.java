@@ -32,7 +32,7 @@ import org.hibernate.type.Type;
 
 public class DomainEventInterceptor extends EmptyInterceptor implements DomainEventRecorder {
     private final Supplier<EventHandlerEventHolder> handlerSupplier;
-    private ThreadLocal<EventHandlerEventHolder> eventHandlerHolder = new ThreadLocal<EventHandlerEventHolder>();
+    private ThreadLocal<EventHandlerEventHolder> eventHandlerHolder = new ThreadLocal<>();
 
     public DomainEventInterceptor(Supplier<EventHandlerEventHolder> handlerSupplier) {
         this.handlerSupplier = handlerSupplier;
