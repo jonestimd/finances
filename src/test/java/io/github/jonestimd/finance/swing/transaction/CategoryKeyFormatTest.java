@@ -1,8 +1,5 @@
 package io.github.jonestimd.finance.swing.transaction;
 
-import java.text.ParseException;
-import java.util.stream.Stream;
-
 import io.github.jonestimd.finance.domain.transaction.CategoryKey;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.junit.Test;
@@ -35,66 +32,8 @@ public class CategoryKeyFormatTest {
 
     }
 
-    @Test(expected = ParseException.class)
-    public void parseFailsForEmptyString() throws Exception {
-        new CategoryKeyFormat().parseObject("");
-    }
-
-    @Test(expected = ParseException.class)
-    public void parseFailsForWhiteSpace() throws Exception {
-        new CategoryKeyFormat().parseObject(" ");
-    }
-
-    @Test(expected = ParseException.class)
-    public void parseFailsForEmptyCodes() throws Exception {
-        new CategoryKeyFormat().parseObject(SEPARATOR + SEPARATOR);
-    }
-
-    @Test
-    public void parseCreatesCategory() throws Exception {
-        CategoryKey key = new CategoryKeyFormat().parseObject("code");
-
-        assertThat(key.getCode()).isEqualTo("code");
-        assertThat(key.getParent()).isNull();
-    }
-
-    @Test
-    public void parseCreatesNestedCategories() throws Exception {
-        CategoryKey key = new CategoryKeyFormat().parseObject(NESTED_CODE);
-
-        assertThat(key.getCode()).isEqualTo(CHILD_CODE);
-        assertThat(key.getParent().getCode()).isEqualTo(PARENT_CODE);
-        assertThat(key.getParent().getParent()).isNull();
-    }
-
-    @Test
-    public void parseReusesCategory() throws Exception {
-        TransactionCategory category = new TransactionCategory("code");
-
-        CategoryKey key = new CategoryKeyFormat(Stream.of(category)).parseObject(category.getCode());
-
-        assertThat(key).isSameAs(category.getKey());
-    }
-
-    @Test
-    public void parseReusesNestedCategories() throws Exception {
-        TransactionCategory parent = new TransactionCategory(PARENT_CODE);
-
-        CategoryKey key = new CategoryKeyFormat(Stream.of(parent)).parseObject(NESTED_CODE);
-
-        assertThat(key.getCode()).isEqualTo(CHILD_CODE);
-        assertThat(key.getParent()).isSameAs(parent);
-        assertThat(key.getParent().getParent()).isNull();
-    }
-
-    @Test
-    public void parseTrimsCodes() throws Exception {
-        TransactionCategory parent = new TransactionCategory(PARENT_CODE);
-
-        CategoryKey key = new CategoryKeyFormat(Stream.of(parent)).parseObject(PARENT_CODE + " " + SEPARATOR + " " + CHILD_CODE + " ");
-
-        assertThat(key.getCode()).isEqualTo(CHILD_CODE);
-        assertThat(key.getParent()).isSameAs(parent);
-        assertThat(key.getParent().getParent()).isNull();
+    @Test(expected = UnsupportedOperationException.class)
+    public void parseThrowsException() throws Exception {
+        new CategoryKeyFormat().parseObject("code");
     }
 }
