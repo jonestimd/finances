@@ -23,27 +23,13 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.text.FieldPosition;
 import java.text.Format;
-import java.text.ParseException;
 import java.text.ParsePosition;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.domain.transaction.CategoryKey;
-import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.util.Streams;
 
 public class CategoryKeyFormat extends Format {
     public static final String SEPARATOR = BundleType.LABELS.getString("io.github.jonestimd.finance.category.code.separator");
-    private final Map<CategoryKey, TransactionCategory> categoryMap;
-
-    public CategoryKeyFormat() {
-        this(Stream.empty());
-    }
-
-    public CategoryKeyFormat(Stream<TransactionCategory> categories) {
-        this.categoryMap = Streams.uniqueIndex(categories, TransactionCategory::getKey);
-    }
 
     public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
         if (obj instanceof CategoryKey) {
@@ -53,22 +39,6 @@ public class CategoryKeyFormat extends Format {
     }
 
     public Object parseObject(String source, ParsePosition pos) {
-        TransactionCategory category = null;
-        int offset = 0;
-        for (String code : source.split(SEPARATOR, -1)) {
-            if (code.trim().isEmpty()) {
-                pos.setErrorIndex(offset);
-                return null;
-            }
-            offset += code.length() + 1;
-            category = categoryMap.getOrDefault(new CategoryKey(category, code.trim()), new TransactionCategory(category, code.trim()));
-        }
-        pos.setIndex(offset);
-        return category.getKey();
-    }
-
-    @Override
-    public CategoryKey parseObject(String source) throws ParseException {
-        return (CategoryKey) super.parseObject(source);
+        throw new UnsupportedOperationException();
     }
 }

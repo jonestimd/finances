@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ package io.github.jonestimd.finance.swing.transaction;
 
 import java.text.FieldPosition;
 import java.text.Format;
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.Map;
 
@@ -52,10 +53,23 @@ public class TransactionTypeFormat extends Format implements IconSource {
     }
 
     public Object parseObject(String source, ParsePosition pos) {
-        TransactionCategory category = new TransactionCategory();
-        category.setCode(source);
-        pos.setIndex(source.length() + 1);
+        TransactionCategory category = null;
+        int offset = 0;
+        for (String code : source.split(CategoryKeyFormat.SEPARATOR, -1)) {
+            if (code.trim().isEmpty()) {
+                pos.setErrorIndex(offset);
+                return null;
+            }
+            offset += code.length() + 1;
+            category = new TransactionCategory(category, code.trim());
+        }
+        pos.setIndex(offset);
         return category;
+    }
+
+    @Override
+    public TransactionCategory parseObject(String source) throws ParseException {
+        return (TransactionCategory) super.parseObject(source);
     }
 
     public Icon getIcon(Object bean) {

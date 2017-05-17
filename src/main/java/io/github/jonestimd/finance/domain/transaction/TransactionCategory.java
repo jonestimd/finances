@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.transaction;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -126,14 +126,11 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
     }
 
     public List<TransactionCategory> getParents() {
-        return addParents(new ArrayList<>());
-    }
-
-    private List<TransactionCategory> addParents(List<TransactionCategory> parents) {
-        TransactionCategory parent = getParent();
-        if (parent != null) {
+        List<TransactionCategory> parents = new LinkedList<>();
+        TransactionCategory parent = key.getParent();
+        while (parent != null) {
             parents.add(parent);
-            return parent.addParents(parents);
+            parent = parent.getParent();
         }
         return parents;
     }
@@ -205,9 +202,7 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
     }
 
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        return key.equals(((TransactionCategory) obj).key);
+        return this == obj || obj != null && getClass() == obj.getClass() && key.equals(((TransactionCategory) obj).key);
     }
 
     public String toString() {

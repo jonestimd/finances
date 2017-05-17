@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,17 @@ import java.awt.event.KeyEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
+import com.google.common.base.Functions;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.transaction.CategoryKey;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.finance.operations.AccountOperations;
@@ -72,24 +75,25 @@ public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<Transa
         return types;
     }
 
-    protected Stream<TransactionCategory> getCategories() {
+    protected Map<CategoryKey, TransactionCategory> getCategories() {
         return Streams.of(getComboBoxModel()).skip(1) // null
                 .filter(not(TransactionType::isTransfer))
-                .map(TransactionCategory.class::cast);
+                .map(TransactionCategory.class::cast)
+                .collect(Collectors.toMap(TransactionCategory::getKey, Functions.identity()));
     }
 
     protected TransactionType saveItem(TransactionType type) {
+        Map<CategoryKey, TransactionCategory> categories = getCategories();
         TransactionCategory category = (TransactionCategory) type;
-        return setKey(category, category.getCode());
-    }
-
-    private TransactionCategory setKey(TransactionCategory category, String text) {
-        try {
-            category.setKey(new CategoryKeyFormat(getCategories()).parseObject(text));
-            return category;
-        } catch (ParseException ex) {
-            return null;
+        while (category.getParent() != null) {
+            TransactionCategory parent = categories.get(category.getParent().getKey());
+            if (parent != null) {
+                category.setParent(parent);
+                break;
+            }
+            category = category.getParent();
         }
+        return type;
     }
 
     private class NextTypeElementAction extends AbstractAction {
@@ -99,7 +103,7 @@ public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<Transa
         public void actionPerformed(ActionEvent e) {
             String text = ((JTextField) e.getSource()).getText();
             TransactionType type = getComboBox().getSelectedItem();
-            if (format.format(type).startsWith(text)) {
+            if (format.format(type).toLowerCase().startsWith(text.toLowerCase()) && getComboBoxModel().indexOf(type) >= 0) {
                 if (type instanceof TransactionCategory) {
                     TransactionCategory category = (TransactionCategory) type;
                     setEditorText((JTextField) e.getSource(), new TransactionCategory(category, ""));
@@ -111,9 +115,13 @@ public class TransactionTypeCellEditor extends EditableComboBoxCellEditor<Transa
                     }
                 }
             }
-            else {
-                TransactionCategory parent = setKey(new TransactionCategory(), text);
-                if (parent != null) getComboBox().setSelectedItem(new TransactionCategory(parent, ""));
+            else if (! text.endsWith(CategoryKeyFormat.SEPARATOR)) {
+                try {
+                    TransactionCategory parent = format.parseObject(text);
+                    getComboBox().setSelectedItem(new TransactionCategory(parent, ""));
+                } catch (ParseException e1) {
+                    // ignore
+                }
             }
         }
 
