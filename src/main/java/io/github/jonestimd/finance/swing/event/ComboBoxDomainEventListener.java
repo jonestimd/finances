@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,16 +56,16 @@ public class ComboBoxDomainEventListener<ID, T extends UniqueId<ID> & Comparable
 
     protected void removeItem(T item) {
         for (int i = 0; i < comboBoxModel.getSize(); i++) {
-            if (item.getId().equals(getListItemId(i))) {
+            T element = comboBoxModel.getElementAt(i);
+            if (isSameId(item, element)) {
                 comboBoxModel.removeElementAt(i);
                 break;
             }
         }
     }
 
-    private Object getListItemId(int i) {
-        T item = comboBoxModel.getElementAt(i);
-        return item == null ? null : item.getId();
+    private boolean isSameId(T item, T element) {
+        return element != null && element.getClass().equals(item.getClass()) && element.getId().equals(item.getId());
     }
 
     public String toString() {

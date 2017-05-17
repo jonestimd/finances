@@ -2,9 +2,10 @@ package io.github.jonestimd.finance.swing.event;
 
 import java.util.Collections;
 
-import io.github.jonestimd.finance.domain.TestDomainUtils;
-import io.github.jonestimd.finance.domain.event.PayeeEvent;
-import io.github.jonestimd.finance.domain.transaction.Payee;
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.swing.component.BeanListModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,60 +17,89 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ComboBoxDomainEventListenerTest {
     @Mock
-    private BeanListModel<Payee> model;
+    private BeanListModel<TransactionType> model;
 
     @Test
     public void addEventInsertsInSortOrder() throws Exception {
         when(model.getSize()).thenReturn(3);
         when(model.getElementAt(0)).thenReturn(null);
-        when(model.getElementAt(1)).thenReturn(new Payee("aaa"));
-        when(model.getElementAt(2)).thenReturn(new Payee("zzz"));
-        ComboBoxDomainEventListener<Long, Payee> listener = new ComboBoxDomainEventListener<>(model);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "aaa"));
+        when(model.getElementAt(2)).thenReturn(new Account(2L, "zzz"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
 
-        Payee payee = new Payee(1L, "bbb");
-        listener.onDomainEvent(new PayeeEvent(this, EventType.ADDED, payee));
+        Account account = new Account(3L, "bbb");
+        listener.onDomainEvent(new DomainEvent<>(this, EventType.ADDED, account, TransactionType.class));
 
-        verify(model).insertElementAt(payee, 2);
+        verify(model).insertElementAt(account, 2);
+    }
+
+    @Test
+    public void addEventAppendsList() throws Exception {
+        when(model.getSize()).thenReturn(3);
+        when(model.getElementAt(0)).thenReturn(null);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "aaa"));
+        when(model.getElementAt(2)).thenReturn(new Account(2L, "bbb"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
+
+        Account account = new Account(3L, "zzz");
+        listener.onDomainEvent(new DomainEvent<>(this, EventType.ADDED, account, TransactionType.class));
+
+        verify(model).insertElementAt(account, 3);
     }
 
     @Test
     public void deleteEventRemovesItem() throws Exception {
-        when(model.getSize()).thenReturn(3);
+        when(model.getSize()).thenReturn(4);
         when(model.getElementAt(0)).thenReturn(null);
-        when(model.getElementAt(1)).thenReturn(TestDomainUtils.createPayee(1L, "aaa"));
-        when(model.getElementAt(2)).thenReturn(TestDomainUtils.createPayee(2L, "bbb"));
-        ComboBoxDomainEventListener<Long, Payee> listener = new ComboBoxDomainEventListener<>(model);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "aaa"));
+        when(model.getElementAt(2)).thenReturn(new TransactionCategory(2L));
+        when(model.getElementAt(3)).thenReturn(new Account(2L, "zzz"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
 
-        listener.onDomainEvent(new PayeeEvent(this, EventType.DELETED, TestDomainUtils.create(Payee.class, 2L)));
+        listener.onDomainEvent(new DomainEvent<>(this, EventType.DELETED, new Account(2L), TransactionType.class));
 
-        verify(model).removeElementAt(2);
+        verify(model).removeElementAt(3);
+    }
+
+    @Test
+    public void deleteEventIgnoresUnknownItem() throws Exception {
+        when(model.getSize()).thenReturn(4);
+        when(model.getElementAt(0)).thenReturn(null);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "aaa"));
+        when(model.getElementAt(2)).thenReturn(new TransactionCategory(2L));
+        when(model.getElementAt(3)).thenReturn(new Account(2L, "zzz"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
+
+        listener.onDomainEvent(new DomainEvent<>(this, EventType.DELETED, new Account(3L), TransactionType.class));
+
+        verify(model, never()).removeElementAt(anyInt());
     }
 
     @Test
     public void updateEventRemovesThenInsertsInSortOrder() throws Exception {
         when(model.getSize()).thenReturn(3);
         when(model.getElementAt(0)).thenReturn(null);
-        when(model.getElementAt(1)).thenReturn(TestDomainUtils.createPayee(1L, "bbb"));
-        when(model.getElementAt(2)).thenReturn(TestDomainUtils.createPayee(2L, "ccc"));
-        ComboBoxDomainEventListener<Long, Payee> listener = new ComboBoxDomainEventListener<>(model);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "bbb"));
+        when(model.getElementAt(2)).thenReturn(new Account(2L, "ccc"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
 
-        Payee payee = TestDomainUtils.createPayee(2L, "aaa");
-        listener.onDomainEvent(new PayeeEvent(this, EventType.CHANGED, payee));
+        Account account = new Account(2L, "aaa");
+        listener.onDomainEvent(new DomainEvent<>(this, EventType.CHANGED, account, TransactionType.class));
 
         verify(model).removeElementAt(2);
-        verify(model).insertElementAt(payee, 1);
+        verify(model).insertElementAt(account, 1);
     }
 
     @Test
     public void replaceEventDeletesItem() throws Exception {
         when(model.getSize()).thenReturn(3);
         when(model.getElementAt(0)).thenReturn(null);
-        when(model.getElementAt(1)).thenReturn(TestDomainUtils.createPayee(1L, "bbb"));
-        when(model.getElementAt(2)).thenReturn(TestDomainUtils.createPayee(2L, "ccc"));
-        ComboBoxDomainEventListener<Long, Payee> listener = new ComboBoxDomainEventListener<>(model);
+        when(model.getElementAt(1)).thenReturn(new Account(1L, "bbb"));
+        when(model.getElementAt(2)).thenReturn(new Account(2L, "ccc"));
+        ComboBoxDomainEventListener<Long, TransactionType> listener = new ComboBoxDomainEventListener<>(model);
 
-        Payee payee = TestDomainUtils.createPayee(2L, "ccc");
-        listener.onDomainEvent(new PayeeEvent(this, Collections.singletonList(payee), null));
+        Account account = new Account(2L, "ccc");
+        listener.onDomainEvent(new DomainEvent<>(this, Collections.singletonList(account), null, TransactionType.class));
 
         verify(model).removeElementAt(2);
     }
