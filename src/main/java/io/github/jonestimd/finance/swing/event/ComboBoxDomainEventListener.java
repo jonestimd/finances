@@ -65,7 +65,7 @@ public class ComboBoxDomainEventListener<ID, T extends UniqueId<ID> & Comparable
     }
 
     private boolean isSameId(T item, T element) {
-        return element != null && element.getClass().equals(item.getClass()) && element.getId().equals(item.getId());
+        return UniqueId.isSameId(item, element) && element.getClass().equals(item.getClass());
     }
 
     public String toString() {
