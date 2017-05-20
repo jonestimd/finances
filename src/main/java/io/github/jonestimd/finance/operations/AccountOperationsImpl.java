@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,13 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.operations;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import io.github.jonestimd.cache.Cacheable;
 import io.github.jonestimd.finance.dao.AccountDao;
@@ -31,9 +35,16 @@ import io.github.jonestimd.finance.dao.CompanyDao;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
+import io.github.jonestimd.finance.domain.event.AccountEvent;
+import io.github.jonestimd.finance.domain.event.CompanyEvent;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.util.Streams;
 
 public class AccountOperationsImpl implements AccountOperations {
+    public static final String EVENT_SOURCE = "AccountOperations";
+    private static final Collector<Company, ?, Map<String, Company>> COMPANY_BY_NAME =
+            Collectors.toMap(Company::getName, Function.identity(), (c1, c2) -> c1);
     private CompanyDao companyDao;
     private AccountDao accountDao;
 
@@ -83,9 +94,36 @@ public class AccountOperationsImpl implements AccountOperations {
         return accountDao.save(account);
     }
 
-    public <T extends Iterable<Account>> T saveAll(T accounts) {
-        companyDao.saveAll(Streams.of(accounts).map(Account::getCompany).filter(Objects::nonNull).filter(Company::isNew));
-        return accountDao.saveAll(accounts);
+    public <T extends Iterable<Account>> List<DomainEvent<?, ?>> saveAll(T accounts) {
+        List<DomainEvent<?, ?>> events = saveNewCompanies(accounts);
+        List<Account> newAccounts = Streams.filter(accounts, Account::isNew);
+        accountDao.saveAll(accounts);
+        List<Account> changedAccounts = Streams.toList(accounts);
+        if (! newAccounts.isEmpty()) {
+            events.add(new AccountEvent(EVENT_SOURCE, EventType.ADDED, newAccounts));
+            changedAccounts.removeAll(newAccounts);
+        }
+        events.add(new AccountEvent(EVENT_SOURCE, EventType.CHANGED, changedAccounts));
+        return events;
+    }
+
+    private <T extends Iterable<Account>> List<DomainEvent<?, ?>> saveNewCompanies(T accounts) {
+        List<DomainEvent<?, ?>> events = new ArrayList<>();
+        Collection<Company> companies = consolidateNewCompanies(accounts);
+        if (! companies.isEmpty()) {
+            companyDao.saveAll(companies);
+            events.add(new CompanyEvent(EVENT_SOURCE, EventType.ADDED, companies));
+        }
+        return events;
+    }
+
+    private <T extends Iterable<Account>> Collection<Company> consolidateNewCompanies(T accounts) {
+        Map<String, Company> companyMap = Account.getNewCompanies(accounts).collect(COMPANY_BY_NAME);
+        accounts.forEach(account -> {
+            Company company = account.getCompany();
+            if (company != null && company.isNew()) account.setCompany(companyMap.get(company.getName()));
+        });
+        return companyMap.values();
     }
 
     @Override

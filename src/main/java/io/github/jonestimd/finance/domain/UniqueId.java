@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ package io.github.jonestimd.finance.domain;
 import java.util.Objects;
 
 public interface UniqueId<T> {
-    final String ID = "id";
+    String ID = "id";
 
     T getId();
 

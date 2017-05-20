@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,9 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.account;
 
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -35,10 +38,10 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.google.common.base.Objects;
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.asset.Currency;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
+import io.github.jonestimd.util.Streams;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Parameter;
@@ -178,19 +181,23 @@ public class Account extends BaseDomain<Long> implements TransactionType {
     }
 
     public int hashCode() {
-        return Objects.hashCode(company, StringUtils.upperCase(name));
+        return Objects.hash(company, StringUtils.upperCase(name));
     }
 
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj != null && getClass().equals(obj.getClass())) {
             Account that = (Account) obj;
-            return Objects.equal(company, that.company) && StringUtils.equalsIgnoreCase(name, that.name);
+            return Objects.equals(company, that.company) && StringUtils.equalsIgnoreCase(name, that.name);
         }
         return false;
     }
 
     public String toString() {
         return String.format("Account: %s[%s]", (company == null ? "" : company.getName()), name);
+    }
+
+    public static Stream<Company> getNewCompanies(Iterable<Account> accounts) {
+        return Streams.of(accounts).map(Account::getCompany).filter(Objects::nonNull).filter(Company::isNew);
     }
 }

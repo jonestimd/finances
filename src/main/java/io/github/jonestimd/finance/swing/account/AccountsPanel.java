@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -45,7 +43,6 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.AccountEvent;
-import io.github.jonestimd.finance.domain.event.CompanyEvent;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.operations.AssetOperations;
@@ -177,12 +174,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     protected List<? extends DomainEvent<?, ?>> saveChanges(List<Account> changedAccounts, List<Account> deletedAccounts) {
         List<DomainEvent<?, ?>> events = new ArrayList<>();
         if (!changedAccounts.isEmpty()) {
-            List<Company> newCompanies = changedAccounts.stream().map(Account::getCompany).filter(Objects::nonNull).filter(Company::isNew).collect(Collectors.toList());
-            accountOperations.saveAll(changedAccounts);
-            events.add(new AccountEvent(this, EventType.CHANGED, changedAccounts));
-            if (!newCompanies.isEmpty()) {
-                events.add(new CompanyEvent(this, EventType.ADDED, newCompanies));
-            }
+            events.addAll(accountOperations.saveAll(changedAccounts));
         }
         if (!deletedAccounts.isEmpty()) {
             accountOperations.deleteAll(deletedAccounts);

@@ -10,6 +10,7 @@ import java.util.Random;
 import javax.swing.SwingUtilities;
 
 import com.google.common.collect.Lists;
+import io.github.jonestimd.finance.domain.TestSequence;
 import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.account.AccountType;
 import io.github.jonestimd.finance.domain.asset.Security;
@@ -26,6 +27,7 @@ import io.github.jonestimd.finance.swing.transaction.TransactionColumnAdapter;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -64,6 +66,11 @@ public class UpdateSharesActionTest {
     private final Security security = new Security();
     private final TransactionCategory feesAction = new TransactionCategory();
     private final TransactionCategory securityAction = new TransactionCategory();
+
+    @BeforeClass
+    public static void resetTestIds() {
+        TestSequence.reset();
+    }
 
     @Before
     public void trainMocks() throws Exception {

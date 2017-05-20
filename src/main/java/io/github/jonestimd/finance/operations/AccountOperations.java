@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import io.github.jonestimd.cache.Cacheable;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
 
 public interface AccountOperations {
 
@@ -50,7 +51,7 @@ public interface AccountOperations {
 
     Account save(Account account);
 
-    <T extends Iterable<Account>> T saveAll(T accounts);
+    <T extends Iterable<Account>> List<DomainEvent<?, ?>> saveAll(T accounts);
 
     <T extends Iterable<Account>> void deleteAll(T accounts);
 }

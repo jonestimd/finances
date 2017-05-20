@@ -5,6 +5,10 @@ public class TestSequence {
 
     private TestSequence() {}
 
+    public static void reset() {
+        nextId = 1L;
+    }
+
     public static long nextId() {
         return nextId++;
     }

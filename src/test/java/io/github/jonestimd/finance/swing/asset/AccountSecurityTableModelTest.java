@@ -7,7 +7,7 @@ import java.util.Collections;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import io.github.jonestimd.finance.domain.UniqueId;
+import io.github.jonestimd.finance.domain.TestSequence;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -23,6 +23,7 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.swing.table.model.TableDataProvider;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -30,7 +31,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static io.github.jonestimd.mockito.MockitoHelper.matches;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -46,6 +47,11 @@ public class AccountSecurityTableModelTest {
     private Security security2 = new SecurityBuilder().nextId().name("security2").get();
     private Company company = new CompanyBuilder().nextId().name("company").get();
     private Account account1 = new AccountBuilder().nextId().company(company).name("account1").get();
+
+    @BeforeClass
+    public static void resetTestIds() {
+        TestSequence.reset();
+    }
 
     @Before
     public void createModel() {

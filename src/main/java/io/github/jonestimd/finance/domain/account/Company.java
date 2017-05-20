@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -108,7 +108,7 @@ public class Company extends BaseDomain<Long> implements Comparable<Company> {
     }
 
     public static List<String> names(Collection<Company> comapnies) {
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (Company company : comapnies) {
             names.add(company.name);
         }
