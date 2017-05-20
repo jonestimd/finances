@@ -26,13 +26,13 @@ import java.util.function.Consumer;
 import javax.swing.UIManager;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.log4j.Logger;
 
 import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 
 public class LookAndFeelConfig {
     private static final String LOOK_AND_FEEL = "finances.lookAndFeel";
-    private static final String DEFAULT_OPTIONS = LOOK_AND_FEEL + ".default.options";
     private static final String OPTIONS = LOOK_AND_FEEL + ".options";
     private static final String LOADER = "loader";
     private static final Logger logger = Logger.getLogger(LookAndFeelConfig.class);
@@ -40,16 +40,24 @@ public class LookAndFeelConfig {
     @SuppressWarnings("unchecked")
     public static void load() {
         try {
-            Config options = CONFIG.hasPath(OPTIONS) ? CONFIG.getConfig(OPTIONS) : CONFIG.getConfig(DEFAULT_OPTIONS);
+            String lafClass = CONFIG.getString(LOOK_AND_FEEL + ".class");
+            Config options = getOptions(lafClass);
             if (options.hasPath(LOADER)) {
                 Consumer<Config> configurer = Consumer.class.cast(Class.forName(options.getString(LOADER)).newInstance());
                 configurer.accept(options.withoutPath("loader"));
             }
-            UIManager.setLookAndFeel(CONFIG.getString(LOOK_AND_FEEL + ".class"));
+            UIManager.setLookAndFeel(lafClass);
             UIManager.getDefaults().addResourceBundle(UiOverrideBundle.class.getName());
         }
         catch (Exception ex) {
             logger.warn("Failed to set look and feel", ex);
         }
+    }
+
+    private static Config getOptions(String lafClass) {
+        String lafOptions = lafClass.replaceFirst(".*\\.", LOOK_AND_FEEL + ".") + ".options";
+        if (CONFIG.hasPath(OPTIONS)) return CONFIG.getConfig(OPTIONS);
+        if (CONFIG.hasPath(lafOptions)) return CONFIG.getConfig(lafOptions);
+        return ConfigFactory.empty();
     }
 }
