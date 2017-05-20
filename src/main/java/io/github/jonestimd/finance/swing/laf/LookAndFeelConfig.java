@@ -32,16 +32,18 @@ import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 
 public class LookAndFeelConfig {
     private static final String LOOK_AND_FEEL = "finances.lookAndFeel";
+    private static final String DEFAULT_OPTIONS = LOOK_AND_FEEL + ".default.options";
     private static final String OPTIONS = LOOK_AND_FEEL + ".options";
-    private static final String OPTIONS_LOADER = OPTIONS + ".loader";
+    private static final String LOADER = "loader";
     private static final Logger logger = Logger.getLogger(LookAndFeelConfig.class);
 
     @SuppressWarnings("unchecked")
     public static void load() {
         try {
-            if (CONFIG.hasPath(OPTIONS_LOADER)) {
-                Consumer<Config> configurer = Consumer.class.cast(Class.forName(CONFIG.getString(OPTIONS_LOADER)).newInstance());
-                configurer.accept(CONFIG.getConfig(OPTIONS).withoutPath("loader"));
+            Config options = CONFIG.hasPath(OPTIONS) ? CONFIG.getConfig(OPTIONS) : CONFIG.getConfig(DEFAULT_OPTIONS);
+            if (options.hasPath(LOADER)) {
+                Consumer<Config> configurer = Consumer.class.cast(Class.forName(options.getString(LOADER)).newInstance());
+                configurer.accept(options.withoutPath("loader"));
             }
             UIManager.setLookAndFeel(CONFIG.getString(LOOK_AND_FEEL + ".class"));
             UIManager.getDefaults().addResourceBundle(UiOverrideBundle.class.getName());
