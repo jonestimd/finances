@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 
 import com.google.common.base.Joiner;
 import io.github.jonestimd.finance.domain.account.Company;
+import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.swing.action.MnemonicAction;
@@ -45,14 +46,13 @@ public class CompanyDialog extends MessageDialog {
 
     private final String deleteConfirmationMessage;
     private final String deleteConfirmationTitle;
-    private final List<Company> companies;
-    private final CompanyTableModel tableModel;
+    private final AccountOperations accountOperations;
+    private final CompanyTableModel tableModel = new CompanyTableModel();
     private boolean cancelled = false;
 
-    public CompanyDialog(Window owner, FinanceTableFactory tableFactory, List<Company> companies) {
+    public CompanyDialog(Window owner, FinanceTableFactory tableFactory, AccountOperations accountOperations) {
         super(owner, BundleType.LABELS.getString(RESOURCE_PREFIX + "title"), ModalityType.DOCUMENT_MODAL);
-        this.companies = companies;
-        this.tableModel = new CompanyTableModel(companies);
+        this.accountOperations = accountOperations;
         deleteConfirmationTitle = BundleType.LABELS.getString(RESOURCE_PREFIX + "confirmation.delete.title");
         deleteConfirmationMessage = BundleType.LABELS.getString(RESOURCE_PREFIX + "confirmation.delete.message");
         setContentPane(new CompanyPanel(tableFactory));
@@ -128,11 +128,11 @@ public class CompanyDialog extends MessageDialog {
 
         @Override
         protected List<Company> getTableData() {
-            return companies;
+            return accountOperations.getAllCompanies();
         }
 
         @Override
-        protected boolean confirmClose(WindowEvent event) { // TODO make super class DialogPanel?
+        protected boolean confirmClose(WindowEvent event) {
             return cancelled = super.confirmClose(event);
         }
     }

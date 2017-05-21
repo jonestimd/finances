@@ -207,7 +207,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         }
 
         protected void loadDialogData() {
-            dialog = new CompanyDialog((JFrame) getTopLevelAncestor(), tableFactory, accountOperations.getAllCompanies());
+            dialog = new CompanyDialog((JFrame) getTopLevelAncestor(), tableFactory, accountOperations);
         }
 
         protected boolean displayDialog(JComponent owner) {
