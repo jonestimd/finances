@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,19 +43,21 @@ import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
+import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
-import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
+import io.github.jonestimd.finance.swing.transaction.AccountAccessPanel;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.table.TableSummary;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static io.github.jonestimd.finance.swing.asset.SecurityTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
-public class SecuritiesPanel extends TransactionSummaryTablePanel<Security, SecuritySummary> {
+public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummary> {
     private final AssetOperations assetOperations;
     private final FinanceTableFactory tableFactory;
     private final SplitsDialogAction splitsAction = new SplitsDialogAction();
@@ -70,8 +72,8 @@ public class SecuritiesPanel extends TransactionSummaryTablePanel<Security, Secu
             new ReloadEventHandler<>(this, "security.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public SecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
-                           Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security");
+            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher) {
+        super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security", windowEventPublisher);
         this.assetOperations = serviceLocator.getAssetOperations();
         this.tableFactory = tableFactory;
         for (SecurityTableExtension extension : tableExtensions) {

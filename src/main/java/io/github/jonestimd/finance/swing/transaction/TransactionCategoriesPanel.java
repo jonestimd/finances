@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,24 +36,27 @@ import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.MergeAction;
+import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static io.github.jonestimd.finance.swing.transaction.TransactionCategoryTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
-public class TransactionCategoriesPanel extends TransactionSummaryTablePanel<TransactionCategory, TransactionCategorySummary> {
+public class TransactionCategoriesPanel extends AccountAccessPanel<TransactionCategory, TransactionCategorySummary> {
     private final TransactionCategoryOperations transactionCategoryOperations;
     private final Action mergeAction;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, TransactionCategorySummary> reloadHandler =
             new ReloadEventHandler<>(this, "category.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
-    public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category");
+    public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher,
+            FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher) {
+        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category", windowEventPublisher);
         this.transactionCategoryOperations = serverLocator.getTransactionCategoryOperations();
         this.mergeAction = new MergeAction<>(TransactionCategory.class, "mergeCategories", getTable(), new TransactionTypeFormat(), TransactionCategorySummary::getCategory,
                 transactionCategoryOperations, domainEventPublisher, this::isMergeDisabled);

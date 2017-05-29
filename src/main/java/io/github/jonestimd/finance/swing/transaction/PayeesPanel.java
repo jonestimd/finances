@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,23 +36,26 @@ import io.github.jonestimd.finance.operations.PayeeOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.MergeAction;
+import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static org.apache.commons.lang.StringUtils.*;
 
 // TODO listen for new payees
-public class PayeesPanel extends TransactionSummaryTablePanel<Payee, PayeeSummary> {
+public class PayeesPanel extends AccountAccessPanel<Payee, PayeeSummary> {
     private final PayeeOperations payeeOperations;
     private final Action mergeAction;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, PayeeSummary> reloadHandler =
             new ReloadEventHandler<>(this, "payee.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
-    public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee");
+    public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
+            WindowEventPublisher<WindowType> windowEventPublisher) {
+        super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee", windowEventPublisher);
         this.payeeOperations = serviceLocator.getPayeeOperations();
         mergeAction = new MergeAction<>(Payee.class, "mergePayees", getTable(), new PayeeFormat(),
                 PayeeSummary::getPayee, payeeOperations, domainEventPublisher);

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,21 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.event;
 
+import javax.swing.Action;
+
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.swing.window.ApplicationWindowEvent;
+import io.github.jonestimd.swing.window.FrameAction;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class TransactionsWindowEvent extends ApplicationWindowEvent<WindowType> {
+    public static Action frameAction(AccountSelector source, String resourcePrefix, WindowEventPublisher<WindowType> eventPublisher) {
+        return new FrameAction<>(LABELS.get(), resourcePrefix, eventPublisher, new TransactionsWindowEvent(source));
+    }
+
     public TransactionsWindowEvent(AccountSelector source) {
         super(source, WindowType.TRANSACTIONS);
     }

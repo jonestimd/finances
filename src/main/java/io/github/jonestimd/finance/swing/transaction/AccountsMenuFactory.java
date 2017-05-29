@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,13 +29,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -56,12 +54,11 @@ import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.action.ActionAdapter;
-import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 import io.github.jonestimd.util.Streams;
 
 // TODO new account menu item
-public class AccountsMenuFactory implements Supplier<Stream<Account>> {
+public class AccountsMenuFactory {
     private static final String HIDE_CLOSED_ACCOUNTS_PROPERTY = "AccountsMenuFactory.hideClosedAccounts";
     public static final String HIDE_CLOSED_ACCOUNTS_MENU_KEY = "menu.accounts.closedFilter.mnemonicAndName";
     public static final String ACCOUNTS_MENU_KEY = "menu.transactions.accounts.mnemonicAndName";
@@ -92,8 +89,7 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
         domainEventPublisher.register(Account.class, accountEventListener);
     }
 
-    @Override
-    public Stream<Account> get() {
+    public Stream<Account> getAccounts() {
         return accountActionMap.values().stream().map(AccountAction::getAccount);
     }
 
@@ -112,7 +108,7 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
     public JMenu createAccountsMenu() {
         JMenu accountsMenu = ComponentFactory.newMenu(BundleType.LABELS.get(), ACCOUNTS_MENU_KEY);
         accountsMenu.add(createFilterMenuItem());
-        accountsMenu.add(createViewAccountsAction(accountsMenu));
+        accountsMenu.add(SingletonWindowEvent.accountsFrameAction(accountsMenu, windowEventPublisher));
         accountsMenu.addSeparator();
         menus.add(new WeakReference<>(accountsMenu));
         if (accountActionMap == null) {
@@ -130,10 +126,6 @@ public class AccountsMenuFactory implements Supplier<Stream<Account>> {
             accountActionMap.put(account.getId(), new AccountAction(account));
         }
         updateMenus();
-    }
-
-    public Action createViewAccountsAction(JComponent source) {
-        return new FrameAction<>(BundleType.LABELS.get(), "action.viewAccounts", windowEventPublisher, new SingletonWindowEvent(source, WindowType.ACCOUNTS));
     }
 
     private JCheckBoxMenuItem createFilterMenuItem() {

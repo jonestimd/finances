@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -127,11 +127,11 @@ public class SwingContext {
     private Map<WindowType, Container> buildSingletonPanels() {
         return ImmutableMap.<WindowType, Container>builder()
             .put(WindowType.ACCOUNTS, new AccountsPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
-            .put(WindowType.CATEGORIES, new TransactionCategoriesPanel(serviceLocator, domainEventPublisher, tableFactory))
-            .put(WindowType.PAYEES, new PayeesPanel(serviceLocator, domainEventPublisher, tableFactory))
-            .put(WindowType.SECURITIES, new SecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory))
-            .put(WindowType.ACCOUNT_SECURITIES, new AccountSecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory))
-            .put(WindowType.TRANSACTION_GROUPS, new TransactionGroupsPanel(serviceLocator, domainEventPublisher, tableFactory))
+            .put(WindowType.CATEGORIES, new TransactionCategoriesPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
+            .put(WindowType.PAYEES, new PayeesPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
+            .put(WindowType.SECURITIES, new SecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, windowEventPublisher))
+            .put(WindowType.ACCOUNT_SECURITIES, new AccountSecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, windowEventPublisher))
+            .put(WindowType.TRANSACTION_GROUPS, new TransactionGroupsPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
             .build();
     }
 

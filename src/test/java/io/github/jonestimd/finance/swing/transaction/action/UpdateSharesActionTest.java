@@ -219,7 +219,7 @@ public class UpdateSharesActionTest {
         SwingUtilities.invokeAndWait(() -> action.actionPerformed(new ActionEvent(table, -1, "")));
 
         waitForDialog();
-        verify(categoryOperations).getSecurityAction(SecurityAction.SELL.code());
+        verify(categoryOperations, timeout(1000)).getSecurityAction(SecurityAction.SELL.code());
         verify(tableModel).setAmount(BigDecimal.valueOf(9L), rowCount - 1);
     }
 

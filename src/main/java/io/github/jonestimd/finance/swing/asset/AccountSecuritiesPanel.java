@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,26 +41,31 @@ import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
+import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
+import io.github.jonestimd.finance.swing.event.SingletonWindowEvent;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.BackgroundAction;
 import io.github.jonestimd.swing.component.MenuActionPanel;
 import io.github.jonestimd.swing.table.SectionTable;
 import io.github.jonestimd.swing.table.sort.SectionTableRowSorter;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 public class AccountSecuritiesPanel extends MenuActionPanel {
     private static final String RESOURCE_GROUP = "accountSecurities";
     public static final String RELOAD_MESSAGE_KEY = "accountSecurities.action.reload.status.initialize";
     private final AssetOperations assetOperations;
+    private final WindowEventPublisher<WindowType> windowEventPublisher;
     private final SectionTable<SecuritySummary, AccountSecurityTableModel> table;
     private Action reloadAction;
     @SuppressWarnings("FieldCanBeLocal")
     private final ReloadEventHandler<Long, SecuritySummary> reloadHandler;
 
     public AccountSecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
-                                  Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory) {
+            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher) {
         this.assetOperations = serviceLocator.getAssetOperations();
+        this.windowEventPublisher = windowEventPublisher;
         AccountSecurityTableModel tableModel = new AccountSecurityTableModel(domainEventPublisher, tableExtensions);
         table = tableFactory.createTable(tableModel);
         SectionTableRowSorter<SecuritySummary, AccountSecurityTableModel> sorter = new SectionTableRowSorter<>(table);
@@ -96,6 +101,8 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
 
     private JToolBar createToolBar() {
         JToolBar toolBar = ComponentFactory.newMenuToolBar();
+        toolBar.add(ComponentFactory.newToolbarButton(SingletonWindowEvent.accountsFrameAction(toolBar, windowEventPublisher)));
+        toolBar.add(ComponentFactory.newMenuBarSeparator());
         toolBar.add(ComponentFactory.newToolbarButton(reloadAction));
         return toolBar;
     }

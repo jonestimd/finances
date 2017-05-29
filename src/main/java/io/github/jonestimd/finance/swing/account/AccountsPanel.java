@@ -60,7 +60,6 @@ import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePane
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.table.TableFactory;
-import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -94,7 +93,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         domainEventPublisher.register(Company.class, companyDomainEventListener);
         domainEventPublisher.register(AccountSummary.class, reloadHandler);
         getTable().getColumn(AccountColumnAdapter.COMPANY_ADAPTER).setCellEditor(companyCellEditor);
-        openAction = new FrameAction<>(bundle, "account.action.open", windowEventPublisher, new TransactionsWindowEvent(this));
+        openAction = TransactionsWindowEvent.frameAction(this, "account.action.open", windowEventPublisher);
         openAction.setEnabled(false);
         companyAction = new CompanyDialogAction(tableFactory);
         qifImportAction = new QifImportAction(serviceLocator, eventPublisher);

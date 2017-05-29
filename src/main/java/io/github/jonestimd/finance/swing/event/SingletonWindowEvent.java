@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,25 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.event;
 
+import javax.swing.Action;
+import javax.swing.JComponent;
+
+import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.swing.window.ApplicationWindowEvent;
+import io.github.jonestimd.swing.window.FrameAction;
+import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 public class SingletonWindowEvent extends ApplicationWindowEvent<WindowType> {
+    public static Action frameAction(Object source, WindowType type, String resourcePrefix, WindowEventPublisher<WindowType> eventPublisher) {
+        SingletonWindowEvent event = new SingletonWindowEvent(source, type);
+        return new FrameAction<>(BundleType.LABELS.get(), resourcePrefix, eventPublisher, event);
+    }
+
+    public static Action accountsFrameAction(JComponent source, WindowEventPublisher<WindowType> eventPublisher) {
+        return frameAction(source, WindowType.ACCOUNTS, "action.viewAccounts", eventPublisher);
+    }
+
     public SingletonWindowEvent(Object source, WindowType windowType) {
         super(source, windowType);
     }

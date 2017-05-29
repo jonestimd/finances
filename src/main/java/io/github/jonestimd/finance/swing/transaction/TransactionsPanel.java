@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,6 @@ import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.service.TransactionService;
-import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.finance.swing.WindowType;
@@ -65,7 +64,6 @@ import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
-import io.github.jonestimd.finance.swing.event.SingletonWindowEvent;
 import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.action.AutofillTask;
 import io.github.jonestimd.finance.swing.transaction.action.CommitAction;
@@ -82,12 +80,11 @@ import io.github.jonestimd.swing.component.ComponentBinder;
 import io.github.jonestimd.swing.component.FilterField;
 import io.github.jonestimd.swing.component.MenuActionPanel;
 import io.github.jonestimd.swing.dialog.Dialogs;
-import io.github.jonestimd.swing.window.ApplicationWindowEvent;
 import io.github.jonestimd.swing.window.ConfirmCloseAdapter;
-import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.event.SingletonWindowEvent.*;
 
 public class TransactionsPanel extends MenuActionPanel implements AccountSelector, HighlightText {
     private static final AccountFormat ACCOUNT_FORMAT = new AccountFormat();
@@ -270,10 +267,10 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
 
     private JMenu createTransactionsMenu(JToolBar toolbar) {
         JMenu menu = ComponentFactory.newMenu(LABELS.get(), "menu.transactions.mnemonicAndName");
-        addTransactionAction(menu, toolbar, createFrameAction(new TransactionsWindowEvent(this), "action.newTransactionsWindow"));
+        addTransactionAction(menu, toolbar, TransactionsWindowEvent.frameAction(this, "action.newTransactionsWindow", windowEventPublisher));
         menu.addSeparator();
         toolbar.add(ComponentFactory.newMenuBarSeparator());
-        addTransactionAction(menu, toolbar, new MoveAction(transactionTable, transactionService, domainEventPublisher, accountsMenuFactory));
+        addTransactionAction(menu, toolbar, new MoveAction(transactionTable, transactionService, domainEventPublisher, accountsMenuFactory::getAccounts));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.INSERT_DETAIL));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.DELETE_DETAIL));
         addTransactionAction(menu, toolbar, saveAllAction);
@@ -283,17 +280,13 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
         addTransactionAction(menu, toolbar, new UpdateSharesAction(transactionTable, assetOperations, transactionCategoryOperations));
         menu.addSeparator();
         toolbar.add(ComponentFactory.newMenuBarSeparator());
-        toolbar.add(ComponentFactory.newToolbarButton(accountsMenuFactory.createViewAccountsAction(this)));
-        addTransactionAction(menu, toolbar, createFrameAction(new SingletonWindowEvent(menu, WindowType.CATEGORIES), "action.viewCategories"));
-        addTransactionAction(menu, toolbar, createFrameAction(new SingletonWindowEvent(menu, WindowType.TRANSACTION_GROUPS), "action.viewTransactionGroups"));
-        addTransactionAction(menu, toolbar, createFrameAction(new SingletonWindowEvent(menu, WindowType.PAYEES), "action.viewPayees"));
-        addTransactionAction(menu, toolbar, createFrameAction(new SingletonWindowEvent(menu, WindowType.SECURITIES), "action.viewSecurities"));
-        addTransactionAction(menu, toolbar, createFrameAction(new SingletonWindowEvent(menu, WindowType.ACCOUNT_SECURITIES), "action.viewAccountSecurities"));
+        toolbar.add(ComponentFactory.newToolbarButton(accountsFrameAction(menu, windowEventPublisher)));
+        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.CATEGORIES, "action.viewCategories", windowEventPublisher));
+        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.TRANSACTION_GROUPS, "action.viewTransactionGroups", windowEventPublisher));
+        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.PAYEES, "action.viewPayees", windowEventPublisher));
+        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.SECURITIES, "action.viewSecurities", windowEventPublisher));
+        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.ACCOUNT_SECURITIES, "action.viewAccountSecurities", windowEventPublisher));
         return menu;
-    }
-
-    private Action createFrameAction(ApplicationWindowEvent<WindowType> event, String resourcePrefix) {
-        return new FrameAction<>(BundleType.LABELS.get(), resourcePrefix, windowEventPublisher, event);
     }
 
     private void addTransactionAction(JMenu menu, JToolBar toolbar, Action action) {
