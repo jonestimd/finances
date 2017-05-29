@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.Action;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -38,7 +37,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
 
-import com.google.common.collect.Iterables;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.Company;
@@ -60,7 +58,7 @@ import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.action.DialogAction;
+import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
@@ -195,44 +193,18 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         }
     }
 
-    public class CompanyDialogAction extends DialogAction {
+    public class CompanyDialogAction extends MnemonicAction {
         private final FinanceTableFactory tableFactory;
-        private CompanyDialog dialog;
-        private List<Company> updatedCompanies;
-        private List<AccountSummary> updatedAccounts;
 
         public CompanyDialogAction(FinanceTableFactory tableFactory) {
             super(BundleType.LABELS.get(), "action.editCompanies");
             this.tableFactory = tableFactory;
         }
 
-        protected void loadDialogData() {
-            dialog = new CompanyDialog((JFrame) getTopLevelAncestor(), tableFactory, accountOperations);
-        }
-
-        protected boolean displayDialog(JComponent owner) {
-            updatedAccounts = null;
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            CompanyDialog dialog = new CompanyDialog((JFrame) getTopLevelAncestor(), tableFactory, accountOperations, eventPublisher);
             dialog.setVisible(true);
-            return ! dialog.isCancelled();
-        }
-
-        protected void saveDialogData() {
-            if (! dialog.getDeletes().isEmpty()) {
-                accountOperations.deleteCompanies(dialog.getDeletes());
-            }
-            if (! dialog.getUpdates().isEmpty()) {
-                accountOperations.saveCompanies(dialog.getUpdates());
-            }
-            updatedCompanies = accountOperations.getAllCompanies();
-            updatedAccounts = accountOperations.getAccountSummaries();
-        }
-
-        protected void setSaveResultOnUI() {
-            if (updatedAccounts != null) {
-                companyCellEditor.setListItems(updatedCompanies);
-                getTableModel().setBeans(updatedAccounts);
-                eventPublisher.publishEvent(new AccountEvent(this, EventType.CHANGED, Iterables.transform(updatedAccounts, AccountSummary::getTransactionAttribute)));
-            }
         }
     }
 }

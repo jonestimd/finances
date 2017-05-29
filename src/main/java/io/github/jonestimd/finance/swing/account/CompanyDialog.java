@@ -22,24 +22,28 @@
 package io.github.jonestimd.finance.swing.account;
 
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import javax.swing.Action;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.google.common.base.Joiner;
 import io.github.jonestimd.finance.domain.account.Company;
+import io.github.jonestimd.finance.domain.event.CompanyEvent;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.swing.BundleType;
+import io.github.jonestimd.finance.swing.DomainEventTablePanel;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
-import io.github.jonestimd.swing.action.MnemonicAction;
-import io.github.jonestimd.swing.component.ValidatedTablePanel;
+import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.swing.dialog.MessageDialog;
 import io.github.jonestimd.util.Streams;
+
+import static org.apache.commons.lang.StringUtils.*;
 
 public class CompanyDialog extends MessageDialog {
     private static final String RESOURCE_PREFIX = "company.dialog.";
@@ -48,14 +52,13 @@ public class CompanyDialog extends MessageDialog {
     private final String deleteConfirmationTitle;
     private final AccountOperations accountOperations;
     private final CompanyTableModel tableModel = new CompanyTableModel();
-    private boolean cancelled = false;
 
-    public CompanyDialog(Window owner, FinanceTableFactory tableFactory, AccountOperations accountOperations) {
+    public CompanyDialog(Window owner, FinanceTableFactory tableFactory, AccountOperations accountOperations, DomainEventPublisher eventPublisher) {
         super(owner, BundleType.LABELS.getString(RESOURCE_PREFIX + "title"), ModalityType.DOCUMENT_MODAL);
         this.accountOperations = accountOperations;
         deleteConfirmationTitle = BundleType.LABELS.getString(RESOURCE_PREFIX + "confirmation.delete.title");
         deleteConfirmationMessage = BundleType.LABELS.getString(RESOURCE_PREFIX + "confirmation.delete.message");
-        setContentPane(new CompanyPanel(tableFactory));
+        setContentPane(new CompanyPanel(tableFactory, eventPublisher));
     }
 
     @Override
@@ -63,6 +66,7 @@ public class CompanyDialog extends MessageDialog {
         if (visible) {
             pack();
             setSize(500, 500); // TODO save/retrieve in preferences
+            setLocationRelativeTo(getOwner());
         }
         super.setVisible(visible);
     }
@@ -87,31 +91,42 @@ public class CompanyDialog extends MessageDialog {
         return companies;
     }
 
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    public List<Company> getDeletes() {
+    private List<Company> getDeletes() {
         return tableModel.getPendingDeletes();
     }
 
-    public List<Company> getUpdates() {
+    private List<Company> getUpdates() {
         return tableModel.getPendingUpdates().collect(Collectors.toList());
     }
 
-    private class CompanyPanel extends ValidatedTablePanel<Company> {
-        public CompanyPanel(FinanceTableFactory tableFactory) {
-            super(BundleType.LABELS.get(), tableFactory.createValidatedTable(tableModel, CompanyTableModel.NAME_INDEX), "company");
+    private class CompanyPanel extends DomainEventTablePanel<Company> {
+        public CompanyPanel(FinanceTableFactory tableFactory, DomainEventPublisher eventPublisher) {
+            super(eventPublisher, tableFactory.createValidatedTable(tableModel, CompanyTableModel.NAME_INDEX), "company");
         }
 
         @Override
-        protected Action createSaveAction() {
-            return new MnemonicAction(BundleType.LABELS.get(), "company.action.save") {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    dispose();
-                }
-            };
+        public void addNotify() {
+            super.addNotify();
+            SwingUtilities.invokeLater(getTable()::requestFocusInWindow);
+        }
+
+        @Override
+        protected boolean isMatch(Company tableRow, String criteria) {
+            return criteria.isEmpty() || containsIgnoreCase(tableRow.getName(), criteria);
+        }
+
+        @Override
+        protected List<? extends DomainEvent<?, ?>> saveChanges(Stream<Company> changedRows, List<Company> deletedRows) {
+            List<CompanyEvent> events = new ArrayList<>();
+            if (! getDeletes().isEmpty()) {
+                accountOperations.deleteCompanies(getDeletes());
+                events.add(new CompanyEvent(this, EventType.DELETED, getDeletes()));
+            }
+            if (! getUpdates().isEmpty()) {
+                accountOperations.saveCompanies(getUpdates());
+                events.add(new CompanyEvent(this, EventType.CHANGED, getUpdates()));
+            }
+            return events;
         }
 
         @Override
@@ -129,11 +144,6 @@ public class CompanyDialog extends MessageDialog {
         @Override
         protected List<Company> getTableData() {
             return accountOperations.getAllCompanies();
-        }
-
-        @Override
-        protected boolean confirmClose(WindowEvent event) {
-            return cancelled = super.confirmClose(event);
         }
     }
 }

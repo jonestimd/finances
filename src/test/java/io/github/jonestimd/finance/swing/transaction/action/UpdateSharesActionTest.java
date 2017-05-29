@@ -152,8 +152,8 @@ public class UpdateSharesActionTest {
         SwingUtilities.invokeAndWait(() -> action.actionPerformed(new ActionEvent(table, -1, "")));
 
         waitForDialog();
-        verify(tableModel).getAccount();
-        verify(tableModel).getRowCount();
+        verify(tableModel, timeout(1000)).getAccount();
+        verify(tableModel, timeout(1000)).getRowCount();
         verify(tableModel, times(2)).getBeanCount();
         verify(tableModel, times(2)).getBean(beanCount - 1);
         verify(dialog).show(Lists.newArrayList(), detail);
