@@ -57,7 +57,6 @@ import io.github.jonestimd.swing.action.ActionAdapter;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
 import io.github.jonestimd.util.Streams;
 
-// TODO new account menu item
 public class AccountsMenuFactory {
     private static final String HIDE_CLOSED_ACCOUNTS_PROPERTY = "AccountsMenuFactory.hideClosedAccounts";
     public static final String HIDE_CLOSED_ACCOUNTS_MENU_KEY = "menu.accounts.closedFilter.mnemonicAndName";
@@ -76,8 +75,10 @@ public class AccountsMenuFactory {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Account> accountEventListener = event -> {
-        if (event.isChange() && accountActionMap != null) { // TODO deleted accounts
-            updateAccountActions(event);
+        if (accountActionMap != null) {
+            if (event.isDelete()) event.getDomainObjects().forEach(account -> accountActionMap.remove(account.getId()));
+            else updateAccountActions(event);
+            updateMenus();
         }
     };
 
@@ -102,7 +103,6 @@ public class AccountsMenuFactory {
                 accountActionMap.put(account.getId(), new AccountAction(account));
             }
         }
-        updateMenus();
     }
 
     public JMenu createAccountsMenu() {
