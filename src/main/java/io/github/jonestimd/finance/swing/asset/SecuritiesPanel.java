@@ -26,6 +26,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -51,15 +55,23 @@ import io.github.jonestimd.finance.swing.transaction.AccountAccessPanel;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.component.BeanListComboBox;
+import io.github.jonestimd.swing.component.BeanListModel;
+import io.github.jonestimd.swing.component.ComboBoxCellEditor;
 import io.github.jonestimd.swing.table.TableSummary;
+import io.github.jonestimd.swing.validation.RequiredValidator;
+import io.github.jonestimd.swing.validation.Validator;
 import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.text.StringFormat;
 
+import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.asset.SecurityTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummary> {
     private final AssetOperations assetOperations;
     private final FinanceTableFactory tableFactory;
+    private final BeanListModel<String> typesModel = new BeanListModel<>();
     private final SplitsDialogAction splitsAction = new SplitsDialogAction();
     private final MnemonicAction hideZeroSharesAction = new MnemonicAction(BundleType.LABELS.get(), "action.hideZeroShares") {
         @Override
@@ -76,6 +88,11 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
         super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security", windowEventPublisher);
         this.assetOperations = serviceLocator.getAssetOperations();
         this.tableFactory = tableFactory;
+
+        Validator<String> typeValidator = new RequiredValidator(LABELS.getString("validation.security.typeRequired"));
+        getTable().getColumn(SecurityColumnAdapter.TYPE_ADAPTER).setCellEditor(new ComboBoxCellEditor(new BeanListComboBox<>(new StringFormat(), typeValidator, typesModel)));
+        getTableModel().addTableModelListener(event -> updateTypes());
+
         for (SecurityTableExtension extension : tableExtensions) {
             if (extension instanceof TableSummary) {
                 addSummaries((TableSummary) extension);
@@ -83,6 +100,13 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
         }
         hideZeroSharesAction.putValue(Action.SELECTED_KEY, Boolean.TRUE);
         domainEventPublisher.register(SecuritySummary.class, reloadHandler);
+    }
+
+    private void updateTypes() {
+        Set<String> types = getTableModel().getBeans().stream()
+                .map(summary -> summary == null ? null : summary.getSecurity().getType())
+                .filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+        typesModel.setElements(types, false);
     }
 
     @Override

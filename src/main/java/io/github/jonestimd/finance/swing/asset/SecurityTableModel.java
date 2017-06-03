@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,10 +34,11 @@ import io.github.jonestimd.finance.swing.transaction.TransactionSummaryColumnAda
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 
-public class SecurityTableModel extends ValidatedBeanListTableModel<SecuritySummary> { // FIXME combo box for security type
+public class SecurityTableModel extends ValidatedBeanListTableModel<SecuritySummary> {
     public static final int NAME_INDEX = SecurityColumnAdapter.ADAPTERS.indexOf(SecurityColumnAdapter.NAME_ADAPTER);
 
     // need references to domain event listeners to avoid garbage collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, SecuritySummary> summaryEventListener = this::addOrUpdateSecurity;
 
     public SecurityTableModel(DomainEventPublisher domainEventPublisher, Iterable<SecurityTableExtension> tableExtensions) {

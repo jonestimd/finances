@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.swing.asset;
 import java.awt.Window;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
@@ -46,27 +47,19 @@ public class SecurityDialog extends FormDialog {
     private static final String RESOURCE_PREFIX = "dialog.security.";
     private static final SecurityNameValidator<Security> NAME_VALIDATOR = new SecurityNameValidator<>(nullGuard(Security::getName));
     private static final AssetSymbolValidator<Security> SYMBOL_VALIDATOR = new AssetSymbolValidator<>();
-    private final Validator<String> typeValidator = new RequiredValidator(LABELS.getString("validation.security.typeRequired"));
     private Security security;
     private JTextField nameField;
     private JTextField symbolField;
     private BeanListComboBox<String> typeField;
-    private final Set<String> types;
 
     public SecurityDialog(Window owner, final Iterable<Security> securities) {
         super(owner, null, LABELS.get());
-        nameField = new ValidatedTextField(new Validator<String>() {
-            public String validate(String value) {
-                return NAME_VALIDATOR.validate(security, value, securities);
-            }
-        });
+        nameField = new ValidatedTextField(value -> NAME_VALIDATOR.validate(security, value, securities));
         nameField.setColumns(30);
-        symbolField = new ValidatedTextField(new Validator<String>() {
-            public String validate(String value) {
-                return SYMBOL_VALIDATOR.validate(security, value, securities);
-            }
-        });
-        types = Streams.of(securities).filter(Objects::nonNull).map(Security::getType).filter(Objects::nonNull).collect(Collectors.toSet());
+        symbolField = new ValidatedTextField(value -> SYMBOL_VALIDATOR.validate(security, value, securities));
+        Set<String> types = Streams.of(securities).map(security -> security == null ? null : security.getType())
+                .filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+        Validator<String> typeValidator = new RequiredValidator(LABELS.getString("validation.security.typeRequired"));
         typeField = new BeanListComboBox<>(new StringFormat(), typeValidator, types);
         buildForm(getFormPanel());
     }
