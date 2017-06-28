@@ -56,7 +56,7 @@ import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
-import io.github.jonestimd.swing.component.BeanListModel;
+import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.component.ComboBoxCellEditor;
 import io.github.jonestimd.swing.table.TableSummary;
 import io.github.jonestimd.swing.validation.RequiredValidator;
@@ -71,7 +71,7 @@ import static org.apache.commons.lang.StringUtils.*;
 public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummary> {
     private final AssetOperations assetOperations;
     private final FinanceTableFactory tableFactory;
-    private final BeanListModel<String> typesModel = new BeanListModel<>();
+    private final BeanListComboBoxModel<String> typesModel = new BeanListComboBoxModel<>();
     private final SplitsDialogAction splitsAction = new SplitsDialogAction();
     private final MnemonicAction hideZeroSharesAction = new MnemonicAction(BundleType.LABELS.get(), "action.hideZeroShares") {
         @Override

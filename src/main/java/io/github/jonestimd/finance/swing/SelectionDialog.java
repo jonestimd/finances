@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,18 +28,16 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import io.github.jonestimd.swing.component.FormatListCellRenderer;
 import io.github.jonestimd.swing.dialog.FormDialog;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
-import io.github.jonestimd.swing.list.MutableListModel;
+import io.github.jonestimd.swing.list.BeanListModel;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class SelectionDialog<T> extends FormDialog {
-    private final MutableListModel<T> listModel = new MutableListModel<>();
+    private final BeanListModel<T> listModel = new BeanListModel<>();
     private final JList<T> choiceList = new JList<>(listModel);
 
     public SelectionDialog(JComponent owner, String resourcePrefix, String labelKey, Format format) {
@@ -51,18 +49,13 @@ public class SelectionDialog<T> extends FormDialog {
         setSaveEnabled(false);
         choiceList.setCellRenderer(new FormatListCellRenderer(format));
         choiceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        choiceList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                setSaveEnabled(choiceList.getSelectedIndex() >= 0);
-            }
-        });
+        choiceList.getSelectionModel().addListSelectionListener(event -> setSaveEnabled(choiceList.getSelectedIndex() >= 0));
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), resourcePrefix);
         builder.append(labelKey, choiceList);
     }
 
     /**
-     * @return true is an item was selected
+     * @return true if an item was selected
      */
     public boolean show(List<T> choices) {
         listModel.setElements(choices);

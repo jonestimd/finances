@@ -24,16 +24,16 @@ package io.github.jonestimd.finance.swing.event;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.swing.component.BeanListComboBox;
-import io.github.jonestimd.swing.component.BeanListModel;
+import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 
 public class ComboBoxDomainEventListener<ID, T extends UniqueId<ID> & Comparable<? super T>> implements DomainEventListener<ID, T> {
-    private final BeanListModel<T> comboBoxModel;
+    private final BeanListComboBoxModel<T> comboBoxModel;
 
     public ComboBoxDomainEventListener(BeanListComboBox<T> comboBox) {
-        this(comboBox.getModel());
+        this((BeanListComboBoxModel<T>) comboBox.getModel());
     }
 
-    public ComboBoxDomainEventListener(BeanListModel<T> comboBoxModel) {
+    public ComboBoxDomainEventListener(BeanListComboBoxModel<T> comboBoxModel) {
         this.comboBoxModel = comboBoxModel;
     }
 

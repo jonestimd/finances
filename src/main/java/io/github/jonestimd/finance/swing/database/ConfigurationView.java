@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.swing.database;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ConfigurationView {
     private Map<Field, String> model;
 
     private final BeanListComboBox<DriverConfigurationService> driverComboBox;
-    private final FileSuggestField directoryField = new FileSuggestField(true, new File(System.getProperty("user.home")), DIRECTORY_REQUIRED);
+    private final FileSuggestField directoryField;
     private final ValidatedTextField hostField;
     private final ValidatedTextField portField;
     private final ValidatedTextField schemaField;
@@ -81,7 +82,12 @@ public class ConfigurationView {
         driverComboBox = new BeanListComboBox<>(FormatFactory.format(DriverConfigurationService::getName), driverServices);
         driverComboBox.addItemListener(this::driverSelected);
 
-        directoryField.setSelectedItem(null);
+        try {
+            directoryField = new FileSuggestField(true, new File(System.getProperty("user.home")), DIRECTORY_REQUIRED);
+            directoryField.setSelectedItem(null);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
 
         hostField = new ValidatedTextField(validator(HOST));
         hostField.setColumns(LABELS.getInt(RESOURCE_PREFIX + "textColumns"));
@@ -109,22 +115,22 @@ public class ConfigurationView {
     }
 
     private void setDefaults(ActionEvent event) {
-        driverComboBox.getSelectedItem().getDefaultValues().entrySet().forEach(entry -> {
-            switch (entry.getKey()) {
+        driverComboBox.getSelectedItem().getDefaultValues().forEach((key, value) -> {
+            switch (key) {
                 case DIRECTORY:
-                    directoryField.setSelectedItem(new File(entry.getValue()));
+                    directoryField.setSelectedItem(new File(value));
                     break;
                 case HOST:
-                    hostField.setText(entry.getValue());
+                    hostField.setText(value);
                     break;
                 case PORT:
-                    portField.setText(entry.getValue());
+                    portField.setText(value);
                     break;
                 case SCHEMA:
-                    schemaField.setText(entry.getValue());
+                    schemaField.setText(value);
                     break;
                 case USER:
-                    userField.setText(entry.getValue());
+                    userField.setText(value);
                     break;
             }
         });

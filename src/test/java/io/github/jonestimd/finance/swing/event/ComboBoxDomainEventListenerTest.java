@@ -6,7 +6,7 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
-import io.github.jonestimd.swing.component.BeanListModel;
+import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ComboBoxDomainEventListenerTest {
     @Mock
-    private BeanListModel<TransactionType> model;
+    private BeanListComboBoxModel<TransactionType> model;
 
     @Test
     public void addEventInsertsInSortOrder() throws Exception {

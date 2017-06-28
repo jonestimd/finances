@@ -96,7 +96,7 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
     private final TransactionTableModelCache transactionModelCache;
     private Account selectedAccount;
     private final TransactionTable transactionTable;
-    private final FilterField<Transaction> filterField = new ComponentFactory().newFilterField(TransactionFilter::new);
+    private final FilterField<Transaction> filterField = new ComponentFactory().newFilterField(TransactionFilter::new, 4, 2);
     private final JTextField clearedBalance = new AutosizeTextField(false);
     private final FinanceTableFactory tableFactory;
     private final WindowEventPublisher<WindowType> windowEventPublisher;
