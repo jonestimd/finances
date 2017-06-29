@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.transaction;
 
-import java.awt.Window;
 import java.util.List;
 
 import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
@@ -50,11 +49,6 @@ public class TransactionGroupCellEditor extends EditableComboBoxCellEditor<Trans
     }
 
     protected TransactionGroup saveItem(TransactionGroup item) {
-        TransactionGroupDialog dialog = new TransactionGroupDialog((Window) getComboBox().getTopLevelAncestor(), getComboBoxModel());
-        try {
-            return dialog.show(item) ? item : null;
-        } finally {
-            dialog.dispose();
-        }
+        return item;
     }
 }

@@ -41,7 +41,6 @@ import static io.github.jonestimd.finance.swing.transaction.TransactionGroupTabl
 import static org.apache.commons.lang.StringUtils.*;
 
 // TODO merge action
-// TODO listen for new transaction groups
 public class TransactionGroupsPanel extends AccountAccessPanel<TransactionGroup, TransactionGroupSummary> {
     private final TransactionGroupOperations transactionGroupOperations;
     @SuppressWarnings("FieldCanBeLocal")
@@ -50,7 +49,7 @@ public class TransactionGroupsPanel extends AccountAccessPanel<TransactionGroup,
 
     public TransactionGroupsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
             WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(), NAME_INDEX), "transactionGroup", windowEventPublisher);
+        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(domainEventPublisher), NAME_INDEX), "transactionGroup", windowEventPublisher);
         this.transactionGroupOperations = serviceLocator.getTransactionGroupOperations();
         domainEventPublisher.register(TransactionGroupSummary.class, reloadHandler);
     }

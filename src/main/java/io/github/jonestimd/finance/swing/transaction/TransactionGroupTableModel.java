@@ -24,18 +24,24 @@ package io.github.jonestimd.finance.swing.transaction;
 import java.util.Arrays;
 import java.util.List;
 
+import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
 import io.github.jonestimd.finance.domain.transaction.TransactionGroupSummary;
+import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
-import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-public class TransactionGroupTableModel extends ValidatedBeanListTableModel<TransactionGroupSummary> {
+public class TransactionGroupTableModel extends TransactionSummaryTableModel<TransactionGroup, TransactionGroupSummary> {
     private static final List<ColumnAdapter<? super TransactionGroupSummary, ?>> ADAPTERS = Arrays.<ColumnAdapter<? super TransactionGroupSummary, ?>>asList(
             TransactionGroupColumnAdapter.NAME_ADAPTER,
             TransactionGroupColumnAdapter.DESCRIPTION_ADAPTER,
             TransactionSummaryColumnAdapter.COUNT_ADAPTER);
     public static final int NAME_INDEX = 0;
 
-    public TransactionGroupTableModel() {
-        super(ADAPTERS);
+    public TransactionGroupTableModel(DomainEventPublisher domainEventPublisher) {
+        super(ADAPTERS, TransactionGroup.class, domainEventPublisher);
+    }
+
+    @Override
+    protected TransactionGroupSummary newSummary(TransactionGroup bean) {
+        return new TransactionGroupSummary(bean, 1);
     }
 }
