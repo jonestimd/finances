@@ -69,7 +69,7 @@ public class ConfigurationViewTest {
 
         new ConfigurationView(panel, services);
 
-        BeanListComboBox<?> driverComboBox = getDriverComboBox(panel);
+        BeanListComboBox<DriverConfigurationService> driverComboBox = getDriverComboBox(panel);
         assertThat(driverComboBox.getModel()).containsOnly(service1, service2);
         assertThat(driverComboBox.getSelectedItem()).isSameAs(service1);
         verify(service1).getName();
@@ -264,8 +264,9 @@ public class ConfigurationViewTest {
         return suffix == null ? null : LABELS.getString(RESOURCE_PREFIX + field.toString() + suffix);
     }
 
-    private BeanListComboBox<?> getDriverComboBox(JPanel panel) {
-        return (BeanListComboBox<?>) find(panel, "Database Type");
+    @SuppressWarnings("unchecked")
+    private BeanListComboBox<DriverConfigurationService> getDriverComboBox(JPanel panel) {
+        return (BeanListComboBox<DriverConfigurationService>) find(panel, "Database Type");
     }
 
     private Component find(JPanel panel, Field field) {
