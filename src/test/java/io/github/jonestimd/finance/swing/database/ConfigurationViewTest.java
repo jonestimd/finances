@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing.database;
 
 import java.awt.Component;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -216,7 +217,7 @@ public class ConfigurationViewTest {
         when(service1.isEnabled(DIRECTORY)).thenReturn(true);
         List<DriverConfigurationService> services = Arrays.asList(service1, service2);
         ConfigurationView view = new ConfigurationView(panel, services);
-        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem("/user/home");
+        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem(new File("/user/home"));
         ((ValidatedTextField) find(panel, HOST)).setText("host name");
         ((ValidatedTextField) find(panel, PORT)).setText("1234");
         ((ValidatedTextField) find(panel, SCHEMA)).setText("schema name");
@@ -241,7 +242,7 @@ public class ConfigurationViewTest {
         when(service1.isEnabled(not(DIRECTORY))).thenReturn(true);
         List<DriverConfigurationService> services = Arrays.asList(service1, service2);
         ConfigurationView view = new ConfigurationView(panel, services);
-        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem("/user/home");
+        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem(new File("/user/home"));
         ((ValidatedTextField) find(panel, HOST)).setText("host name");
         ((ValidatedTextField) find(panel, PORT)).setText("1234");
         ((ValidatedTextField) find(panel, SCHEMA)).setText("schema name");
