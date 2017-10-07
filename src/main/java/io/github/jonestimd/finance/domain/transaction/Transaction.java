@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -179,6 +181,10 @@ public class Transaction extends BaseDomain<Long> {
 
     public List<TransactionDetail> getDetails() {
         return details;
+    }
+
+    public Optional<TransactionDetail> findFirstDetail(Predicate<TransactionDetail> predicate) {
+        return details.stream().filter(predicate).findFirst();
     }
 
     public Security getSecurity() {

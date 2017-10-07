@@ -21,11 +21,11 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file;
 
-import java.util.Map;
+import java.math.BigDecimal;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
@@ -34,51 +34,51 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 
-import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
-
+/**
+ * This class is used to import transactions from a file with one transaction detail in each record.  An import of
+ * this type includes separate columns for the category name/alias and the detail amount.
+ */
 public class SingleDetailImportContext extends ImportContext {
-    private static final Map<FieldType, DetailValueConsumer> detailConsumers = ImmutableMap.of(
-        CATEGORY, SingleDetailImportContext::setTransferOrCategory,
-        AMOUNT, SingleDetailImportContext::setAmount
-    );
-
-    public SingleDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<TransactionCategory> categoryMapper) {
-        super(importFile, payeeMapper, categoryMapper);
+    public SingleDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
+            DomainMapper<TransactionCategory> categoryMapper) {
+        super(importFile, payeeMapper, securityMapper, categoryMapper);
     }
 
-    private void setTransferOrCategory(TransactionDetail detail, String value, ImportField field) {
+    @Override
+    protected TransactionDetail getDetail(Transaction transaction, Multimap<ImportField, String> record) {
+        if (transaction.getDetails().isEmpty()) {
+            transaction.addDetails(new TransactionDetail());
+        }
+        return transaction.getDetails().get(0);
+    }
+
+    @Override
+    protected DetailValueConsumer getDetailConsumer(ImportField field) {
+        return field.getType() == FieldType.AMOUNT ? this::setAmount : super.getDetailConsumer(field);
+    }
+
+    private void setAmount(TransactionDetail detail, ImportField field, String value) {
+        detail.setAmount(getAmount(detail, field, value));
+    }
+
+    protected BigDecimal getAmount(TransactionDetail detail, ImportField field, String value) {
+        BigDecimal amount = field.parseAmount(value);
+        return importFile.isNegate(detail.getCategory()) ? amount.negate() : amount;
+    }
+
+    @Override
+    protected void setCategory(TransactionDetail detail, ImportField field, String value) {
         Account account = importFile.getTransferAccount(value);
         if (account != null) {
             detail.setRelatedDetail(new TransactionDetail(account, detail));
-        } else {
+        }
+        else if (detail.getCategory() == null) {
             detail.setCategory(categoryMapper.get(value));
         }
     }
 
-    private void setAmount(TransactionDetail detail, String amount, ImportField field) {
-        detail.setAmount(field.parseAmount(amount));
-    }
-
     @Override
-    protected void updateDetails(Transaction transaction, String value, ImportField field) {
-        TransactionDetail detail;
-        if (transaction.getDetails().isEmpty()) {
-            detail = new TransactionDetail();
-            transaction.addDetails(detail);
-        }
-        else {
-            detail = transaction.getDetails().get(0);
-        }
-        updateDetail(detail, value, field);
-    }
-
-    private void updateDetail(TransactionDetail detail, String value, ImportField field) {
-        DetailValueConsumer consumer = detailConsumers.get(field.getType());
-        Preconditions.checkNotNull(consumer, "Invalid field type: %s", field.getType());
-        consumer.accept(this, detail, value, field);
-    }
-
-    private static interface DetailValueConsumer {
-        void accept(SingleDetailImportContext context, TransactionDetail detail, String value, ImportField field);
+    protected void setTransferAccount(TransactionDetail detail, ImportField field, String value) {
+        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(value), detail));
     }
 }

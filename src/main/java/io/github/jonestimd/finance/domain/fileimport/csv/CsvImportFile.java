@@ -21,25 +21,26 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport.csv;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import com.google.common.collect.Multimap;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.file.FieldValueExtractor;
-import io.github.jonestimd.finance.file.csv.CsvFieldValueExtractor;
+import io.github.jonestimd.finance.file.csv.CsvParser;
+import io.github.jonestimd.finance.file.ImportFieldMapper;
 
 @Entity
 @DiscriminatorValue("CSV")
 public class CsvImportFile extends ImportFile {
     public CsvImportFile() {}
 
-    public CsvImportFile(String name) {
-        super(name);
-    }
-
     @Override
-    public FieldValueExtractor getFieldValueExtractor() {
-        return new CsvFieldValueExtractor(getFields());
+    public Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws IOException {
+        return new ImportFieldMapper(getFields()).mapFields(new CsvParser(stream).getStream());
     }
 
     @Override

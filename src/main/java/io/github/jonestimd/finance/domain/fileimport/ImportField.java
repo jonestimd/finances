@@ -176,6 +176,9 @@ public class ImportField {
         }
     }
 
+    /**
+     * Set the amount and memo on a transaction detail for a multidetail import record.
+     */
     public void updateDetail(TransactionDetail detail, String amount) {
         detail.setMemo(memo);
         detail.setAmount(parseAmount(amount));

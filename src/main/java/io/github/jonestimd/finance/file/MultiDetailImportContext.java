@@ -21,12 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file;
 
-import java.util.Map;
-import java.util.function.BiConsumer;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import com.google.common.collect.Multimap;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
@@ -34,37 +30,32 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 
-import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
-
+/**
+ * This class is used to import transactions from a file with multiple transaction details in each record.  An import
+ * of this type includes category specific columns that contain the amount for the associated category.
+ */
 public class MultiDetailImportContext extends ImportContext {
-    private final Map<FieldType, BiConsumer<TransactionDetail, ImportField>> detailConsumers = ImmutableMap.of(
-        CATEGORY, this::setCategory,
-        TRANSFER_ACCOUNT, this::setTransferAccount
-    );
-
-    public MultiDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<TransactionCategory> categoryMapper) {
-        super(importFile, payeeMapper, categoryMapper);
-    }
-
-    private void setCategory(TransactionDetail detail, ImportField field) {
-        detail.setCategory(categoryMapper.get(field.getLabel()));
-    }
-
-    private void setTransferAccount(TransactionDetail detail, ImportField field) {
-        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(field.getLabel()), detail));
+    public MultiDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
+            DomainMapper<TransactionCategory> categoryMapper) {
+        super(importFile, payeeMapper, securityMapper, categoryMapper);
     }
 
     @Override
-    protected void updateDetails(Transaction transaction, String value, ImportField field) {
-        TransactionDetail detail = new TransactionDetail();
-        transaction.addDetails(detail);
-        updateDetail(detail, value, field);
+    protected void setCategory(TransactionDetail detail, ImportField field, String value) {
+        detail.setCategory(categoryMapper.get(field.getLabel()));
+        field.updateDetail(detail, value);
     }
 
-    private void updateDetail(TransactionDetail detail, String value, ImportField field) {
-        BiConsumer<TransactionDetail, ImportField> consumer = detailConsumers.get(field.getType());
-        Preconditions.checkNotNull(consumer, "Invalid file type: %s", field.getType());
-        consumer.accept(detail, field);
+    @Override
+    protected void setTransferAccount(TransactionDetail detail, ImportField field, String value) {
+        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(field.getLabel()), detail));
         field.updateDetail(detail, value);
+    }
+
+    @Override
+    protected TransactionDetail getDetail(Transaction transaction, Multimap<ImportField, String> record) {
+        TransactionDetail detail = new TransactionDetail();
+        transaction.addDetails(detail);
+        return detail;
     }
 }

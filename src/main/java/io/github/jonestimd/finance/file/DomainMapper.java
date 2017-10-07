@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.file;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
@@ -30,17 +31,21 @@ import java.util.function.Predicate;
 
 public class DomainMapper<T> {
     private final Collection<T> targets;
-    private final Function<T, String> upperNameFunction;
+    private final Function<T, String> getUpperName;
     private final Map<String, T> aliasMap;
     private final Function<String, T> factory;
     private final Comparator<T> nameLengthComparator;
 
-    public DomainMapper(Collection<T> targets, Function<T, String> nameFunction, Map<String, T> aliasMap, Function<String, T> factory) {
+    public DomainMapper(Collection<T> targets, Function<T, String> getName, Function<String, T> factory) {
+        this(targets, getName, Collections.emptyMap(), factory);
+    }
+
+    public DomainMapper(Collection<T> targets, Function<T, String> getName, Map<String, T> aliasMap, Function<String, T> factory) {
         this.targets = targets;
-        this.upperNameFunction = nameFunction.andThen(String::toUpperCase);
+        this.getUpperName = getName.andThen(String::toUpperCase);
         this.aliasMap = aliasMap;
         this.factory = factory;
-        nameLengthComparator = (target1, target2) -> Integer.compare(nameFunction.apply(target1).length(), nameFunction.apply(target2).length());
+        nameLengthComparator = Comparator.comparingInt(target -> getName.apply(target).length());
     }
 
     public T get(String name) {
@@ -49,11 +54,11 @@ public class DomainMapper<T> {
 
     private T findOrCreate(String name) {
         Optional<T> match = targets.stream().filter(matches(name)).max(nameLengthComparator);
-        return match.isPresent() ? match.get() : addTarget(name);
+        return match.orElseGet(() -> addTarget(name));
     }
 
     private Predicate<T> matches(String name) {
-        return target -> name.toUpperCase().contains(upperNameFunction.apply(target));
+        return target -> name.toUpperCase().contains(getUpperName.apply(target));
     }
 
     private T addTarget(String name) {

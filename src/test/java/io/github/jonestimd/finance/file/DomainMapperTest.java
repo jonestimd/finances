@@ -14,7 +14,7 @@ public class DomainMapperTest {
     @Test
     public void returnsExactMatch() throws Exception {
         List<TestBean> beans = Lists.newArrayList(new TestBean("bean10"), new TestBean("bean1"), new TestBean("bean2"));
-        DomainMapper<TestBean> mapper = new DomainMapper<>(beans, TestBean::getName, Collections.emptyMap(), null);
+        DomainMapper<TestBean> mapper = new DomainMapper<>(beans, TestBean::getName, null);
 
         assertThat(mapper.get("bean1")).isSameAs(beans.get(1));
         assertThat(mapper.get("BEAN1")).isSameAs(beans.get(1));
@@ -24,7 +24,7 @@ public class DomainMapperTest {
     @Test
     public void returnsContainsMatch() throws Exception {
         List<TestBean> beans = Lists.newArrayList(new TestBean("bean1 with extra"), new TestBean("bean1"), new TestBean("bean2"));
-        DomainMapper<TestBean> mapper = new DomainMapper<>(beans, TestBean::getName, Collections.emptyMap(), null);
+        DomainMapper<TestBean> mapper = new DomainMapper<>(beans, TestBean::getName, null);
 
         assertThat(mapper.get("bean1 with extra info")).isSameAs(beans.get(0));
         assertThat(mapper.get("extra bean1 info")).isSameAs(beans.get(1));

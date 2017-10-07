@@ -31,6 +31,7 @@ dependencies {
     compile( group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1' ) { transitive = false }
     compile( group: 'com.itextpdf', name: 'itextpdf', version: '5.5.3' )
     compile( group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6' )
+    compile( group: 'org.apache.poi', name: 'poi', version: '3.17' )
     compile( group: 'org.jsoup', name: 'jsoup', version: '1.8.1' )
     compile( group: 'org.glassfish', name: 'javax.json', version: '1.0.4' )
     compile( group: 'io.github.jonestimd', name: 'subsets', version: '1.0')

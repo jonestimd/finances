@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +21,28 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
-/**
- * Import field type.  The value ordinal determines processing priority during the import of a record.
- */
-public enum FieldType {
-    DATE(true),
-    PAYEE(true),
-    SECURITY(true),
-    CATEGORY(false),
-    TRANSFER_ACCOUNT(false),
-    AMOUNT(false),
-    ASSET_QUANTITY(false);
+import java.io.IOException;
+import java.io.InputStream;
 
-    private final boolean isTransaction;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
 
-    FieldType(boolean isTransaction) {
-        this.isTransaction = isTransaction;
+import com.google.common.collect.Multimap;
+import io.github.jonestimd.finance.file.ImportFieldMapper;
+import io.github.jonestimd.finance.file.excel.SheetParser;
+
+@Entity
+@DiscriminatorValue("XLS")
+public class XlsImortFile extends ImportFile {
+    public XlsImortFile() {}
+
+    @Override
+    public Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws IOException {
+        return new ImportFieldMapper(getFields()).mapFields(new SheetParser(stream, 0, getStartOffset()).getStream());
     }
 
-    public boolean isTransaction() {
-        return isTransaction;
+    @Override
+    public String getFileExtension() {
+        return "xls";
     }
 }

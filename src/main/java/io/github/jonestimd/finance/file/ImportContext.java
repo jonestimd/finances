@@ -22,13 +22,17 @@
 package io.github.jonestimd.finance.file;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
@@ -36,59 +40,104 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
-import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
 
 public abstract class ImportContext {
     private static final Map<FieldType, TransactionValueConsumer> TRANSACTION_CONSUMERS = ImmutableMap.of(
             DATE, ImportContext::setDate,
-            PAYEE, ImportContext::setPayee
-    );
+            PAYEE, ImportContext::setPayee,
+            SECURITY, ImportContext::setSecurity);
+    private final Map<FieldType, DetailValueConsumer> detailConsumers = ImmutableMap.of(
+            CATEGORY, this::setCategory,
+            TRANSFER_ACCOUNT, this::setTransferAccount,
+            ASSET_QUANTITY, this::setAssetQuantity);
     protected final ImportFile importFile;
     protected final DomainMapper<Payee> payeeMapper;
+    protected final DomainMapper<Security> securityMapper;
     protected final DomainMapper<TransactionCategory> categoryMapper;
 
-    protected ImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<TransactionCategory> categoryMapper) {
+    protected ImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
+            DomainMapper<TransactionCategory> categoryMapper) {
         this.importFile = importFile;
         this.payeeMapper = payeeMapper;
+        this.securityMapper = securityMapper;
         this.categoryMapper = categoryMapper;
     }
 
     public List<Transaction> parseTransactions(InputStream source) throws Exception {
-        Iterable<Multimap<ImportField, String>> records = importFile.getFieldValueExtractor().parse(source);
-        return Streams.of(records).map(this::toTransaction).collect(Collectors.toList());
+        List<Transaction> transactions = new ArrayList<>();
+        Iterable<Multimap<ImportField, String>> records = importFile.parse(source);
+        for (Multimap<ImportField, String> record : records) {
+            updateDetails(getTransaction(record, transactions), record);
+        }
+        return transactions;
     }
 
-    private Transaction toTransaction(Multimap<ImportField, String> fieldValues) {
+    protected Transaction getTransaction(Multimap<ImportField, String> record, List<Transaction> transactions) {
         Transaction transaction = new Transaction(importFile.getAccount(), new Date(), importFile.getPayee(), false, null); // TODO override account in UI?
-        fieldValues.entries().stream()
-                .filter(entry -> !updateTransaction(transaction, entry.getValue(), entry.getKey()))
-                .forEach(entry -> updateDetails(transaction, entry.getValue(), entry.getKey()));
-        transaction.getDetails().removeIf(TransactionDetail::isZeroAmount);
+        record.entries().forEach(entry -> updateTransaction(transaction, entry.getKey(), entry.getValue()));
+        transactions.add(transaction);
         return transaction;
     }
 
-    private boolean updateTransaction(Transaction transaction, String value, ImportField field) {
+    private void updateTransaction(Transaction transaction, ImportField field, String value) {
         TransactionValueConsumer consumer = TRANSACTION_CONSUMERS.get(field.getType());
-        if (consumer != null) {
-            consumer.accept(this, transaction, value, field);
-            return true;
-        }
-        return false;
+        if (consumer != null) consumer.accept(this, transaction, field, value);
     }
 
-    protected abstract void updateDetails(Transaction transaction, String value, ImportField field);
+    private void updateDetails(Transaction transaction, Multimap<ImportField, String> record) {
+        record.entries().stream().sorted(Comparator.comparing(entry -> entry.getKey().getType())).forEachOrdered(entry -> {
+            if (!entry.getKey().getType().isTransaction()) {
+                updateDetail(getDetail(transaction, record), entry.getKey(), entry.getValue());
+            }
+        });
+        transaction.getDetails().removeIf(TransactionDetail::isZeroAmount);
+    }
 
-    private void setDate(Transaction transaction, String value, ImportField field) {
+    protected abstract TransactionDetail getDetail(Transaction transaction, Multimap<ImportField, String> record);
+
+    private void updateDetail(TransactionDetail detail, ImportField field, String value) {
+        DetailValueConsumer consumer = getDetailConsumer(field);
+        Preconditions.checkNotNull(consumer, "Invalid field type: %s", field.getType());
+        consumer.accept(detail, field, value);
+    }
+
+    protected DetailValueConsumer getDetailConsumer(ImportField field) {
+        return detailConsumers.get(field.getType());
+    }
+
+    private void setDate(Transaction transaction, ImportField field, String value) {
         transaction.setDate(field.parseDate(value));
     }
 
-    private void setPayee(Transaction transaction, String value, ImportField field) {
+    private void setPayee(Transaction transaction, ImportField field, String value) {
         transaction.setPayee(payeeMapper.get(value));
     }
 
-    private interface TransactionValueConsumer {
-        void accept(ImportContext context, Transaction transaction, String value, ImportField field);
+    private void setSecurity(Transaction transaction, ImportField field, String value) {
+        transaction.setSecurity(securityMapper.get(value));
+    }
+
+    protected abstract void setCategory(TransactionDetail detail, ImportField field, String value);
+
+    protected abstract void setTransferAccount(TransactionDetail detail, ImportField field, String value);
+
+    private void setAssetQuantity(TransactionDetail detail, ImportField field, String value) {
+        BigDecimal quantity = getAssetQuantity(detail, field, value);
+        if (quantity.compareTo(BigDecimal.ZERO) != 0) detail.setAssetQuantity(quantity);
+    }
+
+    protected BigDecimal getAssetQuantity(TransactionDetail detail, ImportField field, String amount) {
+        BigDecimal quantity = field.parseAmount(amount);
+        return importFile.isNegate(detail.getCategory()) ? quantity : quantity.negate();
+    }
+
+    protected interface TransactionValueConsumer {
+        void accept(ImportContext context, Transaction transaction, ImportField field, String value);
+    }
+
+    protected interface DetailValueConsumer {
+        void accept(TransactionDetail detail, ImportField field, String value);
     }
 }

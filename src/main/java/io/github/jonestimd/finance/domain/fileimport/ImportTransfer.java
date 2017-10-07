@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +21,41 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
-/**
- * Import field type.  The value ordinal determines processing priority during the import of a record.
- */
-public enum FieldType {
-    DATE(true),
-    PAYEE(true),
-    SECURITY(true),
-    CATEGORY(false),
-    TRANSFER_ACCOUNT(false),
-    AMOUNT(false),
-    ASSET_QUANTITY(false);
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
-    private final boolean isTransaction;
+import io.github.jonestimd.finance.domain.account.Account;
+import org.hibernate.annotations.ForeignKey;
+import org.hibernate.annotations.Type;
 
-    FieldType(boolean isTransaction) {
-        this.isTransaction = isTransaction;
+@Embeddable
+public class ImportTransfer {
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "account_id", nullable = false)
+    @ForeignKey(name = "import_tx_account_account_fk")
+    private Account account;
+
+    @Column(name = "negate_amount", nullable = false)
+    @Type(type = "yes_no")
+    private boolean negate;
+
+    public Account getAccount() {
+        return account;
     }
 
-    public boolean isTransaction() {
-        return isTransaction;
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public boolean isNegate() {
+        return negate;
+    }
+
+    public void setNegate(boolean negate) {
+        this.negate = negate;
     }
 }

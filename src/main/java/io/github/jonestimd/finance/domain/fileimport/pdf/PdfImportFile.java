@@ -21,11 +21,15 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport.pdf;
 
+import java.io.InputStream;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import com.google.common.collect.Multimap;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.file.FieldValueExtractor;
+import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.file.pdf.PdfFieldValueExtractor;
 
 @Entity
@@ -34,12 +38,12 @@ public class PdfImportFile extends ImportFile {
     public PdfImportFile() {}
 
     public PdfImportFile(String name) {
-        super(name);
+        super(name, ImportType.MULTI_DETAIL_ROWS);
     }
 
     @Override
-    public FieldValueExtractor getFieldValueExtractor() {
-        return new PdfFieldValueExtractor(getFields());
+    public Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws Exception {
+        return new PdfFieldValueExtractor(getFields()).parse(stream);
     }
 
     @Override

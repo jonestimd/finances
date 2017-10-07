@@ -39,6 +39,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.Reconciler;
+import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.operations.PayeeOperations;
 import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
@@ -49,6 +50,7 @@ import io.github.jonestimd.swing.ComponentTreeUtils;
 public class ImportFileAction extends AbstractAction {
     private final ImportFile importFile;
     private final PayeeOperations payeeOperations;
+    private final AssetOperations assetOperations;
     private final TransactionCategoryOperations transactionCategoryOperations;
     private final JFileChooser fileChooser = new JFileChooser();
 
@@ -56,6 +58,7 @@ public class ImportFileAction extends AbstractAction {
         super(importFile.getName());
         this.importFile = importFile;
         this.payeeOperations = serviceLocator.getPayeeOperations();
+        this.assetOperations = serviceLocator.getAssetOperations();
         this.transactionCategoryOperations = serviceLocator.getTransactionCategoryOperations();
         FileFilter fileFilter = new FileNameExtensionFilter("*." + importFile.getFileExtension(), importFile.getFileExtension());
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -73,7 +76,8 @@ public class ImportFileAction extends AbstractAction {
         if (result == JFileChooser.APPROVE_OPTION) {
             Window window = ComponentTreeUtils.findAncestor((JComponent) event.getSource(), Window.class);
             File selectedFile = fileChooser.getSelectedFile();
-            ImportContext importContext = importFile.newContext(payeeOperations.getAllPayees(), transactionCategoryOperations.getAllTransactionCategories());
+            ImportContext importContext = importFile.newContext(payeeOperations.getAllPayees(),
+                    assetOperations.getAllSecurities(), transactionCategoryOperations.getAllTransactionCategories());
             try (FileInputStream inputStream = new FileInputStream(selectedFile)) { // TODO do in background thread
                 List<Transaction> transactions = importContext.parseTransactions(inputStream);
                 TransactionTableModel tableModel = ComponentTreeUtils.findComponent(window, TransactionTable.class).getModel();

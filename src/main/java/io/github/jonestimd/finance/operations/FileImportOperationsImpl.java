@@ -45,12 +45,14 @@ public class FileImportOperationsImpl implements FileImportOperations { // TODO 
     private final ImportFileDao importFileDao;
     private final TransactionService transactionService;
     private final PayeeOperations payeeOperations;
+    private final AssetOperations assetOperations;
     private final TransactionCategoryOperations categoryOperations;
 
     public FileImportOperationsImpl(ImportFileDao importFileDao, ServiceLocator serviceLocator) {
         this.importFileDao = importFileDao;
         this.transactionService = serviceLocator.getTransactionService();
         this.payeeOperations = serviceLocator.getPayeeOperations();
+        this.assetOperations = serviceLocator.getAssetOperations();
         this.categoryOperations = serviceLocator.getTransactionCategoryOperations();
     }
 
@@ -65,7 +67,8 @@ public class FileImportOperationsImpl implements FileImportOperations { // TODO 
     }
 
     public List<Transaction> toTransactions(InputStream source, ImportFile importFile) throws Exception {
-        return importFile.newContext(payeeOperations.getAllPayees(), categoryOperations.getAllTransactionCategories()).parseTransactions(source);
+        return importFile.newContext(payeeOperations.getAllPayees(), assetOperations.getAllSecurities(), categoryOperations.getAllTransactionCategories())
+                .parseTransactions(source);
     }
 
     public static void main(String args[]) {

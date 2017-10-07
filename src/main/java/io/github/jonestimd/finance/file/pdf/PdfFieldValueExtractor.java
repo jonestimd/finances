@@ -35,19 +35,17 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.itextpdf.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.file.FieldValueExtractor;
 import io.github.jonestimd.util.Streams;
 
 import static com.google.common.collect.Multimaps.*;
 
-public class PdfFieldValueExtractor implements FieldValueExtractor {
+public class PdfFieldValueExtractor {
     private final Collection<ImportField> importFields;
 
     public PdfFieldValueExtractor(Map<String, ImportField> importFields) {
         this.importFields = importFields.values();
     }
 
-    @Override
     public Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws IOException {
         return Collections.singleton(getFieldValues(new TextExtractor(inputStream).getText()));
     }

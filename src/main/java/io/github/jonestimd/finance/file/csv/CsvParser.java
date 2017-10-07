@@ -34,9 +34,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import io.github.jonestimd.finance.file.FileParser;
+
 import static io.github.jonestimd.util.JavaPredicates.*;
 
-public class CsvParser {
+public class CsvParser implements FileParser {
     private static final Pattern COLUMN_PATTERN = Pattern.compile("(?<value>[^,\"]*|\"[^\"]*\")(,|$)");
     private final Stream<Map<String, String>> stream;
     private final List<String> headers;

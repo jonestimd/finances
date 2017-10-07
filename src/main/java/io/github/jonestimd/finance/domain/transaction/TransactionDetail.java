@@ -270,6 +270,10 @@ public class TransactionDetail extends BaseDomain<Long> {
         this.relatedDetail = relatedDetail;
     }
 
+    public Account getTransferAccount() {
+        return relatedDetail != null && relatedDetail.getTransaction() != null ? relatedDetail.getTransaction().getAccount() : null;
+    }
+
     public Asset getExchangeAsset() {
         return exchangeAsset;
     }

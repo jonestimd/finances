@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,27 +19,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.domain.fileimport;
+package io.github.jonestimd.finance.file;
 
-/**
- * Import field type.  The value ordinal determines processing priority during the import of a record.
- */
-public enum FieldType {
-    DATE(true),
-    PAYEE(true),
-    SECURITY(true),
-    CATEGORY(false),
-    TRANSFER_ACCOUNT(false),
-    AMOUNT(false),
-    ASSET_QUANTITY(false);
+import java.util.Map;
+import java.util.stream.Stream;
 
-    private final boolean isTransaction;
-
-    FieldType(boolean isTransaction) {
-        this.isTransaction = isTransaction;
-    }
-
-    public boolean isTransaction() {
-        return isTransaction;
-    }
+public interface FileParser {
+    Stream<Map<String, String>> getStream();
 }

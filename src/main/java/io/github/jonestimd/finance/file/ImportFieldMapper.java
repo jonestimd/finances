@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,33 +19,31 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.file.csv;
+package io.github.jonestimd.finance.file;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.file.FieldValueExtractor;
 import io.github.jonestimd.util.Streams;
 
-public class CsvFieldValueExtractor implements FieldValueExtractor {
+public class ImportFieldMapper {
     private final Collection<ImportField> importFields;
 
-    public CsvFieldValueExtractor(Map<String, ImportField> importFields) {
+    public ImportFieldMapper(Map<String, ImportField> importFields) {
         this.importFields = importFields.values();
     }
 
-    @Override
-    public Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws Exception {
-        return Streams.map(new CsvParser(inputStream).getStream(), this::mapRecord);
+    public Iterable<Multimap<ImportField, String>> mapFields(Stream<Map<String, String>> rows) {
+        return Streams.map(rows, this::mapRecord);
     }
 
-    protected Multimap<ImportField, String> mapRecord(Map<String, String> record) {
+    private Multimap<ImportField, String> mapRecord(Map<String, String> record) {
         return Multimaps.forMap(importFields.stream()
                 .filter(field -> record.containsKey(field.getLabel()))
                 .collect(Collectors.toMap(Function.identity(), field -> record.get(field.getLabel()))));
