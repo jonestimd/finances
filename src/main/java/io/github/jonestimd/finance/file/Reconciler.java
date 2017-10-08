@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
@@ -40,7 +39,9 @@ public class Reconciler {
 
     public Reconciler(TransactionTableModel tableModel) {
         this.tableModel = tableModel;
-        this.uncleared = tableModel.getBeans().stream().filter(not(Transaction::isCleared)).collect(Collectors.toList());
+        this.uncleared = tableModel.getBeans().stream()
+                .filter(not(Transaction::isCleared)).filter(not(Transaction::isNew))
+                .collect(Collectors.toList());
     }
 
     public void reconcile(Collection<Transaction> transactions) {
@@ -59,20 +60,17 @@ public class Reconciler {
     }
 
     private Transaction select(Transaction transaction) {
-        final Stream<Transaction> matches = uncleared.stream().filter(sameAmount(transaction));
-        return matches.max(samePayee(transaction)).orElse(transaction);
+        return uncleared.stream().filter(sameProperties(transaction)).min(nearestDate(transaction)).orElse(transaction);
     }
 
-    private Predicate<Transaction> sameAmount(Transaction transaction) {
-        return t2 -> t2.getAmount().compareTo(transaction.getAmount()) == 0;
+    private Predicate<Transaction> sameProperties(Transaction transaction) {
+        return t2 -> transaction.getAmount().compareTo(t2.getAmount()) == 0
+                && transaction.getAssetQuantity().compareTo(t2.getAssetQuantity()) == 0
+                && Objects.equals(transaction.getPayee(), t2.getPayee())
+                && Objects.equals(transaction.getSecurity(), t2.getSecurity());
     }
 
-    private Comparator<Transaction> samePayee(Transaction transaction) {
-        return (t1, t2) -> {
-            if (Objects.equals(t1.getPayee(), transaction.getPayee())) {
-                return Objects.equals(t2.getPayee(), transaction.getPayee()) ? 0 : 1;
-            }
-            return Objects.equals(t2.getPayee(), transaction.getPayee()) ? -1 : 0;
-        };
+    private Comparator<Transaction> nearestDate(Transaction transaction) {
+        return Comparator.comparingInt(t -> transaction.getDate().compareTo(t.getDate()));
     }
 }

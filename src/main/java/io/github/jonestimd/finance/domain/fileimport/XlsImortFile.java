@@ -27,7 +27,7 @@ import java.io.InputStream;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ListMultimap;
 import io.github.jonestimd.finance.file.ImportFieldMapper;
 import io.github.jonestimd.finance.file.excel.SheetParser;
 
@@ -37,7 +37,7 @@ public class XlsImortFile extends ImportFile {
     public XlsImortFile() {}
 
     @Override
-    public Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws IOException {
+    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws IOException {
         return new ImportFieldMapper(getFields()).mapFields(new SheetParser(stream, 0, getStartOffset()).getStream());
     }
 

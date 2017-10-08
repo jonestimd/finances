@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableListMultimap;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
@@ -56,7 +56,7 @@ public class GroupedDetailImportContextTest {
         Security security = new Security();
         when(importFile.getAccount()).thenReturn(account);
         when(importFile.parse(inputStream)).thenReturn(singletonList(
-                ImmutableMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME, securityField, SECURITY_NAME)));
+                ImmutableListMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME, securityField, SECURITY_NAME)));
         ImportContext context = new GroupedDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(payeeMapper.get(PAYEE_NAME)).thenReturn(payee);
         when(securityMapper.get(SECURITY_NAME)).thenReturn(security);
@@ -75,7 +75,7 @@ public class GroupedDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory();
         when(importFile.parse(inputStream)).thenReturn(singletonList(
-                ImmutableMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "1")));
+                ImmutableListMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "1")));
         ImportContext context = new GroupedDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
@@ -96,9 +96,9 @@ public class GroupedDetailImportContextTest {
         final TransactionCategory category2 = new TransactionCategory(otherCategory);
         final Account transferAccount = new Account(-1L, "transfer account");
         when(importFile.parse(inputStream)).thenReturn(Arrays.asList(
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "10", categoryField, CATEGORY_CODE, sharesField, "2"),
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "5", transferField, TRANSFER_ACCOUNT),
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "1", categoryField, otherCategory, sharesField, "20")));
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "10", categoryField, CATEGORY_CODE, sharesField, "2"),
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "5", transferField, TRANSFER_ACCOUNT),
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "1", categoryField, otherCategory, sharesField, "20")));
         ImportContext context = new GroupedDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category1);
         when(categoryMapper.get(otherCategory)).thenReturn(category2);
@@ -123,8 +123,8 @@ public class GroupedDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory(CATEGORY_CODE);
         when(importFile.parse(inputStream)).thenReturn(Arrays.asList(
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "10", categoryField, CATEGORY_CODE, sharesField, "2"),
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "1", categoryField, CATEGORY_CODE, sharesField, "20")));
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "10", categoryField, CATEGORY_CODE, sharesField, "2"),
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "1", categoryField, CATEGORY_CODE, sharesField, "20")));
         ImportContext context = new GroupedDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
@@ -142,8 +142,8 @@ public class GroupedDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final Account transferAccount = new Account(-1L, "transfer account");
         when(importFile.parse(inputStream)).thenReturn(Arrays.asList(
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "10", transferField, TRANSFER_ACCOUNT),
-                ImmutableMultimap.of(dateField, "01/15/1990", amountField, "1", transferField, TRANSFER_ACCOUNT)));
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "10", transferField, TRANSFER_ACCOUNT),
+                ImmutableListMultimap.of(dateField, "01/15/1990", amountField, "1", transferField, TRANSFER_ACCOUNT)));
         ImportContext context = new GroupedDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);
 

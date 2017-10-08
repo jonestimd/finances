@@ -26,13 +26,11 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
 import com.itextpdf.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.util.Streams;
@@ -42,11 +40,11 @@ import static com.google.common.collect.Multimaps.*;
 public class PdfFieldValueExtractor {
     private final Collection<ImportField> importFields;
 
-    public PdfFieldValueExtractor(Map<String, ImportField> importFields) {
-        this.importFields = importFields.values();
+    public PdfFieldValueExtractor(Collection<ImportField> importFields) {
+        this.importFields = importFields;
     }
 
-    public Iterable<Multimap<ImportField, String>> parse(InputStream inputStream) throws IOException {
+    public Iterable<ListMultimap<ImportField, String>> parse(InputStream inputStream) throws IOException {
         return Collections.singleton(getFieldValues(new TextExtractor(inputStream).getText()));
     }
 
@@ -72,7 +70,7 @@ public class PdfFieldValueExtractor {
                 List<ImportField> fieldCandidates = getMatches();
                 if (fieldCandidates.size() == 1) {
                     ImportField field = fieldCandidates.get(0);
-                    if (field.getLabel().equalsIgnoreCase(prefix.toString().trim()) && field.isValueRegion(x)) {
+                    if (field.hasLabel(prefix.toString().trim()) && field.isValueRegion(x)) {
                         appendValue(field, entry.getValue());
                     }
                     else if (field.isLabelRegion(x)) {
@@ -90,7 +88,7 @@ public class PdfFieldValueExtractor {
         }
 
         private boolean isMatch(ImportField field) {
-            return field.getLabel().toUpperCase().startsWith(prefix.toString().trim()) && field.isInRegion(x, y);
+            return field.isMatch(prefix.toString().trim()) && field.isInRegion(x, y);
         }
 
         protected void appendPrefix(String value) {
@@ -98,7 +96,7 @@ public class PdfFieldValueExtractor {
             List<ImportField> fieldCandidates = getMatches();
             if (fieldCandidates.size() == 1) {
                 ImportField field = fieldCandidates.get(0);
-                if (field.getLabel().equalsIgnoreCase(prefix.toString().trim())) {
+                if (field.hasLabel(prefix.toString().trim())) {
                     fieldValues.put(field, new StringBuilder());
                 }
             }

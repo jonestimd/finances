@@ -9,37 +9,41 @@ import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
 
 public class TestDomainUtils {
 
-    public static Account createAccount(String name, AccountType type) throws Exception {
+    public static Account createAccount(String name, AccountType type) {
         Account account = create(Account.class);
         account.setName(name);
         account.setType(type);
         return account;
     }
 
-    public static Account createAccount(String name) throws Exception {
+    public static Account createAccount(String name) {
         return createAccount(name, null);
     }
 
-    public static TransactionGroup createTransactionGroup(String name) throws Exception {
+    public static TransactionGroup createTransactionGroup(String name) {
         TransactionGroup group = create(TransactionGroup.class);
         group.setName(name);
         return group;
     }
 
-    public static Payee createPayee(long id, String name) throws InstantiationException, IllegalAccessException {
+    public static Payee createPayee(long id, String name) {
         Payee payee = create(Payee.class, id);
         payee.setName(name);
         return payee;
     }
 
-    public static <T> T create(Class<T> domainClass) throws Exception {
+    public static <T> T create(Class<T> domainClass) {
         return create(domainClass, TestSequence.nextId());
     }
 
-    public static <T> T create(Class<T> domainClass, Long id) throws IllegalAccessException, InstantiationException {
-        T instance = domainClass.newInstance();
-        getIdField(domainClass).set(instance, id);
-        return instance;
+    public static <T> T create(Class<T> domainClass, Long id) {
+        try {
+            T instance = domainClass.newInstance();
+            getIdField(domainClass).set(instance, id);
+            return instance;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private static <T> Field getIdField(Class<T> domainClass) {

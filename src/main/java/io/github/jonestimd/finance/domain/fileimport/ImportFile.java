@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.domain.fileimport;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
@@ -49,11 +50,10 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
@@ -66,7 +66,7 @@ import io.github.jonestimd.finance.file.MultiDetailImportContext;
 import io.github.jonestimd.finance.file.SingleDetailImportContext;
 import org.hibernate.annotations.Type;
 
-import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.EMPTY_IMPORT_CATEGORY;
+import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
 
 @Entity
 @Table(name = "import_file", uniqueConstraints = {@UniqueConstraint(name = "import_file_ak", columnNames = {"name"})})
@@ -84,9 +84,8 @@ public abstract class ImportFile {
     private String name;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_field_import_file_fk"))
-    @MapKeyColumn(name = "label", nullable = false, length = 250)
     @org.hibernate.annotations.ForeignKey(name = "import_field_import_file_fk")
-    private Map<String, ImportField> fields;
+    private Set<ImportField> fields;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_category",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
@@ -110,6 +109,15 @@ public abstract class ImportFile {
     @MapKeyColumn(name = "payee_alias")
     @org.hibernate.annotations.ForeignKey(name = "import_payee_file_fk", inverseName = "import_payee_payee_fk")
     private Map<String, Payee> payeeMap;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "import_security",
+            joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
+            foreignKey = @ForeignKey(name = "import_security_file_fk"),
+            inverseJoinColumns = @JoinColumn(name = "security_id", nullable = false, unique = false),
+            inverseForeignKey = @ForeignKey(name = "import_security_security_fk"))
+    @MapKeyColumn(name = "security_alias")
+    @org.hibernate.annotations.ForeignKey(name = "import_security_file_fk", inverseName = "import_security_security_fk")
+    private Map<String, Security> securityMap;
     @ManyToOne
     @JoinColumn(name = "account_id", foreignKey = @ForeignKey(name = "import_file_account_fk"))
     private Account account;
@@ -133,7 +141,7 @@ public abstract class ImportFile {
         this.importType = importType;
     }
 
-    public abstract Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws Exception;
+    public abstract Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception;
 
     public abstract String getFileExtension();
 
@@ -149,11 +157,11 @@ public abstract class ImportFile {
         this.name = name;
     }
 
-    public Map<String, ImportField> getFields() {
+    public Set<ImportField> getFields() {
         return fields;
     }
 
-    public void setFields(Map<String, ImportField> fields) {
+    public void setFields(Set<ImportField> fields) {
         this.fields = fields;
     }
 
@@ -193,6 +201,14 @@ public abstract class ImportFile {
 
     public void setPayeeMap(Map<String, Payee> payeeMap) {
         this.payeeMap = payeeMap;
+    }
+
+    public Map<String, Security> getSecurityMap() {
+        return securityMap;
+    }
+
+    public void setSecurityMap(Map<String, Security> securityMap) {
+        this.securityMap = securityMap;
     }
 
     public Account getAccount() {
@@ -237,7 +253,7 @@ public abstract class ImportFile {
 
     public ImportContext newContext(Collection<Payee> payees, Collection<Security> securities, Collection<TransactionCategory> categories) {
         return newContext(new DomainMapper<>(payees, Payee::getName, payeeMap, Payee::new),
-                new DomainMapper<>(securities, Security::getName, name -> new Security(name, SecurityType.STOCK)), // TODO add mapping table
+                new DomainMapper<>(securities, Security::getName, securityMap, name -> new Security(name, SecurityType.STOCK)),
                 new DomainMapper<>(categories, TransactionCategory::getCode, getCategoryMap(), null));
     }
 

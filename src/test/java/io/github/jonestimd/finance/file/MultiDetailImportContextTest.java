@@ -7,8 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
@@ -47,13 +47,13 @@ public class MultiDetailImportContextTest {
     private final ImportField categoryField = new ImportFieldBuilder().type(CATEGORY).label(CATEGORY_NAME).amountFormat(FIXED).get();
     private final ImportField transferField = new ImportFieldBuilder().type(TRANSFER_ACCOUNT).label(ACCOUNT_NAME).amountFormat(FIXED).get();
 
-    public void trainImportFile(Iterable<Multimap<ImportField, String>> rows) throws Exception {
+    public void trainImportFile(Iterable<ListMultimap<ImportField, String>> rows) throws Exception {
         when(importFile.parse(inputStream)).thenReturn(rows);
     }
 
     @Test
     public void setsDateOnTransaction() throws Exception {
-        trainImportFile(ImmutableList.of(ImmutableMultimap.of(dateField, "03/10/2012")));
+        trainImportFile(ImmutableList.of(ImmutableListMultimap.of(dateField, "03/10/2012")));
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
 
@@ -64,7 +64,7 @@ public class MultiDetailImportContextTest {
     @Test
     public void setsPayeeOnTransaction() throws Exception {
         final Payee payee = new Payee();
-        trainImportFile(ImmutableList.of(ImmutableMultimap.of(payeeField, "payee name")));
+        trainImportFile(ImmutableList.of(ImmutableListMultimap.of(payeeField, "payee name")));
         when(payeeMapper.get("payee name")).thenReturn(payee);
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
@@ -76,7 +76,7 @@ public class MultiDetailImportContextTest {
     @Test
     public void addsDetailWithCategory() throws Exception {
         final TransactionCategory category = new TransactionCategory();
-        trainImportFile(ImmutableList.of(ImmutableMultimap.of(categoryField, "123456")));
+        trainImportFile(ImmutableList.of(ImmutableListMultimap.of(categoryField, "123456")));
         when(categoryMapper.get(CATEGORY_NAME)).thenReturn(category);
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
@@ -90,7 +90,7 @@ public class MultiDetailImportContextTest {
     @Test
     public void addsDetailWithTransfer() throws Exception {
         final Account acount = new Account();
-        trainImportFile(ImmutableList.of(ImmutableMultimap.of(transferField, "123456")));
+        trainImportFile(ImmutableList.of(ImmutableListMultimap.of(transferField, "123456")));
         when(importFile.getTransferAccount(ACCOUNT_NAME)).thenReturn(acount);
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
@@ -104,7 +104,7 @@ public class MultiDetailImportContextTest {
     @Test
     public void removesZeroAmountDetails() throws Exception {
         final Account acount = new Account();
-        trainImportFile(ImmutableList.of(ImmutableMultimap.of(transferField, "0.00")));
+        trainImportFile(ImmutableList.of(ImmutableListMultimap.of(transferField, "0.00")));
         when(importFile.getTransferAccount(ACCOUNT_NAME)).thenReturn(acount);
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);

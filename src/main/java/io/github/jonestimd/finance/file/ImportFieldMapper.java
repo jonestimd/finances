@@ -23,29 +23,41 @@ package io.github.jonestimd.finance.file;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.util.Streams;
 
+import static com.google.common.collect.Multimaps.*;
+
 public class ImportFieldMapper {
+    private static final Supplier<ListMultimap<ImportField, String>> MULTIMAP_SUPPLIER = MultimapBuilder.hashKeys().arrayListValues()::build;
     private final Collection<ImportField> importFields;
 
-    public ImportFieldMapper(Map<String, ImportField> importFields) {
-        this.importFields = importFields.values();
+    public ImportFieldMapper(Collection<ImportField> importFields) {
+        this.importFields = importFields;
     }
 
-    public Iterable<Multimap<ImportField, String>> mapFields(Stream<Map<String, String>> rows) {
+    public Iterable<ListMultimap<ImportField, String>> mapFields(Stream<Map<String, String>> rows) {
         return Streams.map(rows, this::mapRecord);
     }
 
-    private Multimap<ImportField, String> mapRecord(Map<String, String> record) {
-        return Multimaps.forMap(importFields.stream()
-                .filter(field -> record.containsKey(field.getLabel()))
-                .collect(Collectors.toMap(Function.identity(), field -> record.get(field.getLabel()))));
+    private ListMultimap<ImportField, String> mapRecord(Map<String, String> record) {
+        return importFields.stream().map(field -> new FieldValue(field, field.getValue(record)))
+                .filter(pair -> pair.value != null)
+                .collect(toMultimap(pair -> pair.field, pair -> pair.value, MULTIMAP_SUPPLIER));
+    }
+
+    private static class FieldValue {
+        private final ImportField field;
+        private final String value;
+
+        private FieldValue(ImportField field, String value) {
+            this.field = field;
+            this.value = value;
+        }
     }
 }

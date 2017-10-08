@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableListMultimap;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
@@ -51,7 +51,7 @@ public class SingleDetailImportContextTest {
         final Payee payee = new Payee();
         final Account account = new Account();
         when(importFile.getAccount()).thenReturn(account);
-        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME)));
+        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME)));
         ImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(payeeMapper.get(PAYEE_NAME)).thenReturn(payee);
 
@@ -68,7 +68,7 @@ public class SingleDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory();
         when(importFile.parse(inputStream)).thenReturn(singletonList(
-                ImmutableMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "5")));
+                ImmutableListMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "5")));
         ImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
@@ -86,7 +86,7 @@ public class SingleDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory();
         when(importFile.parse(inputStream)).thenReturn(singletonList(
-                ImmutableMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "5")));
+                ImmutableListMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "5")));
         ImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
         when(importFile.isNegate(category)).thenReturn(true);
@@ -104,7 +104,7 @@ public class SingleDetailImportContextTest {
     public void excludesZeroAssetQuantity() throws Exception {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory();
-        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "0.0")));
+        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(amountField, "10", categoryField, CATEGORY_CODE, sharesField, "0.0")));
         ImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
@@ -122,7 +122,7 @@ public class SingleDetailImportContextTest {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final TransactionCategory category = new TransactionCategory();
         final Account transferAccount = new Account();
-        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
+        when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
         when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);

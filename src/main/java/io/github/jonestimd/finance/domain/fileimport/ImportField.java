@@ -25,37 +25,48 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Type;
 
 @Entity
-@Table(name = "import_field", uniqueConstraints = {
-    @UniqueConstraint(name = "import_field_ak", columnNames = {"import_file_id", "label"})
-})
+@Table(name = "import_field")
 @SequenceGenerator(name = "id_generator", sequenceName = "import_field_id_seq")
 public class ImportField {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
     private Long id;
-    @Column(name = "label", insertable = false, updatable = false)
-    private String label;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "import_field_label",
+            joinColumns = @JoinColumn(name = "import_field_id", nullable = false),
+            foreignKey = @javax.persistence.ForeignKey(name = "import_field_label_fk"))
+    @ForeignKey(name = "import_field_label_fk")
+    @Column(name = "label", nullable = false)
+    @OrderColumn(name = "list_index", nullable = false)
+    private List<String> labels;
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private FieldType type;
@@ -72,13 +83,17 @@ public class ImportField {
     private boolean negate;
     @Column(name = "memo", length = 2000)
     private String memo;
+    @Column(name = "ignore_regex", length = 2000)
+    private String ignoreRegex;
+    @Column(name = "accept_regex", length = 2000)
+    private String acceptRegex;
 
     public ImportField() {
         this(null, null);
     }
 
-    public ImportField(String label, PageRegion region) {
-        this.label = label;
+    public ImportField(List<String> labels, PageRegion region) {
+        this.labels = labels;
         this.region = region;
     }
 
@@ -86,12 +101,19 @@ public class ImportField {
         return id;
     }
 
-    public String getLabel() {
-        return label;
+    public List<String> getLabels() {
+        return labels;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setLabels(List<String> labels) {
+        this.labels = labels;
+    }
+
+    /**
+     * Get the alias used to map to a category, security, or payee.
+     */
+    public String getAlias() {
+        return Joiner.on("\n").join(labels);
     }
 
     public FieldType getType() {
@@ -160,6 +182,39 @@ public class ImportField {
         this.memo = memo;
     }
 
+    public String getIgnoredRegex() {
+        return ignoreRegex;
+    }
+
+    public void setIgnoredRegex(String ignoreRegex) {
+        this.ignoreRegex = ignoreRegex;
+    }
+
+    public String getAcceptRegex() {
+        return acceptRegex;
+    }
+
+    public void setAcceptRegex(String acceptRegex) {
+        this.acceptRegex = acceptRegex;
+    }
+
+    public boolean hasLabel(String value) {
+        return labels.stream().anyMatch(value::equalsIgnoreCase);
+    }
+
+    public boolean isMatch(String upperPrefix) {
+        return labels.stream().anyMatch(label -> label.toUpperCase().startsWith(upperPrefix));
+    }
+
+    public String getValue(Map<String, String> record) {
+        String value = Joiner.on('\n').join(labels.stream().map(label -> record.getOrDefault(label, "")).collect(Collectors.toList()));
+        return filterValue(value) ? null : value;
+    }
+
+    private boolean filterValue(String value) {
+        return ignoreRegex != null && value.matches(ignoreRegex) || acceptRegex != null && ! value.matches(acceptRegex);
+    }
+
     public BigDecimal parseAmount(String value) {
         if (Strings.isNullOrEmpty(value)) {
             return BigDecimal.ZERO;
@@ -185,6 +240,6 @@ public class ImportField {
     }
 
     public String toString() {
-        return "{ImportField: id=" + id + ", label=" + label + "}";
+        return "{ImportField: id=" + id + ", labels=" + labels + "}";
     }
 }

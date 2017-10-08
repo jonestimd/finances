@@ -66,11 +66,11 @@ public class TransactionDetailBuilder {
         return this;
     }
 
-    public TransactionDetail get() throws Exception {
+    public TransactionDetail get() {
         return build(id, amount, security, shares);
     }
 
-    private TransactionDetail build(Long detailId, BigDecimal detailAmount, Security security, BigDecimal shares) throws Exception {
+    private TransactionDetail build(Long detailId, BigDecimal detailAmount, Security security, BigDecimal shares) {
         TransactionDetail transactionDetail = TestDomainUtils.create(TransactionDetail.class, detailId);
         transactionDetail.setMemo(memo);
         transactionDetail.setCategory(category);
@@ -81,14 +81,14 @@ public class TransactionDetailBuilder {
         return transactionDetail;
     }
 
-    public TransactionDetail persistedTransfer() throws Exception {
+    public TransactionDetail persistedTransfer() {
         TransactionDetail transactionDetail = get();
         transactionDetail.setRelatedDetail(build(relatedId, amount.negate(), null, null));
         transactionDetail.getRelatedDetail().setTransaction(new TransactionBuilder().nextId().get());
         return transactionDetail;
     }
 
-    public TransactionDetail newTransfer() throws Exception {
+    public TransactionDetail newTransfer() {
         TransactionDetail transactionDetail = get();
         transactionDetail.setRelatedDetail(build(null, amount.negate(), null, null));
         transactionDetail.getRelatedDetail().setTransaction(new TransactionBuilder().get());

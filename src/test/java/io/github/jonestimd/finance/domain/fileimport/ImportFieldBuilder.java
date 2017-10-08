@@ -1,5 +1,7 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
+import java.util.Collections;
+
 public class ImportFieldBuilder {
     private final ImportField field = new ImportField();
 
@@ -9,7 +11,7 @@ public class ImportFieldBuilder {
     }
 
     public ImportFieldBuilder label(String label) {
-        field.setLabel(label);
+        field.setLabels(Collections.singletonList(label));
         return this;
     }
 

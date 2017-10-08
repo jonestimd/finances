@@ -29,9 +29,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
@@ -67,27 +70,27 @@ public abstract class ImportContext {
 
     public List<Transaction> parseTransactions(InputStream source) throws Exception {
         List<Transaction> transactions = new ArrayList<>();
-        Iterable<Multimap<ImportField, String>> records = importFile.parse(source);
-        for (Multimap<ImportField, String> record : records) {
+        Iterable<ListMultimap<ImportField, String>> records = importFile.parse(source);
+        for (ListMultimap<ImportField, String> record : records) {
             updateDetails(getTransaction(record, transactions), record);
         }
         return transactions;
     }
 
-    protected Transaction getTransaction(Multimap<ImportField, String> record, List<Transaction> transactions) {
+    protected Transaction getTransaction(ListMultimap<ImportField, String> record, List<Transaction> transactions) {
         Transaction transaction = new Transaction(importFile.getAccount(), new Date(), importFile.getPayee(), false, null); // TODO override account in UI?
-        record.entries().forEach(entry -> updateTransaction(transaction, entry.getKey(), entry.getValue()));
+        Multimaps.asMap(record).forEach((key, value) -> updateTransaction(transaction, key, value));
         transactions.add(transaction);
         return transaction;
     }
 
-    private void updateTransaction(Transaction transaction, ImportField field, String value) {
+    private void updateTransaction(Transaction transaction, ImportField field, List<String> values) {
         TransactionValueConsumer consumer = TRANSACTION_CONSUMERS.get(field.getType());
-        if (consumer != null) consumer.accept(this, transaction, field, value);
+        if (consumer != null) consumer.accept(this, transaction, field, values);
     }
 
-    private void updateDetails(Transaction transaction, Multimap<ImportField, String> record) {
-        record.entries().stream().sorted(Comparator.comparing(entry -> entry.getKey().getType())).forEachOrdered(entry -> {
+    private void updateDetails(Transaction transaction, ListMultimap<ImportField, String> record) {
+        Multimaps.asMap(record).entrySet().stream().sorted(Comparator.comparing(entry -> entry.getKey().getType())).forEachOrdered(entry -> {
             if (!entry.getKey().getType().isTransaction()) {
                 updateDetail(getDetail(transaction, record), entry.getKey(), entry.getValue());
             }
@@ -97,34 +100,38 @@ public abstract class ImportContext {
 
     protected abstract TransactionDetail getDetail(Transaction transaction, Multimap<ImportField, String> record);
 
-    private void updateDetail(TransactionDetail detail, ImportField field, String value) {
+    private void updateDetail(TransactionDetail detail, ImportField field, List<String> values) {
         DetailValueConsumer consumer = getDetailConsumer(field);
         Preconditions.checkNotNull(consumer, "Invalid field type: %s", field.getType());
-        consumer.accept(detail, field, value);
+        consumer.accept(detail, field, values);
     }
 
     protected DetailValueConsumer getDetailConsumer(ImportField field) {
         return detailConsumers.get(field.getType());
     }
 
-    private void setDate(Transaction transaction, ImportField field, String value) {
-        transaction.setDate(field.parseDate(value));
+    private void setDate(Transaction transaction, ImportField field, List<String> values) {
+        transaction.setDate(field.parseDate(values.get(0)));
     }
 
-    private void setPayee(Transaction transaction, ImportField field, String value) {
-        transaction.setPayee(payeeMapper.get(value));
+    protected String getAlias(List<String> values) {
+        return Joiner.on("\n").join(values);
     }
 
-    private void setSecurity(Transaction transaction, ImportField field, String value) {
-        transaction.setSecurity(securityMapper.get(value));
+    private void setPayee(Transaction transaction, ImportField field, List<String> values) {
+        transaction.setPayee(payeeMapper.get(getAlias(values)));
     }
 
-    protected abstract void setCategory(TransactionDetail detail, ImportField field, String value);
+    private void setSecurity(Transaction transaction, ImportField field, List<String> values) {
+        transaction.setSecurity(securityMapper.get(getAlias(values)));
+    }
 
-    protected abstract void setTransferAccount(TransactionDetail detail, ImportField field, String value);
+    protected abstract void setCategory(TransactionDetail detail, ImportField field, List<String> values);
 
-    private void setAssetQuantity(TransactionDetail detail, ImportField field, String value) {
-        BigDecimal quantity = getAssetQuantity(detail, field, value);
+    protected abstract void setTransferAccount(TransactionDetail detail, ImportField field, List<String> values);
+
+    private void setAssetQuantity(TransactionDetail detail, ImportField field, List<String> values) {
+        BigDecimal quantity = getAssetQuantity(detail, field, values.get(0));
         if (quantity.compareTo(BigDecimal.ZERO) != 0) detail.setAssetQuantity(quantity);
     }
 
@@ -134,10 +141,10 @@ public abstract class ImportContext {
     }
 
     protected interface TransactionValueConsumer {
-        void accept(ImportContext context, Transaction transaction, ImportField field, String value);
+        void accept(ImportContext context, Transaction transaction, ImportField field, List<String> values);
     }
 
     protected interface DetailValueConsumer {
-        void accept(TransactionDetail detail, ImportField field, String value);
+        void accept(TransactionDetail detail, ImportField field, List<String> values);
     }
 }

@@ -50,14 +50,14 @@ public class SheetParser implements FileParser {
         final Map<Integer, String> columnNames = new HashMap<>();
         final int lastRow = sheet.getLastRowNum();
         sheet.getRow(headerRow).forEach(cell -> columnNames.put(cell.getColumnIndex(), formatter.formatCellValue(cell)));
-        for (int index = headerRow + 1; index < lastRow; index++) {
+        for (int index = headerRow + 1; index <= lastRow; index++) {
             rows.add(getRow(sheet, index, columnNames, formatter));
         }
     }
 
     private Map<String, String> getRow(Sheet sheet, int index, Map<Integer, String> columnNames, DataFormatter formatter) {
         Map<String, String> values = new HashMap<>();
-        for (Cell cell : sheet.getRow(index++)) {
+        for (Cell cell : sheet.getRow(index)) {
             String key = columnNames.get(cell.getColumnIndex());
             if (key != null) {
                 if (cell.getCellTypeEnum() == CellType.NUMERIC && !DateUtil.isCellDateFormatted(cell)) values.put(key, String.valueOf(cell.getNumericCellValue()));

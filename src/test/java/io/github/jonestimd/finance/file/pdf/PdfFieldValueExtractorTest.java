@@ -1,9 +1,10 @@
 package io.github.jonestimd.finance.file.pdf;
 
-import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.itextpdf.text.pdf.parser.Vector;
@@ -17,10 +18,7 @@ public class PdfFieldValueExtractorTest {
     private final ImportField dateField = new ImportFieldBuilder().label("Date:").rightEdge(10f).get();
     private final ImportField payeeField = new ImportFieldBuilder().label("The Payee:").rightEdge(20f).get();
     private final ImportField amountField = new ImportFieldBuilder().label("Amount").bounds(20f, 10f, 0f, 5f, 10f, 20f).get();
-    private final Map<String, ImportField> importFields = ImmutableMap.of(
-            dateField.getLabel(), dateField,
-            payeeField.getLabel(), payeeField,
-            amountField.getLabel(), amountField);
+    private final Set<ImportField> importFields = ImmutableSet.of(dateField, payeeField, amountField);
     private final PdfFieldValueExtractor pdfFieldValueExtractor = new PdfFieldValueExtractor(importFields);
     private final Builder<Vector, String> pdfTextBuilder = ImmutableMap.builder();
 
@@ -124,7 +122,7 @@ public class PdfFieldValueExtractorTest {
     }
 
     protected void addPdfText(ImportField field, float y, String text) {
-        String label = field.getLabel().toUpperCase();
+        String label = field.getAlias().toUpperCase();
         float x = field.getRegion().getValueRight() - label.split(" ").length - text.split(" ").length;
         x = addPdfText(label, x, y);
         addPdfText(text, x, y);

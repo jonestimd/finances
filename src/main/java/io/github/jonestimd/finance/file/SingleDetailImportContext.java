@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.file;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.account.Account;
@@ -57,8 +58,8 @@ public class SingleDetailImportContext extends ImportContext {
         return field.getType() == FieldType.AMOUNT ? this::setAmount : super.getDetailConsumer(field);
     }
 
-    private void setAmount(TransactionDetail detail, ImportField field, String value) {
-        detail.setAmount(getAmount(detail, field, value));
+    private void setAmount(TransactionDetail detail, ImportField field, List<String> values) {
+        detail.setAmount(getAmount(detail, field, values.get(0)));
     }
 
     protected BigDecimal getAmount(TransactionDetail detail, ImportField field, String value) {
@@ -67,18 +68,18 @@ public class SingleDetailImportContext extends ImportContext {
     }
 
     @Override
-    protected void setCategory(TransactionDetail detail, ImportField field, String value) {
-        Account account = importFile.getTransferAccount(value);
+    protected void setCategory(TransactionDetail detail, ImportField field, List<String> values) {
+        Account account = importFile.getTransferAccount(getAlias(values));
         if (account != null) {
             detail.setRelatedDetail(new TransactionDetail(account, detail));
         }
         else if (detail.getCategory() == null) {
-            detail.setCategory(categoryMapper.get(value));
+            detail.setCategory(categoryMapper.get(getAlias(values)));
         }
     }
 
     @Override
-    protected void setTransferAccount(TransactionDetail detail, ImportField field, String value) {
-        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(value), detail));
+    protected void setTransferAccount(TransactionDetail detail, ImportField field, List<String> values) {
+        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(getAlias(values)), detail));
     }
 }

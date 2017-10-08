@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import io.github.jonestimd.finance.domain.asset.Security;
@@ -52,11 +53,11 @@ public class GroupedDetailImportContext extends SingleDetailImportContext {
     public GroupedDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper,
             DomainMapper<Security> securityMapper, DomainMapper<TransactionCategory> categoryMapper) {
         super(importFile, payeeMapper, securityMapper, categoryMapper);
-        groupingFields = Streams.filter(importFile.getFields().values(), field -> field.getType().isTransaction());
+        groupingFields = Streams.filter(importFile.getFields(), field -> field.getType().isTransaction());
     }
 
     @Override
-    protected Transaction getTransaction(Multimap<ImportField, String> record, List<Transaction> transactions) {
+    protected Transaction getTransaction(ListMultimap<ImportField, String> record, List<Transaction> transactions) {
         if (currentGroup == null || !isSameGroup(currentGroup, record)) {
             currentGroup = record;
             return super.getTransaction(record, transactions);

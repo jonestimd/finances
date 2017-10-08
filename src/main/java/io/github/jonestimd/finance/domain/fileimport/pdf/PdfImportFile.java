@@ -26,7 +26,7 @@ import java.io.InputStream;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ListMultimap;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
@@ -42,7 +42,7 @@ public class PdfImportFile extends ImportFile {
     }
 
     @Override
-    public Iterable<Multimap<ImportField, String>> parse(InputStream stream) throws Exception {
+    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception {
         return new PdfFieldValueExtractor(getFields()).parse(stream);
     }
 

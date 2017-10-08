@@ -21,6 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file;
 
+import java.util.List;
+
 import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
@@ -41,15 +43,15 @@ public class MultiDetailImportContext extends ImportContext {
     }
 
     @Override
-    protected void setCategory(TransactionDetail detail, ImportField field, String value) {
-        detail.setCategory(categoryMapper.get(field.getLabel()));
-        field.updateDetail(detail, value);
+    protected void setCategory(TransactionDetail detail, ImportField field, List<String> values) {
+        detail.setCategory(categoryMapper.get(field.getAlias()));
+        field.updateDetail(detail, values.get(0));
     }
 
     @Override
-    protected void setTransferAccount(TransactionDetail detail, ImportField field, String value) {
-        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(field.getLabel()), detail));
-        field.updateDetail(detail, value);
+    protected void setTransferAccount(TransactionDetail detail, ImportField field, List<String> values) {
+        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(field.getAlias()), detail));
+        field.updateDetail(detail, values.get(0));
     }
 
     @Override
