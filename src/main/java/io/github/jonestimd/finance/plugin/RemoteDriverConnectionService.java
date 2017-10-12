@@ -72,12 +72,15 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
         return "jdbc:" + urlPrefix + config.getString(HOST.toString()) + ":" + config.getString(PORT.toString()) + "/" + config.getString(SCHEMA.toString());
     }
 
+    protected abstract String getSetupJdbcUrl(String jdbcUrl);
+
     @Override
     protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
         Properties connectionProperties = getConnectionProperties(config);
-        String message = ex.getMessage().toLowerCase();
-        if (needToCreateDatabase(message) && (! needSuperUser(message) || getSuperUser(ex.getMessage(), connectionProperties))) {
-            setupDatabase(config, getJdbcUrl(config), connectionProperties, updateProgress);
+        String message = ex.getMessage();
+        String jdbcUrl = getJdbcUrl(config);
+        if (needToCreateDatabase(message) && (! needSuperUser(message) || getSuperUser(message, jdbcUrl, connectionProperties))) {
+            setupDatabase(config, jdbcUrl, connectionProperties, updateProgress);
             return true;
         }
         return ignoreError(message) || super.handleException(config, updateProgress, ex);
@@ -90,13 +93,32 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
     protected abstract boolean needToCreateDatabase(String message);
     protected abstract boolean needSuperUser(String message);
 
-    private boolean getSuperUser(String message, Properties connectionProperties) {
-        SuperUserDialog dialog = new SuperUserDialog(JOptionPane.getRootFrame(), message);
-        dialog.pack();
-        dialog.setVisible(true);
-        connectionProperties.setProperty(USER.toString(), dialog.getUser());
-        connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
+    protected boolean getSuperUser(String message, String jdbcUrl, Properties connectionProperties) {
+        SuperUserDialog dialog = new SuperUserDialog(JOptionPane.getRootFrame());
+        do {
+            dialog.setMessage(message);
+            dialog.pack();
+            dialog.setVisible(true);
+            connectionProperties.setProperty(USER.toString(), dialog.getUser());
+            connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
+        } while (! dialog.isCancelled() && (message = testConnection(getSetupJdbcUrl(jdbcUrl), connectionProperties)) != null);
         return !dialog.isCancelled();
+    }
+
+    public String testConnection(Config config) {
+        String message = testConnection(getJdbcUrl(config), getConnectionProperties(config));
+        return message == null || ignoreError(message) || needToCreateDatabase(message)|| needSuperUser(message) ? null : message;
+    }
+
+    private String testConnection(String jdbcUrl, Properties connectionProperties) {
+        try {
+            DriverManager.getConnection(jdbcUrl, connectionProperties).close();
+            return null;
+        } catch (Exception ex) {
+            Throwable cause = ex.getCause();
+            if (cause != null && !(cause instanceof SQLException)) return cause.getMessage();
+            return ex.getMessage();
+        }
     }
 
     protected void setupDatabase(Config config, String jdbcUrl, Properties connectionProperties, Consumer<String> updateProgress) throws SQLException {

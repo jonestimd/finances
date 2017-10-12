@@ -79,8 +79,7 @@ public class MysqlDriverConnectionServiceTest {
     private Driver driver;
     @Mock
     private Connection userConnection;
-    @Mock
-    private Connection superConnection;
+    private List<Connection> superConnections = new ArrayList<>();
     @Mock
     private PreparedStatement dbTestStatement;
 
@@ -98,10 +97,14 @@ public class MysqlDriverConnectionServiceTest {
         when(driver.acceptsURL(url)).thenReturn(true);
         when(driver.acceptsURL(superUrl)).thenReturn(true);
         when(driver.connect(eq(url), any(Properties.class))).thenReturn(userConnection);
-        when(driver.connect(eq(superUrl), any(Properties.class))).thenReturn(superConnection);
         when(userConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
-        when(superConnection.createStatement()).thenAnswer(this::addStatement);
-        when(superConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+        when(driver.connect(eq(superUrl), any(Properties.class))).thenAnswer(invocation -> {
+            Connection superConnection = mock(Connection.class);
+            superConnections.add(superConnection);
+            when(superConnection.createStatement()).thenAnswer(this::addStatement);
+            when(superConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+            return superConnection;
+        });
         DriverUtils.setDriver(url, driver);
         robot = BasicRobot.robotWithNewAwtHierarchy();
     }
@@ -196,7 +199,9 @@ public class MysqlDriverConnectionServiceTest {
 
     private void verifyCloseConnections() throws SQLException {
         verify(userConnection).close();
-        verify(superConnection).close();
+        for (Connection connection : superConnections) {
+            verify(connection).close();
+        }
         for (PreparedStatement statement : preparedStatements.values()) {
             verify(statement).close();
         }
@@ -220,7 +225,7 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(preparedStatements).isEmpty();
         assertThat(statements).isEmpty();
         verifyTestDatabaseQuery();
-        verifyZeroInteractions(superConnection);
+        assertThat(superConnections).isEmpty();
         verify(userConnection).close();
     }
 
@@ -231,10 +236,10 @@ public class MysqlDriverConnectionServiceTest {
 
         assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
 
-        verifyPreparedStatement(superConnection, "create user if not exists ?", config.getString(USER.toString()));
+        verifyPreparedStatement(superConnections.get(0), "create user if not exists ?", config.getString(USER.toString()));
         verify(updateProgress).accept("Creating database...");
         verifyTestDatabaseQuery();
-        verify(superConnection).createStatement();
+        verify(superConnections.get(0)).createStatement();
         verifyCreateDatabase(config);
         verifyCloseConnections();
     }
@@ -263,13 +268,14 @@ public class MysqlDriverConnectionServiceTest {
 
     @Test
     public void accessDeniedCreatesUserWithoutPassword() throws Exception {
-        testCreateUserWithoutPassword("access denied for user 'finances'@'%'");
+        testCreateUserWithoutPassword("Access denied for user 'finances'@'%'");
     }
 
     @Test
     public void tableDoesntExistCreatesUserWithoutPassword() throws Exception {
-        testCreateUserWithoutPassword("table finances.company' doesn't exist");
+        testCreateUserWithoutPassword("Table finances.company' doesn't exist");
     }
+
     private void testCreateUserWithoutPassword(String errorMessage) throws Exception {
         Config config = defaultConfig();
         when(dbTestStatement.getMetaData()).thenThrow(new SQLException(errorMessage));
@@ -284,8 +290,11 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(runner.thrownException).isNull();
         verify(updateProgress).accept("Creating database...");
         verifyTestDatabaseQuery();
-        verifyPreparedStatement(superConnection, "create user if not exists ?", config.getString(USER.toString()));
-        verify(superConnection).createStatement();
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(0), never()).createStatement();
+        verifyPreparedStatement(superConnections.get(1), "create user if not exists ?", config.getString(USER.toString()));
+        verify(superConnections.get(1)).createStatement();
         verifyCreateDatabase(config);
         verifyCloseConnections();
     }
@@ -305,9 +314,12 @@ public class MysqlDriverConnectionServiceTest {
         assertThat(runner.thrownException).isNull();
         verify(updateProgress).accept("Creating database...");
         verifyTestDatabaseQuery();
-        verifyPreparedStatement(superConnection, "create user if not exists ? identified by ?",
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(0), never()).createStatement();
+        verifyPreparedStatement(superConnections.get(1), "create user if not exists ? identified by ?",
                 config.getString(USER.toString()), config.getString(PASSWORD.toString()));
-        verify(superConnection).createStatement();
+        verify(superConnections.get(1)).createStatement();
         verifyCreateDatabase(config);
         verifyCloseConnections();
     }
@@ -322,7 +334,7 @@ public class MysqlDriverConnectionServiceTest {
         SuperUserDialog dialog = finder.findByType(SuperUserDialog.class);
         ValidatedTextField userField = finder.findByType(dialog, ValidatedTextField.class);
         Collection<ValidatedPasswordField> passwordFields = finder.findAll(dialog, matcher(ValidatedPasswordField.class));
-        JButton saveButton = finder.find(dialog, buttonMatcher("Save"));
+        JButton saveButton = finder.find(dialog, buttonMatcher("OK"));
         SwingUtilities.invokeAndWait(() -> {
             userField.setText("superuser");
             for (ValidatedPasswordField field : passwordFields) {
@@ -334,7 +346,7 @@ public class MysqlDriverConnectionServiceTest {
 
     private Config defaultConfig() {
         Properties properties = new Properties();
-        service.getDefaultValues().entrySet().forEach(entry -> properties.setProperty(entry.getKey().toString(), entry.getValue()));
+        service.getDefaultValues().forEach((key, value) -> properties.setProperty(key.toString(), value));
         return ConfigFactory.parseProperties(properties);
     }
 

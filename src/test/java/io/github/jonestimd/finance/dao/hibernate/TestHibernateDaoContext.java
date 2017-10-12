@@ -40,6 +40,11 @@ public class TestHibernateDaoContext extends HibernateDaoContext implements Test
         public Map<Field, String> getDefaultValues() {
             return Collections.emptyMap();
         }
+
+        @Override
+        public String testConnection(Config config) {
+            return null;
+        }
     }
 
     private org.hibernate.Transaction transaction;

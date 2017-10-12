@@ -51,8 +51,17 @@ public class ConnectionDialog extends FormDialog {
     }
 
     public Optional<Config> showDialog() {
-        setVisible(true);
+        String message = null;
+        do {
+            configView.setMessage(message);
+            setVisible(true);
+        } while (!isCancelled() && (message = testConnection()) != null);
         return isCancelled() ? Optional.empty() : Optional.of(getConfig());
+    }
+
+    private String testConnection() {
+        Config config = getConfig();
+        return DriverConfigurationService.forConfig(config).getDriverService().testConnection(config);
     }
 
     public Config getConfig() {

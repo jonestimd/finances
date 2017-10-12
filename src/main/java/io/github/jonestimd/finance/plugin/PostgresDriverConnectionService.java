@@ -47,7 +47,7 @@ public class PostgresDriverConnectionService extends RemoteDriverConnectionServi
 
     @Override
     protected boolean ignoreError(String message) {
-        return message.startsWith("error: relation \"company\" does not exist") || super.ignoreError(message);
+        return message.toLowerCase().startsWith("error: relation \"company\" does not exist") || super.ignoreError(message);
     }
 
     @Override
@@ -57,12 +57,13 @@ public class PostgresDriverConnectionService extends RemoteDriverConnectionServi
 
     @Override
     protected boolean needSuperUser(String message) {
-        return message.startsWith("fatal: password authentication failed for user") || message.matches("^fatal: database (.*) does not exist$");
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.startsWith("fatal: password authentication failed for user") || lowerMessage.matches("^fatal: database (.*) does not exist$");
     }
 
     @Override
     protected void setupDatabase(Config config, String jdbcUrl, Properties connectionProperties, Consumer<String> updateProgress) throws SQLException {
-        super.setupDatabase(config, withoutSchema(jdbcUrl), connectionProperties, updateProgress);
+        super.setupDatabase(config, getSetupJdbcUrl(jdbcUrl), connectionProperties, updateProgress);
     }
 
     @Override
@@ -94,7 +95,8 @@ public class PostgresDriverConnectionService extends RemoteDriverConnectionServi
         }
     }
 
-    private String withoutSchema(String jdbcUrl) {
+    @Override
+    protected String getSetupJdbcUrl(String jdbcUrl) {
         return jdbcUrl.substring(0, jdbcUrl.lastIndexOf('/') + 1);
     }
 }

@@ -110,6 +110,13 @@ public abstract class DriverConfigurationService {
     public abstract Map<Field, String> getDefaultValues();
 
     /**
+     * Test the database connection properties.  Should ignore non-connection errors (e.g. invalid user or schema).
+     * @param config configuration containing the connection parameters
+     * @return the error message for a connection failure or null for success
+     */
+    public abstract String testConnection(Config config);
+
+    /**
      * Ensure the database is ready to be used.  For example, create it if it does not exist.
      * @param config the connection configuration
      * @param updateProgress used to provide progress feedback on the UI
@@ -141,7 +148,6 @@ public abstract class DriverConfigurationService {
      * @param updateProgress callback to provide user feedback
      * @param ex the exception from the query to test for the database existance
      * @return true if the database is ready for tables to be created
-     * @throws SQLException
      */
     protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
         throw ex;

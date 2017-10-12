@@ -103,6 +103,11 @@ public class DerbyDriverConnectionServiceTest {
     }
 
     @Test
+    public void testConnection() throws Exception {
+        assertThat(service.testConnection(null)).isNull();
+    }
+
+    @Test
     public void getDefaultValues() throws Exception {
         Map<Field, String> values = service.getDefaultValues();
 

@@ -80,8 +80,7 @@ public class PostgresDriverConnectionServiceTest {
     private Driver driver;
     @Mock
     private Connection userConnection;
-    @Mock
-    private Connection superConnection;
+    private List<Connection> superConnections = new ArrayList<>();
     @Mock
     private PreparedStatement dbTestStatement;
     @Mock
@@ -106,10 +105,14 @@ public class PostgresDriverConnectionServiceTest {
         when(driver.acceptsURL(url)).thenReturn(true);
         when(driver.acceptsURL(superUrl)).thenReturn(true);
         when(driver.connect(eq(url), any(Properties.class))).thenReturn(userConnection);
-        when(driver.connect(eq(superUrl), any(Properties.class))).thenReturn(superConnection);
         when(userConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
-        when(superConnection.createStatement()).thenAnswer(this::addStatement);
-        when(superConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+        when(driver.connect(eq(superUrl), any(Properties.class))).thenAnswer(invocation -> {
+            Connection superConnection = mock(Connection.class);
+            superConnections.add(superConnection);
+            when(superConnection.createStatement()).thenAnswer(this::addStatement);
+            when(superConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
+            return superConnection;
+        });
         DriverUtils.setDriver(url, driver);
         robot = BasicRobot.robotWithNewAwtHierarchy();
     }
@@ -196,7 +199,8 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(preparedStatements).hasSize(3);
         assertThat(statements).isEmpty();
         verifyTestDatabaseQuery();
-        verifyZeroInteractions(superConnection, userStatement, schemaStatement);
+        assertThat(superConnections).isEmpty();
+        verifyZeroInteractions(userStatement, schemaStatement);
         verify(userConnection).close();
     }
 
@@ -215,7 +219,8 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(preparedStatements).hasSize(3);
         assertThat(statements).isEmpty();
         verifyTestDatabaseQuery();
-        verifyZeroInteractions(superConnection, userStatement, schemaStatement);
+        assertThat(superConnections).isEmpty();
+        verifyZeroInteractions(userStatement, schemaStatement);
         verify(userConnection).close();
     }
 
@@ -247,7 +252,10 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(runner.createTables).isTrue();
         verify(updateProgress).accept("Creating database...");
         assertThat(preparedStatements).hasSize(3);
-        verify(superConnection).createStatement();
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).createStatement();
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(1)).createStatement();
         verifyTestDatabaseQuery();
         verifyUserQuery(config);
         verifySchemaQuery(config);
@@ -272,7 +280,10 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(runner.createTables).isTrue();
         verify(updateProgress).accept("Creating database...");
         assertThat(preparedStatements).hasSize(3);
-        verify(superConnection, times(2)).createStatement();
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).createStatement();
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(1), times(2)).createStatement();
         verifyTestDatabaseQuery();
         verifyUserQuery(config);
         verifyCreateUser(config, statements.get(0));
@@ -298,7 +309,10 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(runner.createTables).isTrue();
         verify(updateProgress).accept("Creating database...");
         assertThat(preparedStatements).hasSize(3);
-        verify(superConnection).createStatement();
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).createStatement();
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(1)).createStatement();
         verifyTestDatabaseQuery();
         verifyUserQuery(config);
         verifyCreateUser(config, statements.get(0));
@@ -323,7 +337,10 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(runner.createTables).isTrue();
         verify(updateProgress).accept("Creating database...");
         assertThat(preparedStatements).hasSize(3);
-        verify(superConnection, times(2)).createStatement();
+        assertThat(superConnections).hasSize(2);
+        verify(superConnections.get(0), never()).createStatement();
+        verify(superConnections.get(0), never()).prepareStatement(anyString());
+        verify(superConnections.get(1), times(2)).createStatement();
         verifyTestDatabaseQuery();
         verifyUserQuery(config);
         verifyCreateUser(config, statements.get(0));
@@ -333,13 +350,13 @@ public class PostgresDriverConnectionServiceTest {
     }
 
     private void verifySchemaQuery(Config config) throws SQLException {
-        verify(superConnection).prepareStatement(SCHEMA_TEST_QUERY);
+        verify(superConnections.get(1)).prepareStatement(SCHEMA_TEST_QUERY);
         verify(schemaStatement).setString(1, config.getString(SCHEMA.toString()));
         verify(schemaStatement).close();
     }
 
     private void verifyUserQuery(Config config) throws SQLException {
-        verify(superConnection).prepareStatement(USER_TEST_QUERY);
+        verify(superConnections.get(1)).prepareStatement(USER_TEST_QUERY);
         verify(userStatement).setString(1, config.getString(USER.toString()));
         verify(userStatement).close();
     }
@@ -355,7 +372,9 @@ public class PostgresDriverConnectionServiceTest {
 
     private void verifyCloseConnections() throws SQLException {
         verify(userConnection).close();
-        verify(superConnection).close();
+        for (Connection superConnection : superConnections) {
+            verify(superConnection).close();
+        }
         for (Statement statement : statements) {
             verify(statement).close();
         }
@@ -365,7 +384,7 @@ public class PostgresDriverConnectionServiceTest {
         SuperUserDialog dialog = finder.findByType(SuperUserDialog.class);
         ValidatedTextField userField = finder.findByType(dialog, ValidatedTextField.class);
         Collection<ValidatedPasswordField> passwordFields = finder.findAll(dialog, matcher(ValidatedPasswordField.class));
-        JButton saveButton = finder.find(dialog, buttonMatcher("Save"));
+        JButton saveButton = finder.find(dialog, buttonMatcher("OK"));
         SwingUtilities.invokeAndWait(() -> {
             userField.setText("superuser");
             for (ValidatedPasswordField field : passwordFields) {
@@ -377,7 +396,7 @@ public class PostgresDriverConnectionServiceTest {
 
     private Config defaultConfig() {
         Properties properties = new Properties();
-        service.getDefaultValues().entrySet().forEach(entry -> properties.setProperty(entry.getKey().toString(), entry.getValue()));
+        service.getDefaultValues().forEach((key, value) -> properties.setProperty(key.toString(), value));
         return ConfigFactory.parseProperties(properties);
     }
 

@@ -35,7 +35,7 @@ import io.github.jonestimd.swing.validation.ValidatedTextField;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ResourceKey.*;
-import static io.github.jonestimd.swing.component.ComponentBinder.onChange;
+import static javax.swing.Action.*;
 
 public class SuperUserDialog extends FormDialog {
     private static final String RESOURCE_PREFIX = "database.configuration.";
@@ -43,18 +43,23 @@ public class SuperUserDialog extends FormDialog {
 
     private final ValidatedTextField userField = new ValidatedTextField(new RequiredValidator(LABELS.getString(RESOURCE_PREFIX + "user.required")));
     private final ValidatedPasswordField passwordField = new ValidatedPasswordField(LABELS.getString(RESOURCE_PREFIX + "password.required"));
+    private final JLabel messageField = new JLabel();
 
-    public SuperUserDialog(Window owner, String message) {
+    public SuperUserDialog(Window owner) {
         super(owner, LABELS.getString("dialog.connection.title"), LABELS.get());
-        ValidatedPasswordField confirmField = new ValidatedPasswordField(this::validateConfirmPassword);
+        String saveMnemonicAndName = LABELS.getString(RESOURCE_PREFIX + "action.save.mnemonicAndName");
+        saveAction.putValue(NAME, saveMnemonicAndName.substring(1));
+        saveAction.putValue(MNEMONIC_KEY, (int) saveMnemonicAndName.charAt(0));
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), RESOURCE_PREFIX);
-        builder.append(new JLabel(message));
+        builder.append(messageField);
         builder.unrelatedVerticalGap();
         builder.append(new JLabel(LABELS.getString(RESOURCE_PREFIX + "superuser.message")));
         builder.append(LABEL.key(Field.USER), userField);
         builder.append(LABEL.key(Field.PASSWORD), passwordField);
-        builder.append(LABEL.key("confirmPassword"), confirmField);
-        onChange(passwordField, confirmField::validateValue);
+    }
+
+    public void setMessage(String message) {
+        messageField.setText(message);
     }
 
     public String getUser() {

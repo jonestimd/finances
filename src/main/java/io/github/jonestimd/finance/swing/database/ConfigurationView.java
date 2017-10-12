@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import javax.swing.Action;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.text.JTextComponent;
 
@@ -67,6 +68,7 @@ public class ConfigurationView {
 
     private Map<Field, String> model;
 
+    private final JLabel messageField = new JLabel();
     private final BeanListComboBox<DriverConfigurationService> driverComboBox;
     private final FileSuggestField directoryField;
     private final ValidatedTextField hostField;
@@ -100,6 +102,7 @@ public class ConfigurationView {
         driverComboBox.setSelectedIndex(0);
 
         GridBagBuilder builder = new GridBagBuilder(panel, LABELS.get(), RESOURCE_PREFIX);
+        builder.insets(0, 0, 10, 0).append(messageField);
         builder.append(LABEL.key(DRIVER), driverComboBox);
         builder.append(LABEL.key(DIRECTORY), directoryField).addItemListener(this::selectDirectory);
         builder.append(LABEL.key(HOST), bind(hostField, setParameter(HOST)));
@@ -112,6 +115,10 @@ public class ConfigurationView {
         setModel(new HashMap<>());
 
         this.defaultsAction = MnemonicAction.forListener(this::setDefaults, LABELS.get(), RESOURCE_PREFIX + "action.defaults");
+    }
+
+    public void setMessage(String message) {
+        messageField.setText(message == null ? "" : message);
     }
 
     private void setDefaults(ActionEvent event) {

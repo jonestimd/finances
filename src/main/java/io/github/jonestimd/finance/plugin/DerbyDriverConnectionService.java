@@ -72,6 +72,11 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     }
 
     @Override
+    public String testConnection(Config config) {
+        return null;
+    }
+
+    @Override
     public boolean prepareDatabase(Config config, Consumer<String> updateProgress) throws Exception {
         Class.forName(driverClassName);
         File dbDirectory = new File(config.getString(Field.DIRECTORY.toString()));

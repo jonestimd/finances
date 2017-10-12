@@ -47,17 +47,18 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
 
     @Override
     protected boolean needToCreateDatabase(String message) {
-        return message.startsWith("unknown database") || needSuperUser(message);
+        return message.toLowerCase().startsWith("unknown database") || needSuperUser(message);
     }
 
     @Override
     protected boolean needSuperUser(String message) {
-        return message.startsWith("access denied") || message.endsWith(".company' doesn't exist");
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.startsWith("access denied") || lowerMessage.endsWith(".company' doesn't exist");
     }
 
     @Override
     protected void setupDatabase(Config config, String jdbcUrl, Properties connectionProperties, Consumer<String> updateProgress) throws SQLException {
-        super.setupDatabase(config, withoutSchema(jdbcUrl), connectionProperties, updateProgress);
+        super.setupDatabase(config, getSetupJdbcUrl(jdbcUrl), connectionProperties, updateProgress);
     }
 
     @Override
@@ -82,7 +83,8 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
         }
     }
 
-    private String withoutSchema(String jdbcUrl) {
+    @Override
+    protected String getSetupJdbcUrl(String jdbcUrl) {
         return jdbcUrl.substring(0, jdbcUrl.lastIndexOf('/'));
     }
 }

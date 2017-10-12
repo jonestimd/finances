@@ -274,7 +274,7 @@ public class ConfigurationViewTest {
     }
 
     private Component find(JPanel panel, String label) {
-        for (int i = 0; i < panel.getComponentCount(); i+=2) {
+        for (int i = 1; i < panel.getComponentCount(); i+=2) {
             if (((JLabel) panel.getComponent(i)).getText().equals(label)) {
                 return panel.getComponent(i+1);
             }

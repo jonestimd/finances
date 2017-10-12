@@ -170,5 +170,10 @@ public class DriverConfigurationServiceTest {
         protected String getJdbcUrl(Config config) {
             return url;
         }
+
+        @Override
+        public String testConnection(Config config) {
+            return null;
+        }
     }
 }
