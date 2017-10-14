@@ -1,0 +1,21 @@
+[Desktop Entry]
+Comment[en_US]=
+Comment=
+Categories=Application;Office;
+Exec=java -jar /opt/finances/finances-${version}.jar
+GenericName[en_US]=
+GenericName=
+Icon=/opt/finances/finances.png
+MimeType=
+Name[en_US]=Finances
+Name=Finances
+NoDisplay=false
+Path=
+StartupNotify=false
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=none
+X-KDE-SubstituteUID=false
+X-KDE-Username=

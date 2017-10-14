@@ -100,6 +100,10 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
     includeEmptyDirs = false
     compression = Compression.BZIP2
     into 'finances'
+    from 'package/icons'
+    from('package/linux') {
+        expand(['version': project.properties.version])
+    }
     from project.libsDir
     from childRuntime('stockquote-plugin'), {
         into 'plugins'
