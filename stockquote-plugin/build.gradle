@@ -18,7 +18,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Implementation-Title': 'tdj-finances', 'Implementation-Version': version
+        attributes 'Implementation-Title': 'tdj-finances stockquote-plugin', 'Implementation-Version': version
     }
     destinationDir = file( "$rootProject.libsDir/plugins" )
 }
