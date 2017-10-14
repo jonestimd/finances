@@ -58,6 +58,7 @@ public class EnumUserType implements UserType, ParameterizedType {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object nullSafeGet(ResultSet rs, String[] names, SessionImplementor session, Object owner) throws HibernateException, SQLException {
         String value = rs.getString(names[0]);
         if (value != null && Character.isDigit(value.charAt(0))) {
