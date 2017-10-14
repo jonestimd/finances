@@ -72,18 +72,9 @@ jar {
         attributes 'Implementation-Title': 'tdj-finances',
                 'Implementation-Version': version,
                 'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
-                'Class-Path': configurations.runtime.files.collect { it.name }.join(' ')
+                'Class-Path': configurations.runtime.files.collect { 'libs/' + it.name }.join(' ')
     }
     doLast {
-        ant.jar(destfile: archivePath, basedir: sourceSets.main.output.classesDir) {
-            delegate.manifest {
-                attribute(name: 'Implementation-Title', value: 'tdj-finances')
-                attribute(name: 'Implementation-Version', value: version)
-                attribute(name: 'Main-class', value: 'io.github.jonestimd.finance.ApplicationLauncher')
-                attribute(name: 'Class-Path', value: configurations.runtime.files.collect { it.name }.join(' '))
-            }
-        }
-        ant.jar(destfile: archivePath, basedir: sourceSets.main.output.resourcesDir, update: true)
         ant.chmod(file: archivePath, perm: 'a+x')
     }
 }
@@ -110,9 +101,11 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
     compression = Compression.BZIP2
     into 'finances'
     from project.libsDir
-    from configurations.runtime.files
     from childRuntime('stockquote-plugin'), {
         into 'plugins'
+    }
+    from configurations.runtime.files, {
+        into 'libs'
     }
 }
 
