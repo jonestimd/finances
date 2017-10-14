@@ -78,6 +78,15 @@ public class DerbyDriverConnectionServiceTest {
     }
 
     @Test
+    public void disablesDefaultLogFile() throws Exception {
+        String logField = System.getProperty("derby.stream.error.field");
+        Class<?> clazz = Class.forName(logField.replaceFirst("\\.[^.]+$", ""));
+        java.lang.reflect.Field field = clazz.getField(logField.replaceFirst("^.*\\.", ""));
+
+        assertThat(field.get(null)).isEqualTo(DerbyDriverConnectionService.LOG_STREAM);
+    }
+
+    @Test
     public void getName() throws Exception {
         assertThat(service.getName()).isEqualTo("Derby");
     }

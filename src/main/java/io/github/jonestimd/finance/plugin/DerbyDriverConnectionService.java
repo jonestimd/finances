@@ -22,6 +22,8 @@
 package io.github.jonestimd.finance.plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -42,9 +44,14 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     private static final List<String> POST_CREATE_SCHEMA_SCRIPT = unmodifiableList(Arrays.asList(
             "drop index related_detail_uk",
             "alter table tx_detail add constraint related_detail_uk unique (related_detail_id)"));
+    public static final OutputStream LOG_STREAM = new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {}
+    };
 
     public DerbyDriverConnectionService() {
         super("Derby", "org.hibernate.dialect.DerbyTenSevenDialect", "org.apache.derby.jdbc.EmbeddedDriver", "derby:directory:");
+        System.setProperty("derby.stream.error.field", getClass().getName() + ".LOG_STREAM");
     }
 
     @Override
