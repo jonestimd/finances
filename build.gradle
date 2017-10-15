@@ -72,7 +72,9 @@ jar {
         attributes 'Implementation-Title': 'tdj-finances',
                 'Implementation-Version': version,
                 'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
-                'Class-Path': configurations.runtime.files.collect { 'libs/' + it.name }.join(' ')
+                'Class-Path': configurations.runtime.files.findAll {
+                    ! it.name.matches("(mysql-connector-java|postgresql|derby)-.*\\.jar")
+                }.collect { 'libs/' + it.name }.join(' ')
     }
     doLast {
         ant.chmod(file: archivePath, perm: 'a+x')
@@ -110,6 +112,11 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
     }
     from configurations.runtime.files, {
         into 'libs'
+        exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+    from configurations.runtime.files, {
+        into 'drivers'
+        include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
     }
 }
 

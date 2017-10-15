@@ -98,7 +98,10 @@ public class FinanceApplication {
         if (driverOption.isPresent()) {
             BackgroundTask.task(() -> startContext(driverOption.get()), this::showFrame, this::showError).run();
         }
-        else System.exit(1);
+        else {
+            System.err.println("No database driver");
+            System.exit(1);
+        }
     }
 
     private Void startContext(DriverService driver) {

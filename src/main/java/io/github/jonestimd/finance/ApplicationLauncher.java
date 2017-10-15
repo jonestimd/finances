@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,6 +69,7 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public class ApplicationLauncher {
+    private final List<URL> classpathUrls = new LinkedList<>();
     private final List<URL> pluginUrls = new LinkedList<>();
     private final Properties config = new Properties();
 
@@ -86,10 +89,14 @@ public class ApplicationLauncher {
     public ApplicationLauncher() throws URISyntaxException, IOException {
         if (! System.getProperties().containsKey("install.dir")) System.setProperty("install.dir", getInstallDirectory());
         config.load(getClass().getResourceAsStream("/launcher.properties"));
-        String extensions = config.getProperty("classpath.append");
-        if (extensions != null) {
-            for (String dir : extensions.split("\n")) {
-                addDirectory(resolvePlaceholders(dir));
+        gatherFiles(config.getProperty("classpath.append"), classpathUrls::add);
+        gatherFiles(config.getProperty("extension.classpath"), pluginUrls::add);
+    }
+
+    private void gatherFiles(String paths, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
+        if (paths != null) {
+            for (String dir: paths.split("\n")) {
+                addDirectory(resolvePlaceholders(dir), consumer);
             }
         }
     }
@@ -99,17 +106,17 @@ public class ApplicationLauncher {
         return source.isFile() ? source.getParent() : source.getPath();
     }
 
-    private void addDirectory(String path) throws URISyntaxException, MalformedURLException {
+    private void addDirectory(String path, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
         if (path.endsWith("/*")) {
-            addPaths(new File(path.substring(0, path.length() - 2)));
+            addPaths(new File(path.substring(0, path.length() - 2)), consumer);
         }
         else {
-            pluginUrls.add(new File(path).toURI().toURL());
+            consumer.accept(new File(path).toURI().toURL());
         }
     }
 
     private String resolvePlaceholders(String path) {
-        Pattern pattern = Pattern.compile("(\\$\\{[^}]+\\})");
+        Pattern pattern = Pattern.compile("(\\$\\{[^}]+})");
         StringBuffer buffer = new StringBuffer();
         Matcher matcher = pattern.matcher(path);
         while (matcher.find()) {
@@ -125,12 +132,12 @@ public class ApplicationLauncher {
         return value != null ? value : resolvePlaceholders(config.getProperty(property));
     }
 
-    private void addPaths(File parent) {
+    private void addPaths(File parent, Consumer<URL> consumer) {
         if (parent.exists() && parent.isDirectory()) {
             for (File file : parent.listFiles()) {
                 if (file.isDirectory() || file.getName().toLowerCase().endsWith(".jar")) {
                     try {
-                        pluginUrls.add(file.toURI().toURL());
+                        consumer.accept(file.toURI().toURL());
                     } catch (MalformedURLException e) {
                         System.err.println("ignoring classpath file: " + file.toString());
                     }
@@ -140,6 +147,7 @@ public class ApplicationLauncher {
     }
 
     private void launch(String[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
+        appendClasspath();
         URLClassLoader classLoader = createClassLoader();
         Thread.currentThread().setContextClassLoader(classLoader);
         String selector = "default";
@@ -154,6 +162,21 @@ public class ApplicationLauncher {
         }
         else {
             System.err.println("Invalid option for --run: " + selector);
+        }
+    }
+
+    private void appendClasspath() throws NoSuchMethodException {
+        if (!classpathUrls.isEmpty()) {
+            ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+            Method appendClassPath = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            appendClassPath.setAccessible(true);
+            classpathUrls.forEach(url -> {
+                try {
+                    appendClassPath.invoke(systemClassLoader, url);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 
