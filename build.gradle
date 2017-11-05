@@ -1,6 +1,17 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.5.1'
+    }
+}
+
 apply plugin: 'java'
+apply plugin: 'nebula.deb'
 
 compileJava.sourceCompatibility = 1.8
 
@@ -117,6 +128,37 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
     from configurations.runtime.files, {
         into 'drivers'
         include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+}
+
+task financesDeb(type: Deb, dependsOn: [dist]) {
+    release '1'
+    url 'https://github.com/jonestimd/finances'
+    maintainer 'jonestimd@users.noreply.github.com'
+    summary 'Java application for tracking personal finances in a SQL database.'
+    license 'MIT'
+
+    suggests('oracle-java8-installer').or('openjdk-8-jre').or('openjdk-8-jdk')
+    suggests('postgresql').or('mysql-server')
+
+    user 'root'
+    permissionGroup 'root'
+    fileMode 0644
+
+    into('/opt/finances')
+
+    from(project.libsDir, 'package/icons')
+    from configurations.runtime.files, {
+        into 'libs'
+        exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+    from configurations.runtime.files, {
+        into 'drivers'
+        include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+    from('package/linux') {
+        into('/usr/share/applications')
+        expand(['version': project.properties.version])
     }
 }
 
