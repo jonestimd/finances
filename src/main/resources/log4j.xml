@@ -6,6 +6,14 @@
             <param value="%-4r [%t] %-5p %c %x - %m%n" name="ConversionPattern"/>
         </layout>
     </appender>
+    <appender name="File" class="org.apache.log4j.RollingFileAppender">
+        <param name="File" value="${user.home}/.finances/finances.log"/>
+        <param name="Append" value="true"/>
+        <param name="MaxBackupIndex" value="5"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param value="%-4r [%t] %-5p %c %x - %m%n" name="ConversionPattern"/>
+        </layout>
+    </appender>
     <appender class="org.apache.log4j.FileAppender" name="download">
         <param value="/home/tim/.finances/download.log" name="file"/>
         <layout class="org.apache.log4j.PatternLayout">
