@@ -26,9 +26,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Optional;
-import java.util.Properties;
+import java.nio.file.Path;
+import java.nio.file.attribute.*;
+import java.util.*;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -79,12 +79,35 @@ public class ConnectionConfig {
             throw new RuntimeException(ex);
         }
         if (configFile.exists() && isPrivate) {
+            Path configPath = configFile.toPath();
             try {
-                Files.setPosixFilePermissions(configFile.toPath(), PosixFilePermissions.fromString("rw-------"));
+                Files.setPosixFilePermissions(configPath, PosixFilePermissions.fromString("rw-------"));
+            } catch (UnsupportedOperationException ex) {
+                setWindowsPermissions(configPath);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
+    }
+
+    private void setWindowsPermissions(Path path) {
+        try {
+            AclFileAttributeView aclAttr = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            UserPrincipalLookupService lookupService = path.getFileSystem().getUserPrincipalLookupService();
+            aclAttr.setAcl(Arrays.asList(
+                    getAclEntry(lookupService.lookupPrincipalByName("SYSTEM"), Collections.emptySet()),
+                    getAclEntry(lookupService.lookupPrincipalByName(System.getProperty("user.name")), EnumSet.allOf(AclEntryPermission.class))
+            ));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private AclEntry getAclEntry(UserPrincipal user, Set<AclEntryPermission> permissions) throws IOException {
+        return AclEntry.newBuilder().setPermissions(permissions)
+                .setPrincipal(user)
+                .setType(AclEntryType.ALLOW)
+                .build();
     }
 
     public DriverService loadDriver() {
