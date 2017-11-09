@@ -26,6 +26,7 @@ allprojects { // TODO add plugin-api module and test-common module
     }
 }
 
+def mainClass = 'io.github.jonestimd.finance.ApplicationLauncher'
 def hibernateVersion = "4.3.7.Final"
 
 evaluationDependsOnChildren()
@@ -82,8 +83,8 @@ jar {
     manifest {
         attributes 'Implementation-Title': 'tdj-finances',
                 'Implementation-Version': version,
-                'Main-Class': 'io.github.jonestimd.finance.ApplicationLauncher',
-                'Class-Path': configurations.runtime.files.findAll {
+                'Main-Class': mainClass,
+                'Class-Path': 'classes ' + configurations.runtime.files.findAll {
                     ! it.name.matches("(mysql-connector-java|postgresql|derby)-.*\\.jar")
                 }.collect { 'libs/' + it.name }.join(' ')
     }
@@ -129,6 +130,37 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
         into 'drivers'
         include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
     }
+}
+
+task prepareMsi(overwrite: true, type: Copy, dependsOn: [jar, ':stockquote-plugin:jar']) {
+    // TODO handle update/reinstall
+    includeEmptyDirs = false
+    destinationDir project.buildDir
+    from configurations.runtime.files, {
+        into 'tmp/libs'
+        exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+    from configurations.runtime.files, {
+        into 'tmp/drivers'
+        include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
+    }
+    from project.rootDir, {
+        into 'tmp'
+        include 'LICENSE'
+        rename { it + '.txt' }
+    }
+}
+
+task windowsMsi(type: Exec, dependsOn: 'prepareMsi') {
+    workingDir project.rootDir
+    commandLine 'javapackager', '-deploy', '-verbose', '-native', 'msi', '-name', 'Finances',
+            '-outdir', 'build\\distributions', '-outfile', 'finances',
+            '-srcdir', 'build\\tmp', '-srcfiles', 'LICENSE.txt;libs;drivers',
+            '-srcdir', 'build\\libs', '-srcfiles', "finances-${project.version}.jar;plugins",
+            '-appclass', mainClass, '-Bidentifier=0ab6d075-c33e-45de-9218-b73b14cb0605',
+            '-BinstalldirChooser=true', '-BlicenseFile=LICENSE.txt',
+            '-Bvendor=jonestimd', "-BappVersion=${project.version.replace("-SNAPSHOT", "")}",
+            '-Bicon=finances.ico', '-Bwin.menuGroup=Finances'
 }
 
 task financesDeb(type: Deb, dependsOn: [dist]) {
