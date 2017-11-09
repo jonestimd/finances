@@ -21,15 +21,15 @@
 // SOFTWARE.
 package io.github.jonestimd.finance;
 
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,6 +72,7 @@ public class ApplicationLauncher {
     private final List<URL> classpathUrls = new LinkedList<>();
     private final List<URL> pluginUrls = new LinkedList<>();
     private final Properties config = new Properties();
+    private final Logger logger = Logger.getLogger(getClass());
 
     public static void main(String[] args) {
         try (final InputStream is = ApplicationLauncher.class.getResourceAsStream("/java-logging.properties")) {
@@ -89,6 +90,8 @@ public class ApplicationLauncher {
     public ApplicationLauncher() throws URISyntaxException, IOException {
         if (! System.getProperties().containsKey("install.dir")) System.setProperty("install.dir", getInstallDirectory());
         config.load(getClass().getResourceAsStream("/launcher.properties"));
+        logger.debug("install dir: " + System.getProperty("install.dir"));
+        logger.debug("user home: " + System.getProperty("user.home"));
         gatherFiles(config.getProperty("classpath.append"), classpathUrls::add);
         gatherFiles(config.getProperty("extension.classpath"), pluginUrls::add);
     }
@@ -101,12 +104,14 @@ public class ApplicationLauncher {
         }
     }
 
-    private String getInstallDirectory() throws URISyntaxException {
-        File source = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+    private String getInstallDirectory() throws URISyntaxException, UnsupportedEncodingException {
+        String path = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+        File source = new File(URLDecoder.decode(path, "UTF-8"));
         return source.isFile() ? source.getParent() : source.getPath();
     }
 
     private void addDirectory(String path, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
+        logger.debug("adding file(s) " + path);
         if (path.endsWith("/*")) {
             addPaths(new File(path.substring(0, path.length() - 2)), consumer);
         }
@@ -129,7 +134,11 @@ public class ApplicationLauncher {
     private String getValue(String placeholder) {
         String property = placeholder.substring(2, placeholder.length()-1);
         String value = System.getProperty(property);
-        return value != null ? value : resolvePlaceholders(config.getProperty(property));
+        return value != null ? escapePath(value) : resolvePlaceholders(config.getProperty(property));
+    }
+
+    private String escapePath(String replacement) {
+        return replacement.replaceAll("\\\\", "/").replaceAll("\\$", "\\\\\\$");
     }
 
     private void addPaths(File parent, Consumer<URL> consumer) {
@@ -166,6 +175,7 @@ public class ApplicationLauncher {
     }
 
     private void appendClasspath() throws NoSuchMethodException {
+        logger.debug("classpath files: " + classpathUrls);
         if (!classpathUrls.isEmpty()) {
             ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
             Method appendClassPath = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
@@ -181,6 +191,7 @@ public class ApplicationLauncher {
     }
 
     private URLClassLoader createClassLoader() {
+        logger.debug("plugin files: " + pluginUrls);
         return new URLClassLoader(pluginUrls.toArray(new URL[pluginUrls.size()]), getClass().getClassLoader());
     }
 }

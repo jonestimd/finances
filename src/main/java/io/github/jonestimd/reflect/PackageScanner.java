@@ -24,6 +24,7 @@ package io.github.jonestimd.reflect;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -55,10 +56,11 @@ public class PackageScanner {
                 Enumeration<URL> resources = classLoader.getResources(filePrefix);
                 while (resources.hasMoreElements()) {
                     URL resource = resources.nextElement();
+                    String filePath = URLDecoder.decode(resource.getFile(), "UTF-8");
                     if ("jar".equals(resource.getProtocol())) {
-                        visitJarClasses(filePrefix, resource);
+                        visitJarClasses(filePrefix, filePath);
                     } else if ("file".equals(resource.getProtocol())) {
-                        visitFileClasses(filePrefix, resource);
+                        visitFileClasses(filePrefix, filePath);
                     }
                 }
             }
@@ -67,16 +69,16 @@ public class PackageScanner {
         }
     }
 
-    private void visitJarClasses(String filePrefix, URL resource) throws IOException {
-        JarFile jar = new JarFile(new URL(resource.getFile().substring(0, resource.getFile().indexOf('!'))).getFile());
+    private void visitJarClasses(String filePrefix, String filePath) throws IOException {
+        JarFile jar = new JarFile(new URL(filePath.substring(0, filePath.indexOf('!'))).getFile());
         Enumeration<JarEntry> entries = jar.entries();
         while (entries.hasMoreElements()) {
             visitClass(filePrefix, entries.nextElement().getName());
         }
     }
 
-    private void visitFileClasses(String filePrefix, URL resource) throws IOException {
-        visitFileClasses(filePrefix, new File(resource.getFile()));
+    private void visitFileClasses(String filePrefix, String filePath) throws IOException {
+        visitFileClasses(filePrefix, new File(filePath));
     }
 
     private void visitFileClasses(String filePrefix, File directory) {
