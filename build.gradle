@@ -110,18 +110,7 @@ def childRuntime(String name) {
             .findAll { ! configurations.archives.artifacts.collect{ it.file }.contains(it) }
 }
 
-task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']) {
-    includeEmptyDirs = false
-    compression = Compression.BZIP2
-    into 'finances'
-    from 'package/icons'
-    from('package/linux') {
-        expand(['version': project.properties.version])
-    }
-    from project.libsDir
-    from childRuntime('stockquote-plugin'), {
-        into 'plugins'
-    }
+def dependencyJars = copySpec {
     from configurations.runtime.files, {
         into 'libs'
         exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
@@ -131,27 +120,41 @@ task dist(overwrite: true, type: Tar, dependsOn: [jar, ':stockquote-plugin:jar']
         include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
     }
 }
-
-task prepareMsi(overwrite: true, type: Copy, dependsOn: [jar, ':stockquote-plugin:jar']) {
-    // TODO handle update/reinstall
-    includeEmptyDirs = false
-    destinationDir project.buildDir
-    from configurations.runtime.files, {
-        into 'tmp/libs'
-        exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
-    }
-    from configurations.runtime.files, {
-        into 'tmp/drivers'
-        include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
-    }
+def licenseFile = copySpec {
     from project.rootDir, {
-        into 'tmp'
         include 'LICENSE'
         rename { it + '.txt' }
     }
 }
 
-task windowsMsi(type: Exec, dependsOn: 'prepareMsi') {
+task distZip(overwrite: true, type: Zip, dependsOn: [jar, ':stockquote-plugin:jar']) {
+    includeEmptyDirs = false
+    into 'finances'
+    from(['package/linux', 'package/windows']) {
+        exclude 'finances'
+        filesMatching('Finances.desktop') {
+            expand(['version': project.properties.version])
+        }
+    }
+    from project.libsDir
+    from childRuntime('stockquote-plugin'), {
+        into 'plugins'
+    }
+
+    with licenseFile
+    with dependencyJars
+}
+
+task prepareMsi(overwrite: true, type: Copy, dependsOn: [jar, ':stockquote-plugin:jar']) {
+    // TODO handle update/reinstall
+    includeEmptyDirs = false
+    destinationDir = file("${project.buildDir}/tmp")
+
+    with licenseFile
+    with dependencyJars
+}
+
+task distMsi(type: Exec, dependsOn: 'prepareMsi') {
     workingDir project.rootDir
     commandLine 'javapackager', '-deploy', '-verbose', '-native', 'msi', '-name', 'Finances',
             '-outdir', 'build\\distributions', '-outfile', 'finances',
@@ -163,7 +166,7 @@ task windowsMsi(type: Exec, dependsOn: 'prepareMsi') {
             '-Bicon=finances.ico', '-Bwin.menuGroup=Finances'
 }
 
-task financesDeb(type: Deb, dependsOn: [dist]) {
+task distDeb(type: Deb, dependsOn: [jar, ':stockquote-plugin:jar']) {
     release '1'
     url 'https://github.com/jonestimd/finances'
     maintainer 'jonestimd@users.noreply.github.com'
@@ -179,19 +182,24 @@ task financesDeb(type: Deb, dependsOn: [dist]) {
 
     into('/opt/finances')
 
-    from(project.libsDir, 'package/icons')
-    from configurations.runtime.files, {
-        into 'libs'
-        exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
-    }
-    from configurations.runtime.files, {
-        into 'drivers'
-        include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
-    }
+    from(project.libsDir)
     from('package/linux') {
-        into('/usr/share/applications')
-        expand(['version': project.properties.version])
+        filesMatching('Finances.desktop') {
+            into('/usr/share/applications')
+            expand(['version': project.properties.version])
+        }
+        filesMatching('finances') {
+            into('/usr/bin')
+            expand(['version': project.properties.version])
+            fileMode 0755
+        }
+        filesMatching('*.png') {
+            into('/opt/finances')
+        }
     }
+
+    with licenseFile
+    with dependencyJars
 }
 
 //task javaHome {
