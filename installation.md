@@ -9,10 +9,12 @@ instructions are in the following sections.
 
 * Linux: [finances_1.0-1_all.deb](https://github.com/jonestimd/finances/releases/download/v1.0/finances_1.0-1_all.deb)
 * Windows: [finances-1.0.msi](https://github.com/jonestimd/finances/releases/download/v1.0/finances-1.0.msi)
+  (includes Oracle JRE)
 * Manual install: [finances-1.0.zip](https://github.com/jonestimd/finances/releases/download/v1.0/finances-1.0.zip)
 
 ## Linux
-The following command can be used to install the `.deb` file.
+The following command can be used to install the `.deb` file.  A Java 8 JRE
+must be installed separately.
 
 ```sh
 sudo dpkg -i finances_1.0-1_all.deb
@@ -30,11 +32,13 @@ sudo ln -s /opt/finances/Finances.desktop .
 
 ## Windows
 To install using the `.msi` file, double click on it in File Manager and
-complete the setup wizard.
+complete the setup wizard.  The `.msi` file includes a private JRE.
+If you want to use a shared JRE you can install using the `.zip` file.
 
-Or, use the following steps to install using the `.zip` files.
+Use the following steps to install using the `.zip` files.
 * Extract the file to the desired location (e.g. `C:\Program Files`)
-* Add a shortcut to the `Start` menu with the following target
+* Add a shortcut to the `Start` menu using the included `finances.ico`
+  file as the icon and with the following target
   <pre class="highlight">
   java -jar "<em>&lt;install dir&gt;</em>\finances\finances-1.0.jar"
   </pre>
