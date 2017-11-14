@@ -1,7 +1,10 @@
 # Finances
+[Home page](https://jonestimd.github.io/finances)
+
 An application for tracking personal finances using a SQL database.
 
 Requires [Java 8](https://java.com/en/download/).
+
 
 ## Database Support
 
