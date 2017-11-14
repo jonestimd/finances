@@ -20,25 +20,9 @@
       <p>{{ site.description | default: site.github.project_tagline }}</p>
     </div>
 
-    <!--<ul>-->
-      <!--{% if site.show_downloads %}-->
-      <!--<li class="download"><a class="buttons" href="{{ site.github.zip_url }}">Download ZIP</a></li>-->
-      <!--<li class="download"><a class="buttons" href="{{ site.github.tar_url }}">Download TAR</a></li>-->
-      <!--{% endif %}-->
     <div class="downloads">
       <span><a class="buttons github" href="{{ site.github.repository_url }}">View On GitHub</a></span>
     </div>
-    <!--</ul>-->
-
-    <!--{% if site.github.is_project_page %}-->
-    <!--<p class="header">This project is maintained by <a class="header name" href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>-->
-    <!--{% endif %}-->
-
-    <!--{% if site.github.is_user_page %}-->
-    <!--<ul>-->
-      <!--<li><a class="buttons github" href="{{ site.github.owner_url }}">GitHub Profile</a></li>-->
-    <!--</ul>-->
-    <!--{% endif %}-->
   </header>
 
   <div class="wrapper">
@@ -47,7 +31,7 @@
       <ul>
         {% for page in site.pages %}
         {% if page.title %}
-        <li><a href="{{page.url}}">{{page.title}}</a></li>
+        <li><a href="{{page.url | relative_url}}">{{page.title}}</a></li>
         {% endif %}
         {% endfor %}
       </ul>
