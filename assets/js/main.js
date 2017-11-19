@@ -19,7 +19,6 @@
     };
 
     global.scaleImages = function(doc, baseurl) {
-        baseurl = baseurl || '';
         const overlay = doc.getElementById('image-overlay');
         overlay.onclick = () => overlay.classList.add('hidden');
         for (let i=0; i<doc.images.length; i++) {
