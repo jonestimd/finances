@@ -41,7 +41,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 p, ul, ol, table, dl {
-  margin:0 0 22px;
+  margin:0 0 15px;
 }
 
 h1, h2, h3 {
@@ -140,25 +140,59 @@ hr {
 
 /* Images */
 
-img {
-  position: relative;
-  margin: 0 auto;
-  max-width: 650px;
-  padding: 5px;
-  margin: 10px 0 32px 0;
-  border: 1px solid #ccc;
+section {
+  > h1, h2, h3 {
+    clear: both;
+  }
+}
+
+div#image-overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background-color: #80808080;
+
+    img.close-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      border: solid #aaa 2px;
+      border-radius: 50%;
+      background-color: black;
+    }
+
+    img.center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    &.hidden {
+      display: none;
+    }
 }
 
 p img {
-  display: inline;
-  margin: 0;
+  float: right;
+  clear: right;
+  margin: 0 0 10px 10px;
   padding: 0;
-  vertical-align: middle;
-  text-align: center;
   border: none;
+  cursor: zoom-in;
 }
 
 /* Code blocks */
+
+code.highlighter-rouge {
+  background-color: #ffe;
+  padding: 1px 3px;
+  border: solid 1px #ddd;
+  border-radius: 2px;
+}
 
 code, pre {
   font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
@@ -200,17 +234,31 @@ td {
   background: #ccc;
 }
 
-
 .wrapper {
   display: flex;
   flex-flow: row;
 
   nav {
     flex: 0 1 auto;
-    font-size: 150%;
+    font-size: larger;
     background-color: #ddd;
     border-right: solid 1px #aaa;
     padding: 20px;
+    min-width: 180px;
+
+    > ul {
+      list-style-type: none;
+      padding-left: 5px;
+
+      li.current-page {
+        font-weight: bold;
+      }
+
+      ul.sections {
+        margin: 0;
+        font-size: smaller;
+      }
+    }
   }
 
   section {

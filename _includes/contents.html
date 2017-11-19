@@ -1,0 +1,20 @@
+{% for item in include.contents %}
+  {% if item.group %}
+    <li>{{item.group}}
+      <ul>
+        {% include contents.html contents=item.contents %}
+      </ul>
+    </li>
+  {% elsif page.url == item.url %}
+    <li class="current-page">{{item.title}}</li>
+    {% if page.sections %}
+      <ul class="sections">
+      {% for section in page.sections %}
+        <li><a href="#{{section | slugify}}">{{section}}</a></li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% else %}
+    <li><a href="{{item.url | relative_url}}">{{item.title}}</a></li>
+  {% endif %}
+{% endfor %}
