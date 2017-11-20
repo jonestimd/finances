@@ -8,8 +8,12 @@ sections:
 
 The application creates the following configuration files in a directory named
 `.finances` in your home directory.
-* **connection.conf** - database connection settings
-* **finances.properties** - GUI settings
+
+| File Name | Description |
+|---|---|
+| connection.conf | database connection settings |
+| finances.properties | GUI settings |
+{:.definitions}
 
 ## Connection settings
 
@@ -35,11 +39,15 @@ used to store the database files.  The default is to use a directory under
 
 When using *MySql* or *PostgreSQL*, you need to provide the following
 parameters.
-* **Host** - the IP address or hostname of the machine where the database is installed
-* **Port** - the port on which the database service is listening
-* **Schema** - the name of the database schema where the application tables will be stored
-* **User** - the database user ID for the application
-* **Password** - the database password for the application
+
+| Parameter | Description |
+|---|---|
+| Host | the IP address or hostname of the machine where the database is installed |
+| Port | the port on which the database service is listening |
+| Schema | the name of the database schema where the application tables will be stored |
+| User | the database user ID for the application |
+| Password | the database password for the application |
+{:.definitions}
 
 If the database schema and/or user do not already exist then the application
 will attempt to create them.  If the database user does not exist or
