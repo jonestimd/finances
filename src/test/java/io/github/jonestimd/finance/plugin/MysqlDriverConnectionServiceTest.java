@@ -233,13 +233,14 @@ public class MysqlDriverConnectionServiceTest {
     public void unknownDatabaseCreatesSchema() throws Exception {
         Config config = defaultConfig();
         when(dbTestStatement.getMetaData()).thenThrow(new SQLException("unknown database finances"));
+        PrepareDatabaseRunner runner = new PrepareDatabaseRunner(config);
 
-        assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
+        SwingUtilities.invokeLater(runner);
+        enterSuperUser(robot.finder());
 
-        verifyPreparedStatement(superConnections.get(0), "create user if not exists ?", config.getString(USER.toString()));
+        while (! runner.complete) Thread.yield();
         verify(updateProgress).accept("Creating database...");
         verifyTestDatabaseQuery();
-        verify(superConnections.get(0)).createStatement();
         verifyCreateDatabase(config);
         verifyCloseConnections();
     }

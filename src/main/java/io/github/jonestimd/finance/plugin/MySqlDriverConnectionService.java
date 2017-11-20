@@ -53,7 +53,8 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
     @Override
     protected boolean needSuperUser(String message) {
         String lowerMessage = message.toLowerCase();
-        return lowerMessage.startsWith("access denied") || lowerMessage.endsWith(".company' doesn't exist");
+        return lowerMessage.startsWith("access denied") || lowerMessage.endsWith(".company' doesn't exist")
+                || lowerMessage.startsWith("unknown database");
     }
 
     @Override
