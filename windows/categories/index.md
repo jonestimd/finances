@@ -5,7 +5,7 @@ sections:
 - Category properties
 - Window toolbar
 ---
-# ![](/assets/images/categories-icon.png) Transaction Categories
+# ![]({{ "/assets/images/categories-icon.png" | relative_url }}) Transaction Categories
 
 <img class="screen-shot" src="categories-window.png" width="379" title="Categories Window"
      alt="Categories Window"/>
@@ -17,7 +17,7 @@ Renaming a parent category will automatically update the codes of its sub-catego
 The **Categories** window displays all of the categories and can be used to add,
 delete or modify categories.  The window also shows the number of usages of each category.
 The **Categories** window can be accessed from a **Transactions** window by clicking
-on the ![categories](/assets/images/categories-icon.png){:.button} button in the toolbar.
+on the ![categories]({{ "/assets/images/categories-icon.png" | relative_url }}){:.button} button in the toolbar.
 
 ## Reserved categories
 The following predefined categories are used to track security lots and can not
@@ -55,10 +55,10 @@ The following actions are available on the **Categories** window toolbar.
 ![Delete](deleteCategory.png){:.button} Delete
 : Delete the selected categories.  Only enabled for unused categories (no transactions and no sub-categories).
 
-![Save](/assets/images/save.png){:.button} Save
+![Save]({{ "/assets/images/save.png" | relative_url }}){:.button} Save
 : Save changes to the categories.
 
-![Reload](/assets/images/reload.png){:.button} Reload Categories
+![Reload]({{ "/assets/images/reload.png" | relative_url }}){:.button} Reload Categories
 : Reload the categories, discarding any unsaved changes.
 
 ![Merge](mergeCategories.png){:.button} Merge Categories...
