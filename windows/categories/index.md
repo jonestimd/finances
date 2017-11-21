@@ -1,7 +1,7 @@
 ---
 title: Categories window
 sections:
-- Reserved Category
+- Reserved category
 - Category properties
 - Window toolbar
 ---
@@ -46,7 +46,7 @@ Each category has the following properties.
 | Description | description of the category |
 {:.definitions}
 
-## Window Toolbar
+## Window toolbar
 The following actions are available on the **Categories** window toolbar.
 
 ![Add](newCategory.png){:.button} New Category
