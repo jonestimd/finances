@@ -176,13 +176,22 @@ div#image-overlay {
     }
 }
 
-p img {
+img.screen-shot {
   float: right;
   clear: right;
   margin: 0 0 10px 10px;
   padding: 0;
   border: none;
   cursor: zoom-in;
+}
+
+img.button {
+  display: inline;
+  background-color: #ccc;
+  border: 1px solid #999;
+  border-radius: 2px;
+  padding: 3px;
+  vertical-align: middle;
 }
 
 /* Code blocks */
@@ -238,6 +247,7 @@ th {
 td {
   padding: 0 5px;
   border: 1px solid #888;
+  vertical-align: middle;
 }
 
 tr:nth-child(even) {
@@ -386,10 +396,6 @@ a.buttons:hover {
   color: #fff;
   text-decoration: none;
 }
-
-
-/* Section - for main page content */
-
 
 /* Footer */
 footer {

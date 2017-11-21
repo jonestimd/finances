@@ -23,8 +23,7 @@
         overlay.onclick = () => overlay.classList.add('hidden');
         for (let i=0; i<doc.images.length; i++) {
             const image = doc.images[i];
-            // image.onload = (event) => image.width = image.clientWidth / 2;
-            image.onclick = (event) => {
+            if (image.className === 'screen-shot') image.onclick = (event) => {
                 overlay.innerHTML = '<img class="close-icon" src="' + baseurl + '/assets/images/ic_close_white_24px.svg"/>'
                                   + '<img class="center" src="' + event.target.src + '"/>';
                 overlay.classList.remove('hidden');

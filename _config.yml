@@ -9,3 +9,5 @@ navigation:
   title: Installation
 - url: /getting-started/configuration.html
   title: Configuration
+- url: /windows/categories/
+  title: Transaction Categories

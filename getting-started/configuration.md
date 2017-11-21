@@ -26,8 +26,10 @@ not be accessible to other users.  When the application creates this file,
 it attempts to set the permissions so that the file is only accessible by you
 but if that fails, you should set the permissions manually.
 
-<img src="derby-configuration.png" alt="Derby Configuration" title="Derby Configuration" width="239"/>
-<img src="mysql-configuration.png" alt="MySql Configuration" title="MySql Configuration" width="239"/>
+<img class="screen-shot" src="derby-configuration.png" alt="Derby Configuration"
+     title="Derby Configuration" width="239"/>
+<img class="screen-shot" src="mysql-configuration.png" alt="MySql Configuration"
+     title="MySql Configuration" width="239"/>
 
 The required connection parameters depend on the type of database
 being used.  Clicking on the <button>D<u>e</u>faults</button> button will
