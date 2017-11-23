@@ -176,6 +176,10 @@ div#image-overlay {
     }
 }
 
+img.icon {
+  vertical-align: middle;
+}
+
 img.screen-shot {
   float: right;
   clear: right;
@@ -271,7 +275,7 @@ table.definitions {
     background-color: #ddd;
     border-right: solid 1px #aaa;
     padding: 20px;
-    min-width: 180px;
+    min-width: 195px;
 
     > ul {
       list-style-type: none;
