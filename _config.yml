@@ -11,6 +11,8 @@ navigation:
   title: Configuration
 - url: /windows/accounts/
   title: Accounts
+- url: /windows/payees/
+  title: Payees
 - url: /windows/categories/
   title: Transaction Categories
 - url: /windows/groups/
