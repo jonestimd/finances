@@ -41,3 +41,26 @@ require a security amount (shares).  When a security is sold, the specific share
 for the sale can also be selected from prior purchase transactions.
 
 ## Application windows
+The application includes the following windows for viewing and editing the data.
+
+![]({{ "/assets/images/accounts-icon.png" | relative_url }}){:.icon} Accounts
+: Displays all of the accounts and their properties.
+
+![]({{ "/assets/images/categories-icon.png" | relative_url }}){:.icon} Categories
+: Displays all of the transaction categories and their properties.
+
+![]({{ "/assets/images/groups-icon.png" | relative_url }}){:.icon} Groups
+: Displays all of the transaction groups and their properties.
+
+![]({{ "/assets/images/payee-icon.png" | relative_url }}){:.icon} Payees
+: Displays all of the payees and their properties.
+
+![]({{ "/assets/images/securities-icon.png" | relative_url }}){:.icon} Securities
+: Displays all of the securities and the total shares across all accounts.
+
+![]({{ "/assets/images/accountSecurities-icon.png" | relative_url }}){:.icon} Account Securities
+: Displays the currently held securities and the shares per account.
+
+![]({{ "/assets/images/register-icon.png" | relative_url }}){:.icon} Transactions
+: Displays transactions for an account.  Multiple transactions windows can
+be open at the same time.
