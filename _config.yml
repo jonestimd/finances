@@ -9,6 +9,8 @@ navigation:
   title: Installation
 - url: /getting-started/configuration.html
   title: Configuration
+- url: /getting-started/common-ui.html
+  title: Using the UI
 - url: /windows/accounts/
   title: Accounts
 - url: /windows/payees/

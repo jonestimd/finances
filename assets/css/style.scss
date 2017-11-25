@@ -198,6 +198,14 @@ img.button {
   vertical-align: middle;
 }
 
+img.filter {
+  border: 1px solid #686868;
+  padding: 3px 50px 3px 5px;
+  border-radius: 11px;
+  position: relative;
+  top: 3px;
+}
+
 /* Code blocks */
 
 code.highlighter-rouge {
@@ -262,6 +270,12 @@ table.definitions {
   td:first-child {
     font-weight: bold;
     text-align: right;
+  }
+}
+
+table.key-shortcuts {
+  td:first-child {
+    text-align: center;
   }
 }
 
@@ -406,6 +420,23 @@ footer {
   bottom:10px;
   padding-left: 20px;
   border-top: solid 1px #ccc;
+}
+
+span.pending-change {
+  background-color: rgba(175,200,255,255);
+  padding: 2px;
+  border: 1px solid black;
+}
+
+span.pending-delete {
+  background-color: rgba(255,175,175,255);
+  padding: 2px;
+  border: 1px solid black;
+  text-decoration: line-through;
+}
+
+span.filter-match {
+  background-color: #ffff00;
 }
 
 @media print, screen and (max-width: 960px) {
