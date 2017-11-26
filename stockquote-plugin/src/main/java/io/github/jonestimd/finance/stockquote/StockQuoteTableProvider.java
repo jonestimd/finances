@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.yahoo;
+package io.github.jonestimd.finance.stockquote;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -31,13 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.swing.FormatFactory;
@@ -50,28 +48,27 @@ import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
 import io.github.jonestimd.swing.table.model.FunctionPropertyAdapter;
 import io.github.jonestimd.util.Streams;
-import org.apache.log4j.Logger;
 
 import static io.github.jonestimd.finance.swing.asset.SecurityColumnAdapter.*;
 
-public class StockQuoteTableProvider extends AsyncTableDataProvider<SecuritySummary, Collection<String>, Map<String, StockQuote>>
+public class StockQuoteTableProvider extends AsyncTableDataProvider<SecuritySummary, Collection<String>, Map<String, BigDecimal>>
 implements SecurityTableExtension, TableSummary {
     public static final String TOTAL_VALUE = "totalValue";
     private static final Predicate<String> NOT_EMPTY = input -> ! Strings.isNullOrEmpty(input);
-    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("io.github.jonestimd.finance.yahoo.ComponentLabels");
-    private final Logger logger = Logger.getLogger(SecurityTableExtension.class);
-    private StockQuoteQuery query;
-    private final Map<String, StockQuote> stockQuotes = new HashMap<>();
+    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("io.github.jonestimd.finance.stockquote.ComponentLabels");
+    private final Map<String, BigDecimal> stockQuotes = new HashMap<>();
     private final ColumnAdapter<SecuritySummary, BigDecimal> priceAdapter =
             new FunctionColumnAdapter<>(BUNDLE, RESOURCE_PREFIX, "price", BigDecimal.class, this::getLastPrice, null);
     private final ColumnAdapter<SecuritySummary, BigDecimal> marketValueAdapter =
             new FunctionColumnAdapter<>(BUNDLE, RESOURCE_PREFIX, "marketValue", BigDecimal.class, this::getMarketValue, null);
     private final ColumnAdapter<SecuritySummary, BigDecimal> returnOnInvestmentAdapter =
             new FunctionColumnAdapter<>(BUNDLE, RESOURCE_PREFIX, "returnOnInvestment", BigDecimal.class, this::getReturnOnInvestment, null);
-    private List<ColumnAdapter<SecuritySummary, ?>> columnAdapters = ImmutableList.<ColumnAdapter<SecuritySummary, ?>>of(priceAdapter, marketValueAdapter, returnOnInvestmentAdapter);
+    private List<ColumnAdapter<SecuritySummary, ?>> columnAdapters = ImmutableList.of(priceAdapter, marketValueAdapter, returnOnInvestmentAdapter);
     private final PropertyAdapter<BigDecimal> totalValueAdapter = new FunctionPropertyAdapter<>(
             TOTAL_VALUE, BUNDLE.getString("table.security.totalValue"), this::getTotalValue, FormatFactory::currencyFormat);
 
+    private final StockQuoteService quoteService;
+    private final boolean serialQueries;
     private Map<String, BigDecimal> sharesBySymbol = new HashMap<>();
     private BigDecimal totalValue = BigDecimal.ZERO;
     private final DomainEventListener<Long, SecuritySummary> securitySummaryListener = event -> {
@@ -81,17 +78,14 @@ implements SecurityTableExtension, TableSummary {
         submitIfNotPending(Streams.map(event.getDomainObjects(), SecuritySummary::getSymbol));
     };
 
-    public StockQuoteTableProvider(YqlService yqlService, DomainEventPublisher domainEventPublisher) {
-        try {
-            query = new StockQuoteQuery(yqlService);
-            domainEventPublisher.register(SecuritySummary.class, securitySummaryListener);
-        } catch (NoSuchMethodException ex) {
-            logger.error("error initializing stockquote-plugin", ex);
-        }
+    public StockQuoteTableProvider(StockQuoteService quoteService, boolean serialQueries, DomainEventPublisher domainEventPublisher) {
+        this.quoteService = quoteService;
+        this.serialQueries = serialQueries;
+        domainEventPublisher.register(SecuritySummary.class, securitySummaryListener);
     }
 
     private BigDecimal getLastPrice(SecuritySummary summary) {
-        return MoreObjects.firstNonNull(stockQuotes.get(summary.getSecurity().getSymbol()), StockQuote.EMPTY).getLastPrice();
+        return stockQuotes.get(summary.getSecurity().getSymbol());
     }
 
     private BigDecimal getMarketValue(SecuritySummary summary) {
@@ -160,19 +154,20 @@ implements SecurityTableExtension, TableSummary {
 
     @Override
     protected void submitIfNotPending(Collection<String> strings) {
-        List<String> query = Lists.newArrayList(Iterables.filter(strings, NOT_EMPTY));
-        if (! query.isEmpty()) {
-            super.submitIfNotPending(query);
+        List<String> symbols = Streams.filter(strings, NOT_EMPTY);
+        if (! symbols.isEmpty()) {
+            if (serialQueries) symbols.forEach(symbol -> super.submitIfNotPending(Collections.singleton(symbol)));
+            else super.submitIfNotPending(symbols);
         }
     }
 
     @Override
-    protected Map<String, StockQuote> getData(Collection<String> symbols) throws IOException {
-        return query == null ? new HashMap<>() : query.getQuotes(symbols);
+    protected Map<String, BigDecimal> getData(Collection<String> symbols) throws IOException {
+        return quoteService.getPrices(symbols);
     }
 
     @Override
-    protected void setResult(Map<String, StockQuote> stockQuotes) {
+    protected void setResult(Map<String, BigDecimal> stockQuotes) {
         this.stockQuotes.putAll(stockQuotes);
         updateTotalValue();
     }
@@ -184,9 +179,9 @@ implements SecurityTableExtension, TableSummary {
     private void updateTotalValue() {
         totalValue = BigDecimal.ZERO;
         for (Entry<String, BigDecimal> entry : sharesBySymbol.entrySet()) {
-            StockQuote stockQuote = this.stockQuotes.get(entry.getKey());
-            if (stockQuote != null && stockQuote.getLastPrice() != null) {
-                totalValue = totalValue.add(entry.getValue().multiply(stockQuote.getLastPrice()));
+            BigDecimal price = this.stockQuotes.get(entry.getKey());
+            if (price != null) {
+                totalValue = totalValue.add(entry.getValue().multiply(price));
             }
         }
         firePropertyChange(TOTAL_VALUE, null, totalValue);

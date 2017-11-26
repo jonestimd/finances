@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2017 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,14 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.yahoo;
+package io.github.jonestimd.finance.stockquote;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.util.Collection;
+import java.util.Map;
 
-import io.github.jonestimd.finance.yahoo.annotation.JsonType;
-import io.github.jonestimd.finance.yahoo.annotation.YahooColumn;
-import io.github.jonestimd.finance.yahoo.annotation.YahooTable;
-
-@YahooTable(name = "yahoo.finance.quote", result = "quote")
-public class StockQuote {
-    public static final StockQuote EMPTY = new StockQuote();
-    public static final String SYMBOL = "symbol";
-    public static final String LAST_PRICE = "LastTradePriceOnly";
-    @YahooColumn(name = StockQuote.SYMBOL, jsonType = JsonType.STRING)
-    private String symbol;
-    @YahooColumn(name = StockQuote.LAST_PRICE, jsonType = JsonType.BIG_DECIMAL)
-    private BigDecimal lastPrice;
-
-    private StockQuote() {}
-
-    public StockQuote(String symbol, BigDecimal lastPrice) {
-        this.symbol = symbol;
-        this.lastPrice = lastPrice;
-    }
-
-    public String getSymbol() {
-        return symbol;
-    }
-
-    public BigDecimal getLastPrice() {
-        return lastPrice;
-    }
+public interface StockQuoteService {
+    Map<String, BigDecimal> getPrices(Collection<String> symbols) throws IOException;
 }
