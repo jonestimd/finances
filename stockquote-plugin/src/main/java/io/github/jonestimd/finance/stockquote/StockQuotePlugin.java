@@ -24,32 +24,32 @@ package io.github.jonestimd.finance.stockquote;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import io.github.jonestimd.finance.plugin.FinancePlugin;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.stockquote.alphavantage.AlphaVantageQuoteService;
+import io.github.jonestimd.finance.stockquote.iextrading.IexTradingQuoteService;
 import io.github.jonestimd.finance.stockquote.quandl.QuandlQuoteService;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 
 import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 
 public class StockQuotePlugin implements FinancePlugin {
-    private List<? extends SecurityTableExtension> securityTableExtensions;
+    private final List<StockQuoteServiceFactory> factories = ImmutableList.of(
+            IexTradingQuoteService.FACTORY, AlphaVantageQuoteService.FACTORY, QuandlQuoteService.FACTORY);
+    private List<? extends SecurityTableExtension> securityTableExtensions = Collections.emptyList();
 
     @Override
     public void initialize(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
-        boolean bulkQueries = CONFIG.getBoolean("finances.stockquote.bulkQueries");
-        Config config = CONFIG.getConfig("finances.stockquote.alphavantage");
-        if (config.hasPath("apiKey")) {
-            setExtension(new StockQuoteTableProvider(new AlphaVantageQuoteService(config), bulkQueries, domainEventPublisher));
-        }
-        else {
-            config = CONFIG.getConfig("finances.stockquote.quandl");
-            if (config.hasPath("apiKey")) {
-                setExtension(new StockQuoteTableProvider(new QuandlQuoteService(config), bulkQueries, domainEventPublisher));
+        Config config = CONFIG.getConfig("finances.stockquote");
+        boolean bulkQueries = config.getBoolean("bulkQueries");
+        for (StockQuoteServiceFactory factory : factories) {
+            if (factory.isEnabled(config)) {
+                setExtension(new StockQuoteTableProvider(new CachingStockQuoteService(factory.create(config)), bulkQueries, domainEventPublisher));
+                break;
             }
-            else securityTableExtensions = Collections.emptyList();
         }
     }
 

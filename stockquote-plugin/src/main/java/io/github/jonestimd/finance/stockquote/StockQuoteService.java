@@ -23,7 +23,6 @@ package io.github.jonestimd.finance.stockquote;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.Map;
 

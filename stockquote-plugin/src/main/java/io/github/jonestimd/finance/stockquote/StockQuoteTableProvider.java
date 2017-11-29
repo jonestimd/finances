@@ -68,7 +68,7 @@ implements SecurityTableExtension, TableSummary {
             TOTAL_VALUE, BUNDLE.getString("table.security.totalValue"), this::getTotalValue, FormatFactory::currencyFormat);
 
     private final StockQuoteService quoteService;
-    private final boolean serialQueries;
+    private final boolean bulkQueries;
     private Map<String, BigDecimal> sharesBySymbol = new HashMap<>();
     private BigDecimal totalValue = BigDecimal.ZERO;
     private final DomainEventListener<Long, SecuritySummary> securitySummaryListener = event -> {
@@ -78,9 +78,9 @@ implements SecurityTableExtension, TableSummary {
         submitIfNotPending(Streams.map(event.getDomainObjects(), SecuritySummary::getSymbol));
     };
 
-    public StockQuoteTableProvider(StockQuoteService quoteService, boolean serialQueries, DomainEventPublisher domainEventPublisher) {
+    public StockQuoteTableProvider(StockQuoteService quoteService, boolean bulkQueries, DomainEventPublisher domainEventPublisher) {
         this.quoteService = quoteService;
-        this.serialQueries = serialQueries;
+        this.bulkQueries = bulkQueries;
         domainEventPublisher.register(SecuritySummary.class, securitySummaryListener);
     }
 
@@ -156,8 +156,8 @@ implements SecurityTableExtension, TableSummary {
     protected void submitIfNotPending(Collection<String> strings) {
         List<String> symbols = Streams.filter(strings, NOT_EMPTY);
         if (! symbols.isEmpty()) {
-            if (serialQueries) symbols.forEach(symbol -> super.submitIfNotPending(Collections.singleton(symbol)));
-            else super.submitIfNotPending(symbols);
+            if (bulkQueries) super.submitIfNotPending(symbols);
+            else symbols.forEach(symbol -> super.submitIfNotPending(Collections.singleton(symbol)));
         }
     }
 

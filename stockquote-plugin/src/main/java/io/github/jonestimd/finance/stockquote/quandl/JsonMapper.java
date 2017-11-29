@@ -28,15 +28,11 @@ import java.util.List;
 import java.util.Map;
 
 import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
 
 import com.typesafe.config.Config;
+import io.github.jonestimd.finance.stockquote.JsonHelper;
 
 public class JsonMapper {
-    private static final JsonProvider JSON_PROVIDER = JsonProvider.provider();
     private final List<String> symbolPath;
     private final List<String> columnsPath;
     private final List<String> tablePath;
@@ -50,31 +46,15 @@ public class JsonMapper {
     }
 
     public Map<String, BigDecimal> getPrice(InputStream stream) {
-        JsonObject response = JSON_PROVIDER.createReader(stream).readObject();
-        String symbol = getString(symbolPath, response);
-        JsonArray columnNames = getArray(columnsPath, response);
-        JsonArray row = getArray(tablePath, response).getJsonArray(0);
+        JsonHelper helper = new JsonHelper(stream);
+        String symbol = helper.getString(symbolPath);
+        JsonArray columnNames = helper.getArray(columnsPath);
+        JsonArray row = helper.getArray(tablePath).getJsonArray(0);
         for (int i = 0; i < columnNames.size(); i++) {
             if (priceColumn.equals(columnNames.getString(i))) {
                 return Collections.singletonMap(symbol, row.getJsonNumber(i).bigDecimalValue());
             }
         }
-        throw new IllegalArgumentException("Price not found in " + response.toString());
-    }
-
-    private JsonArray getArray(List<String> path, JsonObject obj) {
-        JsonValue value = obj;
-        for (String name : path) {
-            value = ((JsonObject) value).get(name);
-        }
-        return (JsonArray) value;
-    }
-
-    private String getString(List<String> path, JsonObject obj) {
-        JsonValue value = obj;
-        for (String name : path) {
-            value = ((JsonObject) value).get(name);
-        }
-        return ((JsonString) value).getString();
+        throw new IllegalArgumentException("Price not found in " + helper.toString());
     }
 }

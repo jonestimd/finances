@@ -26,23 +26,45 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.json.JsonArray;
+
 import com.typesafe.config.Config;
+import io.github.jonestimd.finance.stockquote.JsonHelper;
 import io.github.jonestimd.finance.stockquote.StockQuoteService;
+import io.github.jonestimd.finance.stockquote.StockQuoteServiceFactory;
 import org.apache.log4j.Logger;
 
 public class QuandlQuoteService implements StockQuoteService {
+    public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
+        @Override
+        public boolean isEnabled(Config config) {
+            return config.hasPath("quandl.apiKey");
+        }
+
+        @Override
+        public StockQuoteService create(Config config) {
+            return new QuandlQuoteService(config.getConfig("quandl"));
+        }
+    };
+
     private final Logger logger = Logger.getLogger(getClass());
     private final String urlFormat;
-    private final JsonMapper jsonMapper;
+    private final List<String> symbolPath;
+    private final List<String> columnsPath;
+    private final List<String> tablePath;
+    private final String priceColumn;
 
     public QuandlQuoteService(Config config) {
-        String urlFormat = config.getString("urlFormat");
-        String apiKey = config.getString("apiKey");
-        this.urlFormat = urlFormat.replaceAll("\\$\\{apiKey}", apiKey);
-        this.jsonMapper = new JsonMapper(config);
+        this.urlFormat = config.getString("urlFormat").replaceAll("\\$\\{apiKey}", config.getString("apiKey"));
+        this.symbolPath = config.getStringList("symbolPath");
+        this.columnsPath = config.getStringList("columnsPath");
+        this.tablePath = config.getStringList("tablePath");
+        this.priceColumn = config.getString("priceColumn");
     }
 
     @Override
@@ -51,11 +73,24 @@ public class QuandlQuoteService implements StockQuoteService {
         for (String symbol : symbols) {
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
             try (InputStream stream = new URL(url).openStream()) {
-                prices.putAll(jsonMapper.getPrice(stream));
+                prices.putAll(getPrice(stream));
             } catch (Exception ex) {
                 logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }
         }
         return prices;
+    }
+
+    private Map<String, BigDecimal> getPrice(InputStream stream) {
+        JsonHelper helper = new JsonHelper(stream);
+        String symbol = helper.getString(symbolPath);
+        JsonArray columnNames = helper.getArray(columnsPath);
+        JsonArray row = helper.getArray(tablePath).getJsonArray(0);
+        for (int i = 0; i < columnNames.size(); i++) {
+            if (priceColumn.equals(columnNames.getString(i))) {
+                return Collections.singletonMap(symbol, row.getJsonNumber(i).bigDecimalValue());
+            }
+        }
+        throw new IllegalArgumentException("Price not found in " + helper.toString());
     }
 }

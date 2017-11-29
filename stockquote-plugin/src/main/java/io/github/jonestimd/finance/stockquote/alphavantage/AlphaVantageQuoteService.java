@@ -28,22 +28,43 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import com.typesafe.config.Config;
+import io.github.jonestimd.finance.stockquote.JsonHelper;
 import io.github.jonestimd.finance.stockquote.StockQuoteService;
+import io.github.jonestimd.finance.stockquote.StockQuoteServiceFactory;
 import org.apache.log4j.Logger;
 
 public class AlphaVantageQuoteService implements StockQuoteService {
+    public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
+        @Override
+        public boolean isEnabled(Config config) {
+            return config.hasPath("alphavantage.apiKey");
+        }
+
+        @Override
+        public StockQuoteService create(Config config) {
+            return new AlphaVantageQuoteService(config.getConfig("alphavantage"));
+        }
+    };
+
     private final Logger logger = Logger.getLogger(getClass());
     private final String urlFormat;
-    private final JsonMapper jsonMapper;
+    private final List<String> symbolPath;
+    private final List<String> seriesPath;
+    private final String priceKey;
+    private final String errorKey;
 
     public AlphaVantageQuoteService(Config config) {
-        String urlFormat = config.getString("urlFormat");
-        String apiKey = config.getString("apiKey");
-        this.urlFormat = urlFormat.replaceAll("\\$\\{apiKey}", apiKey);
-        this.jsonMapper = new JsonMapper(config);
+        this.urlFormat = config.getString("urlFormat").replaceAll("\\$\\{apiKey}", config.getString("apiKey"));
+        this.symbolPath = config.getStringList("symbolPath");
+        this.seriesPath = config.getStringList("seriesPath");
+        this.priceKey = config.getString("priceKey");
+        this.errorKey = config.getString("errorKey");
     }
 
     @Override
@@ -61,10 +82,25 @@ public class AlphaVantageQuoteService implements StockQuoteService {
     private Map<String, BigDecimal> getPrice(String symbol) {
         String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
         try (InputStream stream = new URL(url).openStream()) {
-            return jsonMapper.getPrice(stream);
+            return getPrice(stream);
         } catch (Exception ex) {
             logger.warn("error getting price from " + url + ": " + ex.getMessage());
             return Collections.emptyMap();
         }
+    }
+
+    private Map<String, BigDecimal> getPrice(InputStream stream) {
+        JsonHelper helper = new JsonHelper(stream);
+        helper.optionalString(errorKey).ifPresent(this::throwIllegalState);
+        String symbol = helper.findString(symbolPath);
+        JsonObject series = helper.findObject(seriesPath);
+        return series.keySet().stream().max(String::compareTo)
+                .map(date -> JsonHelper.findString(priceKey, series.getJsonObject(date)))
+                .map(price -> Collections.singletonMap(symbol, new BigDecimal(price)))
+                .orElse(Collections.emptyMap());
+    }
+
+    private void throwIllegalState(String error) {
+        throw new IllegalStateException(error);
     }
 }
