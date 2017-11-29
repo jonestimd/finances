@@ -56,8 +56,8 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
 
     @Test
     public void getSecuritySummaries() throws Exception {
-        Transaction buy = createBuyTransaction(BigDecimal.TEN, "-123.45");
-        Transaction dividend = createBuyTransaction(null, "150.00");
+        Transaction buy = createSecurityTransaction(BigDecimal.TEN, "-123.45");
+        Transaction dividend = createSecurityTransaction(null, "150.00");
 
         List<SecuritySummary> securities = securityDao.getSecuritySummaries();
 
@@ -73,8 +73,27 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
     }
 
     @Test
+    public void getSecuritySummariesIncludesSoldSecurities() throws Exception {
+        Transaction buy = createSecurityTransaction(BigDecimal.TEN, "-123.45");
+        Transaction dividend = createSecurityTransaction(null, "150.00");
+        createSecurityTransaction(new BigDecimal("-10"), "456.78");
+
+        List<SecuritySummary> securities = securityDao.getSecuritySummaries();
+
+        assertThat(securities).hasSize(2);
+        assertThat(securities.get(0).getSecurity()).isEqualTo(buy.getSecurity());
+        assertThat(securities.get(0).getShares()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(securities.get(0).getCostBasis()).isEqualByComparingTo(buy.getAmount().negate());
+        assertThat(securities.get(0).getDividends()).isEqualByComparingTo(dividend.getAmount());
+        assertThat(securities.get(0).getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
+        assertThat(securities.get(0).getTransactionCount()).isEqualTo(3);
+        assertThat(securities.get(1).getShares()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(securities.get(1).getFirstAcquired()).isNull();
+    }
+
+    @Test
     public void getSecuritySummariesForAccount() throws Exception {
-        Transaction buy = createBuyTransaction(BigDecimal.TEN, "-123.45");
+        Transaction buy = createSecurityTransaction(BigDecimal.TEN, "-123.45");
 
         List<SecuritySummary> securities = securityDao.getSecuritySummaries(buy.getAccount().getId());
 
@@ -85,9 +104,9 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
 
     @Test
     public void getSecuritySummariesByAccount() throws Exception {
-        Transaction buy = createBuyTransaction(BigDecimal.TEN, "-123.45");
+        Transaction buy = createSecurityTransaction(BigDecimal.TEN, "-123.45");
         buy.addDetails(new TransactionDetail(null, BigDecimal.ONE.negate(), null, null));
-        Transaction dividend = createBuyTransaction(null, "150.00");
+        Transaction dividend = createSecurityTransaction(null, "150.00");
 
         List<SecuritySummary> securities = securityDao.getSecuritySummariesByAccount();
 
@@ -101,7 +120,7 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
         assertThat(securities.get(0).getTransactionCount()).isEqualTo(2);
     }
 
-    private Transaction createBuyTransaction(BigDecimal shares, String amount) {
+    private Transaction createSecurityTransaction(BigDecimal shares, String amount) {
         Account account = accountDao.get((Long) ACCOUNT_BATCH.getValue(0, "id"));
         Security security = securityDao.get((Long) SECURITY_BATCH.getValue(0, "asset_id"));
         TransactionDetail detail = new TransactionDetail(null, new BigDecimal(amount), null, null);

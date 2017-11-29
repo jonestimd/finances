@@ -49,7 +49,6 @@
         left join (
             select &securitySummary;
             group by t.security_id
-            having sum(coalesce(&adjustedShares;, 0)) != 0
         ) summary on summary.security_id = security.id
     </sql-query>
     <sql-query name="security.getSummariesByAccount">
