@@ -21,23 +21,16 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing;
 
-import java.util.List;
 import java.util.ServiceLoader;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import io.github.jonestimd.finance.plugin.FinancePlugin;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.util.Streams;
 
 public class PluginContext {
-    public static final Function<FinancePlugin, List<? extends SecurityTableExtension>> GET_SECURITY_TABLE_EXTENSION = new Function<FinancePlugin, List<? extends SecurityTableExtension>>() {
-        @Override
-        public List<? extends SecurityTableExtension> apply(FinancePlugin input) {
-            return input.getSecurityTableExtensions();
-        }
-    };
     private final ServiceLoader<FinancePlugin> plugins;
 
     public PluginContext(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
@@ -48,6 +41,6 @@ public class PluginContext {
     }
 
     public Iterable<SecurityTableExtension> getSecurityTableExtensions() {
-        return Iterables.concat(Iterables.transform(plugins, GET_SECURITY_TABLE_EXTENSION));
+        return Iterables.concat(Streams.map(plugins, FinancePlugin::getSecurityTableExtensions));
     }
 }
