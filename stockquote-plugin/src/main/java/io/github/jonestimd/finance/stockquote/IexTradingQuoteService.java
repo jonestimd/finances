@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.stockquote.iextrading;
+package io.github.jonestimd.finance.stockquote;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,9 +34,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
-import io.github.jonestimd.finance.stockquote.JsonHelper;
-import io.github.jonestimd.finance.stockquote.StockQuoteService;
-import io.github.jonestimd.finance.stockquote.StockQuoteServiceFactory;
 import org.apache.log4j.Logger;
 
 public class IexTradingQuoteService implements StockQuoteService {

@@ -23,33 +23,41 @@ package io.github.jonestimd.finance.stockquote;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import io.github.jonestimd.finance.plugin.FinancePlugin;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
-import io.github.jonestimd.finance.stockquote.alphavantage.AlphaVantageQuoteService;
-import io.github.jonestimd.finance.stockquote.iextrading.IexTradingQuoteService;
-import io.github.jonestimd.finance.stockquote.quandl.QuandlQuoteService;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 
 import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 
 public class StockQuotePlugin implements FinancePlugin {
-    private final List<StockQuoteServiceFactory> factories = ImmutableList.of(
-            IexTradingQuoteService.FACTORY, AlphaVantageQuoteService.FACTORY, QuandlQuoteService.FACTORY);
+    private static final Map<String, StockQuoteServiceFactory> FACTORY_NAMES = ImmutableMap.of(
+        "alphavantage", AlphaVantageQuoteService.FACTORY,
+        "iextrading", IexTradingQuoteService.FACTORY,
+        "scraper", ScraperQuoteService.FACTORY,
+        "quandl", QuandlQuoteService.FACTORY
+    );
     private List<? extends SecurityTableExtension> securityTableExtensions = Collections.emptyList();
 
     @Override
     public void initialize(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
         Config config = CONFIG.getConfig("finances.stockquote");
         boolean bulkQueries = config.getBoolean("bulkQueries");
-        for (StockQuoteServiceFactory factory : factories) {
-            if (factory.isEnabled(config)) {
-                setExtension(new StockQuoteTableProvider(new CachingStockQuoteService(factory.create(config)), bulkQueries, domainEventPublisher));
-                break;
-            }
+        List<StockQuoteService> quoteServices = config.getStringList("services").stream()
+                .map(FACTORY_NAMES::get)
+                .filter(factory -> factory.isEnabled(config))
+                .map(factory -> new CachingStockQuoteService(factory.create(config)))
+                .collect(Collectors.toList());
+        if (quoteServices.size() == 1) {
+            setExtension(new StockQuoteTableProvider(quoteServices.get(0), bulkQueries, domainEventPublisher));
+        }
+        else if (quoteServices.size() > 1) {
+            setExtension(new StockQuoteTableProvider(new HierarchicalQuoteService(quoteServices), bulkQueries, domainEventPublisher));
         }
     }
 

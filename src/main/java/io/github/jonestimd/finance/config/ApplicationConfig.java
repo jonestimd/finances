@@ -33,6 +33,6 @@ public class ApplicationConfig {
 
     private static Config loadConfig() {
         Config config = ConfigFactory.load();
-        return CONFIG_FILE.exists() ? ConfigFactory.parseFile(CONFIG_FILE).withFallback(config) : config;
+        return CONFIG_FILE.exists() ? ConfigFactory.parseFile(CONFIG_FILE).withFallback(config).resolve() : config;
     }
 }
