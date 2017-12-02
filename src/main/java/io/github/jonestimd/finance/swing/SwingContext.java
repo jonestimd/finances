@@ -33,11 +33,13 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
+import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.account.AccountsPanel;
 import io.github.jonestimd.finance.swing.account.CompanyFormat;
@@ -86,9 +88,9 @@ public class SwingContext {
 
     public SwingContext(ServiceLocator serviceLocator) {
         this.serviceLocator = serviceLocator;
+        pluginContext = new PluginContext(serviceLocator, domainEventPublisher);
         TableInitializer tableInitializer = new TableInitializer(defaultTableRenderers(), defaultTableEditors(), columnRenderers(), Collections.emptyMap());
         tableFactory = new FinanceTableFactory(tableInitializer);
-        pluginContext = new PluginContext(serviceLocator, domainEventPublisher);
         frameManager = new FrameManager<>(BundleType.LABELS.get(), buildSingletonPanels(), buildPanelFactories(), AboutDialog::new);
         windowEventPublisher.register(frameManager);
     }
@@ -116,7 +118,12 @@ public class SwingContext {
     }
 
     private Map<String, TableCellRenderer> columnRenderers() {
-        return ImmutableMap.of("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER));
+        Builder<String, TableCellRenderer> builder = ImmutableMap.<String, TableCellRenderer>builder()
+                .put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER));
+        for (SecurityTableExtension extension : pluginContext.getSecurityTableExtensions()) {
+            builder.putAll(extension.getTableCellRenderers());
+        }
+        return builder.build();
     }
 
     private void buildTransactionsPanelFactory() {

@@ -27,9 +27,9 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.json.JsonObject;
 
@@ -65,24 +65,14 @@ public class AlphaVantageQuoteService implements StockQuoteService {
     }
 
     @Override
-    public Map<String, BigDecimal> getPrices(Collection<String> symbols) throws IOException {
-        if (symbols.size() > 1) {
-            Map<String, BigDecimal> prices = new HashMap<>();
-            for (String symbol : symbols) {
-                prices.putAll(getPrice(symbol));
+    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+        for (String symbol : symbols) {
+            String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
+            try (InputStream stream = new URL(url).openStream()) {
+                callback.accept(getPrice(stream));
+            } catch (Exception ex) {
+                logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }
-            return prices;
-        }
-        return getPrice(symbols.iterator().next());
-    }
-
-    private Map<String, BigDecimal> getPrice(String symbol) {
-        String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
-        try (InputStream stream = new URL(url).openStream()) {
-            return getPrice(stream);
-        } catch (Exception ex) {
-            logger.warn("error getting price from " + url + ": " + ex.getMessage());
-            return Collections.emptyMap();
         }
     }
 

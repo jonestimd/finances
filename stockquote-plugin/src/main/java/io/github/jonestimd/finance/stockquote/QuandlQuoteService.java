@@ -27,9 +27,9 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.json.JsonArray;
 
@@ -65,17 +65,15 @@ public class QuandlQuoteService implements StockQuoteService {
     }
 
     @Override
-    public Map<String, BigDecimal> getPrices(Collection<String> symbols) throws IOException {
-        Map<String, BigDecimal> prices = new HashMap<>();
+    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
         for (String symbol : symbols) {
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
             try (InputStream stream = new URL(url).openStream()) {
-                prices.putAll(getPrice(stream));
+                callback.accept(getPrice(stream));
             } catch (Exception ex) {
                 logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }
         }
-        return prices;
     }
 
     private Map<String, BigDecimal> getPrice(InputStream stream) {

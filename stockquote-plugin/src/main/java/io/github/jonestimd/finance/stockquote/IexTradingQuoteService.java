@@ -28,9 +28,9 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
@@ -59,13 +59,12 @@ public class IexTradingQuoteService implements StockQuoteService {
     }
 
     @Override
-    public Map<String, BigDecimal> getPrices(Collection<String> symbols) throws IOException {
+    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
         String url = urlFormat.replaceAll("\\$\\{symbols}", symbols.stream().map(this::encode).collect(Collectors.joining(",")));
         try (InputStream stream = new URL(url).openStream()) {
-            return getPrices(stream);
+            callback.accept(getPrices(stream));
         } catch (Exception ex) {
             logger.warn("error getting price from " + url + ": " + ex.getMessage());
-            return Collections.emptyMap();
         }
     }
 

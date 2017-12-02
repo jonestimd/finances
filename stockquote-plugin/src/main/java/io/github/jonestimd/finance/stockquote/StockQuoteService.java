@@ -25,7 +25,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public interface StockQuoteService {
-    Map<String, BigDecimal> getPrices(Collection<String> symbols) throws IOException;
+    void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException;
 }

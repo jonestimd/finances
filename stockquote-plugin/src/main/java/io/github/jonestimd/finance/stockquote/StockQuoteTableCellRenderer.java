@@ -21,31 +21,27 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.stockquote;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.awt.Color;
+import java.awt.Component;
 
-public class HierarchicalQuoteService implements StockQuoteService {
-    private final List<? extends StockQuoteService> quoteServices;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 
-    public HierarchicalQuoteService(List<? extends StockQuoteService> quoteServices) {
-        this.quoteServices = quoteServices;
-    }
+import io.github.jonestimd.finance.stockquote.StockQuote.QuoteStatus;
 
+public class StockQuoteTableCellRenderer extends DefaultTableCellRenderer {
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
-        Set<String> remaining = new HashSet<>(symbols);
-        for (StockQuoteService quoteService : quoteServices) {
-            quoteService.getPrices(new HashSet<>(remaining), (prices) -> {
-                remaining.removeAll(prices.keySet());
-                callback.accept(prices);
-            });
-            if (remaining.isEmpty()) break;
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (value instanceof StockQuote) {
+            StockQuote quote = (StockQuote) value;
+            if (quote.getStatus() == QuoteStatus.SUCCESSFUL) {
+                setHorizontalAlignment(RIGHT);
+                return super.getTableCellRendererComponent(table, "$" + quote.getPrice(), isSelected, hasFocus, row, column);
+            }
+            setHorizontalAlignment(CENTER);
+            setForeground(Color.gray);
+            return super.getTableCellRendererComponent(table, quote.getStatus().value, isSelected, hasFocus, row, column);
         }
+        return super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
     }
 }

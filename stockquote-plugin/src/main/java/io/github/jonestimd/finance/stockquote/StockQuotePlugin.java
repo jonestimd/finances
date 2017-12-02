@@ -47,17 +47,14 @@ public class StockQuotePlugin implements FinancePlugin {
     @Override
     public void initialize(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
         Config config = CONFIG.getConfig("finances.stockquote");
-        boolean bulkQueries = config.getBoolean("bulkQueries");
+//        boolean bulkQueries = config.getBoolean("bulkQueries");
         List<StockQuoteService> quoteServices = config.getStringList("services").stream()
                 .map(FACTORY_NAMES::get)
                 .filter(factory -> factory.isEnabled(config))
-                .map(factory -> new CachingStockQuoteService(factory.create(config)))
+                .map(factory -> factory.create(config))
                 .collect(Collectors.toList());
-        if (quoteServices.size() == 1) {
-            setExtension(new StockQuoteTableProvider(quoteServices.get(0), bulkQueries, domainEventPublisher));
-        }
-        else if (quoteServices.size() > 1) {
-            setExtension(new StockQuoteTableProvider(new HierarchicalQuoteService(quoteServices), bulkQueries, domainEventPublisher));
+        if (!quoteServices.isEmpty()) {
+            setExtension(new PriceTableProvider(new BackgroundQuoteService(config, quoteServices)));
         }
     }
 

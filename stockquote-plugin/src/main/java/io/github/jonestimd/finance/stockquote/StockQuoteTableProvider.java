@@ -163,7 +163,7 @@ implements SecurityTableExtension, TableSummary {
 
     @Override
     protected Map<String, BigDecimal> getData(Collection<String> symbols) throws IOException {
-        return quoteService.getPrices(symbols);
+        return null; // quoteService.getPrices(symbols);
     }
 
     @Override
