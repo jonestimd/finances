@@ -21,13 +21,34 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import javax.swing.table.TableCellRenderer;
+
+import com.typesafe.config.Config;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 
 public interface FinancePlugin {
-    void initialize(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher);
+    void initialize(Config config, ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher);
 
     List<? extends SecurityTableExtension> getSecurityTableExtensions();
+
+    /**
+     * Get value type renderers.
+     * @return a map of value class to renderer.
+     */
+    default Map<Class<?>, TableCellRenderer> getTableCellRenderers() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * Get column specific table cell renderers.
+     * @return a map of column ID to renderer.
+     */
+    default Map<String, TableCellRenderer> getTableColumnRenderers() {
+        return Collections.emptyMap();
+    }
 }

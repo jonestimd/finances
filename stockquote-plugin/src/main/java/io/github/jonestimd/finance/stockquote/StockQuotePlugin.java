@@ -24,7 +24,10 @@ package io.github.jonestimd.finance.stockquote;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
+
+import javax.swing.table.TableCellRenderer;
 
 import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
@@ -33,8 +36,6 @@ import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 
-import static io.github.jonestimd.finance.config.ApplicationConfig.*;
-
 public class StockQuotePlugin implements FinancePlugin {
     private static final Map<String, StockQuoteServiceFactory> FACTORY_NAMES = ImmutableMap.of(
         "alphavantage", AlphaVantageQuoteService.FACTORY,
@@ -42,19 +43,21 @@ public class StockQuotePlugin implements FinancePlugin {
         "scraper", ScraperQuoteService.FACTORY,
         "quandl", QuandlQuoteService.FACTORY
     );
+    public static final ResourceBundle BUNDLE = ResourceBundle.getBundle("io.github.jonestimd.finance.stockquote.ComponentLabels");
+    private final TableCellRenderer stockQuoteRenderer = new StockQuoteTableCellRenderer();
+
     private List<? extends SecurityTableExtension> securityTableExtensions = Collections.emptyList();
 
     @Override
-    public void initialize(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
-        Config config = CONFIG.getConfig("finances.stockquote");
-//        boolean bulkQueries = config.getBoolean("bulkQueries");
+    public void initialize(Config appConfig, ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
+        Config config = appConfig.getConfig("finances.stockquote");
         List<StockQuoteService> quoteServices = config.getStringList("services").stream()
                 .map(FACTORY_NAMES::get)
                 .filter(factory -> factory.isEnabled(config))
                 .map(factory -> factory.create(config))
                 .collect(Collectors.toList());
         if (!quoteServices.isEmpty()) {
-            setExtension(new PriceTableProvider(new BackgroundQuoteService(config, quoteServices)));
+            setExtension(new StockQuoteTableProvider(new BackgroundQuoteService(config, quoteServices), domainEventPublisher));
         }
     }
 
@@ -65,5 +68,10 @@ public class StockQuotePlugin implements FinancePlugin {
     @Override
     public List<? extends SecurityTableExtension> getSecurityTableExtensions() {
         return securityTableExtensions;
+    }
+
+    @Override
+    public Map<Class<?>, TableCellRenderer> getTableCellRenderers() {
+        return Collections.singletonMap(StockQuote.class, stockQuoteRenderer);
     }
 }

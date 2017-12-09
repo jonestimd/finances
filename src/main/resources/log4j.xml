@@ -25,6 +25,9 @@
     <logger name="io.github.jonestimd.finance">
         <level value="debug"/>
     </logger>
+    <!--<logger name="io.github.jonestimd.finance.stockquote">-->
+        <!--<level value="warn"/>-->
+    <!--</logger>-->
     <logger name="io.github.jonestimd.finance.file.download">
         <appender-ref ref="download"/>
     </logger>

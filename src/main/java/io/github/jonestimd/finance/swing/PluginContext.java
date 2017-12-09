@@ -21,9 +21,14 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ServiceLoader;
 
+import javax.swing.table.TableCellRenderer;
+
 import com.google.common.collect.Iterables;
+import io.github.jonestimd.finance.config.ApplicationConfig;
 import io.github.jonestimd.finance.plugin.FinancePlugin;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
@@ -36,11 +41,23 @@ public class PluginContext {
     public PluginContext(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
         plugins = ServiceLoader.load(FinancePlugin.class);
         for (FinancePlugin plugin : plugins) {
-            plugin.initialize(serviceLocator, domainEventPublisher);
+            plugin.initialize(ApplicationConfig.CONFIG, serviceLocator, domainEventPublisher);
         }
     }
 
     public Iterable<SecurityTableExtension> getSecurityTableExtensions() {
         return Iterables.concat(Streams.map(plugins, FinancePlugin::getSecurityTableExtensions));
+    }
+
+    public Map<Class<?>, TableCellRenderer> getTableCellRenderers() {
+        Map<Class<?>, TableCellRenderer> renderers = new HashMap<>();
+        plugins.forEach(plugin -> renderers.putAll(plugin.getTableCellRenderers()));
+        return renderers;
+    }
+
+    public Map<String, TableCellRenderer> getTableColumnRenderers() {
+        Map<String, TableCellRenderer> renderers = new HashMap<>();
+        plugins.forEach(plugin -> renderers.putAll(plugin.getTableColumnRenderers()));
+        return renderers;
     }
 }

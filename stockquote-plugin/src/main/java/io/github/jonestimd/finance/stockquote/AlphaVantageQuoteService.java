@@ -29,13 +29,25 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import javax.json.JsonObject;
+import javax.swing.Icon;
 
 import com.typesafe.config.Config;
 import org.apache.log4j.Logger;
 
+/**
+ * Get security prices from Alpha Vantage.  Enabled by adding a valid API key in the application configuration.
+ * <pre>
+ * finances {
+ *   stockquote {
+ *     alphavantage {
+ *       apiKey = "your API key"
+ *     }
+ *   }
+ * }
+ * </pre>
+ */
 public class AlphaVantageQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
@@ -50,26 +62,44 @@ public class AlphaVantageQuoteService implements StockQuoteService {
     };
 
     private final Logger logger = Logger.getLogger(getClass());
+    private final Icon icon;
     private final String urlFormat;
-    private final List<String> symbolPath;
+    private final long minRequestPeriod;
     private final List<String> seriesPath;
     private final String priceKey;
     private final String errorKey;
+    private final List<String> symbolPath;
+    private volatile long nextRequestMs = System.currentTimeMillis();
 
     public AlphaVantageQuoteService(Config config) {
+        this.icon = new IconLoader(config).getIcon();
         this.urlFormat = config.getString("urlFormat").replaceAll("\\$\\{apiKey}", config.getString("apiKey"));
+        this.minRequestPeriod = config.getLong("minRequestPeriodMs");
         this.symbolPath = config.getStringList("symbolPath");
         this.seriesPath = config.getStringList("seriesPath");
         this.priceKey = config.getString("priceKey");
         this.errorKey = config.getString("errorKey");
     }
 
+    private void waitForNextRequest() {
+        while (nextRequestMs > System.currentTimeMillis()) {
+            try {
+                Thread.sleep(nextRequestMs - System.currentTimeMillis());
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        nextRequestMs = System.currentTimeMillis() + minRequestPeriod;
+    }
+
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
         for (String symbol : symbols) {
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
+            waitForNextRequest();
             try (InputStream stream = new URL(url).openStream()) {
-                callback.accept(getPrice(stream));
+                logger.debug("getting price for " + symbol);
+                callback.accept(getPrice(stream), url, icon, url);
             } catch (Exception ex) {
                 logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }

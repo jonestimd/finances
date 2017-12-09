@@ -30,12 +30,25 @@ import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import javax.swing.Icon;
 
 import com.typesafe.config.Config;
 import org.apache.log4j.Logger;
 
+/**
+ * Get security quotes from IEX.  Enabled by adding a flag in the application configuration.
+ * <pre>
+ * finances {
+ *   stockquote {
+ *     iextrading {
+ *       enabled = true
+ *     }
+ *   }
+ * }
+ * </pre>
+ */
 public class IexTradingQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
@@ -50,19 +63,23 @@ public class IexTradingQuoteService implements StockQuoteService {
     };
 
     private final Logger logger = Logger.getLogger(getClass());
+    private final String tooltip = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.tooltip");
+    private final String attributionUrl = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.url");
     private final String urlFormat;
     private final List<String> pricePath;
+    private final Icon icon;
 
     public IexTradingQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat");
         this.pricePath = config.getStringList("pricePath");
+        this.icon = new IconLoader(config).getIcon();
     }
 
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
         String url = urlFormat.replaceAll("\\$\\{symbols}", symbols.stream().map(this::encode).collect(Collectors.joining(",")));
         try (InputStream stream = new URL(url).openStream()) {
-            callback.accept(getPrices(stream));
+            callback.accept(getPrices(stream), attributionUrl, icon, tooltip);
         } catch (Exception ex) {
             logger.warn("error getting price from " + url + ": " + ex.getMessage());
         }

@@ -28,7 +28,8 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Consumer;
+
+import javax.swing.Icon;
 
 import com.typesafe.config.Config;
 import io.github.jonestimd.util.Streams;
@@ -37,6 +38,29 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+/**
+ * Extract a security quote from a web page using CSS selectors.  Multiple sources can be included in the
+ * application configuration.  A separate instance of this class is used for each configured source.
+ * <h3>Configuration format:</h3>
+ * <pre>
+ * finances {
+ *   stockquote {
+ *     scrapers = [{
+ *       urlFormat = "https://host/page?symbol=${symbol}"
+ *       iconUrl = "https://host/favicon.ico"
+ *       symbolSelector {
+ *         query = "#quote-data > meta[itemprop=tickerSymbol]"
+ *         attribute = "content" // optional: name of attribute containing the symbol, otherwise uses tag content
+ *       }
+ *       priceSelector {
+ *         query = "#quote-data > meta[itemprop=price]"
+ *         attribute = "content" // optional: name of attribute containing the price, otherwise uses tag content
+ *       }
+ *     }, ...]
+ *   }
+ * }
+ * </pre>
+ */
 public class ScraperQuoteService implements StockQuoteService {
     public static final String SCRAPER_LIST = "scrapers";
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
@@ -53,6 +77,7 @@ public class ScraperQuoteService implements StockQuoteService {
 
     private final Logger logger = Logger.getLogger(getClass());
     private final String urlFormat;
+    private final Icon sourceIcon;
     private final String symbolSelector;
     private final String symbolAttribute;
     private final String priceSelector;
@@ -64,6 +89,7 @@ public class ScraperQuoteService implements StockQuoteService {
 
     public ScraperQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat");
+        this.sourceIcon = new IconLoader(config).getIcon();
         this.symbolSelector = config.getString("symbolSelector.query");
         this.symbolAttribute = getOptionalString(config, "symbolSelector.attribute");
         this.priceSelector = config.getString("priceSelector.query");
@@ -71,12 +97,12 @@ public class ScraperQuoteService implements StockQuoteService {
     }
 
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
         for (String symbol : symbols) {
             logger.debug("getting price for " + symbol);
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
             try (InputStream stream = new URL(url).openStream()) {
-                callback.accept(getPrice(stream));
+                callback.accept(getPrice(stream), url, sourceIcon, url);
             } catch (Exception ex) {
                 logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }
@@ -86,6 +112,7 @@ public class ScraperQuoteService implements StockQuoteService {
     private Map<String, BigDecimal> getPrice(InputStream stream) throws IOException {
         Document document = Jsoup.parse(stream, "utf-8", urlFormat);
         String symbol = getString(document, symbolSelector, symbolAttribute);
+        if (symbol == null) throw new NullPointerException("Symbol not found");
         BigDecimal price = getNumber(document, priceSelector, priceAttribute);
         return Collections.singletonMap(symbol, price);
     }

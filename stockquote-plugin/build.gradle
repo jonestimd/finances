@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     compile rootProject
+    compile group: 'org.jclarion', name: 'image4j', version: '0.7'
 
     testCompile project( path: ':', configuration: 'testCompile' )
     testCompile files( rootProject.buildDir.absolutePath + '/classes/test' )

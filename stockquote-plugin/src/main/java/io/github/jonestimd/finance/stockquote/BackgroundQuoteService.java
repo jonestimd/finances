@@ -34,11 +34,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import com.typesafe.config.Config;
 import org.apache.log4j.Logger;
 
+/**
+ * Requests security quotes in a background thread.
+ */
 public class BackgroundQuoteService {
     private final Logger logger = Logger.getLogger(getClass());
     private final ExecutorService executorService;
@@ -89,9 +93,9 @@ public class BackgroundQuoteService {
             }
         }
 
-        private void updateUI(Map<String, BigDecimal> prices) {
+        private void updateUI(Map<String, BigDecimal> prices, String sourceUrl, Icon sourceIcon, String sourceMessage) {
             symbols.removeAll(prices.keySet());
-            SwingUtilities.invokeLater(() -> callback.accept(StockQuote.fromMap(prices)));
+            SwingUtilities.invokeLater(() -> callback.accept(StockQuote.fromMap(prices, sourceUrl, sourceIcon, sourceMessage)));
         }
     }
 }

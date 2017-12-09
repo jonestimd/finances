@@ -1,0 +1,9 @@
+{
+  "Meta Data": {
+    "1. Symbol": "S1"
+  },
+  "Time Series (Daily)": {
+    "2016-12-01": {"2. close": "old price"},
+    "2016-12-02": {"2. close": "87.65"}
+  }
+}

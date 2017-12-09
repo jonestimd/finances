@@ -23,6 +23,7 @@ package io.github.jonestimd.finance.stockquote;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.math.BigDecimal;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -32,16 +33,25 @@ import io.github.jonestimd.finance.stockquote.StockQuote.QuoteStatus;
 public class StockQuoteTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (value instanceof StockQuote) {
             StockQuote quote = (StockQuote) value;
             if (quote.getStatus() == QuoteStatus.SUCCESSFUL) {
                 setHorizontalAlignment(RIGHT);
-                return super.getTableCellRendererComponent(table, "$" + quote.getPrice(), isSelected, hasFocus, row, column);
+                setHorizontalTextPosition(LEADING);
+                String price = "$" + quote.getPrice().setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+                if (quote.getSourceUrl() == null) setValue(price);
+                else setValue(String.format("<html><a href=\"%s\">%s</a></html>", quote.getSourceUrl(), price));
+                setIcon(quote.getSourceIcon());
+                setToolTipText(quote.getSourceMessage());
             }
-            setHorizontalAlignment(CENTER);
-            setForeground(Color.gray);
-            return super.getTableCellRendererComponent(table, quote.getStatus().value, isSelected, hasFocus, row, column);
+            else {
+                setIcon(null);
+                setHorizontalAlignment(CENTER);
+                setForeground(Color.gray);
+                setValue(quote.getStatus().value);
+            }
         }
-        return super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+        return this;
     }
 }

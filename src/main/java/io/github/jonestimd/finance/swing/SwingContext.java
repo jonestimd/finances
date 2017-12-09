@@ -33,13 +33,12 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
+import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
-import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.account.AccountsPanel;
 import io.github.jonestimd.finance.swing.account.CompanyFormat;
@@ -96,8 +95,9 @@ public class SwingContext {
     }
 
     private Map<Class<?>, TableCellRenderer> defaultTableRenderers() {
-        return ImmutableMap.<Class<?>, TableCellRenderer>builder()
-                .put(Date.class, new DateTableCellRenderer(labelBundle.getString("format.date.pattern")))
+        MapBuilder<Class<?>, TableCellRenderer> builder = new MapBuilder<>();
+        pluginContext.getTableCellRenderers().forEach(builder::put);
+        return builder.put(Date.class, new DateTableCellRenderer(labelBundle.getString("format.date.pattern")))
                 .put(BigDecimal.class, new CurrencyTableCellRenderer(FormatFactory.currencyFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(Payee.class, new FormatTableCellRenderer(new PayeeFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(Security.class, new FormatTableCellRenderer(new SecurityFormat(), FinanceTableFactory.HIGHLIGHTER))
@@ -105,7 +105,7 @@ public class SwingContext {
                 .put(TransactionGroup.class, new FormatTableCellRenderer(new TransactionGroupFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(Company.class, new FormatTableCellRenderer(new CompanyFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(NotificationIcon.class, new NotificationIconTableCellRenderer())
-                .put(String.class, new HighlightTableCellRenderer(FinanceTableFactory.HIGHLIGHTER)).build();
+                .put(String.class, new HighlightTableCellRenderer(FinanceTableFactory.HIGHLIGHTER)).get();
     }
 
     private Map<Class<?>, Supplier<TableCellEditor>> defaultTableEditors() {
@@ -118,12 +118,9 @@ public class SwingContext {
     }
 
     private Map<String, TableCellRenderer> columnRenderers() {
-        Builder<String, TableCellRenderer> builder = ImmutableMap.<String, TableCellRenderer>builder()
-                .put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER));
-        for (SecurityTableExtension extension : pluginContext.getSecurityTableExtensions()) {
-            builder.putAll(extension.getTableCellRenderers());
-        }
-        return builder.build();
+        MapBuilder<String, TableCellRenderer> builder = new MapBuilder<>();
+        pluginContext.getTableColumnRenderers().forEach(builder::put);
+        return builder.put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER)).get();
     }
 
     private void buildTransactionsPanelFactory() {

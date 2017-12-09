@@ -47,7 +47,7 @@ dependencies {
     compile( group: 'org.jsoup', name: 'jsoup', version: '1.8.1' )
     compile( group: 'org.glassfish', name: 'javax.json', version: '1.0.4' )
     compile( group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
-    compile( group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.1')
+    compile( group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.2-SNAPSHOT')
     compile( group: 'com.typesafe', name: 'config', version: '1.3.0')
 
     runtime( group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernateVersion ) {
@@ -127,7 +127,13 @@ def licenseFile = copySpec {
     }
 }
 
-task distZip(overwrite: true, type: Zip, dependsOn: [jar, ':stockquote-plugin:jar']) {
+task pluginDependencies(type: Copy) {
+    from childProjects['stockquote-plugin'].configurations.compile.files
+    into "$buildDir/plugins"
+    exclude { it.file in configurations.runtime.resolve() }
+}
+
+task distZip(overwrite: true, type: Zip, dependsOn: [jar, ':stockquote-plugin:jar', pluginDependencies]) {
     includeEmptyDirs = false
     into 'finances'
     from(['package/linux', 'package/windows']) {
@@ -154,7 +160,7 @@ task prepareMsi(overwrite: true, type: Copy, dependsOn: [jar, ':stockquote-plugi
     with dependencyJars
 }
 
-task distMsi(type: Exec, dependsOn: 'prepareMsi') {
+task distMsi(type: Exec, dependsOn: ['prepareMsi', pluginDependencies]) {
     workingDir project.rootDir
     commandLine 'javapackager', '-deploy', '-verbose', '-native', 'msi', '-name', 'Finances',
             '-outdir', 'build\\distributions', '-outfile', 'finances',
@@ -166,7 +172,7 @@ task distMsi(type: Exec, dependsOn: 'prepareMsi') {
             '-Bicon=finances.ico', '-Bwin.menuGroup=Finances'
 }
 
-task distDeb(type: Deb, dependsOn: [jar, ':stockquote-plugin:jar']) {
+task distDeb(type: Deb, dependsOn: [jar, ':stockquote-plugin:jar', pluginDependencies]) {
     release '1'
     url 'https://github.com/jonestimd/finances'
     maintainer 'jonestimd@users.noreply.github.com'

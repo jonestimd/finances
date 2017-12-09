@@ -21,16 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
-import java.util.Collections;
-import java.util.Map;
-
-import javax.swing.table.TableCellRenderer;
-
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.swing.table.model.TableDataProvider;
 
 public interface SecurityTableExtension extends TableDataProvider<SecuritySummary> {
-    default Map<String, TableCellRenderer> getTableCellRenderers() { // TODO move to swing extensions
-        return Collections.emptyMap();
-    }
 }

@@ -29,13 +29,25 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import javax.json.JsonArray;
+import javax.swing.Icon;
 
 import com.typesafe.config.Config;
 import org.apache.log4j.Logger;
 
+/**
+ * Get security prices from Quandl.  Enabled by adding a valid API key in the application configuration.
+ * <pre>
+ * finances {
+ *   stockquote {
+ *     quandl {
+ *       apiKey = "your API key"
+ *     }
+ *   }
+ * }
+ * </pre>
+ */
 public class QuandlQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
@@ -51,6 +63,7 @@ public class QuandlQuoteService implements StockQuoteService {
 
     private final Logger logger = Logger.getLogger(getClass());
     private final String urlFormat;
+    private final Icon icon;
     private final List<String> symbolPath;
     private final List<String> columnsPath;
     private final List<String> tablePath;
@@ -58,6 +71,7 @@ public class QuandlQuoteService implements StockQuoteService {
 
     public QuandlQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat").replaceAll("\\$\\{apiKey}", config.getString("apiKey"));
+        this.icon = new IconLoader(config).getIcon();
         this.symbolPath = config.getStringList("symbolPath");
         this.columnsPath = config.getStringList("columnsPath");
         this.tablePath = config.getStringList("tablePath");
@@ -65,11 +79,11 @@ public class QuandlQuoteService implements StockQuoteService {
     }
 
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
         for (String symbol : symbols) {
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
             try (InputStream stream = new URL(url).openStream()) {
-                callback.accept(getPrice(stream));
+                callback.accept(getPrice(stream), url, icon, url);
             } catch (Exception ex) {
                 logger.warn("error getting price from " + url + ": " + ex.getMessage());
             }

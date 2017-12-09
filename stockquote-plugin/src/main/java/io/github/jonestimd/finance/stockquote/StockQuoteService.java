@@ -25,8 +25,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
+
+import javax.swing.Icon;
 
 public interface StockQuoteService {
-    void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException;
+    interface Callback {
+        void accept(Map<String, BigDecimal> prices, String sourceUrl, Icon sourceIcon, String sourceMessage);
+    }
+
+    void getPrices(Collection<String> symbols, Callback callback) throws IOException;
 }

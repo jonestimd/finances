@@ -22,14 +22,15 @@
 package io.github.jonestimd.finance.stockquote;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
+/**
+ * Requests security quotes from a series of services.  The services are tried in order and any quotes not
+ * returned by a service are requested from the next service in the list.
+ */
 public class HierarchicalQuoteService implements StockQuoteService {
     private final List<? extends StockQuoteService> quoteServices;
 
@@ -38,12 +39,12 @@ public class HierarchicalQuoteService implements StockQuoteService {
     }
 
     @Override
-    public void getPrices(Collection<String> symbols, Consumer<Map<String, BigDecimal>> callback) throws IOException {
+    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
         Set<String> remaining = new HashSet<>(symbols);
         for (StockQuoteService quoteService : quoteServices) {
-            quoteService.getPrices(new HashSet<>(remaining), (prices) -> {
+            quoteService.getPrices(new HashSet<>(remaining), (prices, sourceUrl, sourceIcon, sourceMessage) -> {
                 remaining.removeAll(prices.keySet());
-                callback.accept(prices);
+                callback.accept(prices, sourceUrl, sourceIcon, sourceMessage);
             });
             if (remaining.isEmpty()) break;
         }
