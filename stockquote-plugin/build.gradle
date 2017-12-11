@@ -3,7 +3,7 @@ apply plugin: 'java'
 //compileJava.sourceCompatibility = 1.8
 compileJava.targetCompatibility = 1.8
 group = 'io.github.jonestimd'
-version = '0.7-SNAPSHOT'
+version = '1.0'
 
 repositories {
     mavenCentral()
