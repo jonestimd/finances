@@ -190,7 +190,7 @@ task distDeb(type: Deb, dependsOn: [jar, ':stockquote-plugin:jar', pluginDepende
     into('/opt/finances')
 
     from(project.libsDir)
-    from("${project.buildDir}/plugins") {
+    from childRuntime('stockquote-plugin'), {
         into 'plugins'
     }
     from('package/linux') {
