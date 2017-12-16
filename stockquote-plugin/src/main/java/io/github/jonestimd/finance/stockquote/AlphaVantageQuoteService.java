@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.json.JsonObject;
 import javax.swing.Icon;
@@ -51,17 +52,19 @@ import org.apache.log4j.Logger;
 public class AlphaVantageQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
-        public boolean isEnabled(Config config) {
-            return config.hasPath("alphavantage.apiKey");
-        }
-
-        @Override
-        public StockQuoteService create(Config config) {
-            return new AlphaVantageQuoteService(config.getConfig("alphavantage"));
+        public Optional<StockQuoteService> create(Config config) {
+            try {
+                if (config.hasPath("alphavantage.apiKey")) {
+                    return Optional.of(new AlphaVantageQuoteService(config.getConfig("alphavantage")));
+                }
+            } catch (Exception ex) {
+                logger.warn("Failed to initialize the Alpha Vantage service client", ex);
+            }
+            return Optional.empty();
         }
     };
 
-    private final Logger logger = Logger.getLogger(getClass());
+    private static final Logger logger = Logger.getLogger(AlphaVantageQuoteService.class);
     private final Icon icon;
     private final String urlFormat;
     private final long minRequestPeriod;

@@ -8,6 +8,7 @@ import javax.swing.Icon;
 import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import io.github.jonestimd.collection.MapBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,20 +28,20 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
     private StockQuoteService.Callback callback;
 
     @Test
-    public void enabledByFlagInConfig() throws Exception {
+    public void disabledForIncompleteConfig() throws Exception {
         Config config = ConfigFactory.parseMap(Collections.singletonMap("iextrading.enabled", "true"));
 
-        assertThat(IexTradingQuoteService.FACTORY.isEnabled(config)).isTrue();
+        assertThat(IexTradingQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void disabledByDefault() throws Exception {
-        assertThat(IexTradingQuoteService.FACTORY.isEnabled(getConfig())).isFalse();
+        assertThat(IexTradingQuoteService.FACTORY.create(ConfigFactory.load().getConfig("finances.stockquote"))).isEmpty();
     }
 
     @Test
     public void factoryCreatesIexTradingService() throws Exception {
-        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig()).get();
 
         assertThat(service).isInstanceOf(IexTradingQuoteService.class);
     }
@@ -49,7 +50,7 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
     public void getPricesInvokesCallback() throws Exception {
         String url = BUNDLE.getString("quote.service.iex.attribution.url");
         String message = BUNDLE.getString("quote.service.iex.attribution.tooltip");
-        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(ImmutableList.of("S1", "S2"), callback);
 
@@ -60,7 +61,7 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
 
     @Test
     public void getPricesDoesNotInvokesCallbackOnError() throws Exception {
-        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(ImmutableList.of("S1", "S3"), callback);
 
@@ -70,6 +71,7 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
     private Config getConfig() {
         return ConfigFactory.load().getConfig("finances.stockquote")
                 .withValue("iextrading.urlFormat", fromAnyRef(getUrl("iextrading-${symbols}.json")))
-                .withValue("iextrading.iconUrl", fromAnyRef(getUrl("icon-16x16.png")));
+                .withValue("iextrading.iconUrl", fromAnyRef(getUrl("icon-16x16.png")))
+                .withValue("iextrading.enabled", ConfigValueFactory.fromAnyRef(true));
     }
 }

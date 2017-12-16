@@ -22,24 +22,24 @@ public class ScraperQuoteServiceTest extends HttpServerTest {
     private StockQuoteService.Callback callback;
 
     @Test
-    public void isEnabledWhenScrapersIsNotEmpty() throws Exception {
+    public void isDisabledForIncompleteConfig() throws Exception {
         Config config = ConfigFactory.parseString("{scrapers = [{urlFormat = \"http://localhost\"}]}");
 
-        assertThat(ScraperQuoteService.FACTORY.isEnabled(config)).isTrue();
+        assertThat(ScraperQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void isDisabledWhenScrapersIsMissing() throws Exception {
         Config config = ConfigFactory.empty();
 
-        assertThat(ScraperQuoteService.FACTORY.isEnabled(config)).isFalse();
+        assertThat(ScraperQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void isDisabledWhenScrapersIsEmpty() throws Exception {
         Config config = ConfigFactory.parseString("{scrapers = []}");
 
-        assertThat(ScraperQuoteService.FACTORY.isEnabled(config)).isFalse();
+        assertThat(ScraperQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
@@ -47,7 +47,7 @@ public class ScraperQuoteServiceTest extends HttpServerTest {
         Config scraper = getConfig("#quote > span:nth-child(2)");
         Config config = ConfigFactory.parseMap(singletonMap("scrapers", ConfigValueFactory.fromIterable(singleton(scraper.root()))));
 
-        StockQuoteService service = ScraperQuoteService.FACTORY.create(config);
+        StockQuoteService service = ScraperQuoteService.FACTORY.create(config).get();
 
         assertThat(service).isInstanceOf(HierarchicalQuoteService.class);
     }

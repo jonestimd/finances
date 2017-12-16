@@ -23,23 +23,23 @@ public class QuandlQuoteServiceTest extends HttpServerTest {
     private StockQuoteService.Callback callback;
 
     @Test
-    public void enabledForConfigWithApiKey() throws Exception {
+    public void disabledForIncompleteConfig() throws Exception {
         Config config = ConfigFactory.parseMap(Collections.singletonMap("quandl.apiKey", "key"))
                 .withValue("quandl.iconUrl", fromAnyRef(getUrl("icon-16x16.png")));
 
-        assertThat(QuandlQuoteService.FACTORY.isEnabled(config)).isTrue();
+        assertThat(QuandlQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void disabledForConfigWithoutApiKey() throws Exception {
         Config config = ConfigFactory.empty();
 
-        assertThat(QuandlQuoteService.FACTORY.isEnabled(config)).isFalse();
+        assertThat(QuandlQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void factoryCreatesQuandlService() throws Exception {
-        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig()).get();
 
         assertThat(service).isInstanceOf(QuandlQuoteService.class);
     }
@@ -47,7 +47,7 @@ public class QuandlQuoteServiceTest extends HttpServerTest {
     @Test
     public void getPricesInvokesCallback() throws Exception {
         String url = getUrl("quandl-S1.json");
-        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
@@ -56,7 +56,7 @@ public class QuandlQuoteServiceTest extends HttpServerTest {
 
     @Test
     public void getPricesDoesNotInvokeCallbackWhenNoPrice() throws Exception {
-        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = QuandlQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(Collections.singletonList("S2"), callback);
 

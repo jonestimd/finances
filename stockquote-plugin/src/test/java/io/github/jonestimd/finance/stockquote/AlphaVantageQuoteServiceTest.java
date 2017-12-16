@@ -2,6 +2,7 @@ package io.github.jonestimd.finance.stockquote;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Optional;
 
 import javax.swing.Icon;
 
@@ -23,31 +24,31 @@ public class AlphaVantageQuoteServiceTest extends HttpServerTest {
     private StockQuoteService.Callback callback;
 
     @Test
-    public void enabledForConfigWithApiKey() throws Exception {
+    public void disabledForIncompleteConfig() throws Exception {
         Config config = ConfigFactory.parseMap(Collections.singletonMap("alphavantage.apiKey", "key"))
                 .withValue("alphavantage.iconUrl", fromAnyRef(getUrl("icon-16x16.png")));
 
-        assertThat(AlphaVantageQuoteService.FACTORY.isEnabled(config)).isTrue();
+        assertThat(AlphaVantageQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void disabledForConfigWithoutApiKey() throws Exception {
         Config config = ConfigFactory.empty();
 
-        assertThat(AlphaVantageQuoteService.FACTORY.isEnabled(config)).isFalse();
+        assertThat(AlphaVantageQuoteService.FACTORY.create(config)).isEmpty();
     }
 
     @Test
     public void factoryCreatesAlphaVantageService() throws Exception {
-        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig());
+        Optional<StockQuoteService> service = AlphaVantageQuoteService.FACTORY.create(getConfig());
 
-        assertThat(service).isInstanceOf(AlphaVantageQuoteService.class);
+        assertThat(service.get()).isInstanceOf(AlphaVantageQuoteService.class);
     }
 
     @Test
     public void getPricesInvokesCallback() throws Exception {
         String url = getUrl("alphavantage-S1.json");
-        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
@@ -56,7 +57,7 @@ public class AlphaVantageQuoteServiceTest extends HttpServerTest {
 
     @Test
     public void getPricesDoesNotInvokeCallbackForErrorResponse() throws Exception {
-        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(Collections.singletonList("S3"), callback);
 
@@ -65,7 +66,7 @@ public class AlphaVantageQuoteServiceTest extends HttpServerTest {
 
     @Test
     public void getPricesDoesNotInvokeCallbackForNotFound() throws Exception {
-        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig());
+        StockQuoteService service = AlphaVantageQuoteService.FACTORY.create(getConfig()).get();
 
         service.getPrices(Collections.singletonList("S2"), callback);
 

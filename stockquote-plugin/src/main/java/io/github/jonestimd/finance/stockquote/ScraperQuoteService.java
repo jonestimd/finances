@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.Icon;
 
@@ -63,17 +64,19 @@ public class ScraperQuoteService implements StockQuoteService {
     public static final String SCRAPER_LIST = "scrapers";
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
-        public boolean isEnabled(Config config) {
-            return config.hasPath(SCRAPER_LIST) && ! config.getConfigList("scrapers").isEmpty();
-        }
-
-        @Override
-        public StockQuoteService create(Config config) {
-            return new HierarchicalQuoteService(Streams.map(config.getConfigList(SCRAPER_LIST), ScraperQuoteService::new));
+        public Optional<StockQuoteService> create(Config config) {
+            try {
+                if (config.hasPath(SCRAPER_LIST) && ! config.getConfigList("scrapers").isEmpty()) {
+                    return Optional.of(new HierarchicalQuoteService(Streams.map(config.getConfigList(SCRAPER_LIST), ScraperQuoteService::new)));
+                }
+            } catch (Exception ex) {
+                logger.warn("Failed to initialize the quote scraper", ex);
+            }
+            return Optional.empty();
         }
     };
 
-    private final Logger logger = Logger.getLogger(getClass());
+    private static final Logger logger = Logger.getLogger(ScraperQuoteService.class);
     private final String urlFormat;
     private final Icon sourceIcon;
     private final PriceExtractor priceExtractor;

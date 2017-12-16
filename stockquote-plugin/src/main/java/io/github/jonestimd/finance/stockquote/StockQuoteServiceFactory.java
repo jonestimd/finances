@@ -21,9 +21,10 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.stockquote;
 
+import java.util.Optional;
+
 import com.typesafe.config.Config;
 
 public interface StockQuoteServiceFactory {
-    boolean isEnabled(Config config);
-    StockQuoteService create(Config config);
+    Optional<StockQuoteService> create(Config config);
 }

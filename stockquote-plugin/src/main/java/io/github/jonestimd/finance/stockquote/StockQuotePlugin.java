@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.stockquote;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -52,9 +53,9 @@ public class StockQuotePlugin implements FinancePlugin {
     public void initialize(Config appConfig, ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher) {
         Config config = appConfig.getConfig("finances.stockquote");
         List<StockQuoteService> quoteServices = config.getStringList("services").stream()
-                .map(FACTORY_NAMES::get)
-                .filter(factory -> factory.isEnabled(config))
-                .map(factory -> factory.create(config))
+                .map(name -> FACTORY_NAMES.get(name).create(config))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
         if (!quoteServices.isEmpty()) {
             setExtension(new StockQuoteTableProvider(new BackgroundQuoteService(config, quoteServices), domainEventPublisher));

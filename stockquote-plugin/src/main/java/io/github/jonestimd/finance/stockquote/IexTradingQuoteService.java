@@ -30,6 +30,7 @@ import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -52,17 +53,19 @@ import org.apache.log4j.Logger;
 public class IexTradingQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
-        public boolean isEnabled(Config config) {
-            return config.getBoolean("iextrading.enabled");
-        }
-
-        @Override
-        public StockQuoteService create(Config config) {
-            return new IexTradingQuoteService(config.getConfig("iextrading"));
+        public Optional<StockQuoteService> create(Config config) {
+            try {
+                if (config.getBoolean("iextrading.enabled")) {
+                    return Optional.of(new IexTradingQuoteService(config.getConfig("iextrading")));
+                }
+            } catch (Exception ex) {
+                logger.warn("Failed to initialize the IEX service client", ex);
+            }
+            return Optional.empty();
         }
     };
 
-    private final Logger logger = Logger.getLogger(getClass());
+    private static final Logger logger = Logger.getLogger(IexTradingQuoteService.class);
     private final String tooltip = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.tooltip");
     private final String attributionUrl = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.url");
     private final String urlFormat;

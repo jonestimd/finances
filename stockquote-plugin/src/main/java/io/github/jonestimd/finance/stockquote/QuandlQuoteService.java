@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.json.JsonArray;
 import javax.swing.Icon;
@@ -51,17 +52,17 @@ import org.apache.log4j.Logger;
 public class QuandlQuoteService implements StockQuoteService {
     public static final StockQuoteServiceFactory FACTORY = new StockQuoteServiceFactory() {
         @Override
-        public boolean isEnabled(Config config) {
-            return config.hasPath("quandl.apiKey");
-        }
-
-        @Override
-        public StockQuoteService create(Config config) {
-            return new QuandlQuoteService(config.getConfig("quandl"));
+        public Optional<StockQuoteService> create(Config config) {
+            try {
+                return Optional.of(new QuandlQuoteService(config.getConfig("quandl")));
+            } catch (Exception ex) {
+                logger.warn("Failed to initialize the Quandl service client", ex);
+            }
+            return Optional.empty();
         }
     };
 
-    private final Logger logger = Logger.getLogger(getClass());
+    private static final Logger logger = Logger.getLogger(QuandlQuoteService.class);
     private final String urlFormat;
     private final Icon icon;
     private final List<String> symbolPath;
