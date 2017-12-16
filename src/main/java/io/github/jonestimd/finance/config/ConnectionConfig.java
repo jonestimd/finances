@@ -27,8 +27,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.*;
-import java.util.*;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -62,7 +73,7 @@ public class ConnectionConfig {
     }
 
     public Optional<Config> get(String path) {
-        return config.hasPath(path) ? Optional.of(config.getConfig(path)) : Optional.empty();
+        return ConfigUtils.get(config, path);
     }
 
     public ConnectionConfig addPath(String path, Config config) {

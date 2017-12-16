@@ -36,7 +36,6 @@ import io.github.jonestimd.util.Streams;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 
 /**
  * Extract a security quote from a web page using CSS selectors.  Multiple sources can be included in the
@@ -48,13 +47,12 @@ import org.jsoup.select.Elements;
  *     scrapers = [{
  *       urlFormat = "https://host/page?symbol=${symbol}"
  *       iconUrl = "https://host/favicon.ico"
- *       symbolSelector {
- *         query = "#quote-data > meta[itemprop=tickerSymbol]"
- *         attribute = "content" // optional: name of attribute containing the symbol, otherwise uses tag content
- *       }
- *       priceSelector {
- *         query = "#quote-data > meta[itemprop=price]"
- *         attribute = "content" // optional: name of attribute containing the price, otherwise uses tag content
+ *       price {
+ *         format = "#,##0.0#" // optional format for parsing the value
+ *         selector {
+ *           query = "#quote-data > meta[itemprop=price]"
+ *           attribute = "content" // optional: name of attribute containing the price, otherwise uses tag content
+ *         }
  *       }
  *     }, ...]
  *   }
@@ -78,22 +76,12 @@ public class ScraperQuoteService implements StockQuoteService {
     private final Logger logger = Logger.getLogger(getClass());
     private final String urlFormat;
     private final Icon sourceIcon;
-    private final String symbolSelector;
-    private final String symbolAttribute;
-    private final String priceSelector;
-    private final String priceAttribute;
-
-    private static String getOptionalString(Config config, String path) {
-        return config.hasPath(path) ? config.getString(path) : null;
-    }
+    private final PriceExtractor priceExtractor;
 
     public ScraperQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat");
         this.sourceIcon = new IconLoader(config).getIcon();
-        this.symbolSelector = config.getString("symbolSelector.query");
-        this.symbolAttribute = getOptionalString(config, "symbolSelector.attribute");
-        this.priceSelector = config.getString("priceSelector.query");
-        this.priceAttribute = getOptionalString(config, "priceSelector.attribute");
+        this.priceExtractor = new PriceExtractor(config.getConfig("price"));
     }
 
     @Override
@@ -102,29 +90,16 @@ public class ScraperQuoteService implements StockQuoteService {
             logger.debug("getting price for " + symbol);
             String url = urlFormat.replaceAll("\\$\\{symbol}", symbol);
             try (InputStream stream = new URL(url).openStream()) {
-                callback.accept(getPrice(stream), url, sourceIcon, url);
+                callback.accept(getPrice(symbol, stream), url, sourceIcon, url);
             } catch (Exception ex) {
-                logger.warn("error getting price from " + url + ": " + ex.getMessage());
+                logger.warn("error getting price from " + url + ": " + ex);
             }
         }
     }
 
-    private Map<String, BigDecimal> getPrice(InputStream stream) throws IOException {
+    private Map<String, BigDecimal> getPrice(String symbol, InputStream stream) throws IOException {
         Document document = Jsoup.parse(stream, "utf-8", urlFormat);
-        String symbol = getString(document, symbolSelector, symbolAttribute);
-        if (symbol == null) throw new NullPointerException("Symbol not found");
-        BigDecimal price = getNumber(document, priceSelector, priceAttribute);
+        BigDecimal price = priceExtractor.getValue(document);
         return Collections.singletonMap(symbol, price);
-    }
-
-    private BigDecimal getNumber(Document document, String selector, String attribute) {
-        String string = getString(document, selector, attribute);
-        return string == null ? null : new BigDecimal(string);
-    }
-
-    private String getString(Document document, String selector, String attribute) {
-        Elements elements = document.select(selector);
-        if (elements.isEmpty()) return null;
-        return attribute == null ? elements.get(0).text() : elements.get(0).attr(attribute);
     }
 }

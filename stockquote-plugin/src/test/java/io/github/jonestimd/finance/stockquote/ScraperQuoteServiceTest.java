@@ -44,7 +44,7 @@ public class ScraperQuoteServiceTest extends HttpServerTest {
 
     @Test
     public void factoryCreatesHierarchicalService() throws Exception {
-        Config scraper = getConfig("#quote > span:nth-child(1)", "#quote > span:nth-child(2)");
+        Config scraper = getConfig("#quote > span:nth-child(2)");
         Config config = ConfigFactory.parseMap(singletonMap("scrapers", ConfigValueFactory.fromIterable(singleton(scraper.root()))));
 
         StockQuoteService service = ScraperQuoteService.FACTORY.create(config);
@@ -55,7 +55,7 @@ public class ScraperQuoteServiceTest extends HttpServerTest {
     @Test
     public void getPricesUsesTagContent() throws Exception {
         String url = getUrl("quote-S1.html");
-        ScraperQuoteService service = new ScraperQuoteService(getConfig("#quote > span:nth-child(1)", "#quote > span:nth-child(2)"));
+        ScraperQuoteService service = new ScraperQuoteService(getConfig("#quote > span:nth-child(2)"));
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
@@ -65,43 +65,32 @@ public class ScraperQuoteServiceTest extends HttpServerTest {
     @Test
     public void getPricesUsesAttributes() throws Exception {
         String url = getUrl("quote-S1.html");
-        Config config = getConfig("#quote > meta[itemprop=symbol]", "content", "#quote > meta[itemprop=price]", "content");
+        Config config = getConfig("#quote > meta[itemprop=price]", "content");
         ScraperQuoteService service = new ScraperQuoteService(config);
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
-        verify(callback).accept(singletonMap("S-1", new BigDecimal("15.00")), url, IconLoader.DEFAULT_ICON, url);
-    }
-
-    @Test
-    public void callbackNotInvokedWhenSymbolNotFound() throws Exception {
-        ScraperQuoteService service = new ScraperQuoteService(getConfig("#quote > span:nth-child(3)", "#quote > span:nth-child(2)"));
-
-        service.getPrices(Collections.singletonList("S1"), callback);
-
-        verifyZeroInteractions(callback);
+        verify(callback).accept(singletonMap("S1", new BigDecimal("15.00")), url, IconLoader.DEFAULT_ICON, url);
     }
 
     @Test
     public void callbackNotifiedWhenPriceNotFound() throws Exception {
         String url = getUrl("quote-S1.html");
-        ScraperQuoteService service = new ScraperQuoteService(getConfig("#quote > span:nth-child(1)", "#quote > span:nth-child(3)"));
+        ScraperQuoteService service = new ScraperQuoteService(getConfig("#quote > span:nth-child(3)"));
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
         verify(callback).accept(singletonMap("S1", null), url, IconLoader.DEFAULT_ICON, url);
     }
 
-    private Config getConfig(String symbolQuery, String symbolAttr, String priceQuery, String priceAttr) {
-        return getConfig(symbolQuery, priceQuery).withValue("priceSelector.attribute", ConfigValueFactory.fromAnyRef(priceAttr))
-                .withValue("symbolSelector.attribute", ConfigValueFactory.fromAnyRef(symbolAttr));
+    private Config getConfig(String priceQuery, String priceAttr) {
+        return getConfig(priceQuery).withValue("price.selector.attribute", ConfigValueFactory.fromAnyRef(priceAttr));
     }
 
-    private Config getConfig(String symbolQuery, String priceQuery) {
+    private Config getConfig(String priceQuery) {
         return  ConfigFactory.parseMap(ImmutableMap.of(
                 "urlFormat", getUrl("quote-${symbol}.html"),
-                "symbolSelector.query", symbolQuery,
-                "priceSelector.query", priceQuery
+                "price.selector.query", priceQuery
         ));
     }
 }
