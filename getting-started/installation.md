@@ -11,11 +11,11 @@ instructions are in the following sections.  The application requires a Java 8
 or newer runtime environment (JRE).  A JRE is included with the Windows `.msi`
 file.  A JRE must be installed separately for the other download types.
 
-* Linux: [finances_1.0-1_all.deb](https://github.com/jonestimd/finances/releases/download/v1.0/finances_1.0-1_all.deb)
+* Linux: [finances_1.2-1_all.deb](https://github.com/jonestimd/finances/releases/download/v1.2/finances_1.2-1_all.deb)
   (requires an installed JRE)
-* Windows: [finances-1.0.msi](https://github.com/jonestimd/finances/releases/download/v1.0/finances-1.0.msi)
+* Windows: [finances-1.2.msi](https://github.com/jonestimd/finances/releases/download/v1.2/finances-1.2.msi)
   (includes Oracle JRE)
-* Manual install: [finances-1.0.zip](https://github.com/jonestimd/finances/releases/download/v1.0/finances-1.0.zip)
+* Manual install: [finances-1.2.zip](https://github.com/jonestimd/finances/releases/download/v1.2/finances-1.2.zip)
   (requires an installed JRE)
 
 ## Linux
@@ -28,13 +28,13 @@ sudo apt-get install openjdk-8-jre
 The following command can be used to install the `.deb` file.  After installation,
 the application will be available in the start menu in the `Office` category.
 ```sh
-sudo dpkg -i finances_1.0-1_all.deb
+sudo dpkg -i finances_1.2-1_all.deb
 ```
 
 For distributions that don't support `.deb` files, the following commands
 will install the application in `/opt` and add an entry to the start menu.
 ```sh
-sudo unzip finances-1.0.zip -d /opt
+sudo unzip finances-1.2.zip -d /opt
 cd /usr/local/share/applications
 sudo ln -s /opt/finances/Finances.desktop .
 ```
@@ -50,5 +50,5 @@ Use the following steps to install using the `.zip` files.
 * Add a shortcut to the *Start* menu using the included `finances.ico`
   file as the icon and the following format for the target
   <pre class="highlight">
-  java -jar "<em>&lt;install dir&gt;</em>\finances\finances-1.0.jar"
+  java -jar "<em>&lt;install dir&gt;</em>\finances\finances-1.2.jar"
   </pre>
