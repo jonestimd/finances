@@ -54,7 +54,9 @@ public class QuandlQuoteService implements StockQuoteService {
         @Override
         public Optional<StockQuoteService> create(Config config) {
             try {
-                return Optional.of(new QuandlQuoteService(config.getConfig("quandl")));
+                if (config.hasPath("quandl.apiKey")) {
+                    return Optional.of(new QuandlQuoteService(config.getConfig("quandl")));
+                }
             } catch (Exception ex) {
                 logger.warn("Failed to initialize the Quandl service client", ex);
             }
