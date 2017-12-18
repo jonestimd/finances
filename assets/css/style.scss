@@ -189,6 +189,12 @@ img.screen-shot {
   cursor: zoom-in;
 }
 
+img.screen-shot.left {
+    float: unset;
+    display: block;
+    margin-left: 0;
+}
+
 img.button {
   display: inline;
   background-color: #ccc;

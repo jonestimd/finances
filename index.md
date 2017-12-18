@@ -43,24 +43,35 @@ for the sale can also be selected from prior purchase transactions.
 ## Application windows
 The application includes the following windows for viewing and editing the data.
 
-![]({{ "/assets/images/accounts-icon.png" | relative_url }}){:.icon} Accounts
-: Displays all of the accounts and their properties.
+![]({{ "/assets/images/accounts-icon.png" | relative_url }}){:.icon} **Accounts**
+Displays all of the accounts and their properties.
+<img class="screen-shot left" src="windows/accounts/accounts-window.png" width="379" title="Accounts Window"
+     alt="Accounts Window"/>
 
-![]({{ "/assets/images/categories-icon.png" | relative_url }}){:.icon} Categories
-: Displays all of the transaction categories and their properties.
+![]({{ "/assets/images/categories-icon.png" | relative_url }}){:.icon} **Categories**
+Displays all of the transaction categories and their properties.
+<img class="screen-shot left" src="windows/categories/categories-window.png" width="379" title="Categories Window"
+     alt="Categories Window"/>
 
-![]({{ "/assets/images/groups-icon.png" | relative_url }}){:.icon} Groups
-: Displays all of the transaction groups and their properties.
+![]({{ "/assets/images/groups-icon.png" | relative_url }}){:.icon} **Groups**
+Displays all of the transaction groups and their properties.
+<img class="screen-shot left" src="windows/groups/groups-window.png" width="379" title="Groups Window"
+     alt="Groups Window"/>
 
-![]({{ "/assets/images/payee-icon.png" | relative_url }}){:.icon} Payees
-: Displays all of the payees and their properties.
+![]({{ "/assets/images/payee-icon.png" | relative_url }}){:.icon} **Payees**
+Displays all of the payees and their properties.
+<img class="screen-shot left" src="windows/payees/payees-window.png" width="379" title="Payees Window"
+     alt="Payees Window"/>
 
-![]({{ "/assets/images/securities-icon.png" | relative_url }}){:.icon} Securities
-: Displays all of the securities and the total shares across all accounts.
+![]({{ "/assets/images/securities-icon.png" | relative_url }}){:.icon} **Securities**
+Displays all of the securities and the total shares across all accounts.
+<img class="screen-shot left" src="windows/securities/securities-window.png" width="379" title="Securities Window"
+     alt="Securities Window"/>
 
-![]({{ "/assets/images/accountSecurities-icon.png" | relative_url }}){:.icon} Account Securities
-: Displays the currently held securities and the shares per account.
+![]({{ "/assets/images/accountSecurities-icon.png" | relative_url }}){:.icon} **Account Securities**
+Displays the currently held securities and the shares per account.
+<img class="screen-shot left" src="windows/securities/account-securities-window.png" width="379" title="Account Securities Window"
+     alt="Account Securities Window"/>
 
-![]({{ "/assets/images/register-icon.png" | relative_url }}){:.icon} Transactions
-: Displays transactions for an account.  Multiple transactions windows can
-be open at the same time.
+![]({{ "/assets/images/register-icon.png" | relative_url }}){:.icon} **Transactions**
+Displays transactions for an account.  Multiple transactions windows can be open at the same time.
