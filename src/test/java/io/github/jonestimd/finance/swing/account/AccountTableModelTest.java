@@ -2,17 +2,23 @@ package io.github.jonestimd.finance.swing.account;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
+import io.github.jonestimd.finance.domain.TestDomainUtils;
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
 import io.github.jonestimd.finance.domain.account.AccountType;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.AccountSummaryEvent;
+import io.github.jonestimd.finance.domain.event.CompanyEvent;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import org.junit.Before;
@@ -109,6 +115,34 @@ public class AccountTableModelTest {
         assertThat(model.isCellEditable(1, 2)).isFalse();
         assertThat(model.isCellEditable(1, 3)).isFalse();
         assertThat(model.isCellEditable(1, 4)).isFalse();
+    }
+
+    @Test
+    public void addCompanyDomainEventDoesNothing() throws Exception {
+        Company company = TestDomainUtils.setId(new Company("the company"));
+        model.addRow(createAccount("another account"));
+        events.clear();
+
+        domainEventPublisher.publishEvent(new CompanyEvent("test", EventType.ADDED, Collections.singleton(company)));
+
+        assertThat(events).isEmpty();
+    }
+
+    @Test
+    public void changeCompanyDomainEventUpdatesNames() throws Exception {
+        Company company = TestDomainUtils.setId(new Company("the company"));
+        Account account = new Account(company, "the account");
+        model.addRow(new AccountSummary(account, 0L, BigDecimal.ZERO));
+        model.addRow(createAccount("another account"));
+        events.clear();
+
+        domainEventPublisher.publishEvent(new CompanyEvent("test", EventType.CHANGED, Collections.singleton(company)));
+
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0).getType()).isEqualTo(TableModelEvent.UPDATE);
+        assertThat(events.get(0).getFirstRow()).isEqualTo(0);
+        assertThat(events.get(0).getLastRow()).isEqualTo(0);
+        assertThat(events.get(0).getColumn()).isEqualTo(AccountTableModel.COMPANY_INDEX);
     }
 
     private AccountSummary createAccount(String name) {

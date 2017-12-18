@@ -34,6 +34,7 @@ import javax.swing.event.TableModelEvent;
 import com.google.common.base.MoreObjects;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.AccountSummary;
+import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FormatFactory;
@@ -64,31 +65,14 @@ public class AccountTableModel extends ValidatedBeanListTableModel<AccountSummar
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
     private final PropertyAdapter<BigDecimal> totalPropertyAdapter = new FunctionPropertyAdapter<>(
             TOTAL_PROPERTY, BundleType.LABELS.getString("panel.accounts.cashBalance"), this::getTotal, FormatFactory::currencyFormat);
-    private final DomainEventListener<Long, AccountSummary> domainEventListener = new DomainEventListener<Long, AccountSummary>() {
-        @Override
-        public void onDomainEvent(DomainEvent<Long, AccountSummary> event) {
-            if (! getBeans().isEmpty()) {
-                List<Long> accountIds = Streams.map(getBeans(), UniqueId::getId);
-                for (AccountSummary summary : event.getDomainObjects()) {
-                    int index = accountIds.indexOf(summary.getId());
-                    updateAccount(getBeans().get(index), summary.getBalance(), summary.getTransactionCount());
-                    fireTableRowsUpdated(index, index);
-                }
-            }
-            changeSupport.firePropertyChange(TOTAL_PROPERTY, null, total);
-        }
-
-        private void updateAccount(AccountSummary accountSummary, BigDecimal balance, long transactionCount) {
-            total = total.add(balance);
-            accountSummary.setBalance(accountSummary.getBalance().add(balance));
-            accountSummary.setTransactionCount(accountSummary.getTransactionCount()+transactionCount);
-        }
-    };
+    private final DomainEventListener<Long, AccountSummary> accountEventListener = this::onAccountEvent;
+    private final DomainEventListener<Long, Company> companyEventListener = this::onCompanyEvent;
     private BigDecimal total = BigDecimal.ZERO;
 
     public AccountTableModel(DomainEventPublisher domainEventPublisher) {
         super(ADAPTERS);
-        domainEventPublisher.register(AccountSummary.class, domainEventListener);
+        domainEventPublisher.register(AccountSummary.class, accountEventListener);
+        domainEventPublisher.register(Company.class, companyEventListener);
     }
 
     @Override
@@ -122,6 +106,37 @@ public class AccountTableModel extends ValidatedBeanListTableModel<AccountSummar
             total = total.add(MoreObjects.firstNonNull(account.getBalance(), BigDecimal.ZERO));
         }
         changeSupport.firePropertyChange(TOTAL_PROPERTY, null, total);
+    }
+
+    private void onAccountEvent(DomainEvent<Long, AccountSummary> event) {
+        if (! getBeans().isEmpty()) {
+            List<Long> accountIds = Streams.map(getBeans(), UniqueId::getId);
+            for (AccountSummary summary : event.getDomainObjects()) {
+                int index = accountIds.indexOf(summary.getId());
+                updateAccount(getBeans().get(index), summary.getBalance(), summary.getTransactionCount());
+                fireTableRowsUpdated(index, index);
+            }
+        }
+        changeSupport.firePropertyChange(TOTAL_PROPERTY, null, total);
+    }
+
+    private void updateAccount(AccountSummary accountSummary, BigDecimal balance, long transactionCount) {
+        total = total.add(balance);
+        accountSummary.setBalance(accountSummary.getBalance().add(balance));
+        accountSummary.setTransactionCount(accountSummary.getTransactionCount()+transactionCount);
+    }
+
+    private void onCompanyEvent(DomainEvent<Long, Company> event) {
+        if (event.isChange()) {
+            for (int row = 0; row < getBeanCount(); row++) {
+                AccountSummary summary = getBean(row);
+                Company company = event.getDomainObject(summary.getTransactionAttribute().getCompanyId());
+                if (company != null) {
+                    summary.getTransactionAttribute().setCompany(company);
+                    super.fireTableCellUpdated(row, COMPANY_INDEX);
+                }
+            }
+        }
     }
 
     @Override
