@@ -21,7 +21,7 @@ Each Payee has the following properties.
 
 | Property | Description |
 |---|---|
-| Name | unique name of the payeee |
+| Name | unique name of the payee |
 {:.definitions}
 
 ## Window toolbar

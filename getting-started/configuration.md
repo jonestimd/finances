@@ -15,6 +15,11 @@ The application creates the following configuration files in a directory named
 | finances.properties | GUI settings |
 {:.definitions}
 
+Additional settings can be configured manually by creating a file named
+`finances.conf` in the same directory.  This file incudes settings for
+security quote providers which are covered in the
+[Securities window documentation]({{ "/windows/securities" | relative_url }}).
+
 ## Connection settings
 
 The first time you run the application you must complete a dialog to
