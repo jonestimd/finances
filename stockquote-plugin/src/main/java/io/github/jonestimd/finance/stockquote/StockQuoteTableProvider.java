@@ -42,6 +42,7 @@ import javax.swing.JTable;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.swing.FormatFactory;
@@ -81,6 +82,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
         }
         requestMissingPrices(event.getDomainObjects());
     };
+    private final DomainEventListener<Long, Security> securityListener = event -> requestMissingPrices(event.getDomainObjects().stream());
     private final Desktop desktop;
 
     public StockQuoteTableProvider(BackgroundQuoteService quoteService, DomainEventPublisher domainEventPublisher) {
@@ -91,6 +93,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
         this.quoteService = quoteService;
         this.desktop = desktop;
         domainEventPublisher.register(SecuritySummary.class, securitySummaryListener);
+        domainEventPublisher.register(Security.class, securityListener);
     }
 
     private BigDecimal getLastPrice(String symbol) {
@@ -181,7 +184,11 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
     }
 
     protected void requestMissingPrices(Collection<SecuritySummary> summaries) {
-        List<String> symbols = summaries.stream().map(SecuritySummary::getSymbol)
+        requestMissingPrices(summaries.stream().map(SecuritySummary::getSecurity));
+    }
+
+    protected void requestMissingPrices(Stream<Security> securities) {
+        List<String> symbols = securities.map(Security::getSymbol)
                 .filter(this::needQuote).collect(Collectors.toList());
         if (! symbols.isEmpty()) getPrices(symbols);
     }

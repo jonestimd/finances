@@ -15,6 +15,7 @@ import javax.swing.JTable;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
+import io.github.jonestimd.finance.domain.event.SecurityEvent;
 import io.github.jonestimd.finance.domain.event.SecuritySummaryEvent;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
@@ -45,7 +46,9 @@ public class StockQuoteTableProviderTest {
     @Mock
     private Desktop desktop;
     @Captor
-    private ArgumentCaptor<DomainEventListener<Long, SecuritySummary>> listenerCaptor;
+    private ArgumentCaptor<DomainEventListener<Long, SecuritySummary>> summaryListenerCaptor;
+    @Captor
+    private ArgumentCaptor<DomainEventListener<Long, Security>> securityListenerCaptor;
 
     @Test
     public void setBeansRequestsPrices() throws Exception {
@@ -66,11 +69,21 @@ public class StockQuoteTableProviderTest {
     }
 
     @Test
-    public void requestsPricesForDomainEvent() throws Exception {
+    public void requestsPricesForSecuritySummaryEvent() throws Exception {
         new StockQuoteTableProvider(quoteService, eventPublisher);
-        verify(eventPublisher).register(eq(SecuritySummary.class), listenerCaptor.capture());
+        verify(eventPublisher).register(eq(SecuritySummary.class), summaryListenerCaptor.capture());
 
-        listenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.ADDED, newRow("Security 4", "S4", BigDecimal.ONE, null)));
+        summaryListenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.ADDED, newRow("Security 4", "S4", BigDecimal.ONE, null)));
+
+        verify(quoteService).getPrices(eq(singletonList("S4")), notNull(Consumer.class));
+    }
+
+    @Test
+    public void requestsPricesForSecurityEvent() throws Exception {
+        new StockQuoteTableProvider(quoteService, eventPublisher);
+        verify(eventPublisher).register(eq(Security.class), securityListenerCaptor.capture());
+
+        securityListenerCaptor.getValue().onDomainEvent(new SecurityEvent("test", EventType.ADDED, newSecurity("Security 4", "S4")));
 
         verify(quoteService).getPrices(eq(singletonList("S4")), notNull(Consumer.class));
     }
