@@ -21,3 +21,5 @@ navigation:
   title: Transaction Groups
 - url: /windows/securities/
   title: Securities
+- url: /windows/transactions/
+  title: Transactions

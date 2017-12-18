@@ -30,7 +30,7 @@ can be accessed from a **Transactions** window by clicking on the
 ![securities by account]({{ "/assets/images/accountSecurities-icon.png" | relative_url }}){:.button}
 button in the toolbar.
 
-## Securities tables
+## Security properties
 The following properties are displayed for each security in the **Securities**
 and **Securities by Account** windows.
 

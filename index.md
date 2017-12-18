@@ -75,3 +75,5 @@ Displays the currently held securities and the shares per account.
 
 ![]({{ "/assets/images/register-icon.png" | relative_url }}){:.icon} **Transactions**
 Displays transactions for an account.  Multiple transactions windows can be open at the same time.
+<img class="screen-shot left" src="windows/transactions/transactions-window.png" width="379" title="Transactions Window"
+     alt="Transactions Window"/>
