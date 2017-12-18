@@ -21,6 +21,7 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.asset;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ import static io.github.jonestimd.finance.swing.asset.SecurityTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummary> {
+    private static final int DIALOG_WIDTH = 350;
     private final AssetOperations assetOperations;
     private final FinanceTableFactory tableFactory;
     private final BeanListComboBoxModel<String> typesModel = new BeanListComboBoxModel<>();
@@ -179,6 +181,7 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
 
         protected boolean displayDialog(JComponent owner) {
             dialog.pack();
+            dialog.setSize(DIALOG_WIDTH, dialog.getHeight());
             dialog.setVisible(true);
             return ! dialog.isCancelled();
         }
