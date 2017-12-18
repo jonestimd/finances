@@ -51,7 +51,7 @@ public class StockQuoteTableProviderTest {
     public void setBeansRequestsPrices() throws Exception {
         StockQuoteTableProvider provider = new StockQuoteTableProvider(quoteService, eventPublisher);
 
-        provider.setBeans(Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2")));
+        provider.setBeans(Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null)));
 
         verify(quoteService).getPrices(eq(Arrays.asList("S1", "S2")), notNull(Consumer.class));
     }
@@ -60,7 +60,7 @@ public class StockQuoteTableProviderTest {
     public void addBeansRequestsPrices() throws Exception {
         StockQuoteTableProvider provider = new StockQuoteTableProvider(quoteService, eventPublisher);
 
-        provider.addBean(newRow("Security 3", "S3"));
+        provider.addBean(newRow("Security 3", "S3", BigDecimal.ONE, null));
 
         verify(quoteService).getPrices(eq(singleton("S3")), notNull(Consumer.class));
     }
@@ -70,7 +70,7 @@ public class StockQuoteTableProviderTest {
         new StockQuoteTableProvider(quoteService, eventPublisher);
         verify(eventPublisher).register(eq(SecuritySummary.class), listenerCaptor.capture());
 
-        listenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.ADDED, newRow("Security 4", "S4")));
+        listenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.ADDED, newRow("Security 4", "S4", BigDecimal.ONE, null)));
 
         verify(quoteService).getPrices(eq(singletonList("S4")), notNull(Consumer.class));
     }
@@ -92,7 +92,7 @@ public class StockQuoteTableProviderTest {
     @Test
     public void getSummaryProperties() throws Exception {
         StockQuoteTableProvider provider = new StockQuoteTableProvider(quoteService, eventPublisher);
-        provider.setBeans(singletonList(newRow("Security 1", "S1")));
+        provider.setBeans(singletonList(newRow("Security 1", "S1", BigDecimal.ONE, null)));
 
         List<? extends PropertyAdapter<?>> summaryProperties = provider.getSummaryProperties();
 
@@ -103,7 +103,7 @@ public class StockQuoteTableProviderTest {
 
     @Test
     public void priceColumnAdapterDisplaysStockQuote() throws Exception {
-        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2"));
+        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null));
         StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
                 new StockQuote("S2", BigDecimal.ONE, null, null, null),
                 new StockQuote("S1", BigDecimal.TEN, null, null, null)));
@@ -119,7 +119,7 @@ public class StockQuoteTableProviderTest {
 
     @Test
     public void priceColumnAdapterShowsHandCursorForSourceUrl() throws Exception {
-        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2"));
+        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null));
         StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(new StockQuote("S1", BigDecimal.TEN, "url", null, null)));
         provider.setBeans(beans);
 
@@ -132,7 +132,7 @@ public class StockQuoteTableProviderTest {
     @Test
     public void priceColumnAdapterOpensSourceUrlInBrowser() throws Exception {
         when(event.getClickCount()).thenReturn(1);
-        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2"));
+        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null));
         StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(new StockQuote("S1", BigDecimal.TEN, "http://localhost", null, null)));
         ColumnAdapter<SecuritySummary, StockQuote> priceAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(0);
 
@@ -144,7 +144,7 @@ public class StockQuoteTableProviderTest {
     @Test
     public void priceColumnAdapterIgnoresDoubleClick() throws Exception {
         when(event.getClickCount()).thenReturn(2);
-        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2"));
+        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null));
         StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(new StockQuote("S1", BigDecimal.TEN, "http://localhost", null, null)));
         ColumnAdapter<SecuritySummary, StockQuote> priceAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(0);
 
@@ -156,13 +156,97 @@ public class StockQuoteTableProviderTest {
     @Test
     public void priceColumnAdapterIgnoresClickForNoUrl() throws Exception {
         when(event.getClickCount()).thenReturn(1);
-        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1"), newRow("Security 2", "S2"));
+        List<SecuritySummary> beans = Arrays.asList(newRow("Security 1", "S1", BigDecimal.ONE, null), newRow("Security 2", "S2", BigDecimal.ONE, null));
         StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(new StockQuote("S1", BigDecimal.TEN, null, null, null)));
         ColumnAdapter<SecuritySummary, StockQuote> priceAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(0);
 
         priceAdapter.handleClick(event, table, beans.get(0));
 
         verify(desktop, never()).browse(any());
+    }
+
+    @Test
+    public void marketValueReturnsNullForZeroShares() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.ZERO, null));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S1", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> marketValueAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(1);
+
+        assertThat(marketValueAdapter.getValue(beans.get(0))).isNull();
+    }
+
+    @Test
+    public void marketValueReturnsNullForNoQuote() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.TEN, null));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S2", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> marketValueAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(1);
+
+        assertThat(marketValueAdapter.getValue(beans.get(0))).isNull();
+    }
+
+    @Test
+    public void marketValueReturnsValueForPositiveShares() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.TEN, null));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S1", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> marketValueAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(1);
+
+        assertThat(marketValueAdapter.getValue(beans.get(0))).isEqualTo(new BigDecimal("100"));
+    }
+
+    @Test
+    public void roiReturnsNullForZeroShares() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.ZERO, BigDecimal.ONE));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S1", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> roiAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(2);
+
+        assertThat(roiAdapter.getValue(beans.get(0))).isNull();
+    }
+
+    @Test
+    public void roiReturnsNullForNoQuote() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.TEN, BigDecimal.ONE));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S2", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> roiAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(2);
+
+        assertThat(roiAdapter.getValue(beans.get(0))).isNull();
+    }
+
+    @Test
+    public void roiReturnsNullForCostBasis() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.TEN, null));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S1", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> roiAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(2);
+
+        assertThat(roiAdapter.getValue(beans.get(0))).isNull();
+    }
+
+    @Test
+    public void roiReturnsValueForPositiveShares() throws Exception {
+        List<SecuritySummary> beans = singletonList(newRow("Security 1", "S1", BigDecimal.TEN, BigDecimal.ONE));
+        StockQuoteTableProvider provider = providerWithQuotes(beans, Stream.of(
+                new StockQuote("S1", BigDecimal.TEN, null, null, null)));
+        provider.setBeans(beans);
+
+        ColumnAdapter<SecuritySummary, StockQuote> roiAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(2);
+
+        assertThat(roiAdapter.getValue(beans.get(0))).isEqualTo(new BigDecimal("99"));
     }
 
     private StockQuoteTableProvider providerWithQuotes(List<SecuritySummary> beans, Stream<StockQuote> quotes) {
@@ -176,8 +260,8 @@ public class StockQuoteTableProviderTest {
         return provider;
     }
 
-    private SecuritySummary newRow(String name, String s1) {
-        return new SecuritySummary(newSecurity(name, s1), 0, BigDecimal.ONE, null);
+    private SecuritySummary newRow(String name, String s1, BigDecimal shares, BigDecimal costBasis) {
+        return new SecuritySummary(newSecurity(name, s1), 0, shares, null, costBasis, null);
     }
 
     private Security newSecurity(String name, String symbol) {

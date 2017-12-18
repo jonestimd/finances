@@ -99,14 +99,20 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
     }
 
     private BigDecimal getMarketValue(SecuritySummary summary) {
-        BigDecimal lastPrice = getLastPrice(summary.getSymbol());
-        return lastPrice == null ? null : lastPrice.multiply(summary.getShares());
+        if (summary.getShares().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal lastPrice = getLastPrice(summary.getSymbol());
+            return lastPrice == null ? null : lastPrice.multiply(summary.getShares());
+        }
+        return null;
     }
 
     private BigDecimal getReturnOnInvestment(SecuritySummary summary) {
-        BigDecimal marketValue = getMarketValue(summary);
-        BigDecimal costBasis = summary.getCostBasis();
-        return marketValue == null || costBasis == null ? null : marketValue.subtract(costBasis);
+        if (summary.getShares().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal marketValue = getMarketValue(summary);
+            BigDecimal costBasis = summary.getCostBasis();
+            return marketValue == null || costBasis == null ? null : marketValue.subtract(costBasis);
+        }
+        return null;
     }
 
     @Override

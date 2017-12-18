@@ -72,7 +72,8 @@ public class SecurityColumnAdapter<V> extends FunctionColumnAdapter<SecuritySumm
             new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "firstAcquired", Date.class, SecuritySummary::getFirstAcquired, null);
 
     public static final ColumnAdapter<SecuritySummary, BigDecimal> COST_BASIS_ADAPTER =
-            new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "costBasis", BigDecimal.class, SecuritySummary::getCostBasis, null);
+            new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "costBasis", BigDecimal.class,
+                    summary -> summary.getShares().compareTo(BigDecimal.ZERO) > 0 ? summary.getCostBasis() : null, null);
 
     public static final ColumnAdapter<SecuritySummary, BigDecimal> DIVIDENDS_ADAPTER =
             new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "dividends", BigDecimal.class, SecuritySummary::getDividends, null);
