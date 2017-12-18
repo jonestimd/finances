@@ -29,12 +29,13 @@ import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
+import io.github.jonestimd.util.Streams;
 
 public abstract class TransactionSummaryTableModel<T extends Comparable<? super T> & UniqueId<Long>, S extends TransactionSummary<T>> extends ValidatedBeanListTableModel<S> {
     @SuppressWarnings("FieldCanBeLocal") // need strong reference to avoid garbage collection
     private final DomainEventListener<Long, T> domainEventListener = event -> {
         if (event.isDelete()) {
-            removeAll(getBeans().stream().filter(event::containsAttribute)::iterator);
+            removeAll(Streams.filter(getBeans(), event::containsAttribute));
         }
         else if (event.isReplace()) {
             long delta = getBeans().stream().filter(event::containsAttribute).mapToLong(this::resetCount).sum();
