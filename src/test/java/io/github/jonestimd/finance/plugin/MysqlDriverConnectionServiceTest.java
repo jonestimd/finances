@@ -54,7 +54,6 @@ import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentFinder;
 import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.core.Robot;
-import org.assertj.swing.dependency.jsr305.Nonnull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -362,7 +361,7 @@ public class MysqlDriverConnectionServiceTest {
     private <T extends Component> GenericTypeMatcher<T> matcher(Class<T> componentType, Predicate<T> condition) {
         return new GenericTypeMatcher<T>(componentType) {
             @Override
-            protected boolean isMatching(@Nonnull T component) {
+            protected boolean isMatching(T component) {
                 return condition.test(component);
             }
         };
