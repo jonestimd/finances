@@ -31,6 +31,7 @@ import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.swing.action.BackgroundAction;
+import io.github.jonestimd.swing.dialog.Dialogs;
 import org.apache.log4j.Logger;
 
 public class RefreshAction extends BackgroundAction<List<Transaction>> {
@@ -52,7 +53,7 @@ public class RefreshAction extends BackgroundAction<List<Transaction>> {
         initialLoad = event.getID() == INITIAL_LOAD_ACTION_ID;
         selectedRow = transactionTable.getSelectionModel().getLeadSelectionIndex();
         selectedColumn = transactionTable.getColumnModel().getSelectionModel().getLeadSelectionIndex();
-        return true;
+        return ! transactionTable.getModel().isUnsavedChanges() || Dialogs.confirmDiscardChanges(this.transactionTable);
     }
 
     public List<Transaction> performTask() {

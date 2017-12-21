@@ -276,7 +276,11 @@ public class Transaction extends BaseDomain<Long> {
     }
 
     public boolean isUnsavedAndEmpty() {
-        return id == null && (details == null || details.stream().allMatch(TransactionDetail::isEmpty));
+        return id == null && details.stream().allMatch(TransactionDetail::isEmpty);
+    }
+
+    public boolean isSavedOrNonempty() {
+        return ! isUnsavedAndEmpty();
     }
 
     public String toString() {

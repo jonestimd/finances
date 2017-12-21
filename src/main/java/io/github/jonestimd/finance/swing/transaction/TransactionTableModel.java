@@ -352,7 +352,7 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     }
 
     public boolean isUnsavedChanges() {
-        return getChangedRows().anyMatch(t -> ! t.isUnsavedAndEmpty());
+        return getChangedRows().anyMatch(Transaction::isSavedOrNonempty);
     }
 
     private void updateBalances(int beanIndex) {

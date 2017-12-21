@@ -208,6 +208,19 @@ public class TransactionTableModelTest {
         verifyNoMoreInteractions(listener);
     }
 
+    @Test
+    public void isUnsavedChanges() throws Exception {
+        TransactionTableModel model = new TransactionTableModel(new Account());
+        model.setBeans(Lists.newArrayList(
+                newTransaction(false, BigDecimal.TEN),
+                newTransaction(false, BigDecimal.TEN)));
+        assertThat(model.isUnsavedChanges()).isFalse();
+
+        model.setValueAt(BigDecimal.ONE, 1, model.amountColumn);
+
+        assertThat(model.isUnsavedChanges()).isTrue();
+    }
+
     private Transaction newTransaction(boolean cleared, BigDecimal amount) throws Exception {
         return new TransactionBuilder()
             .nextId()
