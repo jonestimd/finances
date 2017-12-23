@@ -23,10 +23,12 @@ package io.github.jonestimd.finance.swing.asset;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.domain.event.SecuritySummaryEvent;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
@@ -47,15 +49,28 @@ public class SecurityTableModel extends ValidatedBeanListTableModel<SecuritySumm
     }
 
     private void addOrUpdateSecurity(DomainEvent<Long, SecuritySummary> event) {
-        List<Long> securityIds = Streams.map(getBeans(), UniqueId::getId);
-        for (SecuritySummary summary : event.getDomainObjects()) {
-            int index = securityIds.indexOf(summary.getId());
-            if (index < 0) {
-                addRow(summary);
+        if (event.isChange()) {
+            List<Long> securityIds = Streams.map(getBeans(), UniqueId::getId);
+            for (SecuritySummary summary : event.getDomainObjects()) {
+                int index = securityIds.indexOf(summary.getId());
+                if (index < 0) {
+                    addRow(summary);
+                }
+                else {
+                    updateSecurity(getBeans().get(index), summary.getShares(), summary.getTransactionCount());
+                    fireTableRowsUpdated(index, index);
+                }
             }
-            else {
-                updateSecurity(getBeans().get(index), summary.getShares(), summary.getTransactionCount());
-                fireTableRowsUpdated(index, index);
+        }
+        else if (event.isReplace()) {
+            Map<Long, SecuritySummary> totals = SecuritySummaryEvent.getTotals(event);
+            List<Long> ids = Streams.map(getBeans(), SecuritySummary::getId);
+            for (SecuritySummary summary : totals.values()) {
+                int rowIndex = ids.indexOf(summary.getId());
+                SecuritySummary oldSummary = getBean(rowIndex);
+                setRow(rowIndex, summary);
+                notifyDataProviders(summary, SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), oldSummary.getShares());
+                notifyDataProviders(summary, TransactionSummaryColumnAdapter.COUNT_ADAPTER.getColumnId(), oldSummary.getTransactionCount());
             }
         }
     }

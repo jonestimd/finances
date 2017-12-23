@@ -69,6 +69,26 @@
         join asset security on summary.security_id = security.id
         &joinSecurity;
     </sql-query>
+    <sql-query name="security.getSummary">
+        <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
+        <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
+        <return-scalar column="useCount" type="long"/>
+        <return-scalar column="shares" type="java.math.BigDecimal"/>
+        <return-scalar column="firstAcquired" type="java.util.Date"/>
+        <return-scalar column="costBasis" type="java.math.BigDecimal"/>
+        <return-scalar column="dividends" type="java.math.BigDecimal"/>
+        <synchronize table="stock_split"/>
+        select {security.*}, summary.useCount, summary.shares, {account.*}, summary.firstAcquired, summary.costBasis, summary.dividends
+        from (
+            select t.account_id, &securitySummary;
+            group by t.account_id, t.security_id
+            having sum(coalesce(&adjustedShares;, 0)) != 0
+        ) summary
+        join account on summary.account_id = account.id
+        join asset security on summary.security_id = security.id
+        &joinSecurity;
+        where security.id = ?
+    </sql-query>
     <sql-query name="security.getAccountSummary">
         <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
         <return-scalar column="useCount" type="long"/>

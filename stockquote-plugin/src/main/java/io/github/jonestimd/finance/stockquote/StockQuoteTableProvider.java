@@ -39,13 +39,15 @@ import java.util.stream.Stream;
 
 import javax.swing.JTable;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
+import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.domain.event.SecuritySummaryEvent;
 import io.github.jonestimd.finance.plugin.SecurityTableExtension;
 import io.github.jonestimd.finance.swing.FormatFactory;
+import io.github.jonestimd.finance.swing.asset.SecurityColumnAdapter;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.PropertyAdapter;
@@ -76,12 +78,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
     private final BackgroundQuoteService quoteService;
     private Map<String, BigDecimal> sharesBySymbol = new HashMap<>();
     private BigDecimal totalValue = BigDecimal.ZERO;
-    private final DomainEventListener<Long, SecuritySummary> securitySummaryListener = event -> {
-        for (SecuritySummary summary : event.getDomainObjects()) {
-            addShares(summary.getSecurity().getSymbol(), summary.getShares());
-        }
-        requestMissingPrices(event.getDomainObjects());
-    };
+    private final DomainEventListener<Long, SecuritySummary> securitySummaryListener = this::onSecuritySummary;
     private final DomainEventListener<Long, Security> securityListener = event -> requestMissingPrices(event.getDomainObjects().stream());
     private final Desktop desktop;
 
@@ -162,9 +159,23 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
 
     private void addShares(String symbol, BigDecimal shares) {
         if (! Strings.isNullOrEmpty(symbol)) {
-            BigDecimal total = MoreObjects.firstNonNull(sharesBySymbol.get(symbol), BigDecimal.ZERO);
+            BigDecimal total = sharesBySymbol.getOrDefault(symbol, BigDecimal.ZERO);
             sharesBySymbol.put(symbol, total.add(shares));
         }
+    }
+
+    private void onSecuritySummary(DomainEvent<Long, SecuritySummary> event) {
+        if (event.isChange()) {
+            for (SecuritySummary summary : event.getDomainObjects()) {
+                addShares(summary.getSecurity().getSymbol(), summary.getShares());
+            }
+        }
+        else if (event.isReplace()) {
+            Map<Long, SecuritySummary> totals = SecuritySummaryEvent.getTotals(event);
+            totals.values().forEach(summary -> sharesBySymbol.put(summary.getSymbol(), summary.getShares()));
+        }
+        updateTotalValue();
+        requestMissingPrices(event.getDomainObjects());
     }
 
     @Override
@@ -176,7 +187,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
 
     @Override
     public boolean updateBean(SecuritySummary securitySummary, String columnId, Object oldValue) {
-        return false;
+        return SecurityColumnAdapter.SHARES_ADAPTER.getColumnId().equals(columnId);
     }
 
     @Override

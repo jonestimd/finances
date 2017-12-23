@@ -41,15 +41,15 @@ public class SecurityTableModelTest {
 
     @Test
     public void noErrorForDomainEventsBeforeTableLoaded() throws Exception {
-        domainEventPublisher.publishEvent(newEvent(new SecuritySummary(security1, 1L, BigDecimal.ONE, account1)));
+        domainEventPublisher.publishEvent(newEvent(new SecuritySummary(security1, 1L, BigDecimal.ONE, account1), EventType.CHANGED));
     }
 
     @Test
-    public void domainEventUpdatesRow() throws Exception {
+    public void changedDomainEventUpdatesRow() throws Exception {
         model.addRow(new SecuritySummary(security1, 1L, BigDecimal.ONE, null));
         SecuritySummary summary = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
 
-        domainEventPublisher.publishEvent(newEvent(summary));
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.CHANGED));
 
         assertThat(model.getRowCount()).isEqualTo(1);
         assertThat(model.getRow(0).getAccount()).isNull();
@@ -60,7 +60,23 @@ public class SecurityTableModelTest {
         verify(dataProvider).updateBean(model.getRow(0), SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), BigDecimal.ONE);
     }
 
-    private DomainEvent<Long, SecuritySummary> newEvent(SecuritySummary summary) {
-        return new SecuritySummaryEvent(this, EventType.CHANGED, summary);
+    @Test
+    public void replacedDomainEventUpdatesRow() throws Exception {
+        model.addRow(new SecuritySummary(security1, 1L, BigDecimal.ONE, null));
+        SecuritySummary summary = new SecuritySummary(security1, 3L, BigDecimal.TEN, account1);
+
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.REPLACED));
+
+        assertThat(model.getRowCount()).isEqualTo(1);
+        assertThat(model.getRow(0).getAccount()).isNull();
+        assertThat(model.getRow(0).getSecurity()).isSameAs(security1);
+        assertThat(model.getRow(0).getShares()).isEqualTo(BigDecimal.TEN);
+        assertThat(model.getRow(0).getTransactionCount()).isEqualTo(3);
+        verify(dataProvider).updateBean(model.getRow(0), TransactionSummaryColumnAdapter.COUNT_ADAPTER.getColumnId(), 1L);
+        verify(dataProvider).updateBean(model.getRow(0), SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), BigDecimal.ONE);
+    }
+
+    private DomainEvent<Long, SecuritySummary> newEvent(SecuritySummary summary, EventType type) {
+        return new SecuritySummaryEvent(this, type, summary);
     }
 }

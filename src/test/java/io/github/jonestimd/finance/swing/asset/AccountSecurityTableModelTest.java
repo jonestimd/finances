@@ -70,15 +70,20 @@ public class AccountSecurityTableModelTest {
     }
 
     @Test
-    public void noErrorForDomainEventsBeforeTableLoaded() throws Exception {
-        domainEventPublisher.publishEvent(newEvent(new SecuritySummary(security1, 1L, BigDecimal.ONE, account1)));
+    public void noErrorForChangedDomainEventsBeforeTableLoaded() throws Exception {
+        domainEventPublisher.publishEvent(newEvent(new SecuritySummary(security1, 1L, BigDecimal.ONE, account1), EventType.CHANGED));
     }
 
     @Test
-    public void domainEventAddsRow() throws Exception {
+    public void noErrorForReplacedDomainEventsBeforeTableLoaded() throws Exception {
+        domainEventPublisher.publishEvent(newEvent(new SecuritySummary(security1, 1L, BigDecimal.ONE, account1), EventType.REPLACED));
+    }
+
+    @Test
+    public void changeDomainEventAddsRow() throws Exception {
         SecuritySummary summary = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
 
-        domainEventPublisher.publishEvent(newEvent(summary));
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.CHANGED));
 
         assertThat(model.getRowCount()).isEqualTo(2);
         assertThat(model.isSectionRow(0)).isTrue();
@@ -88,26 +93,42 @@ public class AccountSecurityTableModelTest {
     }
 
     @Test
-    public void domainEventUpdatesRow() throws Exception {
+    public void changeDomainEventUpdatesRow() throws Exception {
         model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
         SecuritySummary summary = new SecuritySummary(security1, 1L, BigDecimal.ONE, account1);
 
-        domainEventPublisher.publishEvent(newEvent(summary));
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.CHANGED));
 
         assertThat(model.getRowCount()).isEqualTo(2);
         assertThat(model.getBean(1).getAccount()).isSameAs(account1);
         assertThat(model.getBean(1).getSecurity()).isSameAs(security1);
         assertThat(model.getBean(1).getShares()).isEqualTo(new BigDecimal(2));
+        assertThat(model.getBean(1).getTransactionCount()).isEqualTo(2);
         verify(dataProvider).updateBean(model.getBean(1), SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), BigDecimal.ONE);
     }
 
     @Test
-    public void domainEventRemoveRowWithNoTransactions() throws Exception {
+    public void replaceDomainEventUpdatesRow() throws Exception {
+        model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
+        SecuritySummary summary = new SecuritySummary(security1, 2L, BigDecimal.TEN, account1);
+
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.REPLACED));
+
+        assertThat(model.getRowCount()).isEqualTo(2);
+        assertThat(model.getBean(1).getAccount()).isSameAs(account1);
+        assertThat(model.getBean(1).getSecurity()).isSameAs(security1);
+        assertThat(model.getBean(1).getShares()).isEqualTo(BigDecimal.TEN);
+        assertThat(model.getBean(1).getTransactionCount()).isEqualTo(2);
+        verify(dataProvider).updateBean(model.getBean(1), SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), BigDecimal.ONE);
+    }
+
+    @Test
+    public void changeDomainEventRemovesRowWithNoTransactions() throws Exception {
         model.put(account1.getId(), new SecuritySummary(security1, 1L, BigDecimal.ONE, account1));
         model.put(account1.getId(), new SecuritySummary(security2, 1L, BigDecimal.ONE, account1));
         SecuritySummary summary = new SecuritySummary(security1, -1L, BigDecimal.ONE.negate(), account1);
 
-        domainEventPublisher.publishEvent(newEvent(summary));
+        domainEventPublisher.publishEvent(newEvent(summary, EventType.CHANGED));
 
         assertThat(model.getRowCount()).isEqualTo(2);
         assertThat(model.getBean(1).getAccount()).isSameAs(account1);
@@ -212,7 +233,7 @@ public class AccountSecurityTableModelTest {
         assertThat(model.getSectionName(3)).isEqualTo(account2b.qualifiedName(": "));
     }
 
-    private DomainEvent<Long, SecuritySummary> newEvent(SecuritySummary summary) {
-        return new SecuritySummaryEvent(this, EventType.CHANGED, summary);
+    private DomainEvent<Long, SecuritySummary> newEvent(SecuritySummary summary, EventType type) {
+        return new SecuritySummaryEvent(this, type, summary);
     }
 }

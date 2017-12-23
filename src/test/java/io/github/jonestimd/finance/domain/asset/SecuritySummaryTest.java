@@ -22,10 +22,12 @@
 package io.github.jonestimd.finance.domain.asset;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.transaction.SecurityBuilder;
+import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.*;
@@ -59,6 +61,53 @@ public class SecuritySummaryTest {
         SecuritySummary summary4 = new SecuritySummary(security2, 0, null, account2);
 
         verifyEquality(summary1, summary2, summary3, summary4);
+    }
+
+    @Test
+    public void updateReplacesNullValues() throws Exception {
+        SecuritySummary summary = new SecuritySummary(null, 0, BigDecimal.ZERO);
+        SecuritySummary summary2 = new SecuritySummary(null, 2, BigDecimal.TEN, new Date(), BigDecimal.ONE, new BigDecimal(20));
+
+        summary.update(summary2);
+
+        assertThat(summary.getTransactionCount()).isEqualTo(2);
+        assertThat(summary.getShares()).isEqualTo(BigDecimal.TEN);
+        assertThat(summary.getFirstAcquired()).isEqualTo(summary2.getFirstAcquired());
+        assertThat(summary.getCostBasis()).isEqualTo(summary2.getCostBasis());
+        assertThat(summary.getDividends()).isEqualTo(summary2.getDividends());
+    }
+
+    @Test
+    public void updateAddsValues() throws Exception {
+        SecuritySummary summary = new SecuritySummary(null, 2, BigDecimal.TEN, new Date(), BigDecimal.ONE, new BigDecimal(20));
+        SecuritySummary summary2 = new SecuritySummary(null, 2, BigDecimal.TEN, new Date(), BigDecimal.ONE, new BigDecimal(20));
+
+        summary.update(summary2);
+
+        assertThat(summary.getTransactionCount()).isEqualTo(4);
+        assertThat(summary.getShares()).isEqualTo(new BigDecimal(20));
+        assertThat(summary.getCostBasis()).isEqualTo(new BigDecimal(2));
+        assertThat(summary.getDividends()).isEqualTo(new BigDecimal(40));
+    }
+
+    @Test
+    public void updateUpdatesFirstAcquired() throws Exception {
+        SecuritySummary summary = new SecuritySummary(null, 2, BigDecimal.TEN, new Date(), BigDecimal.ONE, new BigDecimal(20));
+        SecuritySummary summary2 = new SecuritySummary(null, 2, BigDecimal.TEN, DateUtils.addDays(new Date(), -1), BigDecimal.ONE, new BigDecimal(20));
+
+        summary.update(summary2);
+
+        assertThat(summary.getFirstAcquired()).isEqualTo(summary2.getFirstAcquired());
+    }
+
+    @Test
+    public void updateRetainsFirstAcquired() throws Exception {
+        SecuritySummary summary = new SecuritySummary(null, 2, BigDecimal.TEN, DateUtils.addDays(new Date(), -2), BigDecimal.ONE, new BigDecimal(20));
+        SecuritySummary summary2 = new SecuritySummary(null, 2, BigDecimal.TEN, DateUtils.addDays(new Date(), -1), BigDecimal.ONE, new BigDecimal(20));
+
+        summary.update(summary2);
+
+        assertThat(summary.getFirstAcquired()).isEqualTo(summary.getFirstAcquired());
     }
 
     private void verifyEquality(SecuritySummary ...summaries) {

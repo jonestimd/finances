@@ -23,8 +23,10 @@ package io.github.jonestimd.finance.domain.asset;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import javax.persistence.CascadeType;
@@ -34,7 +36,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.SecondaryTable;
 
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
+import io.github.jonestimd.util.Streams;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
@@ -45,7 +49,8 @@ import org.hibernate.annotations.Table;
 @SecondaryTable(name = "security", pkJoinColumns = {
     @PrimaryKeyJoinColumn(name = "asset_id", referencedColumnName = "id")})
 public class Security extends Asset {
-    public static final String SECURITY_SUMMARY = "security.getSummaries";
+    public static final String SECURITY_SUMMARIES = "security.getSummaries";
+    public static final String SECURITY_SUMMARY = "security.getSummary";
     public static final String ACCOUNT_SECURITY_SUMMARY = "security.getAccountSummary";
     public static final String SECURITY_SUMMARY_BY_ACCOUNT = "security.getSummariesByAccount";
     public static final String TYPE = "type";
@@ -85,6 +90,20 @@ public class Security extends Asset {
         this.splits = splits;
     }
 
+    public void updateSplits(Collection<StockSplit> splits) {
+        Map<Long, StockSplit> byId = Streams.uniqueIndex(this.splits, UniqueId::getId);
+        for (StockSplit split : splits) {
+            if (split.isNew() || ! byId.containsKey(split.getId())) this.splits.add(split);
+            else {
+                StockSplit persisted = byId.remove(split.getId());
+                persisted.setDate(split.getDate());
+                persisted.setSharesIn(split.getSharesIn());
+                persisted.setSharesOut(split.getSharesOut());
+            }
+        }
+        this.splits.removeAll(byId.values());
+    }
+
     public BigDecimal applySplits(BigDecimal shares, Date fromDate, Date toDate) {
         return getSplitRatio(fromDate, toDate).apply(shares, getScale());
     }
@@ -104,9 +123,5 @@ public class Security extends Asset {
 
     private static Predicate<StockSplit> isBetween(Date fromDate, Date toDate) {
         return split -> ! split.getDate().before(fromDate) && (toDate == null || ! split.getDate().after(toDate));
-    }
-
-    public BigDecimal round(Double shares) {
-        return shares == null ? BigDecimal.ZERO : new BigDecimal(shares).setScale(getScale(), RoundingMode.HALF_UP);
     }
 }

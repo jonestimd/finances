@@ -27,6 +27,7 @@ import java.util.Objects;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.transaction.TransactionSummary;
+import io.github.jonestimd.lang.Comparables;
 
 public class SecuritySummary extends TransactionSummary<Security> {
     private Account account;
@@ -58,6 +59,14 @@ public class SecuritySummary extends TransactionSummary<Security> {
 
     public SecuritySummary(Security security, long transactionCount, BigDecimal shares) {
         this(security, transactionCount, shares, null);
+    }
+
+    public void update(SecuritySummary that) {
+        setTransactionCount(getTransactionCount() + that.getTransactionCount());
+        this.shares = this.shares.add(that.shares);
+        this.firstAcquired = this.firstAcquired == null ? that.firstAcquired : Comparables.min(this.firstAcquired, that.firstAcquired);
+        this.costBasis = this.costBasis == null ? that.costBasis : this.costBasis.add(that.costBasis);
+        this.dividends = this.dividends == null ? that.dividends : this.dividends.add(that.dividends);
     }
 
     public String getName() {

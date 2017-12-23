@@ -37,4 +37,6 @@ public interface SecurityDao extends BaseDao<Security, Long> {
     List<SecuritySummary> getSecuritySummaries(Long accountId);
 
     List<SecuritySummary> getSecuritySummariesByAccount();
+
+    List<SecuritySummary> getSecuritySummaryByAccount(Long securityId);
 }

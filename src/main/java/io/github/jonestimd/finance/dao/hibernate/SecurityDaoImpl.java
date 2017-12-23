@@ -63,7 +63,7 @@ public class SecurityDaoImpl extends HibernateDao<Security, Long> implements Sec
     @Override
     @SuppressWarnings("unchecked")
     public List<SecuritySummary> getSecuritySummaries() {
-        return getSession().getNamedQuery(Security.SECURITY_SUMMARY)
+        return getSession().getNamedQuery(Security.SECURITY_SUMMARIES)
             .setResultTransformer(SUMMARY_TRANSFORMER)
             .list();
     }
@@ -81,6 +81,15 @@ public class SecurityDaoImpl extends HibernateDao<Security, Long> implements Sec
     @SuppressWarnings("unchecked")
     public List<SecuritySummary> getSecuritySummariesByAccount() {
         return getSession().getNamedQuery(Security.SECURITY_SUMMARY_BY_ACCOUNT)
+                .setResultTransformer(ACCOUNT_SUMMARIES_TRANSFORMER)
+                .list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<SecuritySummary> getSecuritySummaryByAccount(Long securityId) {
+        return (List<SecuritySummary>) getSession().getNamedQuery(Security.SECURITY_SUMMARY)
+                .setParameter(0, securityId)
                 .setResultTransformer(ACCOUNT_SUMMARIES_TRANSFORMER)
                 .list();
     }

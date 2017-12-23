@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.google.common.base.Objects;
@@ -65,7 +66,7 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
     private final Map<Long, Account> accountMap;
     // need references to domain event listeners to avoid garbage collection
     @SuppressWarnings("FieldCanBeLocal")
-    private final DomainEventListener<Long, SecuritySummary> summaryEventListener = event -> event.getDomainObjects().forEach(this::updateShares);
+    private final DomainEventListener<Long, SecuritySummary> summaryEventListener = this::onSummaryChange;
     @SuppressWarnings("FieldCanBeLocal")
     private final DomainEventListener<Long, Security> securityEventListener = this::onSecurityChange;
     @SuppressWarnings("FieldCanBeLocal")
@@ -114,10 +115,17 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
         }
     }
 
-    private void updateShares(SecuritySummary summary) {
+    private void onSummaryChange(DomainEvent<Long, SecuritySummary> event) {
+        if (event.isChange()) event.getDomainObjects().forEach(this::addShares);
+        else if (event.isReplace()) event.getDomainObjects().forEach(this::setShares);
+    }
+
+    private void addShares(SecuritySummary summary) {
         int index = indexOf(equivalentTo(summary));
         if (index >= 0) {
-            updateShares(index, summary.getShares());
+            SecuritySummary bean = getBean(index);
+            bean.setTransactionCount(bean.getTransactionCount() + summary.getTransactionCount());
+            updateShares(index, summary.getShares()::add);
         }
         else {
             accountMap.put(summary.getAccount().getId(), summary.getAccount());
@@ -125,13 +133,19 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
         }
     }
 
-    private void updateShares(int index, BigDecimal shares) {
+    private void setShares(SecuritySummary summary) {
+        int index = indexOf(equivalentTo(summary));
+        if (index >= 0) {
+            getBean(index).setTransactionCount(summary.getTransactionCount());
+            updateShares(index, ignored -> summary.getShares());
+        }
+    }
+
+    private void updateShares(int index, Function<BigDecimal, BigDecimal> update) {
         SecuritySummary summary = getBean(index);
         BigDecimal oldShares = summary.getShares();
-        summary.setShares(summary.getShares().add(shares));
-        if (summary.getShares().compareTo(BigDecimal.ZERO) == 0L) {
-            remove(index);
-        }
+        summary.setShares(update.apply(summary.getShares()));
+        if (summary.getShares().compareTo(BigDecimal.ZERO) == 0L) remove(index);
         else {
             notifyDataProviders(summary, SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), oldShares);
             fireTableRowsUpdated(index, index);

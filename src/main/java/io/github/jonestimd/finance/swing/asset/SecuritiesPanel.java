@@ -21,11 +21,9 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.asset;
 
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -167,31 +165,19 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
         return events;
     }
 
-    public class SplitsDialogAction extends DialogAction {
-        private StockSplitDialog dialog;
-        private Security security;
+    public class SplitsDialogAction extends MnemonicAction {
+        private final JFrame owner = (JFrame) getTopLevelAncestor();
 
         public SplitsDialogAction() {
             super(BundleType.LABELS.get(), "action.stockSplits.edit");
         }
 
-        protected void loadDialogData() {
-            dialog = new StockSplitDialog((JFrame) getTopLevelAncestor(), tableFactory, getSelectedBean().getSecurity(), assetOperations, eventPublisher);
-        }
-
-        protected boolean displayDialog(JComponent owner) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            StockSplitDialog dialog = new StockSplitDialog(owner, tableFactory, getSelectedBean().getSecurity(), assetOperations, eventPublisher);
             dialog.pack();
             dialog.setSize(DIALOG_WIDTH, dialog.getHeight());
             dialog.setVisible(true);
-            return ! dialog.isCancelled();
-        }
-
-        protected void saveDialogData() {
-            security = assetOperations.save(getSelectedBean().getSecurity());
-        }
-
-        protected void setSaveResultOnUI() {
-            eventPublisher.publishEvent(new SecurityEvent(this, EventType.CHANGED, Collections.singleton(security)));
         }
     }
 }

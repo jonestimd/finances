@@ -23,7 +23,6 @@ package io.github.jonestimd.finance.swing.asset;
 
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -31,7 +30,8 @@ import java.util.List;
 import javax.swing.Action;
 
 import io.github.jonestimd.finance.domain.asset.Security;
-import io.github.jonestimd.finance.domain.event.DomainEvent;
+import io.github.jonestimd.finance.domain.asset.SecuritySummary;
+import io.github.jonestimd.finance.domain.event.SecuritySummaryEvent;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
@@ -49,19 +49,14 @@ public class StockSplitDialog extends MessageDialog {
     private final StockSplitTableModel tableModel;
     private final AssetOperations assetOperations;
     private final DomainEventPublisher domainEventPublisher;
-    private boolean cancelled = false;
 
     public StockSplitDialog(Window owner, FinanceTableFactory tableFactory, Security security, AssetOperations assetOperations, DomainEventPublisher domainEventPublisher) {
-        super(owner, LABELS.getString("stockSplit.dialog.title"), ModalityType.DOCUMENT_MODAL);
+        super(owner, LABELS.formatMessage("stockSplit.dialog.title", security.getName()), ModalityType.DOCUMENT_MODAL);
         this.security = security;
         this.assetOperations = assetOperations;
         this.domainEventPublisher = domainEventPublisher;
         this.tableModel = new StockSplitTableModel(security.getSplits());
         setContentPane(new StockSplitPanel(tableFactory));
-    }
-
-    public boolean isCancelled() {
-        return cancelled;
     }
 
     public class StockSplitPanel extends ValidatedTablePanel<StockSplit> {
@@ -91,14 +86,9 @@ public class StockSplitDialog extends MessageDialog {
         protected List<StockSplit> getTableData() {
             return security.getSplits();
         }
-
-        @Override
-        protected boolean confirmClose(WindowEvent event) {
-            return cancelled = super.confirmClose(event);
-        }
     }
 
-    private class SaveAction extends BackgroundAction<Security> {
+    private class SaveAction extends BackgroundAction<List<SecuritySummary>> {
         public SaveAction() {
             super(StockSplitDialog.this, LABELS.get(), "stockSplit.action.save");
         }
@@ -109,17 +99,17 @@ public class StockSplitDialog extends MessageDialog {
         }
 
         @Override
-        public Security performTask() {
-            security.getSplits().clear();
-            security.getSplits().addAll(tableModel.getBeans());
-            return assetOperations.save(security);
+        public List<SecuritySummary> performTask() {
+            security.getSplits().removeAll(tableModel.getPendingDeletes());
+            security.getSplits().addAll(tableModel.getPendingAdds());
+            return assetOperations.saveSplits(security);
         }
 
         @Override
-        public void updateUI(Security result) {
-            security = result;
-            tableModel.commit();
-            domainEventPublisher.publishEvent(new DomainEvent<>(StockSplitDialog.this, EventType.CHANGED, security, Security.class));
+        public void updateUI(List<SecuritySummary> result) {
+            security = result.get(0).getSecurity();
+            tableModel.setBeans(security.getSplits());
+            domainEventPublisher.publishEvent(new SecuritySummaryEvent(StockSplitDialog.this, EventType.REPLACED, result));
         }
     }
 }

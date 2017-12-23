@@ -1,8 +1,9 @@
 package io.github.jonestimd.finance.operations;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -13,16 +14,19 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
+import io.github.jonestimd.finance.domain.transaction.SecurityBuilder;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import io.github.jonestimd.finance.service.ServiceContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class AssetOperationsImplTest {
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private MockDaoContext daoRepository = new MockDaoContext();
     private SecurityDao securityDao;
     private StockSplitDao stockSplitDao;
@@ -40,7 +44,7 @@ public class AssetOperationsImplTest {
     @Test
     public void testGetAllSecurities() throws Exception {
         daoRepository.expectCommit();
-        List<Security> securities = new ArrayList<Security>();
+        List<Security> securities = new ArrayList<>();
         when(securityDao.getAll()).thenReturn(securities);
 
         assertThat(assetOperations.getAllSecurities()).isSameAs(securities);
@@ -156,6 +160,25 @@ public class AssetOperationsImplTest {
     }
 
     @Test
+    public void saveSplitsReplacesSplits() throws Exception {
+        daoRepository.expectCommit();
+        Security persisted = new SecurityBuilder().get();
+        persisted.setSplits(new ArrayList<>());
+        Security updated = new SecurityBuilder().nextId().splits(parseDate("2000-01-01"), parseDate("2005-01-01")).get();
+        when(securityDao.get(updated.getId())).thenReturn(persisted);
+        List<SecuritySummary> result = singletonList(new SecuritySummary());
+        when(securityDao.getSecuritySummaryByAccount(updated.getId())).thenReturn(result);
+
+        assertThat(assetOperations.saveSplits(updated)).isSameAs(result);
+
+        assertThat(persisted.getSplits()).containsExactlyElementsOf(updated.getSplits());
+    }
+
+    private Date parseDate(String source) throws ParseException {
+        return dateFormat.parse(source);
+    }
+
+    @Test
     public void addDuplicateSplitToExistingSecurity() throws Exception {
         StockSplit split = new StockSplit();
         daoRepository.expectCommit();
@@ -173,7 +196,7 @@ public class AssetOperationsImplTest {
         daoRepository.expectCommit();
         final Account account = new Account(-1L);
         final SecuritySummary securitySummary = new SecuritySummary(new Security(), 0L, BigDecimal.ONE, new Account(1L));
-        List<SecuritySummary> expected = Arrays.asList(securitySummary);
+        List<SecuritySummary> expected = singletonList(securitySummary);
         when(securityDao.getSecuritySummaries(account.getId())).thenReturn(expected);
 
         List<SecuritySummary> result = assetOperations.getSecuritySummaries(account);
@@ -185,7 +208,7 @@ public class AssetOperationsImplTest {
     public void getSecuritySummariesByAccount() throws Exception {
         daoRepository.expectCommit();
         final SecuritySummary securitySummary = new SecuritySummary(new Security(), 0L, BigDecimal.ONE, new Account(1L));
-        List<SecuritySummary> expected = Arrays.asList(securitySummary);
+        List<SecuritySummary> expected = singletonList(securitySummary);
         when(securityDao.getSecuritySummariesByAccount()).thenReturn(expected);
 
         List<SecuritySummary> result = assetOperations.getSecuritySummariesByAccount();

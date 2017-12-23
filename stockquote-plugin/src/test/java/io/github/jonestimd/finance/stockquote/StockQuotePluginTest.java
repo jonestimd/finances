@@ -2,6 +2,7 @@ package io.github.jonestimd.finance.stockquote;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
@@ -41,6 +42,7 @@ public class StockQuotePluginTest {
         assertThat(plugin.getSecurityTableExtensions()).hasSize(1);
         assertThat(plugin.getSecurityTableExtensions().get(0)).isInstanceOf(StockQuoteTableProvider.class);
         verify(domainEventPublisher).register(same(SecuritySummary.class), isA(DomainEventListener.class));
+        verify(domainEventPublisher).register(same(Security.class), isA(DomainEventListener.class));
         verifyNoMoreInteractions(domainEventPublisher);
         verifyZeroInteractions(serviceLocator);
     }

@@ -21,6 +21,10 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.event;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.swing.event.EventType;
 
@@ -31,5 +35,15 @@ public class SecuritySummaryEvent extends DomainEvent<Long, SecuritySummary> {
 
     public SecuritySummaryEvent(Object source, EventType type, Iterable<SecuritySummary> domainObjects) {
         super(source, type, domainObjects, SecuritySummary.class);
+    }
+
+    public static Map<Long, SecuritySummary> getTotals(DomainEvent<Long, SecuritySummary> event) {
+        Map<Long, SecuritySummary> totals = new HashMap<>();
+        for (SecuritySummary accountSummary : event.getDomainObjects()) {
+            SecuritySummary summary = totals.computeIfAbsent(accountSummary.getId(),
+                    id -> new SecuritySummary(accountSummary.getSecurity(), 0, BigDecimal.ZERO));
+            summary.update(accountSummary);
+        }
+        return totals;
     }
 }

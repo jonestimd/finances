@@ -52,18 +52,22 @@ public class AssetOperationsImpl implements AssetOperations {
         this.stockSplitDao = daoRepository.getStockSplitDao();
     }
 
+    @Override
     public Currency getCurrency(String code) {
         return currencyDao.getCurrency(code);
     }
 
+    @Override
     public List<Security> getAllSecurities() {
         return securityDao.getAll();
     }
 
+    @Override
     public List<SecuritySummary> getSecuritySummaries() {
         return securityDao.getSecuritySummaries();
     }
 
+    @Override
     public List<SecuritySummary> getSecuritySummaries(Account account) {
         return securityDao.getSecuritySummaries(account.getId());
     }
@@ -73,10 +77,12 @@ public class AssetOperationsImpl implements AssetOperations {
         return securityDao.getSecuritySummariesByAccount();
     }
 
+    @Override
     public Security getSecurity(String symbol) {
         return securityDao.getSecurity(symbol);
     }
 
+    @Override
     public Security createIfUnique(Security security) {
         Security existingSecurity = securityDao.getSecurity(security.getSymbol());
         if (existingSecurity != null && ! existingSecurity.getType().equals(security.getType())) {
@@ -85,15 +91,25 @@ public class AssetOperationsImpl implements AssetOperations {
         return existingSecurity == null ? securityDao.save(security) : existingSecurity;
     }
 
+    @Override
     public Security save(Security security) {
         return securityDao.save(security);
     }
 
+    @Override
     public <T extends Iterable<Security>> T saveAll(T securities) {
         return securityDao.saveAll(securities);
     }
 
+    @Override
+    public List<SecuritySummary> saveSplits(Security security) {
+        Security persisted = securityDao.get(security.getId());
+        persisted.updateSplits(security.getSplits());
+        return securityDao.getSecuritySummaryByAccount(security.getId());
+    }
+
     @Cacheable
+    @Override
     public Security findOrCreate(String name) {
         Security security = securityDao.findByName(name);
         if (security == null) {
@@ -105,6 +121,7 @@ public class AssetOperationsImpl implements AssetOperations {
         return security;
     }
 
+    @Override
     public StockSplit findOrCreateSplit(String securityName, Date splitDate, BigDecimal sharesIn, BigDecimal sharesOut) {
         // TODO check for sales/shares_out after splitDate and warn user to reallocate lots
         Security security = findOrCreate(securityName);

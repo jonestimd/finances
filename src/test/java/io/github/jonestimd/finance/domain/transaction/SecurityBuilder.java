@@ -1,9 +1,14 @@
 package io.github.jonestimd.finance.domain.transaction;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.stream.Collectors;
 
 import io.github.jonestimd.finance.domain.TestDomainUtils;
 import io.github.jonestimd.finance.domain.asset.Security;
+import io.github.jonestimd.finance.domain.asset.SplitRatio;
 
 public class SecurityBuilder {
     private final Security security = new Security();
@@ -32,8 +37,22 @@ public class SecurityBuilder {
         return this;
     }
 
+    public SecurityBuilder splits() {
+        security.setSplits(new ArrayList<>());
+        return this;
+    }
+
+    public SecurityBuilder splits(Date... splitDates) {
+        security.setSplits(Arrays.stream(splitDates).map(this::newSplit).collect(Collectors.toList()));
+        return this;
+    }
+
+    private StockSplit newSplit(Date date) {
+        return TestDomainUtils.setId(new StockSplit(security, date, new SplitRatio(BigDecimal.ONE, BigDecimal.ONE)));
+    }
+
     public SecurityBuilder splits(StockSplit ... splits) {
-        security.setSplits(Arrays.asList(splits));
+        security.setSplits(new ArrayList<>(Arrays.asList(splits)));
         return this;
     }
 
