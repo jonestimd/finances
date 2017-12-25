@@ -31,6 +31,7 @@ import javax.swing.Action;
 
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecuritySummary;
+import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import io.github.jonestimd.finance.domain.event.SecuritySummaryEvent;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import io.github.jonestimd.finance.operations.AssetOperations;
@@ -45,6 +46,7 @@ import org.apache.commons.lang.time.DateUtils;
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class StockSplitDialog extends MessageDialog {
+    private static final int DIALOG_WIDTH = 375;
     private Security security;
     private final StockSplitTableModel tableModel;
     private final AssetOperations assetOperations;
@@ -59,6 +61,16 @@ public class StockSplitDialog extends MessageDialog {
         setContentPane(new StockSplitPanel(tableFactory));
     }
 
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible) {
+            pack();
+            setSize(DIALOG_WIDTH, getHeight());
+            setLocationRelativeTo(getOwner());
+        }
+        super.setVisible(visible);
+    }
+
     public class StockSplitPanel extends ValidatedTablePanel<StockSplit> {
         protected StockSplitPanel(FinanceTableFactory tableFactory) {
             super(LABELS.get(), tableFactory.createValidatedTable(tableModel, StockSplitTableModel.DATE_INDEX), "stockSplit");
@@ -71,10 +83,7 @@ public class StockSplitDialog extends MessageDialog {
 
         @Override
         protected StockSplit newBean() {
-            StockSplit split = new StockSplit();
-            split.setDate(DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH));
-            split.setSecurity(security);
-            return split;
+            return new StockSplit(security, DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH), new SplitRatio());
         }
 
         @Override

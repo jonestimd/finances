@@ -31,7 +31,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.swing.Action;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -52,7 +51,6 @@ import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.transaction.AccountAccessPanel;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.action.DialogAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
@@ -68,7 +66,6 @@ import static io.github.jonestimd.finance.swing.asset.SecurityTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummary> {
-    private static final int DIALOG_WIDTH = 350;
     private final AssetOperations assetOperations;
     private final FinanceTableFactory tableFactory;
     private final BeanListComboBoxModel<String> typesModel = new BeanListComboBoxModel<>();
@@ -166,17 +163,14 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
     }
 
     public class SplitsDialogAction extends MnemonicAction {
-        private final JFrame owner = (JFrame) getTopLevelAncestor();
-
         public SplitsDialogAction() {
             super(BundleType.LABELS.get(), "action.stockSplits.edit");
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            JFrame owner = (JFrame) getTopLevelAncestor();
             StockSplitDialog dialog = new StockSplitDialog(owner, tableFactory, getSelectedBean().getSecurity(), assetOperations, eventPublisher);
-            dialog.pack();
-            dialog.setSize(DIALOG_WIDTH, dialog.getHeight());
             dialog.setVisible(true);
         }
     }

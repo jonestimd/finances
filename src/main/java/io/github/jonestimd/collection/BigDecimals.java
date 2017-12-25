@@ -53,4 +53,11 @@ public class BigDecimals {
     public static BigDecimal sum(Stream<BigDecimal> items) {
         return items.reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    /**
+     * @return true if {@code n1} and {@code n2} are not null and are equal based on {@link BigDecimal#compareTo(BigDecimal)}
+     */
+    public static boolean isEqual(BigDecimal n1, BigDecimal n2) {
+        return n1 != null && n2 != null && n1.compareTo(n2) == 0;
+    }
 }

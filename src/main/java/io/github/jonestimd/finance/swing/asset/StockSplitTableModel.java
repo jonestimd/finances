@@ -28,29 +28,23 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import javax.swing.event.TableModelEvent;
+
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 import io.github.jonestimd.swing.validation.BeanPropertyValidator;
-import io.github.jonestimd.swing.validation.NotNullValidator;
-import io.github.jonestimd.swing.validation.Validator;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class StockSplitTableModel extends ValidatedBeanListTableModel<StockSplit> {
     public static final int DATE_INDEX = 0;
-    private static final StockSplitColumnAdapter<Date> SPLIT_DATE = new StockSplitColumnAdapter<>("date", Date.class,
-            StockSplit::getDate,
-            StockSplit::setDate,
-            new NotNullValidator<>(LABELS.getString("validation.stockSplit.date.required")));
-    private static final StockSplitColumnAdapter<BigDecimal> SHARES_IN = new StockSplitColumnAdapter<>("sharesIn", BigDecimal.class,
-            StockSplit::getSharesIn,
-            StockSplit::setSharesIn,
-            new NotNullValidator<>(LABELS.getString("validation.stockSplit.sharesIn.required")));
-    private static final StockSplitColumnAdapter<BigDecimal> SHARES_OUT = new StockSplitColumnAdapter<>("sharesOut", BigDecimal.class,
-            StockSplit::getSharesOut,
-            StockSplit::setSharesOut,
-            new NotNullValidator<>(LABELS.getString("validation.stockSplit.sharesOut.required")));
+    private static final StockSplitColumnAdapter<Date> SPLIT_DATE = new StockSplitColumnAdapter<>(
+            "date", Date.class, StockSplit::getDate, StockSplit::setDate, new SplitDateValidator());
+    private static final StockSplitColumnAdapter<BigDecimal> SHARES_IN = new StockSplitColumnAdapter<>(
+            "sharesIn", BigDecimal.class, StockSplit::getSharesIn, StockSplit::setSharesIn, new SplitRatioValidator("sharesIn"));
+    private static final StockSplitColumnAdapter<BigDecimal> SHARES_OUT = new StockSplitColumnAdapter<>(
+            "sharesOut", BigDecimal.class, StockSplit::getSharesOut, StockSplit::setSharesOut, new SplitRatioValidator("sharesOut"));
 
     @SuppressWarnings("unchecked")
     public StockSplitTableModel(List<StockSplit> splits) {
@@ -58,17 +52,47 @@ public class StockSplitTableModel extends ValidatedBeanListTableModel<StockSplit
         setBeans(splits);
     }
 
-    protected static class StockSplitColumnAdapter<V> extends FunctionColumnAdapter<StockSplit, V> implements BeanPropertyValidator<StockSplit, V> {
-        private final Validator<V> validator;
+    @Override
+    public void fireTableCellUpdated(int rowIndex, int columnIndex) {
+        super.fireTableCellUpdated(rowIndex, columnIndex);
+        if (columnIndex == DATE_INDEX) validateDates();
+        else {
+            validateCell(rowIndex, getColumnCount()-columnIndex);
+            super.fireTableCellUpdated(rowIndex, getColumnCount()-columnIndex);
+        }
+    }
 
-        protected StockSplitColumnAdapter(String columnId, Class<V> type, Function<StockSplit, V> getter, BiConsumer<StockSplit, V> setter, Validator<V> validator) {
+    @Override
+    public void addRow(int index, StockSplit row) {
+        super.addRow(index, row);
+        validateDates();
+    }
+
+    @Override
+    public void removeRow(StockSplit bean) {
+        super.removeRow(bean);
+        validateDates();
+    }
+
+    private void validateDates() {
+        for (int i = 0; i < getRowCount(); i++) {
+            validateCell(i, DATE_INDEX);
+        }
+        super.fireTableChanged(new TableModelEvent(this, 0, Integer.MAX_VALUE, DATE_INDEX));
+    }
+
+    protected static class StockSplitColumnAdapter<V> extends FunctionColumnAdapter<StockSplit, V> implements BeanPropertyValidator<StockSplit, V> {
+        private final BeanPropertyValidator<StockSplit, V> validator;
+
+        protected StockSplitColumnAdapter(String columnId, Class<V> type, Function<StockSplit, V> getter,
+                BiConsumer<StockSplit, V> setter, BeanPropertyValidator<StockSplit, V> validator) {
             super(LABELS.get(), "table.stockSplit.", columnId, type, getter, setter);
             this.validator = validator;
         }
 
         @Override
         public String validate(int selectedIndex, V propertyValue, List<? extends StockSplit> beans) {
-            return validator.validate(propertyValue);
+            return validator.validate(selectedIndex, propertyValue, beans);
         }
     }
 }
