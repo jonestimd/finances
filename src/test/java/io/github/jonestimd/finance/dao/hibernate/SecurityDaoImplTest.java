@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Predicate;
 
 import io.github.jonestimd.finance.dao.AccountDao;
 import io.github.jonestimd.finance.dao.SecurityDao;
@@ -38,6 +39,10 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
         return Arrays.asList(ACCOUNT_BATCH, SECURITY_BATCH);
     }
 
+    private Predicate<SecuritySummary> hasId(Long securityId) {
+        return s -> s.getSecurity().getId().equals(securityId);
+    }
+
     @Test
     public void getSecurityMatchesSymbol() throws Exception {
         Security result = securityDao.getSecurity("S1");
@@ -61,15 +66,19 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
 
         List<SecuritySummary> securities = securityDao.getSecuritySummaries();
 
-        assertThat(securities).hasSize(2);
-        assertThat(securities.get(0).getSecurity()).isEqualTo(buy.getSecurity());
-        assertThat(securities.get(0).getShares()).isEqualByComparingTo(buy.getAssetQuantity());
-        assertThat(securities.get(0).getCostBasis()).isEqualByComparingTo(buy.getAmount().negate());
-        assertThat(securities.get(0).getDividends()).isEqualByComparingTo(dividend.getAmount());
-        assertThat(securities.get(0).getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
-        assertThat(securities.get(0).getTransactionCount()).isEqualTo(2);
-        assertThat(securities.get(1).getShares()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(securities.get(1).getFirstAcquired()).isNull();
+        assertThat(securities.size()).isGreaterThanOrEqualTo(2);
+        SecuritySummary buySummary = securities.stream().filter(hasId(buy.getSecurity().getId())).findFirst().get();
+        assertThat(buySummary.getShares()).isEqualByComparingTo(buy.getAssetQuantity());
+        assertThat(buySummary.getCostBasis()).isEqualByComparingTo(buy.getAmount().negate());
+        assertThat(buySummary.getDividends()).isEqualByComparingTo(dividend.getAmount());
+        assertThat(buySummary.getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
+        assertThat(buySummary.getTransactionCount()).isEqualTo(2);
+        for (SecuritySummary security : securities) {
+            if (! security.getSecurity().getId().equals(buy.getSecurity().getId())) {
+                assertThat(security.getShares()).isEqualByComparingTo(BigDecimal.ZERO);
+                assertThat(security.getFirstAcquired()).isNull();
+            }
+        }
     }
 
     @Test
@@ -80,15 +89,19 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
 
         List<SecuritySummary> securities = securityDao.getSecuritySummaries();
 
-        assertThat(securities).hasSize(2);
-        assertThat(securities.get(0).getSecurity()).isEqualTo(buy.getSecurity());
-        assertThat(securities.get(0).getShares()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(securities.get(0).getCostBasis()).isEqualByComparingTo(buy.getAmount().negate());
-        assertThat(securities.get(0).getDividends()).isEqualByComparingTo(dividend.getAmount());
-        assertThat(securities.get(0).getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
-        assertThat(securities.get(0).getTransactionCount()).isEqualTo(3);
-        assertThat(securities.get(1).getShares()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(securities.get(1).getFirstAcquired()).isNull();
+        assertThat(securities.size()).isGreaterThanOrEqualTo(2);
+        SecuritySummary buySummary = securities.stream().filter(hasId(buy.getSecurity().getId())).findFirst().get();
+        assertThat(buySummary.getShares()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(buySummary.getCostBasis()).isEqualByComparingTo(buy.getAmount().negate());
+        assertThat(buySummary.getDividends()).isEqualByComparingTo(dividend.getAmount());
+        assertThat(buySummary.getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
+        assertThat(buySummary.getTransactionCount()).isEqualTo(3);
+        for (SecuritySummary security : securities) {
+            if (! security.getSecurity().getId().equals(buy.getSecurity().getId())) {
+                assertThat(security.getShares()).isEqualByComparingTo(BigDecimal.ZERO);
+                assertThat(security.getFirstAcquired()).isNull();
+            }
+        }
     }
 
     @Test
