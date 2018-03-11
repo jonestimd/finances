@@ -40,6 +40,8 @@ involved in the transfer.  For security transactions, some line items also
 require a security amount (shares).  When a security is sold, the specific shares
 for the sale can also be selected from prior purchase transactions.
 
+![]({{ "/assets/images/ic_open_in_new_black_24px.svg" | relative_url }}){:.icon} [Database Tables](/assets/images/tables.svg){:target="_blank"}
+
 ## Application windows
 The application includes the following windows for viewing and editing the data.
 
