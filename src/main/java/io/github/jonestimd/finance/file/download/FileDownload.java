@@ -27,9 +27,11 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.operations.FileImportOperationsImpl;
@@ -52,6 +54,11 @@ import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class FileDownload {
     private static final Logger LOGGER = Logger.getLogger(FileDownload.class);
+    public static final String RESULT_TIMEOUT = "result.timeout";
+    public static final String RESULT_FORMAT = "result.format";
+    public static final String RESULT_EXTRACT = "result.extract";
+    public static final String RESULT_CONDITION = "result.condition";
+    public static final String RESULT_FILES = "result.files";
 
     private final Config config;
     private final CloseableHttpClient client;
@@ -123,8 +130,11 @@ public class FileDownload {
     protected void execute(Config step, List<Object> fileKeys) throws IOException, ParseException {
         for (int tries=0; true; ) {
             try {
-                executeOnce(step, fileKeys);
-                return;
+                long timeout = (step.hasPath(RESULT_TIMEOUT) ? step.getDuration(RESULT_TIMEOUT).toMillis() : 30000L) + System.currentTimeMillis();
+                while (System.currentTimeMillis() <= timeout) {
+                    if (executeOnce(step, fileKeys)) return;
+                }
+                throw new RuntimeException("Timed out waiting for file");
             } catch (IOException ex) {
                 if (tries++ < 3) {
                     try {
@@ -138,22 +148,29 @@ public class FileDownload {
         }
     }
 
-    private void executeOnce(Config step, List<Object> fileKeys) throws IOException, ParseException {
+    private boolean executeOnce(Config step, List<Object> fileKeys) throws IOException, ParseException {
         HttpUriRequest request = requestFactory.request(step, fileKeys);
         try (CloseableHttpResponse response = client.execute(request)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 throw new IOException("Download failed: " + response.getStatusLine().toString());
             }
             if (step.hasPath("result")) {
-                StepResponse<?> result = getResponse(step.getString("result.format"), response.getEntity());
-                if (step.hasPath("result.extract")) {
-                    for (Config extract : step.getConfigList("result.extract")) {
+                StepResponse<?> result = getResponse(step.getString(RESULT_FORMAT), response.getEntity());
+                if (step.hasPath(RESULT_EXTRACT)) {
+                    for (Config extract : step.getConfigList(RESULT_EXTRACT)) {
                         String name = extract.getString("name");
                         context.putValue(name, result.getValue(extract));
                     }
                 }
-                if (step.hasPath("result.files")) {
-                    result.getValues(step.getConfig("result.files")).forEach(context::addFile);
+                if (step.hasPath(RESULT_CONDITION)) {
+                    for (Entry<String, ConfigValue> entry : step.getConfig(RESULT_CONDITION).entrySet()) {
+                        if (!entry.getValue().unwrapped().equals(context.getString(entry.getKey()))) {
+                            return false;
+                        }
+                    }
+                }
+                if (step.hasPath(RESULT_FILES)) {
+                    result.getValues(step.getConfig(RESULT_FILES)).forEach(context::addFile);
                 }
             }
             else if (step.hasPath("save")) {
@@ -164,6 +181,7 @@ public class FileDownload {
             else {
                 EntityUtils.consume(response.getEntity());
             }
+            return true;
         }
     }
 

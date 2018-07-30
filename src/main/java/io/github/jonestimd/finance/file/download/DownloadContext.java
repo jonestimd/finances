@@ -61,6 +61,10 @@ public class DownloadContext {
         values.put(name, value);
     }
 
+    public String getString(String name) {
+        return (String) values.get(name);
+    }
+
     public void addFile(List<Object> fileKeys) {
         fileList.add(fileKeys);
     }
