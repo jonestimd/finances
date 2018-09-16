@@ -185,4 +185,9 @@ public class TransactionOperationsImpl implements TransactionOperations {
         securityLotDao.deleteAll(Streams.of(securityLots).filter(lot -> !lot.isNew() && lot.isEmpty()));
         securityLotDao.saveAll(Streams.of(securityLots).filter(lot -> !lot.isEmpty()));
     }
+
+    @Override
+    public List<TransactionDetail> findAllDetails(String search) {
+        return transactionDetailDao.findAll(search);
+    }
 }

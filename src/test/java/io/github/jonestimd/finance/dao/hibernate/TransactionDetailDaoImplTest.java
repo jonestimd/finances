@@ -230,7 +230,14 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
     }
 
     @Test
-    public void mergeCategories() throws Exception {
+    public void findAll() throws Exception {
+        List<TransactionDetail> matches = transactionDetailDao.findAll("x");
+
+        assertThat(matches).isEmpty();
+    }
+
+    @Test
+    public void replaceCategory() throws Exception {
         TransactionCategory oldCategory = transactionCategoryDao.save(new TransactionCategory("old category"));
         TransactionCategory newCategory = transactionCategoryDao.save(new TransactionCategory("replacement category"));
         Transaction transaction = createTransaction(null, new Date(), new TransactionDetail(oldCategory, BigDecimal.ONE, null, null));

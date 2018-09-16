@@ -184,4 +184,15 @@ public class TransactionServiceImplTest {
 
         verify(transactionOperations).saveSecurityLots(lots);
     }
+
+    @Test
+    public void findAllDetails() throws Exception {
+        final String searchText = "search text";
+        final List<TransactionDetail> matches = new ArrayList<>();
+        when(transactionOperations.findAllDetails(anyString())).thenReturn(matches);
+
+        assertThat(transactionService.findAllDetails(searchText)).isSameAs(matches);
+
+        verify(transactionOperations).findAllDetails(searchText);
+    }
 }

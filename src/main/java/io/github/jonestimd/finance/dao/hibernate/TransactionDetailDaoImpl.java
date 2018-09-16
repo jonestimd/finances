@@ -79,6 +79,14 @@ public class TransactionDetailDaoImpl extends HibernateDao<TransactionDetail, Lo
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionDetail> findAll(String search) {
+        return getSession().getNamedQuery(TransactionDetail.FIND_ALL)
+                .setParameter("search", "%"+search.toLowerCase()+"%")
+                .list();
+    }
+
+    @Override
     public void replaceCategory(List<TransactionCategory> toReplace, TransactionCategory category) {
         getSession().getNamedQuery(TransactionDetail.REPLACE_CATEGORY_QUERY)
                 .setParameterList("oldCategoryIds", Lists.transform(toReplace, UniqueId::getId))

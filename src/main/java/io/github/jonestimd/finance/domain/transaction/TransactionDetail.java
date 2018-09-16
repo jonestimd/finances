@@ -88,7 +88,22 @@ import org.hibernate.annotations.Formula;
         " and td." + TransactionDetail.ASSET_QUANTITY +
         " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
     @NamedQuery(name = TransactionDetail.REPLACE_CATEGORY_QUERY, query =
-        "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)")
+        "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)"),
+    @NamedQuery(name = TransactionDetail.FIND_ALL, query =
+        "select distinct td " +
+        "from TransactionDetail td join fetch td." + TransactionDetail.TRANSACTION + " t " +
+        "left join fetch t." + Transaction.PAYEE + " p " +
+        "left join fetch t." + Transaction.SECURITY + " s " +
+        "left join fetch td." + TransactionDetail.GROUP + " g " +
+        "left join fetch td." + TransactionDetail.CATEGORY + " tc " +
+        "where lower(p." + Payee.NAME + ") like :search" +
+        " or lower(s." + Security.NAME + ") like :search" +
+        " or lower(t." + Transaction.MEMO + ") like :search" +
+        " or lower(td." + TransactionDetail.MEMO + ") like :search" +
+        " or lower(g." + TransactionGroup.NAME + ") like :search" +
+        " or tc.id in (" +
+                "select c.id from TransactionCategory c left join c." + TransactionCategory.PARENT + " p " +
+                "where lower(c." + TransactionCategory.CODE + ") like :search or lower(p." + TransactionCategory.CODE + ") like :search)")
 })
 public class TransactionDetail extends BaseDomain<Long> {
     public static final String FIND_ORPHAN_TRANSFERS = "transactionDetail.findOrphanTransfers";
@@ -96,6 +111,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String UNSOLD_SECURITY_SHARES_BY_DATE = "transaction.unsoldSecuritySharesByDate";
     public static final String UNSOLD_SECURITY_SHARES = "transaction.unsoldSecurityShares";
     public static final String REPLACE_CATEGORY_QUERY = "transaction.replaceCategory";
+    public static final String FIND_ALL = "transactionDetail.findAll";
 
     public static final String TRANSACTION = "transaction";
     public static final String AMOUNT = "amount";

@@ -56,4 +56,5 @@ public interface TransactionOperations {
 
     void saveSecurityLots(Iterable<? extends SecurityLot> securityLots);
 
+    List<TransactionDetail> findAllDetails(String search);
 }

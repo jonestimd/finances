@@ -498,4 +498,15 @@ public class TransactionOperationsImplTest {
         }
         return detail;
     }
+
+    @Test
+    public void findAllDetails() throws Exception {
+        String searchText = "search text";
+        ArrayList<TransactionDetail> details = new ArrayList<>();
+        when(transactionDetailDao.findAll(anyString())).thenReturn(details);
+
+        assertThat(transactionOperations.findAllDetails(searchText)).isSameAs(details);
+
+        verify(transactionDetailDao).findAll(searchText);
+    }
 }

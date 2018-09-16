@@ -61,4 +61,6 @@ public interface TransactionService {
     List<SecurityLot> findAvailableLots(TransactionDetail sale);
 
     void saveSecurityLots(Iterable<? extends SecurityLot> securityLots);
+
+    List<TransactionDetail> findAllDetails(String search);
 }

@@ -118,4 +118,9 @@ public class TransactionServiceImpl implements TransactionService {
     public void saveSecurityLots(Iterable<? extends SecurityLot> securityLots) {
         transactionOperations.saveSecurityLots(securityLots);
     }
+
+    @Override
+    public List<TransactionDetail> findAllDetails(String search) {
+        return transactionOperations.findAllDetails(search);
+    }
 }
