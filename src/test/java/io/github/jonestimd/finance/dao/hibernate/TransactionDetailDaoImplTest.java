@@ -3,6 +3,7 @@ package io.github.jonestimd.finance.dao.hibernate;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -230,10 +231,23 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
     }
 
     @Test
-    public void findAll() throws Exception {
-        List<TransactionDetail> matches = transactionDetailDao.findAll("x");
+    public void findByString() throws Exception {
+        List<TransactionDetail> matches = transactionDetailDao.findByString("x");
 
         assertThat(matches).isEmpty();
+    }
+
+    @Test
+    public void findByCategoryIdsReturnsEmptyListForEmptyIds() throws Exception {
+        assertThat(transactionDetailDao.findByCategoryIds(Collections.emptyList())).isEmpty();
+    }
+
+    @Test
+    public void findByCategoryIdsRunsQueryForNonemptyIds() throws Exception {
+        TransactionCategory category = transactionCategoryDao.save(new TransactionCategory("the category"));
+        createTransaction(null, new Date(), new TransactionDetail(category, BigDecimal.ONE, null, null));
+
+        assertThat(transactionDetailDao.findByCategoryIds(Collections.singletonList(category.getId()))).hasSize(1);
     }
 
     @Test

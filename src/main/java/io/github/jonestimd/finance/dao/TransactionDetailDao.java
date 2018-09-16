@@ -38,7 +38,9 @@ public interface TransactionDetailDao extends BaseDao<TransactionDetail, Long> {
 
     List<TransactionDetail> findAvailablePurchaseShares(TransactionDetail sale);
 
-    List<TransactionDetail> findAll(String search);
+    List<TransactionDetail> findByString(String search);
+
+    List<TransactionDetail> findByCategoryIds(List<Long> categoryIds);
 
     void replaceCategory(List<TransactionCategory> toReplace, TransactionCategory category);
 }

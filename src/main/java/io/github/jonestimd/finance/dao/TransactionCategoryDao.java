@@ -35,4 +35,6 @@ public interface TransactionCategoryDao extends BaseDao<TransactionCategory, Lon
     TransactionCategory getSecurityAction(String code);
 
     List<TransactionCategory> getParentCategories();
+
+    List<TransactionCategory> findByPartialCode(String search);
 }

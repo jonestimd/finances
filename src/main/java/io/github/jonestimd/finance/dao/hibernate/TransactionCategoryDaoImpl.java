@@ -76,4 +76,10 @@ public class TransactionCategoryDaoImpl extends HibernateDao<TransactionCategory
     public List<TransactionCategory> getParentCategories() {
         return getSession().getNamedQuery(TransactionCategory.PARENTS_QUERY).list();
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionCategory> findByPartialCode(String search) {
+        return getSession().getNamedQuery(TransactionCategory.SEARCH_QUERY).setParameter("search", "%"+search+"%").list();
+    }
 }

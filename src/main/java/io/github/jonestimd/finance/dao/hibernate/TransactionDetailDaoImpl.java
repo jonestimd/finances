@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.dao.hibernate;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -80,9 +81,18 @@ public class TransactionDetailDaoImpl extends HibernateDao<TransactionDetail, Lo
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<TransactionDetail> findAll(String search) {
-        return getSession().getNamedQuery(TransactionDetail.FIND_ALL)
+    public List<TransactionDetail> findByString(String search) {
+        return getSession().getNamedQuery(TransactionDetail.FIND_BY_STRING)
                 .setParameter("search", "%"+search.toLowerCase()+"%")
+                .list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionDetail> findByCategoryIds(List<Long> categoryIds) {
+        if (categoryIds.isEmpty()) return Collections.emptyList();
+        return getSession().getNamedQuery(TransactionDetail.FIND_BY_CATEGORY_IDS)
+                .setParameterList("categoryIds", categoryIds)
                 .list();
     }
 

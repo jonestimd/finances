@@ -27,6 +27,7 @@ import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.domain.transaction.SecurityLotBuilder;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import io.github.jonestimd.mockito.MockitoHelper;
@@ -502,11 +503,19 @@ public class TransactionOperationsImplTest {
     @Test
     public void findAllDetails() throws Exception {
         String searchText = "search text";
-        ArrayList<TransactionDetail> details = new ArrayList<>();
-        when(transactionDetailDao.findAll(anyString())).thenReturn(details);
+        TransactionCategory category = mock(TransactionCategory.class);
+        TransactionDetail categoryMatch = new TransactionDetail();
+        when(category.getSubcategoryIds()).thenReturn(Stream.of(-1L, -2L));
+        TransactionDetail otherMatch = new TransactionDetail();
+        when(categoryDao.findByPartialCode(anyString())).thenReturn(Collections.singletonList(category));
+        when(transactionDetailDao.findByCategoryIds(anyListOf(Long.class))).thenReturn(Collections.singletonList(categoryMatch));
+        when(transactionDetailDao.findByString(anyString())).thenReturn(Collections.singletonList(otherMatch));
 
-        assertThat(transactionOperations.findAllDetails(searchText)).isSameAs(details);
+        assertThat(transactionOperations.findAllDetails(searchText)).contains(categoryMatch, otherMatch);
 
-        verify(transactionDetailDao).findAll(searchText);
+        verify(category).getSubcategoryIds();
+        verify(categoryDao).findByPartialCode(searchText);
+        verify(transactionDetailDao).findByCategoryIds(Lists.newArrayList(-1L, -2L));
+        verify(transactionDetailDao).findByString(searchText);
     }
 }
