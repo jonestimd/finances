@@ -22,11 +22,15 @@
 package io.github.jonestimd.finance.swing.transaction;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Currency;
+import io.github.jonestimd.finance.domain.asset.Security;
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.SecurityAction;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionGroup;
@@ -95,4 +99,19 @@ public class TransactionDetailColumnAdapter<V> extends FunctionColumnAdapter<Tra
 
     public static final TransactionDetailColumnAdapter<BigDecimal> EXCHANGE_QUANTITY_ADAPTER =
         new TransactionDetailColumnAdapter<>(TransactionDetail.ASSET_QUANTITY, BigDecimal.class, TransactionDetail::getAssetQuantity, TransactionDetail::setAssetQuantity);
+
+    public static final TransactionDetailColumnAdapter<Date> TRANSACTION_DATE_ADAPTER =
+        new TransactionDetailColumnAdapter<>("transaction.date", Date.class, td -> td.getTransaction().getDate(), null);
+
+    public static final TransactionDetailColumnAdapter<Payee> TRANSACTION_PAYEE_ADAPTER =
+        new TransactionDetailColumnAdapter<>("transaction.payee", Payee.class, td -> td.getTransaction().getPayee(), null);
+
+    public static final TransactionDetailColumnAdapter<Account> TRANSACTION_ACCOUNT_ADAPTER =
+        new TransactionDetailColumnAdapter<>("transaction.account", Account.class, td -> td.getTransaction().getAccount(), null);
+
+    public static final TransactionDetailColumnAdapter<Security> TRANSACTION_SECURITY_ADAPTER =
+        new TransactionDetailColumnAdapter<>("transaction.security", Security.class, td -> td.getTransaction().getSecurity(), null);
+
+    public static final TransactionDetailColumnAdapter<String> TRANSACTION_MEMO_ADAPTER =
+        new TransactionDetailColumnAdapter<>("transaction.memo", String.class, td -> td.getTransaction().getMemo(), null);
 }

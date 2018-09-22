@@ -68,6 +68,7 @@ import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
 import io.github.jonestimd.finance.swing.transaction.action.AutofillTask;
 import io.github.jonestimd.finance.swing.transaction.action.CommitAction;
 import io.github.jonestimd.finance.swing.transaction.action.EditLotsAction;
+import io.github.jonestimd.finance.swing.transaction.action.FindAction;
 import io.github.jonestimd.finance.swing.transaction.action.MoveAction;
 import io.github.jonestimd.finance.swing.transaction.action.RefreshAction;
 import io.github.jonestimd.finance.swing.transaction.action.SaveAllAction;
@@ -270,6 +271,7 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
         addTransactionAction(menu, toolbar, TransactionsWindowEvent.frameAction(this, "action.newTransactionsWindow", windowEventPublisher));
         menu.addSeparator();
         toolbar.add(ComponentFactory.newMenuBarSeparator());
+        menu.add(new FindAction(this, tableFactory, transactionService));
         addTransactionAction(menu, toolbar, new MoveAction(transactionTable, transactionService, domainEventPublisher, accountsMenuFactory::getAccounts));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.INSERT_DETAIL));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.DELETE_DETAIL));

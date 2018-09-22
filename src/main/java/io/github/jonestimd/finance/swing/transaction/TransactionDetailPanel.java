@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,42 +19,26 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.swing;
+package io.github.jonestimd.finance.swing.transaction;
 
-import java.awt.Component;
-import java.util.function.Predicate;
+import java.awt.BorderLayout;
+import java.util.List;
 
-import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
-import org.assertj.swing.core.BasicRobot;
-import org.assertj.swing.core.GenericTypeMatcher;
-import org.assertj.swing.core.Robot;
-import org.junit.After;
-import org.junit.Before;
+import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
+import io.github.jonestimd.finance.swing.FinanceTableFactory;
+import io.github.jonestimd.swing.table.DecoratedTable;
 
-public class SwingRobotTest {
-    protected Robot robot;
+public class TransactionDetailPanel extends JPanel {
+    private final DecoratedTable<TransactionDetail, TransactionDetailTableModel> table;
+    private final TransactionDetailTableModel model = new TransactionDetailTableModel();
 
-    @Before
-    public void setUp() throws Exception {
-        robot = BasicRobot.robotWithCurrentAwtHierarchy();
-    }
-
-    @After
-    public void cleanUp() throws Exception {
-        robot.cleanUp();
-    }
-
-    protected GenericTypeMatcher<JButton> buttonMatcher(String text) {
-        return matcher(JButton.class, button -> button.getText().equals(text));
-    }
-
-    protected  <T extends Component> GenericTypeMatcher<T> matcher(Class<T> componentType, Predicate<T> condition) {
-        return new GenericTypeMatcher<T>(componentType) {
-            @Override
-            protected boolean isMatching(T component) {
-                return condition.test(component);
-            }
-        };
+    public TransactionDetailPanel(FinanceTableFactory tableFactory, List<TransactionDetail> transactionDetails) {
+        model.setBeans(transactionDetails);
+        table = tableFactory.createSortedTable(model);
+        setLayout(new BorderLayout());
+        add(new JScrollPane(table), BorderLayout.CENTER);
     }
 }

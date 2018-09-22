@@ -34,6 +34,7 @@ import javax.swing.table.TableCellRenderer;
 
 import com.google.common.collect.ImmutableMap;
 import io.github.jonestimd.collection.MapBuilder;
+import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.transaction.Payee;
@@ -47,6 +48,7 @@ import io.github.jonestimd.finance.swing.asset.SecuritiesPanel;
 import io.github.jonestimd.finance.swing.asset.SecurityCellEditor;
 import io.github.jonestimd.finance.swing.asset.SecurityFormat;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.transaction.AccountFormat;
 import io.github.jonestimd.finance.swing.transaction.NotificationIcon;
 import io.github.jonestimd.finance.swing.transaction.NotificationIconTableCellRenderer;
 import io.github.jonestimd.finance.swing.transaction.PayeeCellEditor;
@@ -103,6 +105,7 @@ public class SwingContext {
                 .put(Security.class, new FormatTableCellRenderer(new SecurityFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(TransactionType.class, new FormatTableCellRenderer(new TransactionTypeFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(TransactionGroup.class, new FormatTableCellRenderer(new TransactionGroupFormat(), FinanceTableFactory.HIGHLIGHTER))
+                .put(Account.class, new FormatTableCellRenderer(new AccountFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(Company.class, new FormatTableCellRenderer(new CompanyFormat(), FinanceTableFactory.HIGHLIGHTER))
                 .put(NotificationIcon.class, new NotificationIconTableCellRenderer())
                 .put(String.class, new HighlightTableCellRenderer(FinanceTableFactory.HIGHLIGHTER)).get();
