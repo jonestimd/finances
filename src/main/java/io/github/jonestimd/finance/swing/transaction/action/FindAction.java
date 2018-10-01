@@ -30,10 +30,12 @@ import com.google.common.base.Strings;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
+import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.transaction.TransactionDetailPanel;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
 
 public class FindAction extends MnemonicAction {
@@ -44,14 +46,17 @@ public class FindAction extends MnemonicAction {
     private final JComponent owner;
     private final FinanceTableFactory tableFactory;
     private final TransactionService transactionService;
+    private final FrameManager<WindowType> frameManager;
     private final String loadingMessage;
     private final String noMatches;
 
-    public FindAction(JComponent owner, FinanceTableFactory tableFactory, TransactionService transactionService) {
+    public FindAction(JComponent owner, FinanceTableFactory tableFactory, TransactionService transactionService,
+            FrameManager<WindowType> frameManager) {
         super(BundleType.LABELS.get(), RESOURCE_PREFIX);
         this.owner = owner;
         this.tableFactory = tableFactory;
         this.transactionService = transactionService;
+        this.frameManager = frameManager;
         this.loadingMessage = BundleType.LABELS.getString(RESOURCE_PREFIX + ".status");
         this.noMatches = BundleType.LABELS.getString(RESOURCE_PREFIX + ".message.noMatches");
     }
@@ -68,7 +73,7 @@ public class FindAction extends MnemonicAction {
                 else {
                     StatusFrame resultFrame = new StatusFrame(BundleType.LABELS.get(), "transactionDetails");
                     resultFrame.setTitle(resultFrame.getTitle() + BundleType.LABELS.formatMessage(RESOURCE_PREFIX + ".message.matches", search));
-                    resultFrame.setContentPane(new TransactionDetailPanel(tableFactory, result));
+                    resultFrame.setContentPane(new TransactionDetailPanel(tableFactory, result, frameManager));
                     resultFrame.pack();
                     resultFrame.setVisible(true);
                 }

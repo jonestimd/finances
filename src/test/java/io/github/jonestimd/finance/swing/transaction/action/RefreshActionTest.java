@@ -73,7 +73,7 @@ public class RefreshActionTest extends SwingRobotTest {
         when(table.getComponentOrientation()).thenReturn(ComponentOrientation.LEFT_TO_RIGHT);
 
         SwingUtilities.invokeLater(() -> confirmed = action.confirmAction(new ActionEvent("test", 0, "refresh")));
-        robot.click(robot.finder().find(JButtonMatcher.withText("Cancel")));
+        robot.click(robot.finder().find(JButtonMatcher.withText("Cancel").andShowing()));
 
         assertThat(confirmed).isFalse();
     }

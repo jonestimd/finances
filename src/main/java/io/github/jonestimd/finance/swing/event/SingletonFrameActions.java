@@ -21,15 +21,20 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.event;
 
-import java.beans.PropertyChangeListener;
+import javax.swing.JComponent;
 
-import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.swing.WindowType;
+import io.github.jonestimd.swing.window.FrameAction;
+import io.github.jonestimd.swing.window.FrameManager;
 
-public interface AccountSelector {
-    String ACCOUNT_PROPERTY = "account";
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
-    Account getSelectedAccount();
+public class SingletonFrameActions {
+    public static FrameAction<WindowType> forType(Object source, WindowType type, String resourcePrefix, FrameManager<WindowType> frameManager) {
+        return new FrameAction<>(LABELS.get(), resourcePrefix, frameManager, type);
+    }
 
-    void addAccountListener(PropertyChangeListener listener);
-    void removeAccountListener(PropertyChangeListener listener);
+    public static FrameAction<WindowType> forAccounts(JComponent source, FrameManager<WindowType> frameManager) {
+        return forType(source, WindowType.ACCOUNTS, "action.viewAccounts", frameManager);
+    }
 }

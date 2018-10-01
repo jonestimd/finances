@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,7 @@ import io.github.jonestimd.swing.component.ComboBoxCellEditor;
 import io.github.jonestimd.swing.table.TableSummary;
 import io.github.jonestimd.swing.validation.RequiredValidator;
 import io.github.jonestimd.swing.validation.Validator;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.text.StringFormat;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -81,8 +81,8 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
             new ReloadEventHandler<>(this, "security.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public SecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
-            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security", windowEventPublisher);
+            Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory, FrameManager<WindowType> frameManager) {
+        super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security", frameManager);
         this.assetOperations = serviceLocator.getAssetOperations();
         this.tableFactory = tableFactory;
 

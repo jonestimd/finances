@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -69,10 +69,9 @@ import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.HighlightTableCellRenderer;
 import io.github.jonestimd.swing.table.Highlighter;
 import io.github.jonestimd.swing.table.TableInitializer;
-import io.github.jonestimd.swing.window.ApplicationWindowEvent;
+import io.github.jonestimd.swing.window.ApplicationWindowAction;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.PanelFactory;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -80,7 +79,6 @@ public class SwingContext {
     private final ResourceBundle labelBundle = LABELS.get();
     private final ServiceLocator serviceLocator;
     private final DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
-    private final WindowEventPublisher<WindowType> windowEventPublisher = new WindowEventPublisher<>();
 
     private FinanceTableFactory tableFactory;
     private final PluginContext pluginContext;
@@ -92,8 +90,7 @@ public class SwingContext {
         pluginContext = new PluginContext(serviceLocator, domainEventPublisher);
         TableInitializer tableInitializer = new TableInitializer(defaultTableRenderers(), defaultTableEditors(), columnRenderers(), Collections.emptyMap());
         tableFactory = new FinanceTableFactory(tableInitializer);
-        frameManager = new FrameManager<>(BundleType.LABELS.get(), buildSingletonPanels(), buildPanelFactories(), AboutDialog::new);
-        windowEventPublisher.register(frameManager);
+        frameManager = new FrameManager<>(BundleType.LABELS.get(), this::getSingletonPanel, buildPanelFactories(), AboutDialog::new);
     }
 
     private Map<Class<?>, TableCellRenderer> defaultTableRenderers() {
@@ -126,25 +123,27 @@ public class SwingContext {
         return builder.put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER)).get();
     }
 
-    private void buildTransactionsPanelFactory() {
-        transactionsPanelFactory = new TransactionsPanelFactory(serviceLocator, new TransactionTableModelCache(domainEventPublisher),
-                tableFactory, windowEventPublisher, domainEventPublisher);
+    private Container getSingletonPanel(WindowType type) {
+        switch (type) {
+            case ACCOUNTS:
+                return new AccountsPanel(serviceLocator, domainEventPublisher, tableFactory, frameManager);
+            case CATEGORIES:
+                return new TransactionCategoriesPanel(serviceLocator, domainEventPublisher, tableFactory, frameManager);
+            case PAYEES:
+                return new PayeesPanel(serviceLocator, domainEventPublisher, tableFactory, frameManager);
+            case SECURITIES:
+                return new SecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, frameManager);
+            case ACCOUNT_SECURITIES:
+                return new AccountSecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, frameManager);
+            case TRANSACTION_GROUPS:
+                return new TransactionGroupsPanel(serviceLocator, domainEventPublisher, tableFactory, frameManager);
+        }
+        throw new IllegalArgumentException("invalid window type: " + type);
     }
 
-    private Map<WindowType, Container> buildSingletonPanels() {
-        return ImmutableMap.<WindowType, Container>builder()
-            .put(WindowType.ACCOUNTS, new AccountsPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
-            .put(WindowType.CATEGORIES, new TransactionCategoriesPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
-            .put(WindowType.PAYEES, new PayeesPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
-            .put(WindowType.SECURITIES, new SecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, windowEventPublisher))
-            .put(WindowType.ACCOUNT_SECURITIES, new AccountSecuritiesPanel(serviceLocator, domainEventPublisher, pluginContext.getSecurityTableExtensions(), tableFactory, windowEventPublisher))
-            .put(WindowType.TRANSACTION_GROUPS, new TransactionGroupsPanel(serviceLocator, domainEventPublisher, tableFactory, windowEventPublisher))
-            .build();
-    }
-
-    private Map<WindowType, PanelFactory<? extends ApplicationWindowEvent<WindowType>>> buildPanelFactories() {
-        buildTransactionsPanelFactory();
-        return ImmutableMap.<WindowType, PanelFactory<? extends ApplicationWindowEvent<WindowType>>>builder()
+    private Map<WindowType, PanelFactory<? extends ApplicationWindowAction<WindowType>>> buildPanelFactories() {
+        transactionsPanelFactory = new TransactionsPanelFactory(serviceLocator, this, domainEventPublisher);
+        return ImmutableMap.<WindowType, PanelFactory<? extends ApplicationWindowAction<WindowType>>>builder()
             .put(WindowType.TRANSACTIONS, transactionsPanelFactory)
             .build();
     }

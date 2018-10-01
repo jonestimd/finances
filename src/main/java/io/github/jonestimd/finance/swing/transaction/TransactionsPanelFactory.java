@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +22,35 @@
 package io.github.jonestimd.finance.swing.transaction;
 
 import io.github.jonestimd.finance.service.ServiceLocator;
-import io.github.jonestimd.finance.swing.FinanceTableFactory;
-import io.github.jonestimd.finance.swing.WindowType;
+import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
-import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
+import io.github.jonestimd.finance.swing.event.SelectAccountAction;
 import io.github.jonestimd.swing.window.PanelFactory;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
 
-public class TransactionsPanelFactory implements PanelFactory<TransactionsWindowEvent> {
+public class TransactionsPanelFactory implements PanelFactory<SelectAccountAction> {
     private final ServiceLocator serviceLocator;
     private final TransactionTableModelCache transactionModelCache;
-    private final FinanceTableFactory tableFactory;
+    private final SwingContext context;
     private final DomainEventPublisher eventPublisher;
-    private final WindowEventPublisher<WindowType> windowEventPublisher;
     private final AccountsMenuFactory accountsMenuFactory;
     private final ImportFileMenuFactory importFileMenuFactory;
 
-    public TransactionsPanelFactory(ServiceLocator serviceLocator, TransactionTableModelCache transactionModelCache,
-                                    FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher, DomainEventPublisher eventPublisher) {
+    public TransactionsPanelFactory(ServiceLocator serviceLocator, SwingContext context, DomainEventPublisher eventPublisher) {
         this.serviceLocator = serviceLocator;
-        this.transactionModelCache = transactionModelCache;
-        this.tableFactory = tableFactory;
-        this.windowEventPublisher = windowEventPublisher;
-        this.accountsMenuFactory = new AccountsMenuFactory(serviceLocator.getAccountOperations(), windowEventPublisher, eventPublisher);
+        this.transactionModelCache = new TransactionTableModelCache(eventPublisher);
+        this.context = context;
+        this.accountsMenuFactory = new AccountsMenuFactory(serviceLocator.getAccountOperations(), context, eventPublisher);
         this.importFileMenuFactory = new ImportFileMenuFactory(serviceLocator);
         this.eventPublisher = eventPublisher;
     }
 
-    public TransactionsPanel createPanel(TransactionsWindowEvent event) {
+    public TransactionsPanel createPanel(SelectAccountAction action) {
         TransactionsPanel transactionsPanel = createPanel();
-        transactionsPanel.setSelectedAccount(event.getAccount());
+        transactionsPanel.setSelectedAccount(action.getAccount());
         return transactionsPanel;
     }
 
     public TransactionsPanel createPanel() {
-        return new TransactionsPanel(serviceLocator, transactionModelCache, tableFactory, windowEventPublisher, accountsMenuFactory, importFileMenuFactory, eventPublisher);
+        return new TransactionsPanel(serviceLocator, transactionModelCache, context, accountsMenuFactory, importFileMenuFactory, eventPublisher);
     }
 }

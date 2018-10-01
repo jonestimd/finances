@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -94,10 +94,7 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
             return bean.getDetails().size();
         }
     };
-    private static final Comparator<Transaction> DATE_SORT = (t1, t2) -> {
-        int diff = t1.getDate().compareTo(t2.getDate());
-        return diff == 0 ? t1.getId().compareTo(t2.getId()) : diff;
-    };
+    private static final Comparator<Transaction> DATE_SORT = Comparator.comparing(Transaction::getDate).thenComparingLong(Transaction::getId);
     public static final String CLEARED_BALANCE_PROPERTY = "clearedBalance";
     public static final String NEW_TRANSACTION_PAYEE_PROPERTY = "newTransactionPayee";
     private static final String RESOURCE_PREFIX = "table.transaction.";

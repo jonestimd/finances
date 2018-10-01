@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,25 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.event;
 
-import javax.swing.Action;
+import java.util.function.Supplier;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.swing.WindowType;
-import io.github.jonestimd.swing.window.ApplicationWindowEvent;
 import io.github.jonestimd.swing.window.FrameAction;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class TransactionsWindowEvent extends ApplicationWindowEvent<WindowType> {
-    public static Action frameAction(AccountSelector source, String resourcePrefix, WindowEventPublisher<WindowType> eventPublisher) {
-        return new FrameAction<>(LABELS.get(), resourcePrefix, eventPublisher, new TransactionsWindowEvent(source));
+public class TransactionsFrameAction extends FrameAction<WindowType> implements SelectAccountAction {
+    private final Supplier<Account> accountSupplier;
+
+    public TransactionsFrameAction(Supplier<Account> accountSupplier, String resourcePrefix, FrameManager<WindowType> frameManger) {
+        super(LABELS.get(), resourcePrefix, frameManger, WindowType.TRANSACTIONS);
+        this.accountSupplier = accountSupplier;
     }
 
-    public TransactionsWindowEvent(AccountSelector source) {
-        super(source, WindowType.TRANSACTIONS);
-    }
-
+    @Override
     public Account getAccount() {
-        return ((AccountSelector) getSource()).getSelectedAccount();
+        return accountSupplier.get();
     }
 }

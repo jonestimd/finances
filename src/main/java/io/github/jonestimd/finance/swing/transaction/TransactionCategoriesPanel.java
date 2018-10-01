@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static io.github.jonestimd.finance.swing.transaction.TransactionCategoryTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
@@ -55,8 +55,8 @@ public class TransactionCategoriesPanel extends AccountAccessPanel<TransactionCa
             new ReloadEventHandler<>(this, "category.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher,
-            FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category", windowEventPublisher);
+            FinanceTableFactory tableFactory, FrameManager<WindowType> frameManager) {
+        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category", frameManager);
         this.transactionCategoryOperations = serverLocator.getTransactionCategoryOperations();
         this.mergeAction = new MergeAction<>(TransactionCategory.class, "mergeCategories", getTable(), new TransactionTypeFormat(), TransactionCategorySummary::getCategory,
                 transactionCategoryOperations, domainEventPublisher, this::isMergeDisabled);

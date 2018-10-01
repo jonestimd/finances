@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,15 +46,14 @@ import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.finance.swing.WindowType;
+import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
-import io.github.jonestimd.finance.swing.event.SingletonWindowEvent;
+import io.github.jonestimd.finance.swing.event.SingletonFrameActions;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.action.ActionAdapter;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
 import io.github.jonestimd.util.Streams;
 
 public class AccountsMenuFactory {
@@ -66,7 +65,7 @@ public class AccountsMenuFactory {
     private static final Ordering<AccountAction> ACTION_ORDERING = Ordering.from(new AccountsMenuSort()).onResultOf(AccountAction::getAccount);
     private static final String SEPARATOR = BundleType.LABELS.getString("io.github.jonestimd.finance.companyAccount.separator");
     private final AccountOperations accountOperations;
-    private final WindowEventPublisher<WindowType> windowEventPublisher;
+    private final SwingContext context;
     private final ToggleButtonModel filterModel = new ToggleButtonModel();
     private final Action filterAction;
     private Map<Long, AccountAction> accountActionMap;
@@ -82,9 +81,9 @@ public class AccountsMenuFactory {
         }
     };
 
-    public AccountsMenuFactory(AccountOperations accountOperations, WindowEventPublisher<WindowType> windowEventPublisher, DomainEventPublisher domainEventPublisher) {
+    public AccountsMenuFactory(AccountOperations accountOperations, SwingContext context, DomainEventPublisher domainEventPublisher) {
         this.accountOperations = accountOperations;
-        this.windowEventPublisher = windowEventPublisher;
+        this.context = context;
         this.filterAction = ActionAdapter.forMnemonicAndName(new FilterActionHandler(), BundleType.LABELS.getString(HIDE_CLOSED_ACCOUNTS_MENU_KEY));
         filterModel.setSelected(Boolean.getBoolean(HIDE_CLOSED_ACCOUNTS_PROPERTY));
         domainEventPublisher.register(Account.class, accountEventListener);
@@ -108,7 +107,7 @@ public class AccountsMenuFactory {
     public JMenu createAccountsMenu() {
         JMenu accountsMenu = ComponentFactory.newMenu(BundleType.LABELS.get(), ACCOUNTS_MENU_KEY);
         accountsMenu.add(createFilterMenuItem());
-        accountsMenu.add(SingletonWindowEvent.accountsFrameAction(accountsMenu, windowEventPublisher));
+        accountsMenu.add(SingletonFrameActions.forAccounts(accountsMenu, context.getFrameManager()));
         accountsMenu.addSeparator();
         menus.add(new WeakReference<>(accountsMenu));
         if (accountActionMap == null) {
