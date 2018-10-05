@@ -38,6 +38,8 @@ import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
 
+import static io.github.jonestimd.finance.swing.WindowType.*;
+
 public class FindAction extends MnemonicAction {
     private static final String RESOURCE_PREFIX = "action.transaction.find";
     private static final String DIALOG_TITLE = BundleType.LABELS.getString(RESOURCE_PREFIX + ".dialog.title");
@@ -71,9 +73,9 @@ public class FindAction extends MnemonicAction {
                     JOptionPane.showMessageDialog(owner, noMatches);
                 }
                 else {
-                    StatusFrame resultFrame = new StatusFrame(BundleType.LABELS.get(), "transactionDetails");
+                    StatusFrame resultFrame = new StatusFrame(BundleType.LABELS.get(), TRANSACTION_DETAILS.getResourcePrefix());
+                    frameManager.addFrame(resultFrame, new TransactionDetailPanel(tableFactory, result, frameManager));
                     resultFrame.setTitle(resultFrame.getTitle() + BundleType.LABELS.formatMessage(RESOURCE_PREFIX + ".message.matches", search));
-                    resultFrame.setContentPane(new TransactionDetailPanel(tableFactory, result, frameManager));
                     resultFrame.pack();
                     resultFrame.setVisible(true);
                 }

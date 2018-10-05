@@ -31,6 +31,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -60,7 +61,7 @@ public class TransactionDetailPanel extends MenuActionPanel {
             FrameManager<WindowType> frameManager) {
         this.frameManager = frameManager;
         tableModel.setBeans(transactionDetails);
-        detailTable = tableFactory.createSortedTable(tableModel);
+        detailTable = tableFactory.createSortedTable(tableModel, SortOrder.DESCENDING, 0);
         detailTable.setRowSelectionInterval(0, 0);
         setLayout(new BorderLayout());
         add(new JScrollPane(detailTable), BorderLayout.CENTER);
@@ -72,7 +73,7 @@ public class TransactionDetailPanel extends MenuActionPanel {
         if (toolbar.getLayout().getClass().getSimpleName().equals("SynthToolBarLayoutManager")) {
             toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.LINE_AXIS));
         }
-        menuBar.add(createTransactionsMenu(toolbar));
+        menuBar.add(createTransactionsMenu(toolbar), 0);
         menuBar.add(ComponentFactory.newMenuBarSeparator());
         menuBar.add(toolbar);
     }
