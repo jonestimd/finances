@@ -21,6 +21,7 @@ import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.table.DecoratedTable;
+import io.github.jonestimd.swing.table.TableInitializer;
 import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
@@ -40,8 +41,9 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionDetailPanelTest {
-    @Mock
     private FinanceTableFactory tableFactory;
+    @Mock
+    private TableInitializer tableInitializer;
     @Mock
     private FrameManager<WindowType> frameManager;
     @Mock
@@ -59,8 +61,8 @@ public class TransactionDetailPanelTest {
 
     @Before
     public void setupMocks() throws Exception {
-        when(tableFactory.createSortedTable(any(TransactionDetailTableModel.class)))
-                .thenAnswer(invocation -> new DecoratedTable<>((TransactionDetailTableModel) invocation.getArguments()[0]));
+        when(tableInitializer.initialize(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
+        tableFactory = spy(new FinanceTableFactory(tableInitializer));
     }
 
     @After

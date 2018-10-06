@@ -61,7 +61,7 @@ public class TransactionDetailPanel extends MenuActionPanel {
             FrameManager<WindowType> frameManager) {
         this.frameManager = frameManager;
         tableModel.setBeans(transactionDetails);
-        detailTable = tableFactory.createSortedTable(tableModel, SortOrder.DESCENDING, 0);
+        detailTable = tableFactory.tableBuilder(tableModel).sortedBy(SortOrder.DESCENDING, 0).get();
         detailTable.setRowSelectionInterval(0, 0);
         setLayout(new BorderLayout());
         add(new JScrollPane(detailTable), BorderLayout.CENTER);

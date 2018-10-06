@@ -14,7 +14,7 @@ import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.SwingRobotTest;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.transaction.TransactionDetailTableModel;
-import io.github.jonestimd.swing.table.DecoratedTable;
+import io.github.jonestimd.swing.table.TableInitializer;
 import io.github.jonestimd.swing.table.model.BeanListTableModel;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
@@ -39,15 +39,19 @@ public class FindActionTest extends SwingRobotTest {
     @Mock
     private TransactionService transactionService;
     @Mock
-    private FinanceTableFactory tableFactory;
+    private TableInitializer tableInitializer;
     @Mock
     private FrameManager<WindowType> frameManager;
+
+    private FinanceTableFactory tableFactory;
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
         frame.setContentPane(frameContent);
+        when(tableInitializer.initialize(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
+        tableFactory = spy(new FinanceTableFactory(tableInitializer));
     }
 
     @Test
@@ -84,8 +88,6 @@ public class FindActionTest extends SwingRobotTest {
     public void displaysResults() throws Exception {
         TransactionDetail detail = new TransactionDetailBuilder().get();
         when(transactionService.findAllDetails("search")).thenReturn(Collections.singletonList(detail));
-        when(tableFactory.createSortedTable(any(TransactionDetailTableModel.class)))
-                .thenAnswer(invocation -> new DecoratedTable<>((TransactionDetailTableModel) invocation.getArguments()[0]));
         FindAction action = new FindAction(frameContent, tableFactory, transactionService, frameManager);
 
         SwingUtilities.invokeLater(() -> action.actionPerformed(new ActionEvent(frameContent, -1, "x")));
@@ -98,7 +100,7 @@ public class FindActionTest extends SwingRobotTest {
         frame.requireTitle("Transaction Details matching \"search\"");
         verify(transactionService).findAllDetails("search");
         ArgumentCaptor<BeanListTableModel> modelCaptor = ArgumentCaptor.forClass(BeanListTableModel.class);
-        verify(tableFactory).createSortedTable(modelCaptor.capture());
+        verify(tableFactory).tableBuilder(modelCaptor.capture());
         assertThat(modelCaptor.getValue()).isInstanceOf(TransactionDetailTableModel.class);
     }
 }

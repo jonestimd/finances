@@ -55,7 +55,7 @@ public class PayeesPanel extends AccountAccessPanel<Payee, PayeeSummary> {
 
     public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
             FrameManager<WindowType> frameManager) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee", frameManager);
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new PayeeTableModel(domainEventPublisher)).sortedBy(PayeeTableModel.NAME_INDEX).get(), "payee", frameManager);
         this.payeeOperations = serviceLocator.getPayeeOperations();
         mergeAction = new MergeAction<>(Payee.class, "mergePayees", getTable(), new PayeeFormat(),
                 PayeeSummary::getPayee, payeeOperations, domainEventPublisher);

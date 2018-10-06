@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ public class StockSplitDialog extends MessageDialog {
 
     public class StockSplitPanel extends ValidatedTablePanel<StockSplit> {
         protected StockSplitPanel(FinanceTableFactory tableFactory) {
-            super(LABELS.get(), tableFactory.createValidatedTable(tableModel, StockSplitTableModel.DATE_INDEX), "stockSplit");
+            super(LABELS.get(), tableFactory.validatedTableBuilder(tableModel).sortedBy(StockSplitTableModel.DATE_INDEX).get(), "stockSplit");
         }
 
         @Override

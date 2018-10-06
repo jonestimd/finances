@@ -56,7 +56,7 @@ public class TransactionCategoriesPanel extends AccountAccessPanel<TransactionCa
 
     public TransactionCategoriesPanel(ServiceLocator serverLocator, DomainEventPublisher domainEventPublisher,
             FinanceTableFactory tableFactory, FrameManager<WindowType> frameManager) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionCategoryTableModel(domainEventPublisher), CODE_INDEX), "category", frameManager);
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new TransactionCategoryTableModel(domainEventPublisher)).sortedBy(CODE_INDEX).get(), "category", frameManager);
         this.transactionCategoryOperations = serverLocator.getTransactionCategoryOperations();
         this.mergeAction = new MergeAction<>(TransactionCategory.class, "mergeCategories", getTable(), new TransactionTypeFormat(), TransactionCategorySummary::getCategory,
                 transactionCategoryOperations, domainEventPublisher, this::isMergeDisabled);

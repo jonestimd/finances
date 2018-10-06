@@ -85,7 +85,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
 
     public AccountsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
                          FrameManager<WindowType> frameManager) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new AccountTableModel(domainEventPublisher), COMPANY_INDEX, NAME_INDEX), "account");
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new AccountTableModel(domainEventPublisher)).sortedBy(COMPANY_INDEX, NAME_INDEX).get(), "account");
         this.accountOperations = serviceLocator.getAccountOperations();
         this.assetOperations = serviceLocator.getAssetOperations();
         this.eventPublisher = domainEventPublisher;

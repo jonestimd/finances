@@ -67,7 +67,7 @@ public class AccountSecuritiesPanel extends MenuActionPanel {
         this.assetOperations = serviceLocator.getAssetOperations();
         this.frameManager = frameManager;
         AccountSecurityTableModel tableModel = new AccountSecurityTableModel(domainEventPublisher, tableExtensions);
-        table = tableFactory.createTable(tableModel);
+        table = tableFactory.sectionTableBuilder(tableModel).get();
         SectionTableRowSorter<SecuritySummary, AccountSecurityTableModel> sorter = new SectionTableRowSorter<>(table);
         sorter.setRowFilter(SecuritySummary::isNotEmpty);
         sorter.setSortKeys(Lists.newArrayList(new SortKey(AccountSecurityTableModel.NAME_INDEX, SortOrder.ASCENDING)));

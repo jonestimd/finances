@@ -41,7 +41,7 @@ public abstract class AccountAccessPanel<S extends UniqueId<Long> & Comparable<?
         extends TransactionSummaryTablePanel<S, T> {
     protected final FrameManager<WindowType> frameManager;
 
-    public AccountAccessPanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ValidatedBeanListTableModel<T>> table,
+    public AccountAccessPanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ? extends ValidatedBeanListTableModel<T>> table,
             String resourceGroup, FrameManager<WindowType> frameManager) {
         super(domainEventPublisher, table, resourceGroup);
         this.frameManager = frameManager;

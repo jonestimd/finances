@@ -82,7 +82,7 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
 
     public SecuritiesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher,
             Iterable<SecurityTableExtension> tableExtensions, FinanceTableFactory tableFactory, FrameManager<WindowType> frameManager) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new SecurityTableModel(domainEventPublisher, tableExtensions), NAME_INDEX), "security", frameManager);
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new SecurityTableModel(domainEventPublisher, tableExtensions)).sortedBy(NAME_INDEX).get(), "security", frameManager);
         this.assetOperations = serviceLocator.getAssetOperations();
         this.tableFactory = tableFactory;
 

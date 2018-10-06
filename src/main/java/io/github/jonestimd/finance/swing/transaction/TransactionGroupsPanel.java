@@ -49,7 +49,7 @@ public class TransactionGroupsPanel extends AccountAccessPanel<TransactionGroup,
 
     public TransactionGroupsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
             FrameManager<WindowType> frameManager) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(domainEventPublisher), NAME_INDEX), "transactionGroup", frameManager);
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new TransactionGroupTableModel(domainEventPublisher)).sortedBy(NAME_INDEX).get(), "transactionGroup", frameManager);
         this.transactionGroupOperations = serviceLocator.getTransactionGroupOperations();
         domainEventPublisher.register(TransactionGroupSummary.class, reloadHandler);
     }
