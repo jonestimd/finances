@@ -60,6 +60,21 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
     }
 
     @Test
+    public void getPricesDivedsRequestsByBatchSize() throws Exception {
+        String url = BUNDLE.getString("quote.service.iex.attribution.url");
+        String message = BUNDLE.getString("quote.service.iex.attribution.tooltip");
+        StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig(2)).get();
+
+        service.getPrices(ImmutableList.of("S1", "S2", "S3"), callback);
+
+        verify(callback).accept(eq(new MapBuilder<String, BigDecimal>()
+                .put("S1", new BigDecimal("45.89"))
+                .put("S2", new BigDecimal("55.67")).get()), eq(url), notNull(Icon.class), eq(message));
+        verify(callback).accept(eq(new MapBuilder<String, BigDecimal>()
+                .put("S3", new BigDecimal("65.78")).get()), eq(url), notNull(Icon.class), eq(message));
+    }
+
+    @Test
     public void getPricesDoesNotInvokesCallbackOnError() throws Exception {
         StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig()).get();
 
@@ -69,8 +84,13 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
     }
 
     private Config getConfig() {
+        return getConfig(100);
+    }
+
+    private Config getConfig(int batchSize) {
         return ConfigFactory.load().getConfig("finances.stockquote")
                 .withValue("iextrading.urlFormat", fromAnyRef(getUrl("iextrading-${symbols}.json")))
+                .withValue("iextrading.batchSize", fromAnyRef(batchSize))
                 .withValue("iextrading.iconUrl", fromAnyRef(getUrl("icon-16x16.png")))
                 .withValue("iextrading.enabled", ConfigValueFactory.fromAnyRef(true));
     }

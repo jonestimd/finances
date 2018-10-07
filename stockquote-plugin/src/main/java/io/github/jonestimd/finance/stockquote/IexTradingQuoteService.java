@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.stockquote;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
+import com.google.common.collect.Iterables;
 import com.typesafe.config.Config;
 import org.apache.log4j.Logger;
 
@@ -69,22 +69,26 @@ public class IexTradingQuoteService implements StockQuoteService {
     private final String tooltip = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.tooltip");
     private final String attributionUrl = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.url");
     private final String urlFormat;
+    private final int batchSize;
     private final List<String> pricePath;
     private final Icon icon;
 
     public IexTradingQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat");
+        this.batchSize = config.getInt("batchSize");
         this.pricePath = config.getStringList("pricePath");
         this.icon = new IconLoader(config).getIcon();
     }
 
     @Override
-    public void getPrices(Collection<String> symbols, Callback callback) throws IOException {
-        String url = urlFormat.replaceAll("\\$\\{symbols}", symbols.stream().map(this::encode).collect(Collectors.joining(",")));
-        try (InputStream stream = new URL(url).openStream()) {
-            callback.accept(getPrices(stream), attributionUrl, icon, tooltip);
-        } catch (Exception ex) {
-            logger.warn("error getting price from " + url + ": " + ex.getMessage());
+    public void getPrices(Collection<String> symbols, Callback callback) {
+        for (List<String> batch : Iterables.partition(symbols, batchSize)) {
+            String url = urlFormat.replaceAll("\\$\\{symbols}", batch.stream().map(this::encode).collect(Collectors.joining(",")));
+            try (InputStream stream = new URL(url).openStream()) {
+                callback.accept(getPrices(stream), attributionUrl, icon, tooltip);
+            } catch (Exception ex) {
+                logger.warn("error getting price from " + url + ": " + ex.getMessage());
+            }
         }
     }
 
