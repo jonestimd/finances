@@ -19,22 +19,22 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.dao;
+package io.github.jonestimd.finance.swing.event;
 
-import java.util.List;
+import javax.swing.JComponent;
 
-import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
-import io.github.jonestimd.finance.domain.transaction.TransactionCategorySummary;
+import io.github.jonestimd.finance.swing.WindowType;
+import io.github.jonestimd.swing.window.FrameAction;
+import io.github.jonestimd.swing.window.FrameManager;
 
-public interface TransactionCategoryDao extends BaseDao<TransactionCategory, Long> {
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
-    TransactionCategory getTransactionCategory(String ... codes);
+public class SingletonFrameActions {
+    public static FrameAction<WindowType> forType(Object source, WindowType type, String resourcePrefix, FrameManager<WindowType> frameManager) {
+        return new FrameAction<>(LABELS.get(), resourcePrefix, frameManager, type);
+    }
 
-    List<TransactionCategorySummary> getTransactionCategorySummaries();
-
-    TransactionCategory getSecurityAction(String code);
-
-    List<TransactionCategory> getParentCategories();
-
-    List<TransactionCategory> findByPartialCode(String search);
+    public static FrameAction<WindowType> forAccounts(JComponent source, FrameManager<WindowType> frameManager) {
+        return forType(source, WindowType.ACCOUNTS, "action.viewAccounts", frameManager);
+    }
 }

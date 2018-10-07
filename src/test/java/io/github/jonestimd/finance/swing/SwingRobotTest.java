@@ -21,7 +21,13 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing;
 
+import java.awt.Component;
+import java.util.function.Predicate;
+
+import javax.swing.JButton;
+
 import org.assertj.swing.core.BasicRobot;
+import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.core.Robot;
 import org.junit.After;
 import org.junit.Before;
@@ -31,11 +37,24 @@ public class SwingRobotTest {
 
     @Before
     public void setUp() throws Exception {
-        robot = BasicRobot.robotWithNewAwtHierarchy();
+        robot = BasicRobot.robotWithCurrentAwtHierarchy();
     }
 
     @After
     public void cleanUp() throws Exception {
         robot.cleanUp();
+    }
+
+    protected GenericTypeMatcher<JButton> buttonMatcher(String text) {
+        return matcher(JButton.class, button -> button.getText().equals(text));
+    }
+
+    protected  <T extends Component> GenericTypeMatcher<T> matcher(Class<T> componentType, Predicate<T> condition) {
+        return new GenericTypeMatcher<T>(componentType) {
+            @Override
+            protected boolean isMatching(T component) {
+                return condition.test(component);
+            }
+        };
     }
 }

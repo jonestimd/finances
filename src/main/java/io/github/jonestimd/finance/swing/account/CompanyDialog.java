@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -101,7 +101,7 @@ public class CompanyDialog extends MessageDialog {
 
     private class CompanyPanel extends DomainEventTablePanel<Company> {
         public CompanyPanel(FinanceTableFactory tableFactory, DomainEventPublisher eventPublisher) {
-            super(eventPublisher, tableFactory.createValidatedTable(tableModel, CompanyTableModel.NAME_INDEX), "company");
+            super(eventPublisher, tableFactory.validatedTableBuilder(tableModel).sortedBy(CompanyTableModel.NAME_INDEX).get(), "company");
         }
 
         @Override

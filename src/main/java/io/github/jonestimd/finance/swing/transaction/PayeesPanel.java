@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static org.apache.commons.lang.StringUtils.*;
 
@@ -54,8 +54,8 @@ public class PayeesPanel extends AccountAccessPanel<Payee, PayeeSummary> {
             new ReloadEventHandler<>(this, "payee.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public PayeesPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
-            WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new PayeeTableModel(domainEventPublisher), PayeeTableModel.NAME_INDEX), "payee", windowEventPublisher);
+            FrameManager<WindowType> frameManager) {
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new PayeeTableModel(domainEventPublisher)).sortedBy(PayeeTableModel.NAME_INDEX).get(), "payee", frameManager);
         this.payeeOperations = serviceLocator.getPayeeOperations();
         mergeAction = new MergeAction<>(Payee.class, "mergePayees", getTable(), new PayeeFormat(),
                 PayeeSummary::getPayee, payeeOperations, domainEventPublisher);

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -61,4 +61,6 @@ public interface TransactionService {
     List<SecurityLot> findAvailableLots(TransactionDetail sale);
 
     void saveSecurityLots(Iterable<? extends SecurityLot> securityLots);
+
+    List<TransactionDetail> findAllDetails(String search);
 }

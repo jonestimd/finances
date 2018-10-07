@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,17 @@
 package io.github.jonestimd.finance.operations;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.PayeeDao;
 import io.github.jonestimd.finance.dao.SecurityDao;
@@ -39,6 +46,7 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.SecurityAction;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.util.Streams;
 
@@ -184,5 +192,15 @@ public class TransactionOperationsImpl implements TransactionOperations {
     public void saveSecurityLots(Iterable<? extends SecurityLot> securityLots) {
         securityLotDao.deleteAll(Streams.of(securityLots).filter(lot -> !lot.isNew() && lot.isEmpty()));
         securityLotDao.saveAll(Streams.of(securityLots).filter(lot -> !lot.isEmpty()));
+    }
+
+    @Override
+    public List<TransactionDetail> findAllDetails(String search) {
+        List<TransactionCategory> categories = categoryDao.findByPartialCode(search);
+        List<Long> categoryIds = categories.stream().flatMap(TransactionCategory::getSubcategoryIds).collect(Collectors.toList());
+        Set<TransactionDetail> details = new HashSet<>();
+        details.addAll(transactionDetailDao.findByCategoryIds(categoryIds));
+        details.addAll(transactionDetailDao.findByString(search));
+        return Lists.newArrayList(details);
     }
 }

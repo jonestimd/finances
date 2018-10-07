@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,12 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.transaction;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -34,6 +36,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -53,13 +56,16 @@ import static io.github.jonestimd.finance.domain.transaction.SecurityAction.*;
        uniqueConstraints = @UniqueConstraint(name = "tx_category_key", columnNames = {"parent_id", "code"}))
 @SequenceGenerator(name = "id_generator", sequenceName = "tx_category_id_seq")
 @NamedQueries({
-    @NamedQuery(name = TransactionCategory.SUMMARY_QUERY,
-        query = "select category, (select count(distinct td.transaction) from TransactionDetail td where td.category = category) as useCount from TransactionCategory category"),
-    @NamedQuery(name = TransactionCategory.PARENTS_QUERY, query = "select distinct key.parent from TransactionCategory")
+    @NamedQuery(name = TransactionCategory.SUMMARY_QUERY, query =
+        "select category, (select count(distinct td.transaction) from TransactionDetail td where td.category = category) as useCount " +
+        "from TransactionCategory category"),
+    @NamedQuery(name = TransactionCategory.PARENTS_QUERY, query = "select distinct key.parent from TransactionCategory"),
+    @NamedQuery(name = TransactionCategory.SEARCH_QUERY, query = "from TransactionCategory where lower(code) like :search")
 })
 public class TransactionCategory extends BaseDomain<Long> implements TransactionType {
     public static final String SUMMARY_QUERY = "transactionCategory.getSummaries";
     public static final String PARENTS_QUERY = "transactionCategory.getParents";
+    public static final String SEARCH_QUERY = "transactionCategory.findByPartialCode";
     public static final String INCOME = "income";
     public static final String SECURITY = "security";
     public static final String AMOUNT_TYPE = "amountType";
@@ -82,6 +88,8 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
     private AmountType amountType = AmountType.DEBIT_DEPOSIT;
     @Lob @Column(name = "description")
     private String description;
+    @OneToMany(mappedBy = "key.parent")
+    private List<TransactionCategory> children;
 
     public TransactionCategory() {}
 
@@ -137,6 +145,13 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
 
     public List<Long> getParentIds() {
         return getParents().stream().map(UniqueId::getId).collect(Collectors.toList());
+    }
+
+    /**
+     * @return a stream containing this category's ID and the IDs of all of its subcategories.
+     */
+    public Stream<Long> getSubcategoryIds() {
+        return Stream.concat(Stream.of(id), children.stream().flatMap(TransactionCategory::getSubcategoryIds));
     }
 
     public boolean isTransfer() {

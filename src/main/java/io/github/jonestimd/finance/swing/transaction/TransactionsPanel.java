@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,16 +58,18 @@ import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.FormatFactory;
+import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.asset.SecurityTransactionTableModel;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
-import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
+import io.github.jonestimd.finance.swing.event.TransactionsFrameAction;
 import io.github.jonestimd.finance.swing.transaction.action.AutofillTask;
 import io.github.jonestimd.finance.swing.transaction.action.CommitAction;
 import io.github.jonestimd.finance.swing.transaction.action.EditLotsAction;
+import io.github.jonestimd.finance.swing.transaction.action.FindAction;
 import io.github.jonestimd.finance.swing.transaction.action.MoveAction;
 import io.github.jonestimd.finance.swing.transaction.action.RefreshAction;
 import io.github.jonestimd.finance.swing.transaction.action.SaveAllAction;
@@ -81,10 +83,10 @@ import io.github.jonestimd.swing.component.FilterField;
 import io.github.jonestimd.swing.component.MenuActionPanel;
 import io.github.jonestimd.swing.dialog.Dialogs;
 import io.github.jonestimd.swing.window.ConfirmCloseAdapter;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
-import static io.github.jonestimd.finance.swing.event.SingletonWindowEvent.*;
+import static io.github.jonestimd.finance.swing.event.SingletonFrameActions.*;
 
 public class TransactionsPanel extends MenuActionPanel implements AccountSelector, HighlightText {
     private static final AccountFormat ACCOUNT_FORMAT = new AccountFormat();
@@ -99,7 +101,7 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
     private final FilterField<Transaction> filterField = new ComponentFactory().newFilterField(TransactionFilter::new, 4, 2);
     private final JTextField clearedBalance = new AutosizeTextField(false);
     private final FinanceTableFactory tableFactory;
-    private final WindowEventPublisher<WindowType> windowEventPublisher;
+    private final FrameManager<WindowType> frameManager;
     private final AccountsMenuFactory accountsMenuFactory;
     private final ImportFileMenuFactory importFileMenuFactory;
     private final SaveAllAction saveAllAction;
@@ -135,21 +137,20 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
         }
     };
 
-    public TransactionsPanel(ServiceLocator serviceLocator, TransactionTableModelCache transactionModelCache,
-                             FinanceTableFactory tableFactory, WindowEventPublisher<WindowType> windowEventPublisher, AccountsMenuFactory accountsMenuFactory,
-                             ImportFileMenuFactory importFileMenuFactory, DomainEventPublisher eventPublisher) {
+    public TransactionsPanel(ServiceLocator serviceLocator, TransactionTableModelCache transactionModelCache, SwingContext context,
+            AccountsMenuFactory accountsMenuFactory, ImportFileMenuFactory importFileMenuFactory, DomainEventPublisher eventPublisher) {
         this.transactionService = serviceLocator.getTransactionService();
         this.assetOperations = serviceLocator.getAssetOperations();
         this.transactionCategoryOperations = serviceLocator.getTransactionCategoryOperations();
         this.transactionModelCache = transactionModelCache;
-        this.tableFactory = tableFactory;
-        this.windowEventPublisher = windowEventPublisher;
+        this.tableFactory = context.getTableFactory();
+        this.frameManager = context.getFrameManager();
         this.accountsMenuFactory = accountsMenuFactory;
         this.importFileMenuFactory = importFileMenuFactory;
         this.domainEventPublisher = eventPublisher;
         eventPublisher.register(Account.class, accountEventListener);
         // TODO use CurrencyTransactionTableModel
-        this.transactionTable = tableFactory.newTransactionTable(new SecurityTransactionTableModel(getSelectedAccount()));
+        this.transactionTable = context.getTableFactory().newTransactionTable(new SecurityTransactionTableModel(getSelectedAccount()));
         filterField.addPropertyChangeListener(FilterField.PREDICATE_PROPERTY, event -> transactionTable.getRowSorter().setRowFilter(filterField.getFilter()));
         FocusAction.install(filterField, transactionTable, LABELS.get(), "table.filterField.accelerator");
         this.saveAllAction = new SaveAllAction(transactionTable, transactionService, domainEventPublisher);
@@ -267,9 +268,10 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
 
     private JMenu createTransactionsMenu(JToolBar toolbar) {
         JMenu menu = ComponentFactory.newMenu(LABELS.get(), "menu.transactions.mnemonicAndName");
-        addTransactionAction(menu, toolbar, TransactionsWindowEvent.frameAction(this, "action.newTransactionsWindow", windowEventPublisher));
+        addTransactionAction(menu, toolbar, new TransactionsFrameAction(this::getSelectedAccount, "action.newTransactionsWindow", frameManager));
         menu.addSeparator();
         toolbar.add(ComponentFactory.newMenuBarSeparator());
+        menu.add(new FindAction(this, tableFactory, transactionService, frameManager));
         addTransactionAction(menu, toolbar, new MoveAction(transactionTable, transactionService, domainEventPublisher, accountsMenuFactory::getAccounts));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.INSERT_DETAIL));
         addTransactionAction(menu, toolbar, transactionTable.getActionMap().get(TransactionTableAction.DELETE_DETAIL));
@@ -280,12 +282,12 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
         addTransactionAction(menu, toolbar, new UpdateSharesAction(transactionTable, assetOperations, transactionCategoryOperations));
         menu.addSeparator();
         toolbar.add(ComponentFactory.newMenuBarSeparator());
-        toolbar.add(ComponentFactory.newToolbarButton(accountsFrameAction(menu, windowEventPublisher)));
-        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.CATEGORIES, "action.viewCategories", windowEventPublisher));
-        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.TRANSACTION_GROUPS, "action.viewTransactionGroups", windowEventPublisher));
-        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.PAYEES, "action.viewPayees", windowEventPublisher));
-        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.SECURITIES, "action.viewSecurities", windowEventPublisher));
-        addTransactionAction(menu, toolbar, frameAction(menu, WindowType.ACCOUNT_SECURITIES, "action.viewAccountSecurities", windowEventPublisher));
+        toolbar.add(ComponentFactory.newToolbarButton(forAccounts(menu, frameManager)));
+        addTransactionAction(menu, toolbar, forType(menu, WindowType.CATEGORIES, "action.viewCategories", frameManager));
+        addTransactionAction(menu, toolbar, forType(menu, WindowType.TRANSACTION_GROUPS, "action.viewTransactionGroups", frameManager));
+        addTransactionAction(menu, toolbar, forType(menu, WindowType.PAYEES, "action.viewPayees", frameManager));
+        addTransactionAction(menu, toolbar, forType(menu, WindowType.SECURITIES, "action.viewSecurities", frameManager));
+        addTransactionAction(menu, toolbar, forType(menu, WindowType.ACCOUNT_SECURITIES, "action.viewAccountSecurities", frameManager));
         return menu;
     }
 

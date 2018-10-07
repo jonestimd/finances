@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.dao.hibernate;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -76,6 +77,23 @@ public class TransactionDetailDaoImpl extends HibernateDao<TransactionDetail, Lo
             .setParameter("saleDate", sale.getTransaction().getDate())
             .setParameterList("actions", Arrays.asList(BUY.code(), SHARES_IN.code(), REINVEST.code()))
             .list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionDetail> findByString(String search) {
+        return getSession().getNamedQuery(TransactionDetail.FIND_BY_STRING)
+                .setParameter("search", "%"+search.toLowerCase()+"%")
+                .list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionDetail> findByCategoryIds(List<Long> categoryIds) {
+        if (categoryIds.isEmpty()) return Collections.emptyList();
+        return getSession().getNamedQuery(TransactionDetail.FIND_BY_CATEGORY_IDS)
+                .setParameterList("categoryIds", categoryIds)
+                .list();
     }
 
     @Override

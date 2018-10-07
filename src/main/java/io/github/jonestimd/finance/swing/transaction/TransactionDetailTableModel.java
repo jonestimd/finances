@@ -19,28 +19,30 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.dao;
+package io.github.jonestimd.finance.swing.transaction;
 
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 
-import io.github.jonestimd.finance.domain.account.Account;
-import io.github.jonestimd.finance.domain.asset.Asset;
-import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
+import io.github.jonestimd.swing.table.model.BeanListTableModel;
+import io.github.jonestimd.swing.table.model.ColumnAdapter;
 
-public interface TransactionDetailDao extends BaseDao<TransactionDetail, Long> {
-    List<TransactionDetail> findOrphanTransfers();
+public class TransactionDetailTableModel extends BeanListTableModel<TransactionDetail> {
+    private static final List<ColumnAdapter<? super TransactionDetail, ?>> ADAPTERS = Arrays.asList(
+            TransactionDetailColumnAdapter.TRANSACTION_DATE_ADAPTER,
+            TransactionDetailColumnAdapter.TRANSACTION_ACCOUNT_ADAPTER,
+            TransactionDetailColumnAdapter.TRANSACTION_PAYEE_ADAPTER,
+            TransactionDetailColumnAdapter.GROUP_ADAPTER,
+            TransactionDetailColumnAdapter.TYPE_ADAPTER,
+            TransactionDetailColumnAdapter.TRANSACTION_MEMO_ADAPTER,
+            TransactionDetailColumnAdapter.MEMO_ADAPTER,
+            TransactionDetailColumnAdapter.TRANSACTION_SECURITY_ADAPTER,
+            TransactionDetailColumnAdapter.SHARES_ADAPTER,
+            TransactionDetailColumnAdapter.AMOUNT_ADAPTER
+    );
 
-    List<TransactionDetail> findSecuritySalesWithoutLots(String namePrefix, Date saleDate);
-
-    List<TransactionDetail> findPurchasesWithRemainingShares(Account account, Asset security, Date purchaseDate);
-
-    List<TransactionDetail> findAvailablePurchaseShares(TransactionDetail sale);
-
-    List<TransactionDetail> findByString(String search);
-
-    List<TransactionDetail> findByCategoryIds(List<Long> categoryIds);
-
-    void replaceCategory(List<TransactionCategory> toReplace, TransactionCategory category);
+    public TransactionDetailTableModel() {
+        super(ADAPTERS);
+    }
 }

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static io.github.jonestimd.finance.swing.transaction.TransactionGroupTableModel.*;
 import static org.apache.commons.lang.StringUtils.*;
@@ -48,8 +48,8 @@ public class TransactionGroupsPanel extends AccountAccessPanel<TransactionGroup,
             new ReloadEventHandler<>(this, "transactionGroup.action.reload.status.initialize", this::getTableData, this::getTableModel);
 
     public TransactionGroupsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
-            WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new TransactionGroupTableModel(domainEventPublisher), NAME_INDEX), "transactionGroup", windowEventPublisher);
+            FrameManager<WindowType> frameManager) {
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new TransactionGroupTableModel(domainEventPublisher)).sortedBy(NAME_INDEX).get(), "transactionGroup", frameManager);
         this.transactionGroupOperations = serviceLocator.getTransactionGroupOperations();
         domainEventPublisher.register(TransactionGroupSummary.class, reloadHandler);
     }

@@ -31,14 +31,10 @@
     <logger name="io.github.jonestimd.finance.file.download">
         <appender-ref ref="download"/>
     </logger>
-    <!--<logger name="org.hibernate.SQL"/>-->
-    <!--<logger name="org.hibernate.type"/>-->
-    <logger name="io.github.jonestimd.hibernate">
-        <level value="debug"/>
-    </logger>
-    <logger name="io.github.jonestimd.swing">
-        <level value="debug"/>
-    </logger>
+    <!--<logger name="org.hibernate.SQL"><level value="debug"/></logger>-->
+    <!--<logger name="org.hibernate.type"><level value="trace"/></logger>-->
+    <logger name="io.github.jonestimd.hibernate"><level value="debug"/></logger>
+    <logger name="io.github.jonestimd.swing"><level value="debug"/></logger>
     <root>
         <level value="warn"/>
         <appender-ref ref="Console"/>

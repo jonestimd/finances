@@ -27,6 +27,7 @@ import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.finance.domain.transaction.SecurityLotBuilder;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import io.github.jonestimd.mockito.MockitoHelper;
@@ -497,5 +498,24 @@ public class TransactionOperationsImplTest {
             new SecurityLot(detail, new TransactionDetailBuilder().onTransaction().get(), lotShare);
         }
         return detail;
+    }
+
+    @Test
+    public void findAllDetails() throws Exception {
+        String searchText = "search text";
+        TransactionCategory category = mock(TransactionCategory.class);
+        TransactionDetail categoryMatch = new TransactionDetail();
+        when(category.getSubcategoryIds()).thenReturn(Stream.of(-1L, -2L));
+        TransactionDetail otherMatch = new TransactionDetail();
+        when(categoryDao.findByPartialCode(anyString())).thenReturn(Collections.singletonList(category));
+        when(transactionDetailDao.findByCategoryIds(anyListOf(Long.class))).thenReturn(Collections.singletonList(categoryMatch));
+        when(transactionDetailDao.findByString(anyString())).thenReturn(Collections.singletonList(otherMatch));
+
+        assertThat(transactionOperations.findAllDetails(searchText)).contains(categoryMatch, otherMatch);
+
+        verify(category).getSubcategoryIds();
+        verify(categoryDao).findByPartialCode(searchText);
+        verify(transactionDetailDao).findByCategoryIds(Lists.newArrayList(-1L, -2L));
+        verify(transactionDetailDao).findByString(searchText);
     }
 }

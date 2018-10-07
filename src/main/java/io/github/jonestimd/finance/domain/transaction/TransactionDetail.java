@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -88,7 +88,20 @@ import org.hibernate.annotations.Formula;
         " and td." + TransactionDetail.ASSET_QUANTITY +
         " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
     @NamedQuery(name = TransactionDetail.REPLACE_CATEGORY_QUERY, query =
-        "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)")
+        "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)"),
+    @NamedQuery(name = TransactionDetail.FIND_BY_STRING, query =
+        "select distinct td " +
+        "from TransactionDetail td join fetch td." + TransactionDetail.TRANSACTION + " t " +
+        "left join fetch t." + Transaction.PAYEE + " p " +
+        "left join fetch t." + Transaction.SECURITY + " s " +
+        "left join fetch td." + TransactionDetail.GROUP + " g " +
+        "where lower(p." + Payee.NAME + ") like :search" +
+        " or lower(s." + Security.NAME + ") like :search" +
+        " or lower(t." + Transaction.MEMO + ") like :search" +
+        " or lower(td." + TransactionDetail.MEMO + ") like :search" +
+        " or lower(g." + TransactionGroup.NAME + ") like :search"),
+    @NamedQuery(name = TransactionDetail.FIND_BY_CATEGORY_IDS,
+        query = "from TransactionDetail where " + TransactionDetail.CATEGORY + ".id in (:categoryIds)")
 })
 public class TransactionDetail extends BaseDomain<Long> {
     public static final String FIND_ORPHAN_TRANSFERS = "transactionDetail.findOrphanTransfers";
@@ -96,6 +109,8 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String UNSOLD_SECURITY_SHARES_BY_DATE = "transaction.unsoldSecuritySharesByDate";
     public static final String UNSOLD_SECURITY_SHARES = "transaction.unsoldSecurityShares";
     public static final String REPLACE_CATEGORY_QUERY = "transaction.replaceCategory";
+    public static final String FIND_BY_CATEGORY_IDS = "transactionDetail.findByCategoryIds";
+    public static final String FIND_BY_STRING = "transactionDetail.findByString";
 
     public static final String TRANSACTION = "transaction";
     public static final String AMOUNT = "amount";

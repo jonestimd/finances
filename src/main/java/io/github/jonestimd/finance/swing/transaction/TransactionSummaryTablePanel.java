@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 
 public abstract class TransactionSummaryTablePanel<S extends UniqueId<Long> & Comparable<? super S>, T extends TransactionSummary<S>> extends DomainEventTablePanel<T> {
-    protected TransactionSummaryTablePanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ValidatedBeanListTableModel<T>> table, String resourceGroup) {
+    protected TransactionSummaryTablePanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ? extends ValidatedBeanListTableModel<T>> table, String resourceGroup) {
         super(domainEventPublisher, table, resourceGroup);
     }
 

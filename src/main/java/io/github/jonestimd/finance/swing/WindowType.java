@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,13 @@ public enum WindowType implements WindowInfo {
     SECURITIES(true, "securities"),
     ACCOUNT_SECURITIES(true, "accountSecurities"),
     TRANSACTION_GROUPS(true, "transactionGroups"),
-    TRANSACTIONS(false, "transactions");
+    TRANSACTIONS(false, "transactions"),
+    TRANSACTION_DETAILS(false, "transactionDetails");
 
     private final boolean singleton;
     private final String resourcePrefix;
 
-    private WindowType(boolean singleton, String frameId) {
+    WindowType(boolean singleton, String frameId) {
         this.singleton = singleton;
         this.resourcePrefix = "window." + frameId;
     }

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,26 +30,26 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
-import static io.github.jonestimd.finance.swing.event.SingletonWindowEvent.*;
+import static io.github.jonestimd.finance.swing.event.SingletonFrameActions.*;
 
 /**
  * Extends {@link TransactionSummaryTablePanel} to include the {@code Accounts} window button in the toolbar.
  */
 public abstract class AccountAccessPanel<S extends UniqueId<Long> & Comparable<? super S>, T extends TransactionSummary<S>>
         extends TransactionSummaryTablePanel<S, T> {
-    protected final WindowEventPublisher<WindowType> windowEventPublisher;
+    protected final FrameManager<WindowType> frameManager;
 
-    public AccountAccessPanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ValidatedBeanListTableModel<T>> table,
-            String resourceGroup, WindowEventPublisher<WindowType> windowEventPublisher) {
+    public AccountAccessPanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ? extends ValidatedBeanListTableModel<T>> table,
+            String resourceGroup, FrameManager<WindowType> frameManager) {
         super(domainEventPublisher, table, resourceGroup);
-        this.windowEventPublisher = windowEventPublisher;
+        this.frameManager = frameManager;
     }
 
     @Override
     protected void addActions(JToolBar toolbar) {
-        toolbar.add(ComponentFactory.newToolbarButton(accountsFrameAction(toolbar, windowEventPublisher)));
+        toolbar.add(ComponentFactory.newToolbarButton(forAccounts(toolbar, frameManager)));
         toolbar.add(ComponentFactory.newMenuBarSeparator());
         super.addActions(toolbar);
     }

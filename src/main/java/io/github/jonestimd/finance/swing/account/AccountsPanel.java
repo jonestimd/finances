@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,12 +55,12 @@ import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
-import io.github.jonestimd.finance.swing.event.TransactionsWindowEvent;
+import io.github.jonestimd.finance.swing.event.TransactionsFrameAction;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.table.TableFactory;
-import io.github.jonestimd.swing.window.WindowEventPublisher;
+import io.github.jonestimd.swing.window.FrameManager;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.account.AccountTableModel.*;
@@ -84,8 +84,8 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
     private Action capitalGainsImportAction;
 
     public AccountsPanel(ServiceLocator serviceLocator, DomainEventPublisher domainEventPublisher, FinanceTableFactory tableFactory,
-                         WindowEventPublisher<WindowType> windowEventPublisher) {
-        super(domainEventPublisher, tableFactory.createValidatedTable(new AccountTableModel(domainEventPublisher), COMPANY_INDEX, NAME_INDEX), "account");
+                         FrameManager<WindowType> frameManager) {
+        super(domainEventPublisher, tableFactory.validatedTableBuilder(new AccountTableModel(domainEventPublisher)).sortedBy(COMPANY_INDEX, NAME_INDEX).get(), "account");
         this.accountOperations = serviceLocator.getAccountOperations();
         this.assetOperations = serviceLocator.getAssetOperations();
         this.eventPublisher = domainEventPublisher;
@@ -93,7 +93,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         domainEventPublisher.register(Company.class, companyDomainEventListener);
         domainEventPublisher.register(AccountSummary.class, reloadHandler);
         getTable().getColumn(AccountColumnAdapter.COMPANY_ADAPTER).setCellEditor(companyCellEditor);
-        openAction = TransactionsWindowEvent.frameAction(this, "account.action.open", windowEventPublisher);
+        openAction = new TransactionsFrameAction(this::getSelectedAccount, "account.action.open", frameManager);
         openAction.setEnabled(false);
         companyAction = new CompanyDialogAction(tableFactory);
         qifImportAction = new QifImportAction(serviceLocator, eventPublisher);

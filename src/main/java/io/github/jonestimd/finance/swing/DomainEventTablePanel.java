@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ public abstract class DomainEventTablePanel<T extends UniqueId<?>> extends Valid
     private final JTextField filterField = new ComponentFactory().newFilterField();
 
     @SuppressWarnings("unchecked")
-    protected DomainEventTablePanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ValidatedBeanListTableModel<T>> table, String resourceGroup) {
+    protected DomainEventTablePanel(DomainEventPublisher domainEventPublisher, DecoratedTable<T, ? extends ValidatedBeanListTableModel<T>> table, String resourceGroup) {
         super(BundleType.LABELS.get(), table, resourceGroup);
         this.eventPublisher = domainEventPublisher;
         PredicateRowFilter.install(getRowSorter(), filterField, this::isVisible);

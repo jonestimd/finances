@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -75,5 +75,11 @@ public class TransactionCategoryDaoImpl extends HibernateDao<TransactionCategory
     @SuppressWarnings("unchecked")
     public List<TransactionCategory> getParentCategories() {
         return getSession().getNamedQuery(TransactionCategory.PARENTS_QUERY).list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<TransactionCategory> findByPartialCode(String search) {
+        return getSession().getNamedQuery(TransactionCategory.SEARCH_QUERY).setParameter("search", "%"+search+"%").list();
     }
 }

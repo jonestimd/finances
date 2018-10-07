@@ -82,4 +82,12 @@ public class TransactionCategoryDaoImplTest extends HsqlTestFixture {
         assertThat(categories).isNotEmpty();
         assertThat(Streams.map(categories, UniqueId::getId)).contains(1000L, 1001L);
     }
+
+    @Test
+    public void findByPartialCode() throws Exception {
+        List<TransactionCategory> matches = transactionCategoryDao.findByPartialCode("sal");
+
+        assertThat(matches).isNotEmpty();
+        matches.forEach(match -> assertThat(match.getCode().toLowerCase()).contains("sal"));
+    }
 }
