@@ -73,7 +73,7 @@ import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "file_type", length = 10)
 @SequenceGenerator(name = "id_generator", sequenceName = "import_file_id_seq")
-@NamedQuery(name = ImportFile.FIND_ONE_BY_NAME, query = "from ImportFile where name = ?")
+@NamedQuery(name = ImportFile.FIND_ONE_BY_NAME, query = "from ImportFile where name = :name")
 public abstract class ImportFile {
     public static final String FIND_ONE_BY_NAME = "ImportFile.findOneByName";
     @Id
