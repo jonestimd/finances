@@ -235,14 +235,25 @@
         <property name="valueRight" column="value_right" type="float" not-null="true"/>
     </class>
 
-    <class name="io.github.jonestimd.finance.domain.fileimport.ImportFile" table="import_file" abstract="true">
+    <class name="io.github.jonestimd.finance.domain.fileimport.ImportFile" table="import_file">
         <id name="id" column="id" type="long">
             <generator class="native">
                 <param name="sequence">import_file_id_seq</param>
             </generator>
         </id>
-        <discriminator column="import_type" type="string" length="20" not-null="true"/>
         <property name="name" type="string" length="250" not-null="false" unique-key="import_file_ak"/>
+        <property name="fileType" type="string" length="10" not-null="true">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.fileimport.FileType</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
+        <property name="importType" type="string" length="50" not-null="true">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">io.github.jonestimd.finance.domain.fileimport.ImportType</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
         <map name="fields" lazy="false" cascade="all-delete-orphan">
             <key column="import_file_id" not-null="true" foreign-key="import_field_file_fk"/>
             <map-key column="label" type="string" length="250"/>
@@ -272,8 +283,5 @@
                      lazy="false" class="io.github.jonestimd.finance.domain.transaction.Payee"/>
         <property name="multiDetail" column="multi_detail" type="yes_no" not-null="true"/>
         <property name="reconcile" type="yes_no" not-null="true"/>
-
-        <subclass name="io.github.jonestimd.finance.domain.fileimport.pdf.PdfImportFile" discriminator-value="PDF"/>
-        <subclass name="io.github.jonestimd.finance.domain.fileimport.csv.CsvImportFile" discriminator-value="CSV"/>
     </class>
 </hibernate-mapping>

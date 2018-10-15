@@ -29,7 +29,6 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -54,6 +53,7 @@ import javax.persistence.UniqueConstraint;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SecurityType;
@@ -71,10 +71,9 @@ import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
 @Entity
 @Table(name = "import_file", uniqueConstraints = {@UniqueConstraint(name = "import_file_ak", columnNames = {"name"})})
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "file_type", length = 10)
 @SequenceGenerator(name = "id_generator", sequenceName = "import_file_id_seq")
 @NamedQuery(name = ImportFile.FIND_ONE_BY_NAME, query = "from ImportFile where name = :name")
-public abstract class ImportFile {
+public class ImportFile implements UniqueId<Long> {
     public static final String FIND_ONE_BY_NAME = "ImportFile.findOneByName";
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
@@ -82,6 +81,9 @@ public abstract class ImportFile {
     private Long id;
     @Column(name = "name", nullable = false, length = 250)
     private String name;
+    @Column(name = "file_type", length = 10, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FileType fileType;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_field_import_file_fk"))
     @org.hibernate.annotations.ForeignKey(name = "import_field_import_file_fk")
@@ -133,17 +135,17 @@ public abstract class ImportFile {
     @Type(type = "yes_no")
     private boolean reconcile;
 
-    protected ImportFile() {
-    }
+    public ImportFile() {}
 
-    protected ImportFile(String name, ImportType importType) {
+    public ImportFile(String name, ImportType importType, FileType fileType) {
         this.name = name;
+        this.fileType = fileType;
         this.importType = importType;
     }
 
-    public abstract Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception;
-
-    public abstract String getFileExtension();
+    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception {
+        return fileType.parse(this, stream);
+    }
 
     public Long getId() {
         return id;
@@ -155,6 +157,14 @@ public abstract class ImportFile {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public FileType getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(FileType fileType) {
+        this.fileType = fileType;
     }
 
     public Set<ImportField> getFields() {

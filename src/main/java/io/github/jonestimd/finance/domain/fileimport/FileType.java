@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2018 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,32 +19,41 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.domain.fileimport.csv;
+package io.github.jonestimd.finance.domain.fileimport;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-
 import com.google.common.collect.ListMultimap;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.file.ImportFieldMapper;
 import io.github.jonestimd.finance.file.csv.CsvParser;
+import io.github.jonestimd.finance.file.excel.SheetParser;
+import io.github.jonestimd.finance.file.pdf.PdfFieldValueExtractor;
+import io.github.jonestimd.finance.swing.BundleType;
 
-@Entity
-@DiscriminatorValue("CSV")
-public class CsvImportFile extends ImportFile {
-    public CsvImportFile() {}
+public enum  FileType {
+    CSV("csv", (importFile, stream) -> new ImportFieldMapper(importFile.getFields()).mapFields(new CsvParser(stream).getStream())),
+    XLS("xls", (importFile, stream) -> new ImportFieldMapper(importFile.getFields()).mapFields(new SheetParser(stream, 0, importFile.getStartOffset()).getStream())),
+    PDF("pdf", (importFile, stream) -> new PdfFieldValueExtractor(importFile.getFields()).parse(stream));
 
-    @Override
-    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws IOException {
-        return new ImportFieldMapper(getFields()).mapFields(new CsvParser(stream).getStream());
+    public final String extension;
+    private final Parser parser;
+
+    FileType(String extension, Parser parser) {
+        this.extension = extension;
+        this.parser = parser;
+    }
+
+    public Iterable<ListMultimap<ImportField, String>> parse(ImportFile importFile, InputStream stream) throws IOException {
+        return parser.apply(importFile, stream);
     }
 
     @Override
-    public String getFileExtension() {
-        return "csv";
+    public String toString() {
+        return BundleType.REFERENCE.getString("importFileType." + name());
+    }
+
+    private interface Parser {
+        Iterable<ListMultimap<ImportField, String>> apply(ImportFile importFile, InputStream stream) throws IOException;
     }
 }
