@@ -207,7 +207,7 @@ public class ImportField {
     }
 
     public String getValue(Map<String, String> record) {
-        String value = Joiner.on('\n').join(labels.stream().map(label -> record.getOrDefault(label, "")).collect(Collectors.toList()));
+        String value = labels.stream().map(label -> record.getOrDefault(label, "")).collect(Collectors.joining("\n"));
         return filterValue(value) ? null : value;
     }
 
