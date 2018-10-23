@@ -21,25 +21,37 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.transaction;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.border.LineBorder;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.service.ServiceLocator;
-import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.transaction.action.ImportFileAction;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.util.Streams;
 
+import static io.github.jonestimd.finance.swing.BundleType.*;
+
 public class ImportFileMenuFactory {
     public static final String MENU_KEY = "menu.file.import.mnemonicAndName";
+    public static final int BUTTON_GAP = 2;
+
     private final ServiceLocator serviceLocator;
     private final List<AccountListener> accountListeners = new ArrayList<>();
     private List<ImportFileAction> importFileActions;
@@ -52,7 +64,7 @@ public class ImportFileMenuFactory {
      * This method is not thread safe and should only be called from the Swing event thread.
      */
     public JMenu createImportMenu(AccountSelector accountSelector) {
-        AccountListener accountListener = new AccountListener(accountSelector, ComponentFactory.newMenu(BundleType.LABELS.get(), MENU_KEY));
+        AccountListener accountListener = new AccountListener(accountSelector, ComponentFactory.newMenu(LABELS.get(), MENU_KEY));
         if (importFileActions == null) {
             accountListeners.add(accountListener);
             if (accountListeners.size() == 1) {
@@ -76,6 +88,30 @@ public class ImportFileMenuFactory {
         return new ImportFileAction(importFile, serviceLocator);
     }
 
+    private JButton newMenuButton(Action action) {
+        JButton button = new JButton(action);
+        button.setBorder(new LineBorder(Color.BLACK, 1));
+        return button;
+    }
+
+    private JMenuItem newImportMenuItem(ImportFileAction action) {
+        JMenuItem item = new JMenuItem(action);
+        item.setLayout(new BoxLayout(item, BoxLayout.X_AXIS));
+        item.add(Box.createHorizontalGlue());
+        Dimension buttonSize = addButton(item, action.getEditAction());
+        addButton(item, action.getDeleteAction());
+        Insets insets = item.getInsets();
+        item.setPreferredSize(new Dimension(item.getPreferredSize().width + 2*buttonSize.width + 2*BUTTON_GAP,
+                buttonSize.height + insets.top + insets.bottom));
+        return item;
+    }
+
+    private Dimension addButton(JMenuItem item, Action action) {
+        Dimension buttonSize = item.add(newMenuButton(action)).getPreferredSize();
+        item.add(Box.createHorizontalStrut(BUTTON_GAP));
+        return buttonSize;
+    }
+
     private class AccountListener implements PropertyChangeListener {
         private final AccountSelector accountSelector;
         private final JMenu menu;
@@ -94,7 +130,8 @@ public class ImportFileMenuFactory {
             menu.removeAll();
             Account account = accountSelector.getSelectedAccount();
             if (importFileActions != null && account != null) {
-                importFileActions.stream().filter(action -> action.getImportFile().getAccount().equals(account)).forEach(menu::add);
+                importFileActions.stream().filter(action -> action.getImportFile().getAccount().equals(account))
+                        .map(ImportFileMenuFactory.this::newImportMenuItem).forEach(menu::add);
             }
         }
     }
