@@ -42,6 +42,7 @@ import com.typesafe.config.ConfigFactory;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.Field;
 import io.github.jonestimd.finance.swing.FormatFactory;
+import io.github.jonestimd.swing.action.ActionAdapter;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.FileSuggestField;
@@ -114,7 +115,7 @@ public class ConfigurationView {
         onChange(passwordField, confirmField::validateValue);
         setModel(new HashMap<>());
 
-        this.defaultsAction = MnemonicAction.forListener(this::setDefaults, LABELS.get(), RESOURCE_PREFIX + "action.defaults");
+        this.defaultsAction = new ActionAdapter(this::setDefaults, LABELS.get(), RESOURCE_PREFIX + "action.defaults");
     }
 
     public void setMessage(String message) {
