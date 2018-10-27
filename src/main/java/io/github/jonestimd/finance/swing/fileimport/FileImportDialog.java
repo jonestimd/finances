@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,8 +57,8 @@ import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class FileImportDialog extends FormDialog {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
-    private static final GridBagFormula LABELS_LABEL_CONSTRAINTS = GridBagFormula.get(null, GridBagConstraints.NORTHEAST, 1, 1, 0, 0, 0);
-    private static final GridBagFormula LABELS_CONSTRAINTS = GridBagFormula.get(LABELS_LABEL_CONSTRAINTS, GridBagConstraints.NORTH, 1, 1, 1, 1, 0);
+    private static final GridBagFormula LABELS_LABEL_CONSTRAINTS = GridBagFormula.get(null, GridBagConstraints.NORTHEAST, 1, 1, 0, 0, new Insets(4, 0, 0, 0));
+    private static final GridBagFormula LABELS_CONSTRAINTS = GridBagFormula.get(LABELS_LABEL_CONSTRAINTS, GridBagConstraints.NORTH, 1, 1, 1, 0, 0);
     private static Validated requiredTextField(String resourcePrefix) {
         return TextField.validated(LABELS.get(), RESOURCE_PREFIX + resourcePrefix).required("required");
     }
@@ -70,6 +71,7 @@ public class FileImportDialog extends FormDialog {
     private final ValidatedTextField startOffsetField = requiredTextField("startOffset.").configure().inputFilter("[0-9]*").get();
     private final JCheckBox reconcileButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
     private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
+    private final JComboBox<AmountFormat> sharesFormatField = new JComboBox<>(AmountFormat.values());
     private final Map<FieldType, LabelsPanel> labelPanels = new MapBuilder<FieldType, LabelsPanel>()
             .put(FieldType.DATE, new LabelsPanel(LABELS.getString(RESOURCE_PREFIX + "dateLabel.required")))
             .put(FieldType.AMOUNT, new LabelsPanel(LABELS.getString(RESOURCE_PREFIX + "amountLabel.required")))
@@ -88,18 +90,19 @@ public class FileImportDialog extends FormDialog {
         builder.append("importType", importTypeField);
         builder.append("fileType", fileTypeField);
         builder.append("dateFormat", dateFormatField);
+        builder.append("dateLabel", labelPanels.get(FieldType.DATE));
+        builder.append("payeeLabel", labelPanels.get(FieldType.PAYEE));
+        builder.append("securityLabel", labelPanels.get(FieldType.SECURITY));
         builder.append("startOffset", startOffsetField);
         builder.append(reconcileButton);
         // TODO mappings
         // TODO filter regex's, negate amount, memo
         builder.append(new JSeparator(JSeparator.HORIZONTAL), FormElement.PANEL);
         builder.append("amountFormat", amountFormatField);
-        builder.append("dateLabel", labelPanels.get(FieldType.DATE));
         builder.append("amountLabel", labelPanels.get(FieldType.AMOUNT));
         builder.append("categoryLabels", labelPanels.get(FieldType.CATEGORY));
         builder.append("transferLabel", labelPanels.get(FieldType.TRANSFER_ACCOUNT));
-        builder.append("payeeLabel", labelPanels.get(FieldType.PAYEE));
-        builder.append("securityLabel", labelPanels.get(FieldType.SECURITY));
+        builder.append("sharesFormat", sharesFormatField);
         builder.append("sharesLabel", labelPanels.get(FieldType.ASSET_QUANTITY));
     }
 
@@ -108,6 +111,8 @@ public class FileImportDialog extends FormDialog {
         if (importFile.getName() != null) {
             nameField.setText(importFile.getName());
             accountField.setSelectedItem(importFile.getAccount());
+            importTypeField.setSelectedItem(importFile.getImportType());
+            fileTypeField.setSelectedItem(importFile.getFileType());
             startOffsetField.setText(Integer.toString(importFile.getStartOffset()));
             dateFormatField.setText(importFile.getDateFormat());
             reconcileButton.setSelected(importFile.isReconcile());
@@ -115,6 +120,9 @@ public class FileImportDialog extends FormDialog {
                 labelPanels.get(field.getType()).setLabels(field.getLabels());
                 if (field.getType() == FieldType.AMOUNT) {
                     amountFormatField.setSelectedItem(field.getAmountFormat());
+                }
+                else if (field.getType() == FieldType.ASSET_QUANTITY) {
+                    sharesFormatField.setSelectedItem(field.getAmountFormat());
                 }
             });
         }
