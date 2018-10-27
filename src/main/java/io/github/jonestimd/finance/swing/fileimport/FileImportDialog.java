@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 
@@ -39,6 +40,7 @@ import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
+import io.github.jonestimd.finance.swing.laf.LookAndFeelConfig;
 import io.github.jonestimd.finance.swing.transaction.AccountFormat;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.component.BeanListComboBox;
@@ -107,13 +109,11 @@ public class FileImportDialog extends FormDialog {
             nameField.setText(importFile.getName());
             accountField.setSelectedItem(importFile.getAccount());
             startOffsetField.setText(Integer.toString(importFile.getStartOffset()));
+            dateFormatField.setText(importFile.getDateFormat());
             reconcileButton.setSelected(importFile.isReconcile());
             importFile.getFields().forEach(field -> {
                 labelPanels.get(field.getType()).setLabels(field.getLabels());
-                if (field.getType() == FieldType.DATE) {
-                    dateFormatField.setText(field.getDateFormat());
-                }
-                else if (field.getType() == FieldType.AMOUNT) {
+                if (field.getType() == FieldType.AMOUNT) {
                     amountFormatField.setSelectedItem(field.getAmountFormat());
                 }
             });
@@ -122,4 +122,8 @@ public class FileImportDialog extends FormDialog {
         setVisible(true);
         return false; // TODO check for valid and changed
     }
-}
+
+    public static void main(String... args) {
+        LookAndFeelConfig.load();
+        new FileImportDialog(JOptionPane.getRootFrame(), new ArrayList<>()).show(new ImportFile());
+    }}

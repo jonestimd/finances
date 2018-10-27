@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -42,7 +43,7 @@ public class MultiDetailImportContextTest {
 
     private final InputStream inputStream = new ByteArrayInputStream("".getBytes());
 
-    private final ImportField dateField = new ImportFieldBuilder().type(DATE).dateFormat("MM/dd/yyyy").get();
+    private final ImportField dateField = new ImportFieldBuilder().type(DATE).get();
     private final ImportField payeeField = new ImportFieldBuilder().type(PAYEE).get();
     private final ImportField categoryField = new ImportFieldBuilder().type(CATEGORY).label(CATEGORY_NAME).amountFormat(FIXED).get();
     private final ImportField transferField = new ImportFieldBuilder().type(TRANSFER_ACCOUNT).label(ACCOUNT_NAME).amountFormat(FIXED).get();
@@ -53,12 +54,15 @@ public class MultiDetailImportContextTest {
 
     @Test
     public void setsDateOnTransaction() throws Exception {
+        final Date date = new Date();
+        when(importFile.parseDate(anyString())).thenReturn(date);
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(dateField, "03/10/2012")));
 
         List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
-        assertThat(transactions.get(0).getDate()).isEqualTo(new SimpleDateFormat("MM/dd/yyyy").parse("03/10/2012"));
+        assertThat(transactions.get(0).getDate()).isSameAs(date);
+        verify(importFile).parseDate("03/10/2012");
     }
 
     @Test

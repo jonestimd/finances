@@ -76,8 +76,6 @@ public class ImportField {
     @Column(name = "number_format", length = 15)
     @Enumerated(EnumType.STRING)
     private AmountFormat amountFormat;
-    @Column(name = "date_format", length = 50)
-    private String dateFormat;
     @Column(name = "negate", nullable = false)
     @Type(type = "yes_no")
     private boolean negate;
@@ -158,14 +156,6 @@ public class ImportField {
         this.amountFormat = amountFormat;
     }
 
-    public String getDateFormat() {
-        return dateFormat;
-    }
-
-    public void setDateFormat(String dateFormat) {
-        this.dateFormat = dateFormat;
-    }
-
     public boolean isNegate() {
         return negate;
     }
@@ -221,14 +211,6 @@ public class ImportField {
         }
         BigDecimal amount = amountFormat.toBigDecimal(value.replaceAll("[^0-9.\\-]", ""));
         return negate ? amount.negate() : amount;
-    }
-
-    public Date parseDate(String dateString) {
-        try {
-            return new SimpleDateFormat(dateFormat).parse(dateString);
-        } catch (ParseException ex) {
-            throw new RuntimeException(ex);
-        }
     }
 
     /**

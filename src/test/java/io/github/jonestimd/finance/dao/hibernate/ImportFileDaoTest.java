@@ -29,7 +29,7 @@ public class ImportFileDaoTest extends TransactionalTestFixture {
 
     @Test
     public void findByIdUsesHibernateDao() throws Exception {
-        ImportFile pdfImport = importFileDao.save(new ImportFile(TEST_PDF_IMPORT, ImportType.SINGLE_DETAIL_ROWS, FileType.PDF));
+        ImportFile pdfImport = importFileDao.save(new ImportFile(TEST_PDF_IMPORT, ImportType.SINGLE_DETAIL_ROWS, FileType.PDF, "yyyy/MM/dd"));
 
         assertThat(importFileDao.get(pdfImport.getId()).getId()).isEqualTo(pdfImport.getId());
     }
@@ -37,7 +37,7 @@ public class ImportFileDaoTest extends TransactionalTestFixture {
     @Test
     public void findOneByName() throws Exception {
         final String name = TEST_PDF_IMPORT;
-        importFileDao.save(new ImportFile(name, ImportType.SINGLE_DETAIL_ROWS, FileType.PDF));
+        importFileDao.save(new ImportFile(name, ImportType.SINGLE_DETAIL_ROWS, FileType.PDF, "yyyy/MM/dd"));
 
         assertThat(importFileDao.findOneByName(name).getName()).isEqualTo(TEST_PDF_IMPORT);
     }

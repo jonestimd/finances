@@ -22,7 +22,10 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -134,13 +137,16 @@ public class ImportFile implements UniqueId<Long> {
     @Column(name = "reconcile", nullable = false)
     @Type(type = "yes_no")
     private boolean reconcile;
+    @Column(name = "date_format", length = 50, nullable = false)
+    private String dateFormat;
 
     public ImportFile() {}
 
-    public ImportFile(String name, ImportType importType, FileType fileType) {
+    public ImportFile(String name, ImportType importType, FileType fileType, String dateFormat) {
         this.name = name;
         this.fileType = fileType;
         this.importType = importType;
+        this.dateFormat = dateFormat;
     }
 
     public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception {
@@ -259,6 +265,22 @@ public class ImportFile implements UniqueId<Long> {
 
     public void setStartOffset(int startOffset) {
         this.startOffset = startOffset;
+    }
+
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    public Date parseDate(String dateString) {
+        try {
+            return new SimpleDateFormat(dateFormat).parse(dateString);
+        } catch (ParseException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public ImportContext newContext(Collection<Payee> payees, Collection<Security> securities, Collection<TransactionCategory> categories) {

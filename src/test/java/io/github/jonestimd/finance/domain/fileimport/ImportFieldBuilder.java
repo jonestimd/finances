@@ -15,11 +15,6 @@ public class ImportFieldBuilder {
         return this;
     }
 
-    public ImportFieldBuilder dateFormat(String dateFormat) {
-        field.setDateFormat(dateFormat);
-        return this;
-    }
-
     public ImportFieldBuilder amountFormat(AmountFormat amountFormat) {
         field.setAmountFormat(amountFormat);
         return this;

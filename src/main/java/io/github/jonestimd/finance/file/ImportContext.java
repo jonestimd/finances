@@ -78,7 +78,7 @@ public abstract class ImportContext {
     }
 
     protected Transaction getTransaction(ListMultimap<ImportField, String> record, List<Transaction> transactions) {
-        Transaction transaction = new Transaction(importFile.getAccount(), new Date(), importFile.getPayee(), false, null); // TODO override account in UI?
+        Transaction transaction = new Transaction(importFile.getAccount(), new Date(), importFile.getPayee(), false, null);
         Multimaps.asMap(record).forEach((key, value) -> updateTransaction(transaction, key, value));
         transactions.add(transaction);
         return transaction;
@@ -111,7 +111,7 @@ public abstract class ImportContext {
     }
 
     private void setDate(Transaction transaction, ImportField field, List<String> values) {
-        transaction.setDate(field.parseDate(values.get(0)));
+        transaction.setDate(importFile.parseDate(values.get(0)));
     }
 
     protected String getAlias(List<String> values) {
