@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -77,7 +78,9 @@ public class FileImportDialog extends FormDialog {
     private final ValidatedTextField startOffsetField = requiredTextField("startOffset.").configure().inputFilter("[0-9]*").get();
     private final JCheckBox reconcileButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
     private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
+    private final JCheckBox negateAmountButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateAmount");
     private final JComboBox<AmountFormat> sharesFormatField = new JComboBox<>(AmountFormat.values());
+    private final JCheckBox negateSharesButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateShares");
     private final JCheckBox singlePayeeButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "singlePayee");
     private final JLabel payeeLabel;
     private final BeanListComboBox<Payee> payeeField = new BeanListComboBox<>(new PayeeFormat(), LABELS.getString(RESOURCE_PREFIX + "payee.required"));
@@ -104,19 +107,27 @@ public class FileImportDialog extends FormDialog {
         builder.append(singlePayeeButton);
         singlePayeeButton.getModel().addItemListener(this::onSinglePayeeChange);
         builder.append("payeeLabel", labelPanels.get(FieldType.PAYEE));
-        payeeLabel = (JLabel) getFormPanel().getComponent(getFormPanel().getComponentCount()-2);
+        payeeLabel = builder.getLastLabel();
         builder.append("securityLabel", labelPanels.get(FieldType.SECURITY));
         builder.append("startOffset", startOffsetField);
         builder.append(reconcileButton);
         // TODO mappings
         // TODO filter regex's, negate amount, memo
         builder.append(new JSeparator(JSeparator.HORIZONTAL), FormElement.PANEL);
-        builder.append("amountFormat", amountFormatField);
+        builder.append("amountFormat", createFormatGroup(amountFormatField, negateAmountButton), FormElement.TEXT_FIELD);
         builder.append("amountLabel", labelPanels.get(FieldType.AMOUNT));
         builder.append("categoryLabels", labelPanels.get(FieldType.CATEGORY));
         builder.append("transferLabel", labelPanels.get(FieldType.TRANSFER_ACCOUNT));
-        builder.append("sharesFormat", sharesFormatField);
+        builder.append("sharesFormat", createFormatGroup(sharesFormatField, negateSharesButton), FormElement.TEXT_FIELD);
         builder.append("sharesLabel", labelPanels.get(FieldType.ASSET_QUANTITY));
+    }
+
+    private Box createFormatGroup(JComboBox<AmountFormat> formatInput, JCheckBox negateButton) {
+        Box box = Box.createHorizontalBox();
+        box.add(formatInput);
+        box.add(Box.createHorizontalStrut(GridBagBuilder.UNRELATED_GAP));
+        box.add(negateButton);
+        return box;
     }
 
     private void onSinglePayeeChange(ItemEvent itemEvent) {
@@ -151,9 +162,11 @@ public class FileImportDialog extends FormDialog {
                 labelPanels.get(field.getType()).setLabels(field.getLabels());
                 if (field.getType() == FieldType.AMOUNT) {
                     amountFormatField.setSelectedItem(field.getAmountFormat());
+                    negateAmountButton.setSelected(field.isNegate());
                 }
                 else if (field.getType() == FieldType.ASSET_QUANTITY) {
                     sharesFormatField.setSelectedItem(field.getAmountFormat());
+                    negateSharesButton.setSelected(field.isNegate());
                 }
             });
             if (importFile.getPayee() != null) {
