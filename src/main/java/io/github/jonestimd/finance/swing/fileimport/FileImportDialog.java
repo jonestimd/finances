@@ -22,14 +22,18 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
@@ -41,8 +45,10 @@ import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.swing.laf.LookAndFeelConfig;
 import io.github.jonestimd.finance.swing.transaction.AccountFormat;
+import io.github.jonestimd.finance.swing.transaction.PayeeFormat;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.TextField;
@@ -72,6 +78,9 @@ public class FileImportDialog extends FormDialog {
     private final JCheckBox reconcileButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
     private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
     private final JComboBox<AmountFormat> sharesFormatField = new JComboBox<>(AmountFormat.values());
+    private final JCheckBox singlePayeeButton = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "singlePayee");
+    private final JLabel payeeLabel;
+    private final BeanListComboBox<Payee> payeeField = new BeanListComboBox<>(new PayeeFormat(), LABELS.getString(RESOURCE_PREFIX + "payee.required"));
     private final Map<FieldType, LabelsPanel> labelPanels = new MapBuilder<FieldType, LabelsPanel>()
             .put(FieldType.DATE, new LabelsPanel(LABELS.getString(RESOURCE_PREFIX + "dateLabel.required")))
             .put(FieldType.AMOUNT, new LabelsPanel(LABELS.getString(RESOURCE_PREFIX + "amountLabel.required")))
@@ -81,17 +90,21 @@ public class FileImportDialog extends FormDialog {
             .put(FieldType.SECURITY, new LabelsPanel())
             .put(FieldType.ASSET_QUANTITY, new LabelsPanel()).get();
 
-    public FileImportDialog(Window owner, List<Account> accounts) {
+    public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), RESOURCE_PREFIX).setConstraints(LabelsPanel.class, LABELS_CONSTRAINTS);
         builder.append("name", nameField);
         accountField = builder.append("account", new BeanListComboBox<>(new AccountFormat(), LABELS.getString(RESOURCE_PREFIX + "account.required")));
         accountField.getModel().setElements(accounts, false);
+        payeeField.getModel().setElements(payees, false);
         builder.append("importType", importTypeField);
         builder.append("fileType", fileTypeField);
         builder.append("dateFormat", dateFormatField);
         builder.append("dateLabel", labelPanels.get(FieldType.DATE));
+        builder.append(singlePayeeButton);
+        singlePayeeButton.getModel().addItemListener(this::onSinglePayeeChange);
         builder.append("payeeLabel", labelPanels.get(FieldType.PAYEE));
+        payeeLabel = (JLabel) getFormPanel().getComponent(getFormPanel().getComponentCount()-2);
         builder.append("securityLabel", labelPanels.get(FieldType.SECURITY));
         builder.append("startOffset", startOffsetField);
         builder.append(reconcileButton);
@@ -104,6 +117,24 @@ public class FileImportDialog extends FormDialog {
         builder.append("transferLabel", labelPanels.get(FieldType.TRANSFER_ACCOUNT));
         builder.append("sharesFormat", sharesFormatField);
         builder.append("sharesLabel", labelPanels.get(FieldType.ASSET_QUANTITY));
+    }
+
+    private void onSinglePayeeChange(ItemEvent itemEvent) {
+        if (singlePayeeButton.isSelected()) replacePayeeField(labelPanels.get(FieldType.PAYEE), payeeField, "payee");
+        else replacePayeeField(payeeField, labelPanels.get(FieldType.PAYEE), "payeeLabel");
+        if (isVisible()) {
+            revalidate();
+            pack();
+        }
+    }
+
+    private void replacePayeeField(JComponent oldComponent, JComponent newComponent, String labelKey) {
+        GridBagLayout layout = (GridBagLayout) getFormPanel().getLayout();
+        GridBagConstraints constraints = layout.getConstraints(oldComponent);
+        getFormPanel().remove(oldComponent);
+        getFormPanel().add(newComponent, constraints);
+        String label = LABELS.getString(RESOURCE_PREFIX + labelKey);
+        payeeLabel.setText(label.substring(1));
     }
 
     public boolean show(ImportFile importFile) {
@@ -125,6 +156,10 @@ public class FileImportDialog extends FormDialog {
                     sharesFormatField.setSelectedItem(field.getAmountFormat());
                 }
             });
+            if (importFile.getPayee() != null) {
+                singlePayeeButton.setSelected(true);
+                payeeField.setSelectedItem(importFile.getPayee());
+            }
         }
         pack();
         setVisible(true);
@@ -133,5 +168,5 @@ public class FileImportDialog extends FormDialog {
 
     public static void main(String... args) {
         LookAndFeelConfig.load();
-        new FileImportDialog(JOptionPane.getRootFrame(), new ArrayList<>()).show(new ImportFile());
+        new FileImportDialog(JOptionPane.getRootFrame(), new ArrayList<>(), new ArrayList<>()).show(new ImportFile());
     }}

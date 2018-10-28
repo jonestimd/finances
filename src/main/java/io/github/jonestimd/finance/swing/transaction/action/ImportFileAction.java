@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.Reconciler;
@@ -111,6 +112,7 @@ public class ImportFileAction extends AbstractAction {
 
     private class EditImportAction extends DialogAction {
         private List<Account> accounts;
+        private List<Payee> payees;
 
         public EditImportAction() {
             super(LABELS.get(), "action.file.import.edit");
@@ -119,12 +121,13 @@ public class ImportFileAction extends AbstractAction {
         @Override
         protected void loadDialogData() {
             accounts = serviceLocator.getAccountOperations().getAllAccounts();
+            payees = serviceLocator.getPayeeOperations().getAllPayees();
         }
 
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            return new FileImportDialog(window, accounts).show(importFile);
+            return new FileImportDialog(window, accounts, payees).show(importFile);
         }
 
         @Override
