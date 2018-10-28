@@ -36,7 +36,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JSeparator;
 import javax.swing.JTextField;
 
 import io.github.jonestimd.collection.MapBuilder;
@@ -96,12 +95,16 @@ public class FileImportDialog extends FormDialog {
     public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), RESOURCE_PREFIX).setConstraints(LabelsPanel.class, LABELS_CONSTRAINTS);
+        builder.append("importType", importTypeField);
         builder.append("name", nameField);
         accountField = builder.append("account", new BeanListComboBox<>(new AccountFormat(), LABELS.getString(RESOURCE_PREFIX + "account.required")));
         accountField.getModel().setElements(accounts, false);
         payeeField.getModel().setElements(payees, false);
-        builder.append("importType", importTypeField);
         builder.append("fileType", fileTypeField);
+        builder.append("startOffset", startOffsetField);
+        builder.append(reconcileButton);
+        builder.unrelatedVerticalGap();
+        builder.append(ComponentFactory.newFormSeparator(LABELS.getString(RESOURCE_PREFIX + "transaction")));
         builder.append("dateFormat", dateFormatField);
         builder.append("dateLabel", labelPanels.get(FieldType.DATE));
         builder.append(singlePayeeButton);
@@ -109,11 +112,10 @@ public class FileImportDialog extends FormDialog {
         builder.append("payeeLabel", labelPanels.get(FieldType.PAYEE));
         payeeLabel = builder.getLastLabel();
         builder.append("securityLabel", labelPanels.get(FieldType.SECURITY));
-        builder.append("startOffset", startOffsetField);
-        builder.append(reconcileButton);
         // TODO mappings
         // TODO filter regex's, negate amount, memo
-        builder.append(new JSeparator(JSeparator.HORIZONTAL), FormElement.PANEL);
+        builder.unrelatedVerticalGap();
+        builder.append(ComponentFactory.newFormSeparator(LABELS.getString(RESOURCE_PREFIX + "transactionDetails")));
         builder.append("amountFormat", createFormatGroup(amountFormatField, negateAmountButton), FormElement.TEXT_FIELD);
         builder.append("amountLabel", labelPanels.get(FieldType.AMOUNT));
         builder.append("categoryLabels", labelPanels.get(FieldType.CATEGORY));
