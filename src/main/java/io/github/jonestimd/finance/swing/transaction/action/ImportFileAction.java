@@ -43,6 +43,7 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.Reconciler;
 import io.github.jonestimd.finance.service.ServiceLocator;
+import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.fileimport.FileImportDialog;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
@@ -56,14 +57,16 @@ import static io.github.jonestimd.finance.swing.BundleType.*;
 public class ImportFileAction extends AbstractAction {
     private final ImportFile importFile;
     private final ServiceLocator serviceLocator;
+    private final FinanceTableFactory tableFactory;
     private final JFileChooser fileChooser = new JFileChooser();
     private final Action editAction = new EditImportAction();
     private final Action deleteAction = new ActionAdapter(this::onDeleteImport, LABELS.get(), "action.file.import.delete");
 
-    public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator) {
+    public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator, FinanceTableFactory tableFactory) {
         super(importFile.getName());
         this.importFile = importFile;
         this.serviceLocator = serviceLocator;
+        this.tableFactory = tableFactory;
         FileFilter fileFilter = new FileNameExtensionFilter("*." + importFile.getFileType().extension, importFile.getFileType().extension);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.addChoosableFileFilter(fileFilter);
@@ -127,6 +130,7 @@ public class ImportFileAction extends AbstractAction {
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
+            // return new FileImportDialog(window, accounts, payees, tableFactory).show(importFile);
             return new FileImportDialog(window, accounts, payees).show(importFile);
         }
 

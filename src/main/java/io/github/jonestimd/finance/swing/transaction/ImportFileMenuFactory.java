@@ -40,6 +40,7 @@ import javax.swing.border.LineBorder;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.service.ServiceLocator;
+import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
 import io.github.jonestimd.finance.swing.transaction.action.ImportFileAction;
 import io.github.jonestimd.swing.BackgroundTask;
@@ -53,11 +54,13 @@ public class ImportFileMenuFactory {
     public static final int BUTTON_GAP = 2;
 
     private final ServiceLocator serviceLocator;
+    private final FinanceTableFactory tableFactory;
     private final List<AccountListener> accountListeners = new ArrayList<>();
     private List<ImportFileAction> importFileActions;
 
-    public ImportFileMenuFactory(ServiceLocator serviceLocator) {
+    public ImportFileMenuFactory(ServiceLocator serviceLocator, FinanceTableFactory tableFactory) {
         this.serviceLocator = serviceLocator;
+        this.tableFactory = tableFactory;
     }
 
     /**
@@ -85,7 +88,7 @@ public class ImportFileMenuFactory {
     }
 
     private ImportFileAction newImportFileAction(ImportFile importFile) {
-        return new ImportFileAction(importFile, serviceLocator);
+        return new ImportFileAction(importFile, serviceLocator, tableFactory);
     }
 
     private JButton newMenuButton(Action action) {

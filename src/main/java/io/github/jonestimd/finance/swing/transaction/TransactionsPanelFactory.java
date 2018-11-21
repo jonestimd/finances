@@ -40,7 +40,7 @@ public class TransactionsPanelFactory implements PanelFactory<SelectAccountActio
         this.transactionModelCache = new TransactionTableModelCache(eventPublisher);
         this.context = context;
         this.accountsMenuFactory = new AccountsMenuFactory(serviceLocator.getAccountOperations(), context, eventPublisher);
-        this.importFileMenuFactory = new ImportFileMenuFactory(serviceLocator);
+        this.importFileMenuFactory = new ImportFileMenuFactory(serviceLocator, context.getTableFactory());
         this.eventPublisher = eventPublisher;
     }
 
