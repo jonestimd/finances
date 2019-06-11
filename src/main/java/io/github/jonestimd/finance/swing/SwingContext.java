@@ -32,9 +32,9 @@ import java.util.function.Supplier;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
-import com.google.common.collect.ImmutableMap;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.account.AccountType;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.transaction.Payee;
@@ -58,7 +58,6 @@ import io.github.jonestimd.finance.swing.transaction.TransactionCategoriesPanel;
 import io.github.jonestimd.finance.swing.transaction.TransactionGroupCellEditor;
 import io.github.jonestimd.finance.swing.transaction.TransactionGroupFormat;
 import io.github.jonestimd.finance.swing.transaction.TransactionGroupsPanel;
-import io.github.jonestimd.finance.swing.transaction.TransactionTableModelCache;
 import io.github.jonestimd.finance.swing.transaction.TransactionTypeCellEditor;
 import io.github.jonestimd.finance.swing.transaction.TransactionTypeFormat;
 import io.github.jonestimd.finance.swing.transaction.TransactionsPanelFactory;
@@ -68,6 +67,7 @@ import io.github.jonestimd.swing.table.DateTableCellRenderer;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.HighlightTableCellRenderer;
 import io.github.jonestimd.swing.table.Highlighter;
+import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.TableInitializer;
 import io.github.jonestimd.swing.window.ApplicationWindowAction;
 import io.github.jonestimd.swing.window.FrameManager;
@@ -109,12 +109,13 @@ public class SwingContext {
     }
 
     private Map<Class<?>, Supplier<TableCellEditor>> defaultTableEditors() {
-        return ImmutableMap.of(
-                Date.class, () -> new DateCellEditor(labelBundle.getString("format.date.pattern")),
-                Payee.class, () -> new PayeeCellEditor(serviceLocator, domainEventPublisher),
-                Security.class, () -> new SecurityCellEditor(serviceLocator, domainEventPublisher),
-                TransactionType.class, () -> new TransactionTypeCellEditor(serviceLocator, domainEventPublisher),
-                TransactionGroup.class, () -> new TransactionGroupCellEditor(serviceLocator, domainEventPublisher));
+        return new MapBuilder<Class<?>, Supplier<TableCellEditor>>()
+                .put(Date.class, () -> new DateCellEditor(labelBundle.getString("format.date.pattern")))
+                .put(AccountType.class, () -> TableFactory.createEnumCellEditor(AccountType.class))
+                .put(Payee.class, () -> new PayeeCellEditor(serviceLocator, domainEventPublisher))
+                .put(Security.class, () -> new SecurityCellEditor(serviceLocator, domainEventPublisher))
+                .put(TransactionType.class, () -> new TransactionTypeCellEditor(serviceLocator, domainEventPublisher))
+                .put(TransactionGroup.class, () -> new TransactionGroupCellEditor(serviceLocator, domainEventPublisher)).get();
     }
 
     private Map<String, TableCellRenderer> columnRenderers() {
@@ -143,9 +144,9 @@ public class SwingContext {
 
     private Map<WindowType, PanelFactory<? extends ApplicationWindowAction<WindowType>>> buildPanelFactories() {
         transactionsPanelFactory = new TransactionsPanelFactory(serviceLocator, this, domainEventPublisher);
-        return ImmutableMap.<WindowType, PanelFactory<? extends ApplicationWindowAction<WindowType>>>builder()
+        return new MapBuilder<WindowType, PanelFactory<? extends ApplicationWindowAction<WindowType>>>()
             .put(WindowType.TRANSACTIONS, transactionsPanelFactory)
-            .build();
+            .get();
     }
 
     public FinanceTableFactory getTableFactory() {
