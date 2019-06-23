@@ -23,12 +23,14 @@ package io.github.jonestimd.finance.file.pdf;
 
 import java.util.Comparator;
 
-import com.itextpdf.text.pdf.parser.Vector;
+import com.lowagie.text.pdf.parser.Vector;
 
 public abstract class VectorComparator implements Comparator<Vector> {
-    public static final Comparator<Vector> TOP_DOWN = (v1, v2) -> Float.compare(v2.get(Vector.I2), v1.get(Vector.I2));
+    public static final int X_INDEX = 0;
+    public static final int Y_INDEX = 1;
 
-    public static final Comparator<Vector> LEFT_TO_RIGHT = (v1, v2) -> Float.compare(v1.get(Vector.I1), v2.get(Vector.I1));
+    public static final Comparator<Vector> TOP_DOWN = (v1, v2) -> Float.compare(v2.get(Y_INDEX), v1.get(Y_INDEX));
+    public static final Comparator<Vector> LEFT_TO_RIGHT = (v1, v2) -> Float.compare(v1.get(X_INDEX), v2.get(X_INDEX));
 
     public static final Comparator<Vector> TOP_DOWN_LEFT_TO_RIGHT = TOP_DOWN.thenComparing(LEFT_TO_RIGHT);
 }

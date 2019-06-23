@@ -32,24 +32,29 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.parser.ImageRenderInfo;
-import com.itextpdf.text.pdf.parser.PdfReaderContentParser;
-import com.itextpdf.text.pdf.parser.RenderListener;
-import com.itextpdf.text.pdf.parser.TextRenderInfo;
-import com.itextpdf.text.pdf.parser.Vector;
+import com.google.common.collect.Maps;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.FinalText;
+import com.lowagie.text.pdf.parser.ParsedText;
+import com.lowagie.text.pdf.parser.ParsedTextImpl;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
+import com.lowagie.text.pdf.parser.TextAssembler;
+import com.lowagie.text.pdf.parser.Vector;
+import com.lowagie.text.pdf.parser.Word;
+
+import static io.github.jonestimd.finance.file.pdf.VectorComparator.*;
 
 public class TextExtractor {
     private final List<Map<Vector, String>> pageText = new ArrayList<>();
 
     public TextExtractor(InputStream is) throws IOException {
         PdfReader pdfReader = new PdfReader(is);
-        PdfReaderContentParser parser = new PdfReaderContentParser(pdfReader);
         int pages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= pages; i++) {
             ImportRenderListener renderListener = new ImportRenderListener();
-            parser.processContent(i, renderListener);
-            pageText.add(renderListener.text);
+            PdfTextExtractor extractor = new PdfTextExtractor(pdfReader, renderListener);
+            extractor.getTextFromPage(i);
+            pageText.add(Maps.transformValues(renderListener.textByPosition, StringBuilder::toString));
         }
     }
 
@@ -57,24 +62,68 @@ public class TextExtractor {
         return pageText.stream().map(Map::entrySet).flatMap(Collection::stream);
     }
 
-    private class ImportRenderListener implements RenderListener {
-        private Map<Vector, String> text = new TreeMap<>(VectorComparator.TOP_DOWN_LEFT_TO_RIGHT);
+    private class ImportRenderListener implements TextAssembler {
+        private Map<Vector, StringBuilder> textByPosition = new TreeMap<>(VectorComparator.TOP_DOWN_LEFT_TO_RIGHT);
+        private Vector pos;
+        private Vector lastEnd;
+        private StringBuilder buffer;
 
         @Override
-        public void beginTextBlock() {
+        public void process(FinalText completed, String contextName) {
         }
 
         @Override
-        public void endTextBlock() {
+        public void process(Word completed, String contextName) {
         }
 
         @Override
-        public void renderImage(ImageRenderInfo info) {
+        public void process(ParsedText parsed, String contextName) {
+            String text = parsed.getText();
+            if (text.trim().length() > 0) {
+                if (pos == null || !isSameLine(parsed) || !isSameWord(parsed)) {
+                    buffer = new StringBuilder();
+                    pos = parsed.getStartPoint();
+                    textByPosition.put(pos, buffer);
+                }
+                lastEnd = parsed.getEndPoint();
+                buffer.append(parsed.getText());
+            }
+        }
+
+        private boolean isSameLine(ParsedText parsed) {
+            return pos.get(Y_INDEX) == parsed.getStartPoint().get(Y_INDEX);
+        }
+
+        private boolean isSameWord(ParsedText parsed) {
+            return Math.abs(parsed.getStartPoint().get(X_INDEX) - lastEnd.get(X_INDEX)) < parsed.getSingleSpaceWidth()/2f;
         }
 
         @Override
-        public void renderText(TextRenderInfo info) {
-            text.put(info.getBaseline().getStartPoint(), info.getText());
+        public void renderText(FinalText completed) {
+        }
+
+        @Override
+        public void renderText(ParsedTextImpl parsed) {
+            System.out.println(parsed);
+        }
+
+        @Override
+        public FinalText endParsingContext(String containingElementName) {
+            return null;
+        }
+
+        @Override
+        public String getWordId() {
+            return null;
+        }
+
+        @Override
+        public void setPage(int page) {
+
+        }
+
+        @Override
+        public void reset() {
         }
     }
 

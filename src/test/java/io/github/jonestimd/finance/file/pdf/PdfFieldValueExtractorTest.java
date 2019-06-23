@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
-import com.itextpdf.text.pdf.parser.Vector;
+import com.lowagie.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
 import org.junit.Test;

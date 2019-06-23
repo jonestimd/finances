@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
-import com.itextpdf.text.pdf.parser.Vector;
+import com.lowagie.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.util.Streams;
 
@@ -62,10 +62,10 @@ public class PdfFieldValueExtractor {
 
         public TextWalker(Iterable<Entry<Vector, String>> pdfText) throws IOException {
             for (Entry<Vector, String> entry : pdfText) {
-                x = entry.getKey().get(Vector.I1);
-                if (entry.getKey().get(Vector.I2) != y || isPastRightEdge(x)) {
+                x = entry.getKey().get(VectorComparator.X_INDEX);
+                if (entry.getKey().get(VectorComparator.Y_INDEX) != y || isPastRightEdge(x)) {
                     prefix.setLength(0);
-                    y = entry.getKey().get(Vector.I2);
+                    y = entry.getKey().get(VectorComparator.Y_INDEX);
                 }
                 List<ImportField> fieldCandidates = getMatches();
                 if (fieldCandidates.size() == 1) {

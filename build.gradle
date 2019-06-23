@@ -41,7 +41,7 @@ dependencies {
         exclude group: 'org.jboss', module: 'jandex'
     }
     compile( group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1' ) { transitive = false }
-    compile( group: 'com.itextpdf', name: 'itextpdf', version: '5.5.3' )
+    compile( group: 'com.github.librepdf', name: 'openpdf', version: '1.2.20' )
     compile( group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6' )
     compile( group: 'org.apache.poi', name: 'poi', version: '3.17' )
     compile( group: 'org.jsoup', name: 'jsoup', version: '1.8.1' )
