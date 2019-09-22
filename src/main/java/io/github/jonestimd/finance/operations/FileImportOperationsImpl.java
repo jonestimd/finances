@@ -23,17 +23,18 @@ package io.github.jonestimd.finance.operations;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
+import io.github.jonestimd.finance.file.download.FileDownload;
 import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.service.TransactionService;
@@ -41,7 +42,7 @@ import io.github.jonestimd.finance.service.TransactionService;
 import static io.github.jonestimd.finance.config.ApplicationConfig.*;
 import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
-public class FileImportOperationsImpl implements FileImportOperations { // TODO move to client (import action?)
+public class FileImportOperationsImpl implements FileImportOperations {
     private final ImportFileDao importFileDao;
     private final TransactionService transactionService;
     private final PayeeOperations payeeOperations;
@@ -71,22 +72,25 @@ public class FileImportOperationsImpl implements FileImportOperations { // TODO 
                 .parseTransactions(source);
     }
 
-    public static void main(String args[]) {
-        JFileChooser fileChooser = new JFileChooser("/home/tim/temp");
-        fileChooser.setMultiSelectionEnabled(true);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.getActionMap().get("viewTypeDetails").actionPerformed(null);
-        fileChooser.showOpenDialog(JOptionPane.getRootFrame());
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("usage: java " + FileImportOperationsImpl.class.getName() + " import_name file [file ...]");
+            System.exit(1);
+        }
         try {
-            DaoRepository daoContext = new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG);
-            ServiceContext serviceContext = new ServiceContext(daoContext);
-            FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
-            for (File file : fileChooser.getSelectedFiles()) {
-                fileImportOperations.importTransactions("Discover Statement", new FileInputStream(file));
-            }
+            importFiles(args[0], Stream.of(args).skip(1).map(File::new).collect(Collectors.toList()));
         }
         catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    public static void importFiles(String importName, Iterable<File> files) throws IOException {
+        DaoRepository daoContext = new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG);
+        ServiceContext serviceContext = new ServiceContext(daoContext);
+        FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
+        for (File file : files) {
+            fileImportOperations.importTransactions(importName, new FileInputStream(file));
         }
     }
 }
