@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.file.download;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collections;
@@ -32,10 +31,7 @@ import java.util.Map.Entry;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
-import io.github.jonestimd.finance.dao.DaoRepository;
-import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.operations.FileImportOperationsImpl;
-import io.github.jonestimd.finance.service.ServiceContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -48,9 +44,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-
-import static io.github.jonestimd.finance.config.ApplicationConfig.*;
-import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class FileDownload {
     private static final Logger LOGGER = Logger.getLogger(FileDownload.class);
@@ -76,12 +69,7 @@ public class FileDownload {
             FileDownload download = new FileDownload(config, context, buildClient(config));
             download.downloadNewStatements();
             if (args.length > 1) {
-                DaoRepository daoContext = new HibernateDaoContext(CONNECTION_CONFIG.loadDriver(), CONFIG);
-                ServiceContext serviceContext = new ServiceContext(daoContext);
-                FileImportOperationsImpl fileImportOperations = new FileImportOperationsImpl(daoContext.getImportFileDao(), serviceContext);
-                for (File file : context.getStatements()) {
-                    fileImportOperations.importTransactions(args[1], new FileInputStream(file));
-                }
+                FileImportOperationsImpl.importFiles(args[1], context.getStatements());
             }
         } catch (Exception ex) {
             LOGGER.error("Error processing download: " + args[0], ex);
