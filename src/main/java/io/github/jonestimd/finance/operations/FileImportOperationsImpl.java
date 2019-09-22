@@ -34,7 +34,6 @@ import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
-import io.github.jonestimd.finance.file.download.FileDownload;
 import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.service.TransactionService;
