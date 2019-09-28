@@ -10,8 +10,10 @@ buildscript {
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'nebula.deb'
+plugins {
+    id 'java-library'
+    id 'nebula.deb' version '3.1.0'
+}
 
 compileJava.sourceCompatibility = 1.8
 
@@ -19,10 +21,18 @@ group = 'io.github.jonestimd'
 version = '1.5.0-SNAPSHOT'
 
 allprojects { // TODO add plugin-api module and test-common module
+    apply plugin: 'java'
+
     repositories {
         mavenLocal()
         mavenCentral()
 //        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+    dependencies {
+        testImplementation(group: 'junit', name: 'junit', version: '4.7')
+        testImplementation(group: 'org.assertj', name: 'assertj-swing-junit', version: '3.8.0')
+        testImplementation(group: 'org.easytesting', name: 'fest-util', version: '1.2.5')
+        testImplementation(group: 'org.mockito', name: 'mockito-core', version: '1.9.0')
     }
 }
 
@@ -32,43 +42,39 @@ def hibernateVersion = "4.3.7.Final"
 evaluationDependsOnChildren()
 
 dependencies {
-//    compile files( System.getProperty("java.home") + "/lib/ext/jfxrt.jar")
-    compile( group: 'com.google.guava', name: 'guava', version: '21.0' )
-    compile( group: 'commons-lang', name: 'commons-lang', version: '2.4' )
-    compile( group: 'log4j', name: 'log4j', version: '1.2.15' ) { transitive = false }
-    compile( group: 'org.hibernate', name: 'hibernate-core', version: hibernateVersion ) {
+//    api files( System.getProperty("java.home") + "/lib/ext/jfxrt.jar")
+    api(group: 'com.google.guava', name: 'guava', version: '21.0')
+    api(group: 'commons-lang', name: 'commons-lang', version: '2.4')
+    api(group: 'log4j', name: 'log4j', version: '1.2.15') { transitive = false }
+    api(group: 'org.hibernate', name: 'hibernate-core', version: hibernateVersion) {
         exclude group: 'org.jboss.logging', module: 'jboss-logging-annotations'
         exclude group: 'org.jboss', module: 'jandex'
     }
-    compile( group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1' ) { transitive = false }
-    compile( group: 'com.itextpdf', name: 'itextpdf', version: '5.5.3' )
-    compile( group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6' )
-    compile( group: 'org.apache.poi', name: 'poi', version: '3.17' )
-    compile( group: 'org.jsoup', name: 'jsoup', version: '1.8.1' )
-    compile( group: 'org.glassfish', name: 'javax.json', version: '1.0.4' )
-    compile( group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
-    compile( group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.3.0')
-    compile( group: 'com.typesafe', name: 'config', version: '1.3.0')
+    api(group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1') { transitive = false }
+    api(group: 'com.itextpdf', name: 'itextpdf', version: '5.5.3')
+    api(group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6')
+    api(group: 'org.apache.poi', name: 'poi', version: '3.17')
+    api(group: 'org.jsoup', name: 'jsoup', version: '1.8.1')
+    api(group: 'org.glassfish', name: 'javax.json', version: '1.0.4')
+    api(group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
+    api(group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.3.0')
+    api(group: 'com.typesafe', name: 'config', version: '1.3.0')
 
-    runtime( group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernateVersion ) {
+    runtimeOnly(group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernateVersion) {
         exclude group: 'org.hibernate', module: 'hibernate-core'
         exclude group: 'org.jboss.logging', module: 'jboss-logging-annotations'
     }
-    runtime( group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1' ) { transitive = false }
-    runtime( group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.6.1' ) { transitive = false }
-    runtime( group: 'org.objenesis', name: 'objenesis', version: '1.2' )
-    runtime( group: 'org.javassist', name: 'javassist', version: '3.18.1-GA' )
-    runtime( group: 'mysql', name: 'mysql-connector-java', version: '5.1.6' )
-    runtime( group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.5.3' )
-    runtime( group: 'com.jgoodies', name: 'jgoodies-common', version: '1.7.0' )
-    runtime( group: 'org.postgresql', name: 'postgresql', version: '9.4.1208')
-    runtime( group: 'org.apache.derby', name: 'derby', version: '10.13.1.1')
+    runtimeOnly(group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1') { transitive = false }
+    runtimeOnly(group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.6.1') { transitive = false }
+    runtimeOnly(group: 'org.objenesis', name: 'objenesis', version: '1.2')
+    runtimeOnly(group: 'org.javassist', name: 'javassist', version: '3.18.1-GA')
+    runtimeOnly(group: 'mysql', name: 'mysql-connector-java', version: '5.1.6')
+    runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.5.3')
+    runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-common', version: '1.7.0')
+    runtimeOnly(group: 'org.postgresql', name: 'postgresql', version: '9.4.1208')
+    runtimeOnly(group: 'org.apache.derby', name: 'derby', version: '10.13.1.1')
 
-    testCompile( group: 'junit', name: 'junit', version: '4.7' )
-    testCompile( group: 'org.assertj', name: 'assertj-swing-junit', version: '3.8.0' )
-    testCompile( group: 'org.mockito', name: 'mockito-core', version: '1.9.0' )
-
-    testRuntime( group: 'org.hsqldb', name: 'hsqldb', version: '2.3.3', classifier: 'jdk6debug')
+    testRuntimeOnly(group: 'org.hsqldb', name: 'hsqldb', version: '2.3.3', classifier: 'jdk6debug')
 }
 
 processResources {
@@ -83,7 +89,7 @@ jar {
                 'Implementation-Version': version,
                 'Main-Class': mainClass,
                 'Class-Path': configurations.runtime.files.findAll {
-                    ! it.name.matches("(mysql-connector-java|postgresql|derby)-.*\\.jar")
+                    !it.name.matches("(mysql-connector-java|postgresql|derby)-.*\\.jar")
                 }.collect { 'libs/' + it.name }.join(' ')
     }
     doLast {
@@ -104,16 +110,16 @@ javadoc {
 
 def childRuntime(String name) {
     childProjects[name].configurations.runtime.files
-            .findAll { ! configurations.runtime.files.contains(it) }
-            .findAll { ! configurations.archives.artifacts.collect{ it.file }.contains(it) }
+            .findAll { !configurations.runtime.files.contains(it) }
+            .findAll { !configurations.archives.artifacts.collect { it.file }.contains(it) }
 }
 
 def dependencyJars = copySpec {
-    from configurations.runtime.files, {
+    from configurations.runtimeClasspath.files, {
         into 'libs'
         exclude "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
     }
-    from configurations.runtime.files, {
+    from configurations.runtimeClasspath.files, {
         into 'drivers'
         include "derby-*.jar", "mysql-connector-java-*.jar", "postgresql-*.jar"
     }
@@ -130,7 +136,8 @@ task pluginDependencies(type: Copy) {
     into "$buildDir/plugins"
 }
 
-task distZip(overwrite: true, type: Zip, dependsOn: [jar, ':stockquote-plugin:jar', pluginDependencies]) {
+tasks.register('distZip', Zip) {
+    dependsOn(jar, ':stockquote-plugin:jar', pluginDependencies)
     includeEmptyDirs = false
     into 'finances'
     from(['package/linux', 'package/windows']) {
@@ -139,16 +146,13 @@ task distZip(overwrite: true, type: Zip, dependsOn: [jar, ':stockquote-plugin:ja
             expand(['version': project.properties.version])
         }
     }
-    from project.libsDir
-    from childRuntime('stockquote-plugin'), {
-        into 'plugins'
-    }
-
+    from "$project.buildDir/libs"
     with licenseFile
     with dependencyJars
 }
 
-task prepareMsi(overwrite: true, type: Copy, dependsOn: [jar, ':stockquote-plugin:jar']) {
+tasks.register('prepareMsi', Copy) {
+    dependsOn(jar, ':stockquote-plugin:jar')
     // TODO handle update/reinstall
     includeEmptyDirs = false
     destinationDir = file("${project.buildDir}/tmp")
@@ -186,7 +190,7 @@ task distDeb(type: Deb, dependsOn: [jar, ':stockquote-plugin:jar', pluginDepende
 
     into('/opt/finances')
 
-    from(project.libsDir)
+    from "$project.buildDir/libs"
     from childRuntime('stockquote-plugin'), {
         into 'plugins'
     }
