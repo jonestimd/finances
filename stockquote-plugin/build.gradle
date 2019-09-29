@@ -1,4 +1,6 @@
-apply plugin: 'java'
+plugins {
+    id 'java'
+}
 
 //compileJava.sourceCompatibility = 1.8
 compileJava.targetCompatibility = 1.8
@@ -10,16 +12,13 @@ repositories {
 }
 
 dependencies {
-    compile rootProject
-    compile group: 'org.jclarion', name: 'image4j', version: '0.7'
-
-    testCompile project( path: ':', configuration: 'testCompile' )
-    testCompile files( rootProject.buildDir.absolutePath + '/classes/test' )
+    implementation apiElements(rootProject)
+    implementation group: 'org.jclarion', name: 'image4j', version: '0.7'
 }
 
 jar {
     manifest {
         attributes 'Implementation-Title': 'tdj-finances stockquote-plugin', 'Implementation-Version': version
     }
-    destinationDir = file( "$rootProject.libsDir/plugins" )
+    destinationDirectory = file( "$rootProject.buildDir/libs/plugins" )
 }
