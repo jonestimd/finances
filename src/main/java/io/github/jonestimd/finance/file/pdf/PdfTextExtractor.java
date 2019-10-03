@@ -21,12 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.pdf;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import com.lowagie.text.pdf.PRIndirectReference;
 import com.lowagie.text.pdf.PdfDictionary;
@@ -34,16 +30,11 @@ import com.lowagie.text.pdf.PdfLiteral;
 import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfNumber;
 import com.lowagie.text.pdf.PdfObject;
-import org.apache.commons.collections4.map.HashedMap;
+import javafx.geometry.Point2D;
+import javafx.scene.transform.Affine;
 
 public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
-    @FunctionalInterface
-    public interface ContentHandler {
-        void invoke(List<PdfObject> operands, PdfDictionary resources);
-    }
-
-    private Map<String, ContentHandler> operators = new HashedMap<>();
-    private AffineTransform matrix = new AffineTransform();
+    private Affine matrix = new Affine();
     private PdfFontInfo fontInfo;
     private PdfName colorSpace;
     private float color;
@@ -51,7 +42,7 @@ public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
     private float strokeColor;
 
     private class TextState {
-        public AffineTransform matrix = new AffineTransform();
+        public Affine matrix = new Affine();
         public float horizontalScale = 1f; // Th
         public float charSpacing; // Tc
         public float wordSpacing; // Tw
@@ -59,13 +50,13 @@ public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
         public final StringBuilder word = new StringBuilder();
 
         public String text;
-        public final Point2D.Float pos = new Point2D.Float(); // TODO use matrix to translate
-        public final Point2D.Float wordPos = new Point2D.Float();
+        private Point2D pos = new Point2D(0, 0); // TODO use matrix to translate
 
         public void startWord() {
             addWord();
             word.setLength(0);
-            wordPos.setLocation(pos);
+            matrix.appendTranslation(pos.getX(), pos.getY());
+            pos = new Point2D(0, 0);
         }
 
         public void append() {
@@ -76,48 +67,19 @@ public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
         public void addWord() {
             if (text != null) append();
             if (word.length() > 0) {
-                Point2D.Float p = new Point2D.Float();
-                matrix.transform(wordPos, p);
-                documentText.add(new PdfTextInfo(fontInfo, word.toString(), p.x, p.y));
+                Point2D p = matrix.transform(0, 0);
+                documentText.add(new PdfTextInfo(fontInfo, word.toString(), (float) p.getX(), (float) p.getY()));
             }
         }
 
         public void move(float x, float y) {
-            pos.x += x;
-            pos.y += y;
+            pos = pos.add(x, y);
         }
     }
 
     private TextState textState;
 
     private List<PdfTextInfo> documentText = new ArrayList<>();
-
-    public PdfTextExtractor() {
-        operators.put("cm", this::concatMatrix);
-        operators.put("cs", this::setColorSpace);
-        operators.put("CS", this::setStrokeColorSpace);
-        operators.put("scn", this::setColor);
-        operators.put("SCN", this::setStrokeColor);
-        operators.put("g", this::setGray);
-        operators.put("G", this::setStrokeGray);
-        operators.put("Tf", this::setTextFont);
-        operators.put("Td", this::setTextPosition);
-        operators.put("Tm", this::setTextMatrix);
-        operators.put("Tj", this::showText);
-        // operators.put("TJ", this::showTextWithPos); // includes individual glyph positioning
-        // operators.put("'", this::moveToNextLineAndShowText);
-        // operators.put("\"", this::setSpacingMoveToNextLineAndShowText);
-        operators.put("Tc", this::setCharSpacing);
-        operators.put("Tw", this::setWordSpacing);
-        operators.put("Tz", this::setHorizontalScale);
-        operators.put("TL", this::setLineSpacing);
-        operators.put("BT", this::beginText);
-        operators.put("ET", this::endText);
-        // operators.put("gs", this::??); // set text knockout?
-        // operators.put("q", this::saveGraphicsState);
-        // operators.put("Q", this::restoreGraphicsState);
-        // operators.put("Do", this::invokeXObject);
-    }
 
     @Override
     public List<PdfTextInfo> getResult() {
@@ -127,58 +89,90 @@ public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
     @Override
     public void operator(PdfLiteral operator, List<PdfObject> operands, PdfDictionary resources) {
         String operatorName = operator.toString();
-        lookupOperator(operatorName).orElse(this::unhandled).invoke(operands, resources);
+        switch (operatorName) {
+            case "cm": concatMatrix(operands); break;
+            case "cs": setColorSpace((PdfName) operands.get(0)); break;
+            case "CS": setStrokeColorSpace((PdfName) operands.get(0)); break;
+            case "scn": setColor(operands); break;
+            case "SCN": setStrokeColor(operands); break;
+            case "g": setGray((PdfNumber) operands.get(0)); break;
+            case "G": setStrokeGray((PdfNumber) operands.get(0)); break;
+            case "Tf": setTextFont((PdfName) operands.get(0), (PdfNumber) operands.get(1), resources); break;
+            case "Td": setTextPosition((PdfNumber) operands.get(0), (PdfNumber) operands.get(1)); break;
+            case "Tm": setTextMatrix(operands); break;
+            case "Tj": showText(operands.get(0)); break;
+            // case "TJ": showTextWithPos(); break; // includes individual glyph positioning
+            // case "'": moveToNextLineAndShowText(); break;
+            // case "\"": setSpacingMoveToNextLineAndShowText(); break;
+            case "Tc": setCharSpacing((PdfNumber) operands.get(0)); break;
+            case "Tw": setWordSpacing((PdfNumber) operands.get(0)); break;
+            case "Tz": setHorizontalScale((PdfNumber) operands.get(0)); break;
+            case "TL": setLineSpacing((PdfNumber) operands.get(0)); break;
+            case "BT": beginText(); break;
+            case "ET": endText(); break;
+            // case "gs": ??(); break; // set text knockout?
+            // case "q": saveGraphicsState(); break;
+            // case "Q": restoreGraphicsState(); break;
+            case "Do": invokeXObject((PdfName) operands.get(0), resources); break;
+            default: unhandled(operatorName, operands);
+        }
     }
 
-    private void unhandled(List<PdfObject> operands, PdfDictionary resources) {
-        // PdfLiteral operator = (PdfLiteral) operands.get(operands.size() - 1);
-        // System.out.print("<" + operator.toString() + ">");
+    private void unhandled(String operator, List<PdfObject> operands) {
+        // System.out.print("<" + operator + ">");
     }
 
-    protected void concatMatrix(List<PdfObject> operands, PdfDictionary resources) {
+    protected void invokeXObject(PdfName name, PdfDictionary resources) {
+        // PdfName name = (PdfName) operands.get(0);
+        // System.err.println(resources.getAsDict(PdfName.XOBJECT).getAsStream(name).get(PdfName.SUBTYPE));
+    }
+
+    protected void concatMatrix(List<PdfObject> operands) {
         // matrix = (AffineTransform) matrix.clone();
-        matrix.preConcatenate(new AffineTransform(
+        matrix.prepend(new Affine(
                 ((PdfNumber) operands.get(0)).floatValue(),
                 ((PdfNumber) operands.get(1)).floatValue(),
                 ((PdfNumber) operands.get(2)).floatValue(),
                 ((PdfNumber) operands.get(3)).floatValue(),
                 ((PdfNumber) operands.get(4)).floatValue(),
-                ((PdfNumber) operands.get(5)).floatValue()
-        ));
+                ((PdfNumber) operands.get(5)).floatValue()));
     }
 
-    protected void setColorSpace(List<PdfObject> operands, PdfDictionary resources) {
-        colorSpace = (PdfName) operands.get(0);
+    protected void setColorSpace(PdfName name) {
+        this.colorSpace = name;
     }
 
-    protected void setColor(List<PdfObject> operands, PdfDictionary resources) {
-        color = ((PdfNumber) operands.get(0)).floatValue();
+    protected void setColor(List<PdfObject> operands) {
+        // TODO depends on current color space
+        // this.color = color.floatValue();
     }
 
-    protected void setStrokeColorSpace(List<PdfObject> operands, PdfDictionary resources) {
-        strokeColorSpace = (PdfName) operands.get(0);
+    protected void setStrokeColorSpace(PdfName name) {
+        this.strokeColorSpace = name;
     }
 
-    protected void setStrokeColor(List<PdfObject> operands, PdfDictionary resources) {
-        strokeColor = ((PdfNumber) operands.get(0)).floatValue();
+    protected void setStrokeColor(List<PdfObject> operands) {
+        // TODO depends on current color space
+        // strokeColor = ((PdfNumber) operands.get(0)).floatValue();
     }
 
-    protected void setGray(List<PdfObject> operands, PdfDictionary resources) {
+    protected void setGray(PdfNumber gray) {
+        // set color space to DeviceGray (or the DefaultGray color space) and set gray level
     }
 
-    protected void setStrokeGray(List<PdfObject> operands, PdfDictionary resources) {
+    protected void setStrokeGray(PdfNumber gray) {
+        // set color space to DeviceGray (or the DefaultGray color space) and set gray level
     }
 
-    protected void setTextFont(List<PdfObject> operands, PdfDictionary resources) {
-        PdfName fontResourceName = (PdfName) operands.get(0);
+    protected void setTextFont(PdfName name, PdfNumber size, PdfDictionary resources) {
         PdfDictionary fontsDictionary = resources.getAsDict(PdfName.FONT);
-        PdfObject pdfObject = fontsDictionary.get(fontResourceName);
-        fontInfo = new PdfFontInfo((PRIndirectReference) pdfObject, (PdfNumber) operands.get(1));
+        PdfObject pdfObject = fontsDictionary.get(name);
+        fontInfo = new PdfFontInfo((PRIndirectReference) pdfObject, size);
     }
 
-    protected void setTextPosition(List<PdfObject> operands, PdfDictionary resources) {
-        float x = ((PdfNumber) operands.get(0)).floatValue();
-        float y = ((PdfNumber) operands.get(1)).floatValue();
+    protected void setTextPosition(PdfNumber pdfX, PdfNumber pdfY) {
+        float x = pdfX.floatValue();
+        float y = pdfY.floatValue();
         textState.move(x, y);
         if (textState.text != null) {
             float width = fontInfo.getWidth(textState.text);
@@ -188,49 +182,45 @@ public class PdfTextExtractor implements PdfContentHandler<List<PdfTextInfo>> {
         else textState.startWord();
     }
 
-    protected void setTextMatrix(List<PdfObject> operands, PdfDictionary resources) {
-        textState.matrix = new AffineTransform(
-                ((PdfNumber) operands.get(0)).floatValue(),
-                ((PdfNumber) operands.get(1)).floatValue(),
-                ((PdfNumber) operands.get(2)).floatValue(),
-                ((PdfNumber) operands.get(3)).floatValue(),
-                ((PdfNumber) operands.get(4)).floatValue(),
-                ((PdfNumber) operands.get(5)).floatValue());
+    protected void setTextMatrix(List<PdfObject> operands) {
+        textState.matrix = new Affine(
+                ((PdfNumber) operands.get(0)).doubleValue(),
+                ((PdfNumber) operands.get(1)).doubleValue(),
+                ((PdfNumber) operands.get(2)).doubleValue(),
+                ((PdfNumber) operands.get(3)).doubleValue(),
+                ((PdfNumber) operands.get(4)).doubleValue(),
+                ((PdfNumber) operands.get(5)).doubleValue());
     }
 
-    protected void setCharSpacing(List<PdfObject> operands, PdfDictionary resources) {
+    protected void setCharSpacing(PdfNumber spacing) {
         // TODO clone state and begin new "word"
-        textState.charSpacing = ((PdfNumber) operands.get(0)).floatValue();
+        textState.charSpacing = spacing.floatValue();
     }
 
-    protected void setWordSpacing(List<PdfObject> operands, PdfDictionary resources) {
+    protected void setWordSpacing(PdfNumber spacing) {
         // TODO clone state and begin new "word"
-        textState.wordSpacing = ((PdfNumber) operands.get(0)).floatValue();
+        textState.wordSpacing = spacing.floatValue();
     }
 
-    protected void setHorizontalScale(List<PdfObject> operands, PdfDictionary resources) {
+    protected void setHorizontalScale(PdfNumber percent) {
         // TODO clone state and begin new "word"
-        textState.horizontalScale = ((PdfNumber) operands.get(0)).floatValue() / 100f;
+        textState.horizontalScale = percent.floatValue()/100f;
     }
 
-    protected void setLineSpacing(List<PdfObject> operands, PdfDictionary resources) {
-        textState.lineSpacing = ((PdfNumber) operands.get(0)).floatValue();
+    protected void setLineSpacing(PdfNumber spacing) {
+        textState.lineSpacing = spacing.floatValue();
     }
 
-    protected void showText(List<PdfObject> operands, PdfDictionary resources) {
-        textState.text = fontInfo.decode(operands.get(0));
+    protected void showText(PdfObject text) {
+        textState.text = fontInfo.decode(text);
     }
 
-    protected void beginText(List<PdfObject> operands, PdfDictionary resources) {
+    protected void beginText() {
         textState = new TextState();
     }
 
-    protected void endText(List<PdfObject> operands, PdfDictionary resources) {
+    protected void endText() {
         textState.addWord();
         textState = null;
-    }
-
-    protected Optional<ContentHandler> lookupOperator(String operatorName) {
-        return Optional.ofNullable(operators.get(operatorName));
     }
 }
