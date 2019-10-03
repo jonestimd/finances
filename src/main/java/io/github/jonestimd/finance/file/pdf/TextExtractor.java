@@ -62,7 +62,7 @@ public class TextExtractor {
         return pageText.stream().map(Map::entrySet).flatMap(Collection::stream);
     }
 
-    private class ImportRenderListener implements TextAssembler {
+    private static class ImportRenderListener implements TextAssembler {
         private Map<Vector, StringBuilder> textByPosition = new TreeMap<>(VectorComparator.TOP_DOWN_LEFT_TO_RIGHT);
         private Vector pos;
         private Vector lastEnd;
