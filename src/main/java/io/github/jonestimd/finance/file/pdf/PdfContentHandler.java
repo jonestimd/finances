@@ -28,7 +28,9 @@ import com.lowagie.text.pdf.PdfLiteral;
 import com.lowagie.text.pdf.PdfObject;
 
 public interface PdfContentHandler<T> {
-    void operator(PdfLiteral operator, List<PdfObject> operands, PdfDictionary resources);
+    void setResources(PdfDictionary resources);
+
+    void operator(PdfLiteral operator, List<PdfObject> operands);
 
     T getResult();
 }

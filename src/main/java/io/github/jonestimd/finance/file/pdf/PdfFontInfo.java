@@ -21,18 +21,39 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.pdf;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.lowagie.text.pdf.CMapAwareDocumentFont;
 import com.lowagie.text.pdf.PRIndirectReference;
+import com.lowagie.text.pdf.PRStream;
+import com.lowagie.text.pdf.PdfDictionary;
+import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfNumber;
 import com.lowagie.text.pdf.PdfObject;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfStream;
 
 public class PdfFontInfo {
+    private final PdfDictionary fontDict;
     private final CMapAwareDocumentFont font;
     private final float fontSize; // units in user space. Default unit is 1/72 inch?
 
     public PdfFontInfo(PRIndirectReference fontReference, PdfNumber fontSize) {
+        this.fontDict = (PdfDictionary) PdfReader.getPdfObject(fontReference);
         this.font = new CMapAwareDocumentFont(fontReference);
         this.fontSize = fontSize.floatValue();
+    }
+
+    public String getFontName() {
+        return font.getPostscriptFontName();
+    }
+
+    public InputStream getFontStream() throws IOException {
+        PdfDictionary fontDesc = (PdfDictionary) PdfReader.getPdfObject(fontDict.get(PdfName.FONTDESCRIPTOR));
+        PdfStream stream = fontDesc.getAsStream(PdfName.FONTFILE);
+        return new ByteArrayInputStream(PdfReader.getStreamBytes((PRStream) stream));
     }
 
     public String decode(PdfObject operand) {

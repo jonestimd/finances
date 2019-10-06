@@ -21,12 +21,12 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.pdf;
 
+import java.awt.Rectangle;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.stream.Collectors;
 
 import com.lowagie.text.ExceptionConverter;
 import com.lowagie.text.pdf.PRIndirectReference;
@@ -48,24 +48,33 @@ public class PdfContent {
         this.reader = reader;
     }
 
+    public Rectangle getMediaBox(int page) {
+        PdfDictionary pageDict = reader.getPageN(page + 1);
+        PdfArray mediaBox = pageDict.getAsArray(PdfName.MEDIABOX);// boundry in 1/72 inch units
+        int left = mediaBox.getAsNumber(0).intValue();
+        int bottom = mediaBox.getAsNumber(1).intValue();
+        int right = mediaBox.getAsNumber(2).intValue();
+        int top = mediaBox.getAsNumber(3).intValue();
+        return new Rectangle(left, bottom, right - left, top - bottom);
+    }
+
     public <T> T processPage(int page, PdfContentHandler<T> handler) throws IOException {
-        PdfDictionary pageDict = reader.getPageN(page);
+        PdfDictionary pageDict = reader.getPageN(page + 1);
         if (pageDict != null) {
-            System.out.println(pageDict.getKeys());
-            System.out.println(pageDict.get(PdfName.MEDIABOX)); // boundry in 1/72 inch units
             PdfDictionary resources = pageDict.getAsDict(PdfName.RESOURCES);
-            processContent(getContentBytesForPage(page), resources, handler);
+            handler.setResources(resources);
+            processContent(getContentBytesForPage(page + 1), handler);
         }
         return handler.getResult();
     }
 
-    protected void processContent(byte[] contentBytes, PdfDictionary resources, PdfContentHandler<?> handler) {
+    private void processContent(byte[] contentBytes, PdfContentHandler<?> handler) {
         try {
             PdfContentParser ps = new PdfContentParser(new PRTokeniser(contentBytes));
             List<PdfObject> operands = new ArrayList<>();
             while (ps.parse(operands).size() > 0) {
                 PdfLiteral operator = (PdfLiteral) operands.get(operands.size() - 1);
-                handler.operator(operator, operands, resources);
+                handler.operator(operator, operands);
             }
         } catch (Exception e) {
             throw new ExceptionConverter(e);

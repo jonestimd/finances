@@ -21,16 +21,24 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.pdf;
 
+import javafx.geometry.Point2D;
+
 public class PdfTextInfo {
     public final PdfFontInfo fontInfo;
     public final String text;
     public final float x;
     public final float y;
+    public final float charSpacing;
+    public final float horizontalScale;
+    public final float verticalScale;
 
-    public PdfTextInfo(PdfFontInfo fontInfo, String text, float x, float y) {
+    public PdfTextInfo(PdfFontInfo fontInfo, String text, Point2D start, float charSpacing, float horizontalScale, float verticalScale) {
         this.fontInfo = fontInfo;
         this.text = text;
-        this.x = x;
-        this.y = y;
+        this.x = (float) start.getX();
+        this.y = (float) start.getY();
+        this.charSpacing = charSpacing;
+        this.horizontalScale = horizontalScale;
+        this.verticalScale = verticalScale;
     }
 }
