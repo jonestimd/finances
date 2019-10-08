@@ -51,9 +51,9 @@ dependencies {
         exclude group: 'org.jboss', module: 'jandex'
     }
     api(group: 'org.hibernate', name: 'hibernate-tools', version: '4.3.1.CR1') { transitive = false }
-    api(group: 'com.github.librepdf', name: 'openpdf', version: '1.2.20')
     api(group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.6')
     api(group: 'org.apache.poi', name: 'poi', version: '3.17')
+    api(group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.17')
     api(group: 'org.jsoup', name: 'jsoup', version: '1.8.1')
     api(group: 'org.glassfish', name: 'javax.json', version: '1.0.4')
     api(group: 'io.github.jonestimd', name: 'subsets', version: '1.0')

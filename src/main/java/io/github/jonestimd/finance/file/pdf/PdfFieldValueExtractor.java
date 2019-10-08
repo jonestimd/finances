@@ -26,14 +26,14 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
-import com.lowagie.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.util.Streams;
+import javafx.util.Pair;
+import org.apache.pdfbox.util.Vector;
 
 import static com.google.common.collect.Multimaps.*;
 
@@ -48,7 +48,7 @@ public class PdfFieldValueExtractor {
         return Collections.singleton(getFieldValues(new TextExtractor(inputStream).getText()));
     }
 
-    protected ListMultimap<ImportField, String> getFieldValues(Stream<Entry<Vector, String>> pdfText) throws IOException {
+    protected ListMultimap<ImportField, String> getFieldValues(Stream<Pair<Vector, String>> pdfText) {
         ListMultimap<ImportField, String> fieldValues = transformValues(new TextWalker(pdfText::iterator).fieldValues, StringBuilder::toString);
         fieldValues.values().removeIf(String::isEmpty);
         return fieldValues;
@@ -60,12 +60,12 @@ public class PdfFieldValueExtractor {
         private float y = -1f;
         private final StringBuilder prefix = new StringBuilder();
 
-        public TextWalker(Iterable<Entry<Vector, String>> pdfText) throws IOException {
-            for (Entry<Vector, String> entry : pdfText) {
-                x = entry.getKey().get(VectorComparator.X_INDEX);
-                if (entry.getKey().get(VectorComparator.Y_INDEX) != y || isPastRightEdge(x)) {
+        public TextWalker(Iterable<Pair<Vector, String>> pdfText) {
+            for (Pair<Vector, String> entry : pdfText) {
+                x = entry.getKey().getX();
+                if (entry.getKey().getY() != y || isPastRightEdge(x)) {
                     prefix.setLength(0);
-                    y = entry.getKey().get(VectorComparator.Y_INDEX);
+                    y = entry.getKey().getY();
                 }
                 List<ImportField> fieldCandidates = getMatches();
                 if (fieldCandidates.size() == 1) {

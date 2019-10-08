@@ -2,14 +2,14 @@ package io.github.jonestimd.finance.file.pdf;
 
 import java.util.Set;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
-import com.lowagie.text.pdf.parser.Vector;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
+import javafx.util.Pair;
+import org.apache.pdfbox.util.Vector;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.*;
@@ -20,7 +20,7 @@ public class PdfFieldValueExtractorTest {
     private final ImportField amountField = new ImportFieldBuilder().label("Amount").bounds(20f, 10f, 0f, 5f, 10f, 20f).get();
     private final Set<ImportField> importFields = ImmutableSet.of(dateField, payeeField, amountField);
     private final PdfFieldValueExtractor pdfFieldValueExtractor = new PdfFieldValueExtractor(importFields);
-    private final Builder<Vector, String> pdfTextBuilder = ImmutableMap.builder();
+    private final ImmutableList.Builder<Pair<Vector, String>> pdfTextBuilder = ImmutableList.builder();
 
     @Test
     public void filtersEmptyValues() throws Exception {
@@ -28,7 +28,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText("The Other_field something", 0f, y);
         addPdfText(payeeField, y, "");
 
-        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.asMap()).isEmpty();
     }
@@ -40,7 +40,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText("The Other_field something", 0f, y);
         addPdfText(payeeField, y, "payee");
 
-        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = new PdfFieldValueExtractor(importFields).getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(payeeField)).containsOnly(payee);
         assertThat(fieldValues.asMap()).hasSize(1).as("no empty values");
@@ -53,7 +53,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText(dateField, 1f, date);
         addPdfText(payeeField, 2f, "payee");
 
-        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(dateField)).containsOnly(date);
         assertThat(fieldValues.get(payeeField)).containsOnly(payee);
@@ -66,7 +66,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText(dateField, 1f, date);
         addPdfText(payeeField, 1f, "payee");
 
-        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(dateField)).containsOnly(date);
         assertThat(fieldValues.get(payeeField)).containsOnly(payee);
@@ -79,7 +79,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText(dateField, 1f, date1);
         addPdfText(dateField, 2f, date2);
 
-        ListMultimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        ListMultimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(dateField)).containsExactly(date1, date2);
     }
@@ -89,7 +89,7 @@ public class PdfFieldValueExtractorTest {
         String payee = "some payee";
         addPdfText(payeeField, 1f, "some payee");
 
-        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
@@ -100,7 +100,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText(payeeField, 1f, "some payee");
         addPdfText("ignored", payeeField.getRegion().getValueRight(), 1.1f);
 
-        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(payeeField)).containsOnly(payee);
     }
@@ -116,7 +116,7 @@ public class PdfFieldValueExtractorTest {
         addPdfText("Amount", 0f, 30f);
         addPdfText("below", 10f, 30f);
 
-        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().entrySet().stream());
+        Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
         assertThat(fieldValues.get(amountField)).containsOnly("the amount");
     }
@@ -130,7 +130,7 @@ public class PdfFieldValueExtractorTest {
 
     private float addPdfText(String text, float x, float y) {
         for (String word : text.split(" ")) {
-            pdfTextBuilder.put(new Vector(x, y, 0f), word);
+            pdfTextBuilder.add(new Pair<>(new Vector(x, y), word));
             x += 1f;
         }
         return x;

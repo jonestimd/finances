@@ -21,24 +21,33 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.file.pdf;
 
-import javafx.geometry.Point2D;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.util.Vector;
 
 public class PdfTextInfo {
-    public final PdfFontInfo fontInfo;
+    public final PDFont font;
+    public final float fontSize;
     public final String text;
     public final float x;
     public final float y;
     public final float charSpacing;
     public final float horizontalScale;
-    public final float verticalScale;
 
-    public PdfTextInfo(PdfFontInfo fontInfo, String text, Point2D start, float charSpacing, float horizontalScale, float verticalScale) {
-        this.fontInfo = fontInfo;
+    public PdfTextInfo(PDFont font, float fontSize, String text, Vector start, float charSpacing, float horizontalScale) {
+        this.font = font;
+        this.fontSize = fontSize;
         this.text = text;
-        this.x = (float) start.getX();
-        this.y = (float) start.getY();
+        this.x = start.getX();
+        this.y = start.getY();
         this.charSpacing = charSpacing;
         this.horizontalScale = horizontalScale;
-        this.verticalScale = verticalScale;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public Vector getPos() {
+        return new Vector(x, y);
     }
 }
