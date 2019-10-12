@@ -24,14 +24,14 @@ package io.github.jonestimd.function;
 import java.util.function.Consumer;
 
 @FunctionalInterface
-public interface FailableConsumer<T> {
-    void accept(T input) throws Exception;
+public interface FailableConsumer<T, E extends Exception> {
+    void accept(T input) throws E;
 
-    static <T> Consumer<T> rethrowException(FailableConsumer<T> consumer) {
+    static <T, E extends Exception> Consumer<T> rethrowException(FailableConsumer<T, E> consumer) {
         return handleException(consumer, ex -> { throw new RuntimeException(ex); });
     }
 
-    static <T> Consumer<T> handleException(FailableConsumer<T> consumer, Consumer<Exception> handler) {
+    static <T, E extends Exception> Consumer<T> handleException(FailableConsumer<T, E> consumer, Consumer<Exception> handler) {
         return input -> {
             try {
                 consumer.accept(input);

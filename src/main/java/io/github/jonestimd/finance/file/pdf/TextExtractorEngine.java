@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.jonestimd.function.FailableConsumer;
 import org.apache.pdfbox.contentstream.PDFStreamEngine;
 import org.apache.pdfbox.contentstream.operator.state.Concatenate;
 import org.apache.pdfbox.contentstream.operator.state.Restore;
@@ -41,6 +42,8 @@ import org.apache.pdfbox.contentstream.operator.text.SetTextLeading;
 import org.apache.pdfbox.contentstream.operator.text.SetTextRise;
 import org.apache.pdfbox.contentstream.operator.text.SetWordSpacing;
 import org.apache.pdfbox.contentstream.operator.text.ShowText;
+import org.apache.pdfbox.contentstream.operator.text.ShowTextAdjusted;
+import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -60,8 +63,8 @@ public class TextExtractorEngine extends PDFStreamEngine {
         addOperator(new MoveText());
         addOperator(new SetMatrix());
         addOperator(new SetTextRise());
-        addOperator(new ShowText()); // TODO override
-        // addOperator(new ShowTextAdjusted());
+        addOperator(new ShowText());
+        addOperator(new ShowTextAdjusted());
         // addOperator(new ShowTextLine());
         // addOperator(new ShowTextLineAndSpace());
         addOperator(new SetCharSpacing());
@@ -85,7 +88,16 @@ public class TextExtractorEngine extends PDFStreamEngine {
     }
 
     @Override
-    public void showText(byte[] string) throws IOException {
+    public void showTextString(byte[] string) throws IOException {
+        captureString(string, super::showTextString);
+    }
+
+    @Override
+    public void showTextStrings(COSArray array) throws IOException {
+        captureString(array, super::showTextStrings);
+    }
+
+    private <T> void captureString(T arg, FailableConsumer<T, IOException> superImpl) throws IOException {
         PDTextState textState = getGraphicsState().getTextState();
         PDFont font = textState.getFont();
         float fontSize = textState.getFontSize();
@@ -93,9 +105,10 @@ public class TextExtractorEngine extends PDFStreamEngine {
         float horizontalScale = textState.getHorizontalScaling();
         wordBuffer.setLength(0);
         pos = null;
-        super.showText(string);
-        documentText.add(new PdfTextInfo(font, fontSize, wordBuffer.toString(), pos, charSpacing, horizontalScale));
-        System.out.println(pos + " " + wordBuffer);
+        superImpl.accept(arg);
+        if (pos != null && wordBuffer.length() > 0) {
+            documentText.add(new PdfTextInfo(font, fontSize, wordBuffer.toString(), pos, charSpacing, horizontalScale));
+        }
     }
 
     @Override

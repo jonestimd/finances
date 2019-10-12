@@ -50,4 +50,8 @@ public class PdfTextInfo {
     public Vector getPos() {
         return new Vector(x, y);
     }
+
+    public String toString() {
+        return String.format("PdfTextInfo(%s @ %f,%f}", text, x, y);
+    }
 }
