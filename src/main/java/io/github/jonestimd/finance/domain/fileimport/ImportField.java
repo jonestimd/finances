@@ -22,9 +22,6 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +44,8 @@ import javax.persistence.Table;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Type;
@@ -85,6 +84,12 @@ public class ImportField {
     private String ignoreRegex;
     @Column(name = "accept_regex", length = 2000)
     private String acceptRegex;
+    @ManyToOne
+    @JoinColumn(name = "tx_category_id") @ForeignKey(name = "import_field_tx_category_fk")
+    private TransactionCategory category;
+    @ManyToOne
+    @JoinColumn(name = "transfer_account_id") @ForeignKey(name = "import_field_transfer_account_fk")
+    private Account transferAccount;
 
     public ImportField() {
         this(null, null);
@@ -188,6 +193,22 @@ public class ImportField {
         this.acceptRegex = acceptRegex;
     }
 
+    public TransactionCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TransactionCategory category) {
+        this.category = category;
+    }
+
+    public Account getTransferAccount() {
+        return transferAccount;
+    }
+
+    public void setTransferAccount(Account transferAccount) {
+        this.transferAccount = transferAccount;
+    }
+
     public boolean hasLabel(String value) {
         return labels.stream().anyMatch(value::equalsIgnoreCase);
     }
@@ -219,6 +240,10 @@ public class ImportField {
     public void updateDetail(TransactionDetail detail, String amount) {
         detail.setMemo(memo);
         detail.setAmount(parseAmount(amount));
+        if (category != null) detail.setCategory(category);
+        if (transferAccount != null) {
+            detail.setRelatedDetail(new TransactionDetail(transferAccount, detail));
+        }
     }
 
     public String toString() {

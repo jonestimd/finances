@@ -291,7 +291,7 @@ public class ImportFile implements UniqueId<Long> {
 
     public ImportContext newContext(DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper, DomainMapper<TransactionCategory> categoryMapper) {
         if (importType == ImportType.MULTI_DETAIL_ROWS) {
-            return new MultiDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);
+            return new MultiDetailImportContext(this, payeeMapper, securityMapper);
         }
         if (importType == ImportType.SINGLE_DETAIL_ROWS) {
             new SingleDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);

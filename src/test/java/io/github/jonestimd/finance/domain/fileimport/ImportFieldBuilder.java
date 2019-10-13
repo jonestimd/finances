@@ -2,6 +2,9 @@ package io.github.jonestimd.finance.domain.fileimport;
 
 import java.util.Collections;
 
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+
 public class ImportFieldBuilder {
     private final ImportField field = new ImportField();
 
@@ -12,6 +15,16 @@ public class ImportFieldBuilder {
 
     public ImportFieldBuilder label(String label) {
         field.setLabels(Collections.singletonList(label));
+        return this;
+    }
+
+    public ImportFieldBuilder category(TransactionCategory category) {
+        field.setCategory(category);
+        return this;
+    }
+
+    public ImportFieldBuilder account(Account account) {
+        field.setTransferAccount(account);
         return this;
     }
 

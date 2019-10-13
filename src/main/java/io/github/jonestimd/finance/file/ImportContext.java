@@ -41,7 +41,6 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
-import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 
 import static io.github.jonestimd.finance.domain.fileimport.FieldType.*;
@@ -58,14 +57,11 @@ public abstract class ImportContext {
     protected final ImportFile importFile;
     protected final DomainMapper<Payee> payeeMapper;
     protected final DomainMapper<Security> securityMapper;
-    protected final DomainMapper<TransactionCategory> categoryMapper;
 
-    protected ImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
-            DomainMapper<TransactionCategory> categoryMapper) {
+    protected ImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper) {
         this.importFile = importFile;
         this.payeeMapper = payeeMapper;
         this.securityMapper = securityMapper;
-        this.categoryMapper = categoryMapper;
     }
 
     public List<Transaction> parseTransactions(InputStream source) throws Exception {
