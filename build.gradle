@@ -69,7 +69,7 @@ dependencies {
     runtimeOnly(group: 'org.objenesis', name: 'objenesis', version: '1.2')
     runtimeOnly(group: 'org.javassist', name: 'javassist', version: '3.18.1-GA')
     runtimeOnly(group: 'mysql', name: 'mysql-connector-java', version: '5.1.6')
-    runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.5.3')
+    runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.7.0')
     runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-common', version: '1.7.0')
     runtimeOnly(group: 'org.postgresql', name: 'postgresql', version: '9.4.1208')
     runtimeOnly(group: 'org.apache.derby', name: 'derby', version: '10.13.1.1')
