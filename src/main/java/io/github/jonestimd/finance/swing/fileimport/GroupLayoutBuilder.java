@@ -46,9 +46,9 @@ public class GroupLayoutBuilder {
     private final String resourcePrefix;
     private int row = 0;
     private int column = 0;
-    private Alignment rowAlignment = Alignment.BASELINE;
+    private final int columnCount;
 
-    public GroupLayoutBuilder(Container container, ResourceBundle bundle, String resourcePrefix) {
+    public GroupLayoutBuilder(Container container, ResourceBundle bundle, String resourcePrefix, int columnCount) {
         layout = new GroupLayout(container);
         container.setLayout(layout);
         layout.setHorizontalGroup(horizontalGroup = layout.createSequentialGroup());
@@ -56,6 +56,7 @@ public class GroupLayoutBuilder {
         layout.setAutoCreateGaps(true);
         this.bundle = bundle;
         this.resourcePrefix = resourcePrefix;
+        this.columnCount = columnCount;
     }
 
     private void addColumnGroup(ParallelGroup group) {
@@ -69,45 +70,68 @@ public class GroupLayoutBuilder {
     }
 
     public GroupLayoutBuilder addCheckBox(JCheckBox component) {
+        return this.addCheckBox(component, 0);
+    }
+
+    public GroupLayoutBuilder addCheckBox(JCheckBox component, int rowOffset) {
+        ensureRow();
+        row += rowOffset;
         ensureGroups();
         columnGroups.get(column++).addComponent(component);
         rowGroups.get(row).addComponent(component);
+        row -= rowOffset;
         return this;
     }
 
     public GroupLayoutBuilder addField(String labelKey, JComponent component) {
-        addLabel(labelKey, component);
+        JLabel label = new LabelBuilder().mnemonicAndName(bundle.getString(resourcePrefix+labelKey)).forComponent(component).get();
+        return addField(label, component);
+    }
+
+    public GroupLayoutBuilder addField(JLabel label, JComponent component) {
+        addLabel(label, component);
+        ensureRowAndGroups();
         columnGroups.get(column++).addComponent(component);
-        rowGroups.get(row).addComponent(component);
+        rowGroups.get(row--).addComponent(component);
         return this;
     }
 
-    private void addLabel(String labelKey, JComponent component) {
+    public GroupLayoutBuilder overlayField(JComponent component) {
+        columnGroups.get(column-1).addComponent(component);
+        rowGroups.get(row+1).addComponent(component);
+        return  this;
+    }
+
+    private void addLabel(JLabel label, JComponent component) {
+        ensureRowAndGroups();
+        columnGroups.get(column).addComponent(label);
+        rowGroups.get(row++).addComponent(label);
+    }
+
+    private void ensureRowAndGroups() {
+        ensureRow();
         ensureGroups();
-        JLabel label = new LabelBuilder().mnemonicAndName(bundle.getString(resourcePrefix+labelKey)).forComponent(component).get();
-        columnGroups.get(column++).addComponent(label);
-        rowGroups.get(row).addComponent(label);
     }
 
     private void ensureGroups() {
         while (columnGroups.size() <= column) {
-            addColumnGroup(layout.createParallelGroup(Alignment.TRAILING));
             addColumnGroup(layout.createParallelGroup(Alignment.LEADING));
         }
         while (rowGroups.size() <= row) {
-            addRowGroup(layout.createParallelGroup(rowAlignment));
+            addRowGroup(layout.createParallelGroup(Alignment.BASELINE));
         }
-        rowAlignment = Alignment.BASELINE;
     }
 
-    public GroupLayoutBuilder alignRow(Alignment rowAlignment) {
-        this.rowAlignment = rowAlignment;
-        return this;
+    private void ensureRow() {
+        if (column >= columnCount) nextRow();
     }
 
+    /**
+     * Skip to the beginning of the next empty row.
+     */
     public GroupLayoutBuilder nextRow() {
         column = 0;
-        row++;
+        row = rowGroups.size();
         return this;
     }
 
