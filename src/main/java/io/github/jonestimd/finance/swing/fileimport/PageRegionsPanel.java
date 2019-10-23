@@ -22,39 +22,29 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
-import javax.swing.JComponent;
-import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
-import io.github.jonestimd.swing.list.BeanListModel;
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.swing.table.DecoratedTable;
 
-public class ImportFieldsPanel extends JComponent {
-    private final JList<ImportField> fieldList = new JList<>();
-    private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
+public class PageRegionsPanel extends JPanel {
+    private final PageRegionTableModel tableModel = new PageRegionTableModel();
+    private final DecoratedTable<PageRegion, PageRegionTableModel> table = new DecoratedTable<>(tableModel);
 
-    public ImportFieldsPanel() {
-        // TODO Add/Delete buttons
-        // TODO hide/disable detail panel when no field selected
-        fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
-        fieldList.addListSelectionListener(this::onFieldSelected);
-        setLayout(new BorderLayout(5, 10));
+    public PageRegionsPanel() {
+        super(new BorderLayout());
         setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
-        add(new JScrollPane(fieldList), BorderLayout.WEST);
-        add(fieldPanel, BorderLayout.CENTER);
+        table.setPreferredScrollableViewportSize(new Dimension(535, 100));
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        // TODO buttons: add, delete, preview
     }
 
     public void setImportFile(ImportFile importFile) {
-        fieldList.setModel(new BeanListModel<>(importFile.getFields()));
-        fieldPanel.setImportFile(importFile);
-    }
-
-    private void onFieldSelected(ListSelectionEvent event) {
-        fieldPanel.setImportField(fieldList.getSelectedValue());
+        tableModel.setBeans(importFile.getPageRegions());
     }
 }

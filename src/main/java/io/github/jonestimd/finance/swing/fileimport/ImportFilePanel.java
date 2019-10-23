@@ -21,16 +21,9 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.event.ItemEvent;
-import java.text.Normalizer.Form;
 import java.util.Collection;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.Box.Filler;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -39,7 +32,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
@@ -51,7 +43,6 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.swing.transaction.AccountFormat;
 import io.github.jonestimd.finance.swing.transaction.PayeeFormat;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.LabelBuilder;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.MultiSelectField;
 import io.github.jonestimd.swing.component.TextField;
@@ -109,7 +100,7 @@ public class ImportFilePanel extends JComponent {
         builder.overlay(payeeField);
         builder.append(singlePayeeCheckbox);
         builder.append(reconcileCheckbox);
-        setBorder(new EmptyBorder(5, 5, 5, 5));
+        setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
         singlePayeeCheckbox.getModel().addItemListener(event -> {
             if (singlePayeeCheckbox.isSelected()) replacePayeeField(payeeScrollPane, payeeField, "payee");
             else replacePayeeField(payeeField, payeeScrollPane, "payeeLabel");

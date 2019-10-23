@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +24,20 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-public class ImportFieldTableModel extends ValidatedBeanListTableModel<ImportField> {
-    private static final List<ImportFieldColumnAdapter<?>> COLUMN_ADAPTERS = ImmutableList.of(
-            ImportFieldColumnAdapter.TYPE_ADAPTER,
-            ImportFieldColumnAdapter.LABELS_ADAPTER,
-            ImportFieldColumnAdapter.AMOUNT_FORMAT_ADAPTER,
-            ImportFieldColumnAdapter.NEGATE_ADAPTER,
-            ImportFieldColumnAdapter.ACCEPT_REGEX_ADAPTER,
-            ImportFieldColumnAdapter.IGNORE_REGEX_ADAPTER,
-            ImportFieldColumnAdapter.MEMO_ADAPTER);
+public class PageRegionTableModel extends ValidatedBeanListTableModel<PageRegion> {
+    private static final List<PageRegionColumnAdapter<?>> COLUMN_ADAPTERS = ImmutableList.of(
+        PageRegionColumnAdapter.NAME_ADAPTER,
+        PageRegionColumnAdapter.TOP_ADAPTER,
+        PageRegionColumnAdapter.BOTTOM_ADAPTER,
+        PageRegionColumnAdapter.LABEL_LEFT_ADAPTER,
+        PageRegionColumnAdapter.LABEL_RIGHT_ADAPTER,
+        PageRegionColumnAdapter.VALUE_LEFT_ADAPTER,
+        PageRegionColumnAdapter.VALUE_RIGHT_ADAPTER);
 
-    public ImportFieldTableModel() {
+    public PageRegionTableModel() {
         super(COLUMN_ADAPTERS);
     }
 }

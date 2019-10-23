@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.swing.laf.LookAndFeelConfig;
@@ -42,6 +43,7 @@ public class FileImportDialog extends FormDialog {
     private final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel = new ImportFieldsPanel();
+    private final PageRegionsPanel regionsPanel = new PageRegionsPanel();
 
     public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
@@ -50,6 +52,7 @@ public class FileImportDialog extends FormDialog {
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         tabbedPane.add("Fields", fieldsPanel);
+        tabbedPane.add("Page Regions", regionsPanel);
         // TODO mappings
         // TODO filter regex's, negate amount, memo
     }
@@ -58,6 +61,8 @@ public class FileImportDialog extends FormDialog {
         // TODO update title
         filePanel.setImportFile(importFile);
         fieldsPanel.setImportFile(importFile);
+        regionsPanel.setImportFile(importFile);
+        tabbedPane.setEnabledAt(2, importFile.getFileType() == FileType.PDF);
         pack();
         setVisible(true);
         return false; // TODO check for valid and changed
