@@ -39,12 +39,12 @@ public class ImportFieldBuilder {
     }
 
     public ImportFieldBuilder rightEdge(Float rightEdge) {
-        field.setRegion(new PageRegion(null, null, null, rightEdge, null, rightEdge));
+        field.setRegion(new PageRegion("region", null, null, null, rightEdge, null, rightEdge));
         return this;
     }
 
     public ImportFieldBuilder bounds(Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
-        field.setRegion(new PageRegion(top, bottom, labelLeft, labelRight, valueLeft, valueRight));
+        field.setRegion(new PageRegion("region", top, bottom, labelLeft, labelRight, valueLeft, valueRight));
         return this;
     }
 

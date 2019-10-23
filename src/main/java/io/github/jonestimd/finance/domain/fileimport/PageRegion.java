@@ -26,24 +26,21 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.hibernate.annotations.ForeignKey;
+import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "import_page_region")
+@Table(name = "import_page_region",
+       uniqueConstraints = { @UniqueConstraint(name = "import_page_region_ak", columnNames = {"import_file_id", "name"}) })
 @SequenceGenerator(name = "id_generator", sequenceName = "import_page_region_id_seq")
 public class PageRegion {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
     private Long id;
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "import_file_id") @ForeignKey(name = "import_page_region_file_fk")
-    private ImportFile importFile;
+    @Column(name = "name", nullable = false, length = 250)
+    private String name;
     @Column(name = "top", nullable = false)
     private Float top;
     @Column(name = "bottom", nullable = false)
@@ -59,7 +56,8 @@ public class PageRegion {
 
     public PageRegion() {}
 
-    public PageRegion(Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
+    public PageRegion(String name, Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
+        this.name = name;
         this.top = top;
         this.bottom = bottom;
         this.labelLeft = labelLeft;
@@ -76,12 +74,12 @@ public class PageRegion {
         this.id = id;
     }
 
-    public ImportFile getImportFile() {
-        return importFile;
+    public String getName() {
+        return name;
     }
 
-    public void setImportFile(ImportFile importFile) {
-        this.importFile = importFile;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public float getTop() {

@@ -39,3 +39,10 @@ from import_category c
 join import_field f on c.import_file_id = f.import_file_id
 join import_field_label l on f.id = l.import_field_id and l.label = c.type_alias
 where f.tx_category_id = c.tx_category_id;
+
+-- add name to import_page_region
+
+alter table import_page_region add column name varchar(250);
+update import_page_region set name = id;
+alter table import_page_region modify column name varchar(250) not null;
+alter table import_page_region add unique index import_page_region_ak(import_file_id, name);

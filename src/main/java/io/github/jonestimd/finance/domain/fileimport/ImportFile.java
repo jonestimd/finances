@@ -91,6 +91,10 @@ public class ImportFile implements UniqueId<Long> {
     @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_field_import_file_fk"))
     @org.hibernate.annotations.ForeignKey(name = "import_field_import_file_fk")
     private Set<ImportField> fields;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_page_region_import_file_fk"))
+    @org.hibernate.annotations.ForeignKey(name = "import_page_region_import_file_fk")
+    private Set<PageRegion> pageRegions;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_category",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
@@ -179,6 +183,14 @@ public class ImportFile implements UniqueId<Long> {
 
     public void setFields(Set<ImportField> fields) {
         this.fields = fields;
+    }
+
+    public Set<PageRegion> getPageRegions() {
+        return pageRegions;
+    }
+
+    public void setPageRegions(Set<PageRegion> pageRegions) {
+        this.pageRegions = pageRegions;
     }
 
     public Map<String, ImportCategory> getImportCategoryMap() {
