@@ -57,6 +57,7 @@ public class FileImportDialog extends FormDialog {
     public boolean show(ImportFile importFile) {
         // TODO update title
         filePanel.setImportFile(importFile);
+        fieldsPanel.setImportFile(importFile);
         pack();
         setVisible(true);
         return false; // TODO check for valid and changed

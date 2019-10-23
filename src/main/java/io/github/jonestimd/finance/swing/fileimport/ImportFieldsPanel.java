@@ -27,17 +27,34 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
+import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
+import io.github.jonestimd.swing.list.BeanListModel;
 
 public class ImportFieldsPanel extends JComponent {
-    private final JList<String> fieldList = new JList<>();
+    private final JList<ImportField> fieldList = new JList<>();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
 
     public ImportFieldsPanel() {
         // TODO Add/Delete buttons
         // TODO hide/disable detail panel when no field selected
+        fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
+        fieldList.addListSelectionListener(this::onFieldSelected);
         setLayout(new BorderLayout(5, 10));
         setBorder(new EmptyBorder(5, 5, 5, 5));
         add(new JScrollPane(fieldList), BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
+    }
+
+    public void setImportFile(ImportFile importFile) {
+        fieldList.setModel(new BeanListModel<>(importFile.getFields()));
+        fieldPanel.setImportFile(importFile);
+    }
+
+    private void onFieldSelected(ListSelectionEvent event) {
+        fieldPanel.setImportField(fieldList.getSelectedValue());
     }
 }

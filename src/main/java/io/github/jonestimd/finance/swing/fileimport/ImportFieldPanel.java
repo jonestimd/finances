@@ -21,14 +21,23 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.text.Format;
+import java.util.Collections;
+
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 
+import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
+import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
+import io.github.jonestimd.swing.component.BeanListComboBox;
+import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.component.MultiSelectField;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
@@ -37,11 +46,12 @@ import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
+    private static final Format REGION_FORMAT = FormatFactory.format(PageRegion::getName);
 
     private final JComboBox<FieldType> typeField = new JComboBox<>(FieldType.values());
-    private final JComboBox<PageRegion> pageRegionField = new JComboBox<>();
+    private final BeanListComboBox<PageRegion> pageRegionField = new BeanListComboBox<>(REGION_FORMAT);
     private final MultiSelectField labelField = new MultiSelectField.Builder(false, true).disableTab().get();
-    private final JTextField amountFormatField = new JTextField();
+    private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
     private final JCheckBox negateField = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateAmount");
     private final JTextField acceptRegexField = new JTextField();
     private final JTextField rejectRegexField = new JTextField();
@@ -59,5 +69,32 @@ public class ImportFieldPanel extends JComponent {
         builder.append("rejectRegex", rejectRegexField);
         builder.append("pageRegion", pageRegionField);
         builder.append("memo", memoField);
+    }
+
+    public void setImportFile(ImportFile importFile) {
+        pageRegionField.setModel(new BeanListComboBoxModel<>(importFile.getPageRegions()));
+    }
+
+    public void setImportField(ImportField importField) {
+        if (importField != null) {
+            labelField.setItems(importField.getLabels());
+            typeField.setSelectedItem(importField.getType());
+            amountFormatField.setSelectedItem(importField.getAmountFormat());
+            negateField.setSelected(importField.isNegate());
+            acceptRegexField.setText(importField.getAcceptRegex());
+            rejectRegexField.setText(importField.getIgnoredRegex());
+            pageRegionField.setSelectedItem(importField.getRegion());
+            memoField.setText(importField.getMemo());
+        }
+        else {
+            labelField.setItems(Collections.emptyList());
+            typeField.setSelectedItem(null);
+            amountFormatField.setSelectedItem(null);
+            negateField.setSelected(false);
+            acceptRegexField.setText("");
+            rejectRegexField.setText("");
+            pageRegionField.setSelectedItem(null);
+            memoField.setText("");
+        }
     }
 }
