@@ -180,12 +180,12 @@ public class PdfPanel extends JComponent implements Scrollable {
                 graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
                 i = i%REGION_COLORS.size();
                 graphics.setColor(REGION_COLORS.get(i++));
-                int top = clip(size.height - region.getTop()*scale, 0, size.height);
-                int height = clip((region.getTop() - region.getBottom())*scale, 0, size.height);
-                drawRect(graphics, region.getLabelLeft(), region.getLabelRight(), top, height, size.width);
-                if (region.getLabelLeft() != region.getValueLeft() || region.getLabelRight() != region.getValueRight()) {
+                int top = clip(size.height - region.top()*scale, 0, size.height);
+                int height = clip((region.top() - region.bottom())*scale, 0, size.height);
+                drawRect(graphics, region.labelLeft(), region.labelRight(), top, height, size.width);
+                if (region.labelLeft() != region.valueLeft() || region.labelRight() != region.valueRight()) {
                     graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
-                    drawRect(graphics, region.getValueLeft(), region.getValueRight(), top, height, size.width);
+                    drawRect(graphics, region.valueLeft(), region.valueRight(), top, height, size.width);
                 }
             }
         } finally {

@@ -73,6 +73,13 @@ public class PageRegionsPanel extends JPanel {
         setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
         table = tableFactory.validatedTableBuilder(tableModel).get();
         table.setPreferredScrollableViewportSize(new Dimension(535, 100));
+        table.setDefaultEditor(Float.class, new RegionCoordinateEditor(table));
+        table.getColumn(PageRegionColumnAdapter.TOP_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
+        table.getColumn(PageRegionColumnAdapter.LABEL_RIGHT_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
+        table.getColumn(PageRegionColumnAdapter.VALUE_RIGHT_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
+        table.getColumn(PageRegionColumnAdapter.BOTTOM_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
+        table.getColumn(PageRegionColumnAdapter.LABEL_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
+        table.getColumn(PageRegionColumnAdapter.VALUE_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(new ButtonBarFactory().add(pdfPreviewAction).get(), BorderLayout.SOUTH);
         // TODO buttons: add, delete

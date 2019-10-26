@@ -82,31 +82,47 @@ public class PageRegion {
         this.name = name;
     }
 
-    public float getTop() {
+    public float top() {
         return top == null ? Float.POSITIVE_INFINITY : top;
+    }
+
+    public Float getTop() {
+        return top;
     }
 
     public void setTop(Float top) {
         this.top = top;
     }
 
-    public float getBottom() {
+    public float bottom() {
         return bottom == null ? Float.NEGATIVE_INFINITY : bottom;
+    }
+
+    public Float getBottom() {
+        return bottom;
     }
 
     public void setBottom(Float bottom) {
         this.bottom = bottom;
     }
 
-    public float getLabelLeft() {
+    public float labelLeft() {
         return labelLeft == null ? Float.NEGATIVE_INFINITY : labelLeft;
+    }
+
+    public Float getLabelLeft() {
+        return labelLeft;
     }
 
     public void setLabelLeft(Float labelLeft) {
         this.labelLeft = labelLeft;
     }
 
-    public float getLabelRight() {
+    public Float getLabelRight() {
+        return labelRight;
+    }
+
+    public float labelRight() {
         return labelRight == null ? Float.POSITIVE_INFINITY : labelRight;
     }
 
@@ -114,7 +130,11 @@ public class PageRegion {
         this.labelRight = labelRight;
     }
 
-    public float getValueLeft() {
+    public Float getValueLeft() {
+        return valueLeft;
+    }
+
+    public float valueLeft() {
         return valueLeft == null ? Float.NEGATIVE_INFINITY : valueLeft;
     }
 
@@ -122,8 +142,12 @@ public class PageRegion {
         this.valueLeft = valueLeft;
     }
 
-    public float getValueRight() {
+    public float valueRight() {
         return valueRight == null ? Float.POSITIVE_INFINITY : valueRight;
+    }
+
+    public Float getValueRight() {
+        return valueRight;
     }
 
     public void setValueRight(Float valueRight) {

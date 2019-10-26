@@ -136,21 +136,21 @@ public class ImportField {
     }
 
     public boolean isInRegion(float x, float y) {
-        return  region == null || region.getTop() >= y && y >= region.getBottom()
-                && Math.min(region.getLabelLeft(), region.getValueLeft()) <= x
-                && x <= Math.max(region.getLabelRight(), region.getValueRight());
+        return  region == null || region.top() >= y && y >= region.bottom()
+                && Math.min(region.labelLeft(), region.valueLeft()) <= x
+                && x <= Math.max(region.labelRight(), region.valueRight());
     }
 
     public boolean isLabelRegion(float x) {
-        return region == null || region.getLabelLeft() <= x && x <= region.getLabelRight();
+        return region == null || region.labelLeft() <= x && x <= region.labelRight();
     }
 
     public boolean isValueRegion(float x) {
-        return region == null || region.getValueLeft() <= x && x <= region.getValueRight();
+        return region == null || region.valueLeft() <= x && x <= region.valueRight();
     }
 
     public boolean isPastRightEdge(float x) {
-        return  region != null && x > region.getValueRight() && x > region.getLabelRight();
+        return  region != null && x > region.valueRight() && x > region.labelRight();
     }
 
     public AmountFormat getAmountFormat() {

@@ -98,7 +98,7 @@ public class PdfFieldValueExtractorTest {
     public void doesNotCombineValuesFromDifferentLines() throws Exception {
         String payee = "some payee";
         addPdfText(payeeField, 1f, "some payee");
-        addPdfText("ignored", payeeField.getRegion().getValueRight(), 1.1f);
+        addPdfText("ignored", payeeField.getRegion().valueRight(), 1.1f);
 
         Multimap<ImportField, String> fieldValues = pdfFieldValueExtractor.getFieldValues(pdfTextBuilder.build().stream());
 
@@ -123,7 +123,7 @@ public class PdfFieldValueExtractorTest {
 
     protected void addPdfText(ImportField field, float y, String text) {
         String label = field.getAlias().toUpperCase();
-        float x = field.getRegion().getValueRight() - label.split(" ").length - text.split(" ").length;
+        float x = field.getRegion().valueRight() - label.split(" ").length - text.split(" ").length;
         x = addPdfText(label, x, y);
         addPdfText(text, x, y);
     }
