@@ -41,17 +41,17 @@ public class PageRegion {
     private Long id;
     @Column(name = "name", nullable = false, length = 250)
     private String name;
-    @Column(name = "top", nullable = false)
+    @Column(name = "top")
     private Float top;
-    @Column(name = "bottom", nullable = false)
+    @Column(name = "bottom")
     private Float bottom;
-    @Column(name = "label_left", nullable = false)
+    @Column(name = "label_left")
     private Float labelLeft;
-    @Column(name = "label_right", nullable = false)
+    @Column(name = "label_right")
     private Float labelRight;
-    @Column(name = "value_left", nullable = false)
+    @Column(name = "value_left")
     private Float valueLeft;
-    @Column(name = "value_right", nullable = false)
+    @Column(name = "value_right")
     private Float valueRight;
 
     public PageRegion() {}
