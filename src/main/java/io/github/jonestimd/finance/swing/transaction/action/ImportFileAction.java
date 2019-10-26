@@ -130,8 +130,7 @@ public class ImportFileAction extends AbstractAction {
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            // return new FileImportDialog(window, accounts, payees, tableFactory).show(importFile);
-            return new FileImportDialog(window, accounts, payees).show(importFile);
+            return new FileImportDialog(window, accounts, payees, tableFactory).show(importFile);
         }
 
         @Override

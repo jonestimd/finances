@@ -23,28 +23,68 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
 
+import javax.swing.Action;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.swing.ButtonBarFactory;
+import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.table.DecoratedTable;
+import io.github.jonestimd.swing.table.TableFactory;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
 
 public class PageRegionsPanel extends JPanel {
     private final PageRegionTableModel tableModel = new PageRegionTableModel();
-    private final DecoratedTable<PageRegion, PageRegionTableModel> table = new DecoratedTable<>(tableModel);
+    private final DecoratedTable<PageRegion, PageRegionTableModel> table;
+    private JDialog previewDialog;
 
-    public PageRegionsPanel() {
-        super(new BorderLayout());
+    private final Action pdfPreviewAction = new MnemonicAction(LABELS.get(), RESOURCE_PREFIX + "pdfPreview") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!previewDialog.isVisible()) {
+                previewDialog.pack();
+                Rectangle bounds = getTopLevelAncestor().getBounds();
+                Rectangle screen = getGraphicsConfiguration().getBounds();
+                Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+                Dimension size = previewDialog.getSize();
+                int x = bounds.x + bounds.width;
+                int y = Math.min(bounds.y, screen.y + screen.height - size.height - screenInsets.bottom);
+                if (x + size.width > screen.x + screen.width - screenInsets.right) x = bounds.x - size.width;
+                previewDialog.setLocation(x, y);
+                previewDialog.setVisible(true);
+            }
+        }
+    };
+
+    public PageRegionsPanel(TableFactory tableFactory) {
+        super(new BorderLayout(5, 5));
         setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
+        table = tableFactory.validatedTableBuilder(tableModel).get();
         table.setPreferredScrollableViewportSize(new Dimension(535, 100));
         add(new JScrollPane(table), BorderLayout.CENTER);
-        // TODO buttons: add, delete, preview
+        add(new ButtonBarFactory().add(pdfPreviewAction).get(), BorderLayout.SOUTH);
+        // TODO buttons: add, delete
     }
 
     public void setImportFile(ImportFile importFile) {
         tableModel.setBeans(importFile.getPageRegions());
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        previewDialog = new PdfPreviewDialog((Window) getTopLevelAncestor(), tableModel);
     }
 }

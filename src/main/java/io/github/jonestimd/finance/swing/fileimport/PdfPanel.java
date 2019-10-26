@@ -21,18 +21,23 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
 import javax.swing.Scrollable;
 
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.swing.table.model.BeanListTableModel;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -40,15 +45,83 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class PdfPanel extends JComponent implements Scrollable {
-    private final PDDocument document;
-    private final PDFRenderer renderer;
-    private float scale = 1.5f;
+    private static final List<Color> REGION_COLORS = Arrays.asList(Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA);
+    private static final int POINTS_PER_INCH = 72;
+    private static final int DEFAULT_WIDTH = (int) (8.5*POINTS_PER_INCH);
+    private static final int DEFAULT_HEIGHT = 11*POINTS_PER_INCH;
+    private PDDocument document;
+    private PDFRenderer renderer;
+    private float scale = 1f;
     private BufferedImage image;
+    private final BeanListTableModel<PageRegion> regionsTableModel;
 
-    public PdfPanel(PDDocument document) {
-        this.document = document;
-        renderer = new PDFRenderer(document);
+    public PdfPanel(BeanListTableModel<PageRegion> regionsTableModel) {
+        this.regionsTableModel = regionsTableModel;
+        regionsTableModel.addTableModelListener(event -> repaint());
         setOpaque(true);
+        setSize();
+    }
+
+    public void setDocument(String fileName) {
+        setDocument(new File(fileName));
+    }
+
+    public void setDocument(File fileName) {
+        closeDocument();
+        try (RandomAccessBufferedFileInputStream stream = new RandomAccessBufferedFileInputStream(fileName)) {
+            PDFParser parser = new PDFParser(stream);
+            parser.parse();
+            document = parser.getPDDocument();
+            renderer = new PDFRenderer(document);
+            image = null;
+            setSize();
+            repaint();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        closeDocument();
+    }
+
+    private void closeDocument() {
+        try {
+            if (document != null) document.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } finally {
+            document = null;
+            renderer = null;
+        }
+    }
+
+    public float getScale() {
+        return scale;
+    }
+
+    public void setScale(float scale) {
+        if (scale != this.scale) {
+            this.scale = scale;
+            image = null;
+            setSize();
+            repaint();
+        }
+    }
+
+    private void setSize() {
+        float width = DEFAULT_WIDTH;
+        float height = DEFAULT_HEIGHT;
+        if (document != null) {
+            PDRectangle mediaBox = document.getPage(0).getMediaBox();
+            width = mediaBox.getWidth();
+            height = mediaBox.getHeight();
+        }
+        Dimension size = new Dimension((int) (width*scale), (int) (height*scale));
+        setPreferredSize(size);
+        setSize(size);
     }
 
     @Override
@@ -78,16 +151,14 @@ public class PdfPanel extends JComponent implements Scrollable {
 
     private void renderImage() {
         try {
-            image = renderer.renderImage(0, scale);
+            if (renderer != null) image = renderer.renderImage(0, scale);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-        PDRectangle mediaBox = document.getPage(0).getMediaBox();
-        return new Dimension((int) (mediaBox.getWidth()*scale), (int) (mediaBox.getHeight()*scale));
+    private int clip(float value, float min, float max) {
+        return (int) Math.min(Math.max(value, min), max);
     }
 
     @Override
@@ -96,23 +167,33 @@ public class PdfPanel extends JComponent implements Scrollable {
         if (image == null) renderImage();
         Graphics2D graphics = (Graphics2D) g.create();
         try {
-            graphics.drawImage(image, 0, 0, null);
+            Dimension size = getSize();
+            if (image != null) graphics.drawImage(image, 0, 0, null);
+            else {
+                graphics.setColor(Color.WHITE);
+                graphics.fillRect(0, 0, size.width, size.height);
+            }
+            graphics.setColor(Color.BLACK);
+            graphics.drawRect(0, 0, size.width, size.height);
+            int i = 0;
+            for (PageRegion region : regionsTableModel.getBeans()) {
+                graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
+                i = i%REGION_COLORS.size();
+                graphics.setColor(REGION_COLORS.get(i++));
+                int top = clip(size.height - region.getTop()*scale, 0, size.height);
+                int height = clip((region.getTop() - region.getBottom())*scale, 0, size.height);
+                drawRect(graphics, region.getLabelLeft(), region.getLabelRight(), top, height, size.width);
+                if (region.getLabelLeft() != region.getValueLeft() || region.getLabelRight() != region.getValueRight()) {
+                    graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
+                    drawRect(graphics, region.getValueLeft(), region.getValueRight(), top, height, size.width);
+                }
+            }
         } finally {
             graphics.dispose();
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            PDFParser parser = new PDFParser(new RandomAccessBufferedFileInputStream(args[0]));
-            parser.parse();
-            JFrame frame = new JFrame("test PDF");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setContentPane(new JScrollPane(new PdfPanel(parser.getPDDocument())));
-            frame.setSize(600, 800);
-            frame.setVisible(true);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    private void drawRect(Graphics2D graphics, float left, float right, int top, int height, int width) {
+        graphics.fillRect(clip(left*scale, 0, width), top, clip(right*scale - clip(left*scale, 0, width), 0, width), height);
     }
 }

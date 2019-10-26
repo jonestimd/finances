@@ -23,18 +23,16 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
 import java.awt.Window;
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
-import io.github.jonestimd.finance.swing.laf.LookAndFeelConfig;
 import io.github.jonestimd.swing.dialog.FormDialog;
+import io.github.jonestimd.swing.table.TableFactory;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -43,18 +41,19 @@ public class FileImportDialog extends FormDialog {
     private final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel = new ImportFieldsPanel();
-    private final PageRegionsPanel regionsPanel = new PageRegionsPanel();
+    private final PageRegionsPanel regionsPanel;
 
-    public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees) {
+    public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees, TableFactory tableFactory) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
         filePanel = new ImportFilePanel(accounts, payees);
         tabbedPane.add("File", filePanel); // TODO label from resources
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         tabbedPane.add("Fields", fieldsPanel);
-        tabbedPane.add("Page Regions", regionsPanel);
+        tabbedPane.add("Page Regions", regionsPanel = new PageRegionsPanel(tableFactory));
         // TODO mappings
         // TODO filter regex's, negate amount, memo
+        // TODO disable escape when table has focus
     }
 
     public boolean show(ImportFile importFile) {
@@ -66,10 +65,5 @@ public class FileImportDialog extends FormDialog {
         pack();
         setVisible(true);
         return false; // TODO check for valid and changed
-    }
-
-    public static void main(String... args) {
-        LookAndFeelConfig.load();
-        new FileImportDialog(JOptionPane.getRootFrame(), new ArrayList<>(), new ArrayList<>()).show(new ImportFile());
     }
 }
