@@ -43,10 +43,13 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.FileSuggestField;
+import io.github.jonestimd.swing.table.DecoratedTable;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -58,9 +61,9 @@ public class PdfPreviewDialog extends JDialog {
     private final JButton loadFileButton;
     private final JFormattedTextField scaleField = new JFormattedTextField(DecimalFormat.getIntegerInstance());
 
-    public PdfPreviewDialog(Window owner, PageRegionTableModel regionTableModel) {
+    public PdfPreviewDialog(Window owner, DecoratedTable<PageRegion, PageRegionTableModel> regionTable) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), ModalityType.MODELESS);
-        previewPanel = new PdfPanel(regionTableModel);
+        previewPanel = new PdfPanel(regionTable);
         try {
             fileField = new FileSuggestField(false, new File("."));
             fileField.getEditor().getEditorComponent().addFocusListener(new FocusAdapter() {

@@ -37,7 +37,7 @@ import javax.swing.JComponent;
 import javax.swing.Scrollable;
 
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
-import io.github.jonestimd.swing.table.model.BeanListTableModel;
+import io.github.jonestimd.swing.table.DecoratedTable;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -49,15 +49,20 @@ public class PdfPanel extends JComponent implements Scrollable {
     private static final int POINTS_PER_INCH = 72;
     private static final int DEFAULT_WIDTH = (int) (8.5*POINTS_PER_INCH);
     private static final int DEFAULT_HEIGHT = 11*POINTS_PER_INCH;
+    private static final float OUTLINE_ALPHA = 0.5f;
+    private static final float LABEL_ALPHA = 0.15f;
+    private static final float VALUE_ALPHA = 0.25f;
     private PDDocument document;
     private PDFRenderer renderer;
     private float scale = 1f;
     private BufferedImage image;
-    private final BeanListTableModel<PageRegion> regionsTableModel;
+    private final DecoratedTable<PageRegion, PageRegionTableModel> regionsTable;
 
-    public PdfPanel(BeanListTableModel<PageRegion> regionsTableModel) {
-        this.regionsTableModel = regionsTableModel;
-        regionsTableModel.addTableModelListener(event -> repaint());
+    public PdfPanel(DecoratedTable<PageRegion, PageRegionTableModel> regionsTable) {
+        this.regionsTable = regionsTable;
+        regionsTable.getModel().addTableModelListener(event -> repaint());
+        regionsTable.getSelectionModel().addListSelectionListener(event -> repaint());
+
         setOpaque(true);
         setSize();
     }
@@ -176,24 +181,29 @@ public class PdfPanel extends JComponent implements Scrollable {
             graphics.setColor(Color.BLACK);
             graphics.drawRect(0, 0, size.width, size.height);
             int i = 0;
-            for (PageRegion region : regionsTableModel.getBeans()) {
-                graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
-                i = i%REGION_COLORS.size();
-                graphics.setColor(REGION_COLORS.get(i++));
+            for (PageRegion region : regionsTable.getModel().getBeans()) {
                 int top = clip(size.height - region.top()*scale, 0, size.height);
                 int height = clip((region.top() - region.bottom())*scale, 0, size.height);
-                drawRect(graphics, region.labelLeft(), region.labelRight(), top, height, size.width);
+                boolean selected = regionsTable.getSelectedItems().contains(region);
+                drawRegion(graphics, top, size.width, height, region.labelLeft(), region.labelRight(), selected, i, LABEL_ALPHA);
                 if (region.labelLeft() != region.valueLeft() || region.labelRight() != region.valueRight()) {
-                    graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
-                    drawRect(graphics, region.valueLeft(), region.valueRight(), top, height, size.width);
+                    drawRegion(graphics, top, size.width, height, region.valueLeft(), region.valueRight(), selected, i, VALUE_ALPHA);
                 }
+                i = (i + 1)%REGION_COLORS.size();
             }
         } finally {
             graphics.dispose();
         }
     }
 
-    private void drawRect(Graphics2D graphics, float left, float right, int top, int height, int width) {
+    private void drawRegion(Graphics2D graphics, int top, int width, int height, float left, float right, boolean selected, int color, float alpha) {
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        graphics.setColor(REGION_COLORS.get(color));
         graphics.fillRect(clip(left*scale, 0, width), top, clip(right*scale - clip(left*scale, 0, width), 0, width), height);
+        if (selected) {
+            graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, OUTLINE_ALPHA));
+            graphics.setColor(Color.BLACK);
+            graphics.drawRect(clip(left*scale, 0, width), top, clip(right*scale - clip(left*scale, 0, width), 0, width), height);
+        }
     }
 }

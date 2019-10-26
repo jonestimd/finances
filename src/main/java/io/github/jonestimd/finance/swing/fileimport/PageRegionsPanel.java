@@ -92,6 +92,6 @@ public class PageRegionsPanel extends JPanel {
     @Override
     public void addNotify() {
         super.addNotify();
-        previewDialog = new PdfPreviewDialog((Window) getTopLevelAncestor(), tableModel);
+        previewDialog = new PdfPreviewDialog((Window) getTopLevelAncestor(), table);
     }
 }
