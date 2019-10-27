@@ -30,8 +30,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.Scrollable;
@@ -45,7 +43,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class PdfPanel extends JComponent implements Scrollable {
-    private static final List<Color> REGION_COLORS = Arrays.asList(Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA);
     private static final int POINTS_PER_INCH = 72;
     private static final int DEFAULT_WIDTH = (int) (8.5*POINTS_PER_INCH);
     private static final int DEFAULT_HEIGHT = 11*POINTS_PER_INCH;
@@ -180,25 +177,24 @@ public class PdfPanel extends JComponent implements Scrollable {
             }
             graphics.setColor(Color.BLACK);
             graphics.drawRect(0, 0, size.width, size.height);
-            int i = 0;
             for (PageRegion region : regionsTable.getModel().getBeans()) {
                 int top = clip(size.height - region.top()*scale, 0, size.height);
                 int height = clip((region.top() - region.bottom())*scale, 0, size.height);
                 boolean selected = regionsTable.getSelectedItems().contains(region);
-                drawRegion(graphics, top, size.width, height, region.labelLeft(), region.labelRight(), selected, i, LABEL_ALPHA);
+                Color color = regionsTable.getModel().getColor(region);
+                drawRegion(graphics, top, size.width, height, region.labelLeft(), region.labelRight(), selected, color, LABEL_ALPHA);
                 if (region.labelLeft() != region.valueLeft() || region.labelRight() != region.valueRight()) {
-                    drawRegion(graphics, top, size.width, height, region.valueLeft(), region.valueRight(), selected, i, VALUE_ALPHA);
+                    drawRegion(graphics, top, size.width, height, region.valueLeft(), region.valueRight(), selected, color, VALUE_ALPHA);
                 }
-                i = (i + 1)%REGION_COLORS.size();
             }
         } finally {
             graphics.dispose();
         }
     }
 
-    private void drawRegion(Graphics2D graphics, int top, int width, int height, float left, float right, boolean selected, int color, float alpha) {
+    private void drawRegion(Graphics2D graphics, int top, int width, int height, float left, float right, boolean selected, Color color, float alpha) {
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        graphics.setColor(REGION_COLORS.get(color));
+        graphics.setColor(color);
         graphics.fillRect(clip(left*scale, 0, width), top, clip(right*scale - clip(left*scale, 0, width), 0, width), height);
         if (selected) {
             graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, OUTLINE_ALPHA));
