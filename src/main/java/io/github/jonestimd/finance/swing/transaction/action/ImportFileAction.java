@@ -48,8 +48,8 @@ import io.github.jonestimd.finance.swing.fileimport.FileImportDialog;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.ActionAdapter;
 import io.github.jonestimd.swing.action.DialogAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.window.StatusFrame;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -60,7 +60,7 @@ public class ImportFileAction extends AbstractAction {
     private final FinanceTableFactory tableFactory;
     private final JFileChooser fileChooser = new JFileChooser();
     private final Action editAction = new EditImportAction();
-    private final Action deleteAction = new ActionAdapter(this::onDeleteImport, LABELS.get(), "action.file.import.delete");
+    private final Action deleteAction = LocalizedAction.create(LABELS.get(), "action.file.import.delete", this::onDeleteImport);
 
     public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator, FinanceTableFactory tableFactory) {
         super(importFile.getName());

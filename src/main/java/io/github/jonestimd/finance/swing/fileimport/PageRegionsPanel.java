@@ -38,9 +38,12 @@ import javax.swing.border.EmptyBorder;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
+import io.github.jonestimd.swing.table.ColorTableCellEditor;
+import io.github.jonestimd.swing.table.ColorTableCellRenderer;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
+import io.github.jonestimd.swing.table.TableInitializer;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
@@ -50,7 +53,7 @@ public class PageRegionsPanel extends JPanel {
     private final DecoratedTable<PageRegion, PageRegionTableModel> table;
     private JDialog previewDialog;
 
-    private final Action pdfPreviewAction = new MnemonicAction(LABELS.get(), RESOURCE_PREFIX + "pdfPreview") {
+    private final Action pdfPreviewAction = new LocalizedAction(LABELS.get(), RESOURCE_PREFIX + "pdfPreview") {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!previewDialog.isVisible()) {
@@ -73,6 +76,9 @@ public class PageRegionsPanel extends JPanel {
         setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
         table = tableFactory.validatedTableBuilder(tableModel).get();
         table.setPreferredScrollableViewportSize(new Dimension(535, 100));
+        TableInitializer.setFixedWidth(table.getColumn(tableModel.getColorColumnAdapter()), table.getRowHeight());
+        table.getColumn(tableModel.getColorColumnAdapter()).setCellRenderer(new ColorTableCellRenderer());
+        table.getColumn(tableModel.getColorColumnAdapter()).setCellEditor(new ColorTableCellEditor());
         table.setDefaultEditor(Float.class, new RegionCoordinateEditor(table));
         table.getColumn(PageRegionColumnAdapter.TOP_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.LABEL_RIGHT_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);

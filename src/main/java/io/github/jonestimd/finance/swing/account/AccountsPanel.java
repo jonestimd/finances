@@ -58,7 +58,7 @@ import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.event.TransactionsFrameAction;
 import io.github.jonestimd.finance.swing.transaction.TransactionSummaryTablePanel;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.window.FrameManager;
 
@@ -192,7 +192,7 @@ public class AccountsPanel extends TransactionSummaryTablePanel<Account, Account
         }
     }
 
-    public class CompanyDialogAction extends MnemonicAction {
+    public class CompanyDialogAction extends LocalizedAction {
         private final FinanceTableFactory tableFactory;
 
         public CompanyDialogAction(FinanceTableFactory tableFactory) {

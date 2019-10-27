@@ -45,7 +45,6 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.operations.AccountOperations;
-import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.SwingContext;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
@@ -53,17 +52,19 @@ import io.github.jonestimd.finance.swing.event.SingletonFrameActions;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.ActionAdapter;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.util.Streams;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class AccountsMenuFactory {
     private static final String HIDE_CLOSED_ACCOUNTS_PROPERTY = "AccountsMenuFactory.hideClosedAccounts";
-    public static final String HIDE_CLOSED_ACCOUNTS_MENU_KEY = "menu.accounts.closedFilter.mnemonicAndName";
+    public static final String HIDE_CLOSED_ACCOUNTS_MENU_KEY = "menu.accounts.closedFilter";
     public static final String ACCOUNTS_MENU_KEY = "menu.transactions.accounts.mnemonicAndName";
     public static final String ACCOUNTS_WINDOW_MENU_KEY = "action.viewAccounts.mnemonicAndName";
     private static final int FIRST_ACCOUNT_INDEX = 3;
     private static final Ordering<AccountAction> ACTION_ORDERING = Ordering.from(new AccountsMenuSort()).onResultOf(AccountAction::getAccount);
-    private static final String SEPARATOR = BundleType.LABELS.getString("io.github.jonestimd.finance.companyAccount.separator");
+    private static final String SEPARATOR = LABELS.getString("io.github.jonestimd.finance.companyAccount.separator");
     private final AccountOperations accountOperations;
     private final SwingContext context;
     private final ToggleButtonModel filterModel = new ToggleButtonModel();
@@ -84,7 +85,7 @@ public class AccountsMenuFactory {
     public AccountsMenuFactory(AccountOperations accountOperations, SwingContext context, DomainEventPublisher domainEventPublisher) {
         this.accountOperations = accountOperations;
         this.context = context;
-        this.filterAction = ActionAdapter.forMnemonicAndName(new FilterActionHandler(), BundleType.LABELS.getString(HIDE_CLOSED_ACCOUNTS_MENU_KEY));
+        this.filterAction = LocalizedAction.create(LABELS.get(), HIDE_CLOSED_ACCOUNTS_MENU_KEY, new FilterActionHandler());
         filterModel.setSelected(Boolean.getBoolean(HIDE_CLOSED_ACCOUNTS_PROPERTY));
         domainEventPublisher.register(Account.class, accountEventListener);
     }
@@ -105,7 +106,7 @@ public class AccountsMenuFactory {
     }
 
     public JMenu createAccountsMenu() {
-        JMenu accountsMenu = ComponentFactory.newMenu(BundleType.LABELS.get(), ACCOUNTS_MENU_KEY);
+        JMenu accountsMenu = ComponentFactory.newMenu(LABELS.get(), ACCOUNTS_MENU_KEY);
         accountsMenu.add(createFilterMenuItem());
         accountsMenu.add(SingletonFrameActions.forAccounts(accountsMenu, context.getFrameManager()));
         accountsMenu.addSeparator();
@@ -156,8 +157,8 @@ public class AccountsMenuFactory {
 
     private void buildMenuActions() {
         List<Character> menuMnemonics = new ArrayList<>();
-        menuMnemonics.add(BundleType.LABELS.getString(HIDE_CLOSED_ACCOUNTS_MENU_KEY).charAt(0));
-        menuMnemonics.add(BundleType.LABELS.getString(ACCOUNTS_WINDOW_MENU_KEY).charAt(0));
+        menuMnemonics.add(LABELS.getString(HIDE_CLOSED_ACCOUNTS_MENU_KEY + ".mnemonicAndName").charAt(0));
+        menuMnemonics.add(LABELS.getString(ACCOUNTS_WINDOW_MENU_KEY).charAt(0));
         menuActions.clear();
         CompanyAction companyAction = null;
         List<Character> companyAccountMnemonics = new ArrayList<>();
@@ -205,7 +206,7 @@ public class AccountsMenuFactory {
         }
     }
 
-    private abstract class MenuAction extends AbstractAction {
+    private static abstract class MenuAction extends AbstractAction {
         protected MenuAction(String name) {
             super(name);
         }

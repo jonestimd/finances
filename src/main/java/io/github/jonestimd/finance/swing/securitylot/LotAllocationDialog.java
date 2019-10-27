@@ -35,7 +35,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.operations.inventory.LotAllocationStrategy;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.action.ActionAdapter;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.TextField;
 import io.github.jonestimd.swing.dialog.FormDialog;
@@ -72,7 +72,7 @@ public class LotAllocationDialog extends FormDialog {
         builder.append(new ButtonBarFactory().alignRight().border(BUTTON_BAR_BORDER, 0).add(firstInAction, lastInAction, lowestPriceAction, highestPriceAction).get());
         saleSharesField = builder.append("saleShares.name", TextField.plain().readOnly().get());
         purchaseSharesField = builder.append("purchaseShares.name", TextField.plain().readOnly().get());
-        addButton(ActionAdapter.forMnemonicAndName(this::discardLots, LABELS.getString(RESOURCE_PREFIX + "action.discardLots.mnemonicAndName")));
+        addButton(LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "action.discardLots", this::discardLots));
     }
 
     private void discardLots(ActionEvent event) {

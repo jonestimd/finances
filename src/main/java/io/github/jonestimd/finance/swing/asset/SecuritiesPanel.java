@@ -51,7 +51,7 @@ import io.github.jonestimd.finance.swing.event.EventType;
 import io.github.jonestimd.finance.swing.event.ReloadEventHandler;
 import io.github.jonestimd.finance.swing.transaction.AccountAccessPanel;
 import io.github.jonestimd.swing.ComponentFactory;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.component.ComboBoxCellEditor;
@@ -70,7 +70,7 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
     private final FinanceTableFactory tableFactory;
     private final BeanListComboBoxModel<String> typesModel = new BeanListComboBoxModel<>();
     private final SplitsDialogAction splitsAction = new SplitsDialogAction();
-    private final MnemonicAction hideZeroSharesAction = new MnemonicAction(BundleType.LABELS.get(), "action.hideZeroShares") {
+    private final Action hideZeroSharesAction = new LocalizedAction(BundleType.LABELS.get(), "action.hideZeroShares") {
         @Override
         public void actionPerformed(ActionEvent e) {
             getRowSorter().allRowsChanged();
@@ -162,7 +162,7 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
         return events;
     }
 
-    public class SplitsDialogAction extends MnemonicAction {
+    public class SplitsDialogAction extends LocalizedAction {
         public SplitsDialogAction() {
             super(BundleType.LABELS.get(), "action.stockSplits.edit");
         }
