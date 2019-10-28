@@ -1,7 +1,6 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import javax.swing.JTable;
-import javax.swing.text.JTextComponent;
 
 import io.github.jonestimd.swing.validation.ValidatedTextField;
 import org.junit.Test;

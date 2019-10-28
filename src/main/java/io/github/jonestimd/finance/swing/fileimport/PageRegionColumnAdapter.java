@@ -21,23 +21,37 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
+import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class PageRegionColumnAdapter<V> extends FunctionColumnAdapter<PageRegion, V> {
     public static final String RESOURCE_PREFIX = "table.importPageRegion.column.";
+    private static final String NAME_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "name.required");
+    private static final String NAME_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "name.unique");
 
     protected PageRegionColumnAdapter(String columnId, Class<? super V> valueType, Function<PageRegion, V> getter, BiConsumer<PageRegion, V> setter) {
         super(LABELS.get(), RESOURCE_PREFIX, columnId, valueType, getter, setter);
     }
 
-    public static final PageRegionColumnAdapter<String> NAME_ADAPTER =
-        new PageRegionColumnAdapter<>("name", String.class, PageRegion::getName, PageRegion::setName);
+    public static final ValidatedColumnAdapter<PageRegion, String> NAME_ADAPTER =
+        new ValidatedPageRegionColumnAdapter<String>("name", String.class, PageRegion::getName, PageRegion::setName) {
+            @Override
+            public String validate(int selectedIndex, String propertyValue, List<? extends PageRegion> beans) {
+                if (propertyValue == null || propertyValue.trim().isEmpty()) return NAME_REQUIRED;
+                PageRegion row = beans.get(selectedIndex);
+                if (beans.stream().filter(region -> region != row).anyMatch(region -> region.getName().equals(propertyValue))) {
+                    return NAME_UNIQUE;
+                }
+                return null;
+            }
+        };
 
     public static final PageRegionColumnAdapter<Float> TOP_ADAPTER =
         new PageRegionColumnAdapter<>("top", Float.class, PageRegion::getTop, PageRegion::setTop);
@@ -56,4 +70,10 @@ public class PageRegionColumnAdapter<V> extends FunctionColumnAdapter<PageRegion
 
     public static final PageRegionColumnAdapter<Float> VALUE_RIGHT_ADAPTER =
         new PageRegionColumnAdapter<>("valueRight", Float.class, PageRegion::getValueRight, PageRegion::setValueRight);
+
+    private static abstract class ValidatedPageRegionColumnAdapter<V> extends PageRegionColumnAdapter<V> implements ValidatedColumnAdapter<PageRegion, V> {
+        public ValidatedPageRegionColumnAdapter(String columnId, Class<? super V> valueType, Function<PageRegion, V> getter, BiConsumer<PageRegion, V> setter) {
+            super(columnId, valueType, getter, setter);
+        }
+    }
 }

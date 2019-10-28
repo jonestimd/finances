@@ -33,7 +33,7 @@ import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
 public class PageRegionTableModel extends ValidatedBeanListTableModel<PageRegion> {
-    private static final List<PageRegionColumnAdapter<?>> COLUMN_ADAPTERS = ImmutableList.of(
+    private static final List<ColumnAdapter<PageRegion, ?>> COLUMN_ADAPTERS = ImmutableList.of(
         PageRegionColumnAdapter.NAME_ADAPTER,
         PageRegionColumnAdapter.TOP_ADAPTER,
         PageRegionColumnAdapter.BOTTOM_ADAPTER,
