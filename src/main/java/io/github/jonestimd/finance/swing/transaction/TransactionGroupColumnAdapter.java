@@ -30,21 +30,21 @@ import io.github.jonestimd.finance.domain.transaction.TransactionGroupSummary;
 import io.github.jonestimd.finance.domain.transaction.TransactionSummary;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
-import io.github.jonestimd.swing.validation.BeanPropertyValidator;
+import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
 public class TransactionGroupColumnAdapter<V> extends FunctionColumnAdapter<TransactionGroupSummary, V> {
     private TransactionGroupColumnAdapter(String resourcePrefix, Class<V> valueType, Function<TransactionGroup, V> getter, BiConsumer<TransactionGroup, V> setter) {
         super(BundleType.LABELS.get(), "table.transactionGroup.", resourcePrefix, valueType, TransactionSummary.compose(getter), TransactionSummary.compose(setter));
     }
 
-    private static abstract class ValidatedColumnAdapter<V> extends TransactionGroupColumnAdapter<V> implements BeanPropertyValidator<TransactionGroupSummary, V> {
-        private ValidatedColumnAdapter(String resourcePrefix, Class<V> valueType, Function<TransactionGroup, V> getter, BiConsumer<TransactionGroup, V> setter) {
+    private static abstract class ValidatedGroupColumnAdapter<V> extends TransactionGroupColumnAdapter<V> implements ValidatedColumnAdapter<TransactionGroupSummary, V> {
+        private ValidatedGroupColumnAdapter(String resourcePrefix, Class<V> valueType, Function<TransactionGroup, V> getter, BiConsumer<TransactionGroup, V> setter) {
             super(resourcePrefix, valueType, getter, setter);
         }
     }
 
-    public static final TransactionGroupColumnAdapter<String> NAME_ADAPTER =
-        new ValidatedColumnAdapter<String>(TransactionGroup.NAME, String.class, TransactionGroup::getName, TransactionGroup::setName) {
+    public static final ValidatedColumnAdapter<TransactionGroupSummary, String> NAME_ADAPTER =
+        new ValidatedGroupColumnAdapter<String>(TransactionGroup.NAME, String.class, TransactionGroup::getName, TransactionGroup::setName) {
             private final TransactionGroupNameValidator<TransactionGroupSummary> validator =
                     new TransactionGroupNameValidator<>(TransactionGroupSummary::getName);
 

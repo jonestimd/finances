@@ -32,6 +32,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategorySummary
 import io.github.jonestimd.finance.domain.transaction.TransactionSummary;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
+import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 import io.github.jonestimd.swing.validation.BeanPropertyValidator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -62,8 +63,8 @@ public class TransactionCategoryColumnAdapter<V> extends FunctionColumnAdapter<T
         return super.isEditable(row) && ! row.getCategory().isLocked();
     }
 
-    private static class ValidatedColumnAdapter<V> extends TransactionCategoryColumnAdapter<V> implements BeanPropertyValidator<TransactionCategorySummary, V> {
-        public ValidatedColumnAdapter(String columnId, Class<? super V> valueType, Function<TransactionCategory,V> getter, BiConsumer<TransactionCategory, V> setter,
+    private static class ValidatedCategoryColumnAdapter<V> extends TransactionCategoryColumnAdapter<V> implements ValidatedColumnAdapter<TransactionCategorySummary, V> {
+        public ValidatedCategoryColumnAdapter(String columnId, Class<? super V> valueType, Function<TransactionCategory,V> getter, BiConsumer<TransactionCategory, V> setter,
                                       BeanPropertyValidator<TransactionCategorySummary, V> validator) {
             super(columnId, valueType, getter, setter);
             this.validator = validator;
@@ -89,8 +90,8 @@ public class TransactionCategoryColumnAdapter<V> extends FunctionColumnAdapter<T
     public static final ColumnAdapter<TransactionCategorySummary, AmountType> AMOUNT_TYPE_ADAPTER =
         new TransactionCategoryColumnAdapter<>(TransactionCategory.AMOUNT_TYPE, AmountType.class, TransactionCategory::getAmountType, TransactionCategory::setAmountType);
 
-    public static final ColumnAdapter<TransactionCategorySummary, CategoryKey> KEY_ADAPTER =
-        new ValidatedColumnAdapter<>(TransactionCategory.CODE, CategoryKey.class, TransactionCategory::getKey, TransactionCategory::setKey, KEY_VALIDATOR);
+    public static final ValidatedColumnAdapter<TransactionCategorySummary, CategoryKey> KEY_ADAPTER =
+        new ValidatedCategoryColumnAdapter<>(TransactionCategory.CODE, CategoryKey.class, TransactionCategory::getKey, TransactionCategory::setKey, KEY_VALIDATOR);
 
     public static final ColumnAdapter<TransactionCategorySummary, String> DESCRIPTION_ADAPTER =
         new TransactionCategoryColumnAdapter<>(TransactionCategory.DESCRIPTION, String.class, TransactionCategory::getDescription, TransactionCategory::setDescription);

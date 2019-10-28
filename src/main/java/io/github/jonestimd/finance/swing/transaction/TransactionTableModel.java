@@ -56,6 +56,7 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.BufferedHeaderDetailTableModel;
+import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.DetailAdapter;
 import io.github.jonestimd.swing.table.model.EmptyColumnAdapter;
 import io.github.jonestimd.swing.table.model.ReadOnlyColumnAdapter;
@@ -113,7 +114,6 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     private final DomainEventListener<Long, TransactionGroup> groupListener = new DetailDomainEventHandler<>(TransactionDetailColumnAdapter.GROUP_ADAPTER);
     private final DomainEventListener<Long, TransactionCategory> categoryListener = new DetailDomainEventHandler<>(CATEGORY_ADAPTER);
 
-    @SuppressWarnings("unchecked")
     public TransactionTableModel(Account account) {
         super(ROW_ADAPTER, UniqueId::getId);
         this.account = account;
@@ -138,10 +138,9 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
         balanceColumn = getColumnCount() - 1;
     }
 
-    @SuppressWarnings("unchecked")
     protected TransactionTableModel(Account account,
-                                    TransactionColumnAdapter<? extends Asset> assetColumnAdapter,
-                                    TransactionDetailColumnAdapter<BigDecimal> assetQuantityAdapter) {
+                                    ColumnAdapter<Transaction, ? extends Asset> assetColumnAdapter,
+                                    ColumnAdapter<TransactionDetail, BigDecimal> assetQuantityAdapter) {
         super(ROW_ADAPTER, UniqueId::getId);
         this.account = account;
         setColumnAdapters(Arrays.asList(
