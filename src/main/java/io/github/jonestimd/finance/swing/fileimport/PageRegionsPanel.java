@@ -38,6 +38,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
+import io.github.jonestimd.swing.ButtonBarLayout;
 import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.table.ColorTableCellEditor;
 import io.github.jonestimd.swing.table.ColorTableCellRenderer;
@@ -51,6 +52,9 @@ import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
 public class PageRegionsPanel extends JPanel {
     private final PageRegionTableModel tableModel = new PageRegionTableModel();
     private final DecoratedTable<PageRegion, PageRegionTableModel> table;
+    private final Action addRegionAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "pdfRegion.add", this::addRegion);
+    private final Action deleteRegionAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "pdfRegion.delete", this::deleteRegion);
+
     private JDialog previewDialog;
 
     private final Action pdfPreviewAction = new LocalizedAction(LABELS.get(), RESOURCE_PREFIX + "pdfPreview") {
@@ -87,8 +91,7 @@ public class PageRegionsPanel extends JPanel {
         table.getColumn(PageRegionColumnAdapter.LABEL_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.VALUE_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         add(new JScrollPane(table), BorderLayout.CENTER);
-        add(new ButtonBarFactory().add(pdfPreviewAction).get(), BorderLayout.SOUTH);
-        // TODO buttons: add, delete
+        add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
     }
 
     public void setImportFile(ImportFile importFile) {
@@ -99,5 +102,13 @@ public class PageRegionsPanel extends JPanel {
     public void addNotify() {
         super.addNotify();
         previewDialog = new PdfPreviewDialog((Window) getTopLevelAncestor(), table);
+    }
+
+    private void addRegion(ActionEvent event) {
+        // TODO
+    }
+
+    private void deleteRegion(ActionEvent event) {
+        // TODO
     }
 }
