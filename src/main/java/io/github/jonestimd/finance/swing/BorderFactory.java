@@ -25,9 +25,9 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
 public class BorderFactory {
-    private static final int DIALOG_BORDER = 5;
+    public static final int GAP = 5;
 
     public static Border panelBorder() {
-        return new EmptyBorder(DIALOG_BORDER, DIALOG_BORDER, DIALOG_BORDER, DIALOG_BORDER);
+        return new EmptyBorder(GAP, GAP, GAP, GAP);
     }
 }

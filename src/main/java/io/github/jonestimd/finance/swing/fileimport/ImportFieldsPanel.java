@@ -22,39 +22,60 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 
+import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BorderFactory;
+import io.github.jonestimd.swing.ButtonBarFactory;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
 import io.github.jonestimd.swing.list.BeanListModel;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
 
 public class ImportFieldsPanel extends JComponent {
     private final JList<ImportField> fieldList = new JList<>();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
+    private final Action addAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "importField.add", this::addField);
+    private final Action deleteAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "importField.delete", this::adddelete);
 
     public ImportFieldsPanel() {
-        // TODO Add/Delete buttons
         // TODO hide/disable detail panel when no field selected
         fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
         fieldList.addListSelectionListener(this::onFieldSelected);
+        JPanel listPanel = new JPanel(new BorderLayout(0, BorderFactory.GAP));
+        listPanel.add(new JScrollPane(fieldList), BorderLayout.CENTER);
+        listPanel.add(new ButtonBarFactory().alignRight().add(addAction, deleteAction).get(), BorderLayout.SOUTH);
         setLayout(new BorderLayout(5, 10));
         setBorder(BorderFactory.panelBorder());
-        add(new JScrollPane(fieldList), BorderLayout.WEST);
+        add(listPanel, BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
     }
 
     public void setImportFile(ImportFile importFile) {
         fieldList.setModel(new BeanListModel<>(importFile.getFields()));
         fieldPanel.setImportFile(importFile);
+        if (importFile.getFields().size() > 0) fieldList.setSelectedIndex(0);
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
         fieldPanel.setImportField(fieldList.getSelectedValue());
+    }
+
+    private void addField(ActionEvent event) {
+        // TODO
+    }
+
+    private void adddelete(ActionEvent event) {
+        // TODO
     }
 }
