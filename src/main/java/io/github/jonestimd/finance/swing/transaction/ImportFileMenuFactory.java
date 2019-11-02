@@ -37,7 +37,7 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
-import io.github.jonestimd.finance.swing.fileimport.FileImportDialog;
+import io.github.jonestimd.finance.swing.fileimport.FileImportsDialog;
 import io.github.jonestimd.finance.swing.transaction.action.ImportFileAction;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
@@ -70,7 +70,7 @@ public class ImportFileMenuFactory {
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            FileImportDialog dialog = new FileImportDialog(window, accounts, payees, importFiles, tableFactory);
+            FileImportsDialog dialog = new FileImportsDialog(window, accounts, payees, importFiles, tableFactory);
             return dialog.showDialog();
         }
 

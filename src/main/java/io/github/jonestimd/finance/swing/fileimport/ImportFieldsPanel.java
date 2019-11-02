@@ -35,20 +35,18 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
 import io.github.jonestimd.swing.list.BeanListModel;
-
-import static io.github.jonestimd.finance.swing.BundleType.*;
-import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
 
 public class ImportFieldsPanel extends JComponent {
     private final JList<ImportField> fieldList = new JList<>();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
-    private final Action addAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "importField.add", this::addField);
-    private final Action deleteAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "importField.delete", this::adddelete);
+    private final Action addAction;
+    private final Action deleteAction;
 
-    public ImportFieldsPanel() {
+    public ImportFieldsPanel(FileImportsDialog owner) {
+        addAction = owner.actionFactory.newAction("importField.add", this::addField);
+        deleteAction = owner.actionFactory.newAction("importField.delete", this::deleteField);
         // TODO hide/disable detail panel when no field selected
         fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
         fieldList.addListSelectionListener(this::onFieldSelected);
@@ -75,7 +73,7 @@ public class ImportFieldsPanel extends JComponent {
         // TODO
     }
 
-    private void adddelete(ActionEvent event) {
+    private void deleteField(ActionEvent event) {
         // TODO
     }
 }

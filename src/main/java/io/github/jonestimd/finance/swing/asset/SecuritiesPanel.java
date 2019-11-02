@@ -87,7 +87,8 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
         this.tableFactory = tableFactory;
 
         Validator<String> typeValidator = new RequiredValidator(LABELS.getString("validation.security.typeRequired"));
-        getTable().getColumn(SecurityColumnAdapter.TYPE_ADAPTER).setCellEditor(new ComboBoxCellEditor(new BeanListComboBox<>(new StringFormat(), typeValidator, typesModel)));
+        getTable().getColumn(SecurityColumnAdapter.TYPE_ADAPTER)
+                .setCellEditor(new ComboBoxCellEditor(BeanListComboBox.builder(new StringFormat(), typesModel).editable(typeValidator).get()));
         getTableModel().addTableModelListener(event -> updateTypes());
 
         for (SecurityTableExtension extension : tableExtensions) {

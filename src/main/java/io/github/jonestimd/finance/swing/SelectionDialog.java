@@ -46,12 +46,12 @@ public class SelectionDialog<T> extends FormDialog {
 
     public SelectionDialog(Window owner, String resourcePrefix, String labelKey, Format format) {
         super(owner, LABELS.getString(resourcePrefix + "title"), LABELS.get());
-        setSaveEnabled(false);
         choiceList.setCellRenderer(new FormatListCellRenderer(format));
         choiceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        choiceList.getSelectionModel().addListSelectionListener(event -> setSaveEnabled(choiceList.getSelectedIndex() >= 0));
+        choiceList.getSelectionModel().addListSelectionListener(event -> updateSaveEnabled());
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), resourcePrefix);
         builder.append(labelKey, choiceList);
+        addSaveCondition(() -> choiceList.getSelectedIndex() >= 0);
     }
 
     /**

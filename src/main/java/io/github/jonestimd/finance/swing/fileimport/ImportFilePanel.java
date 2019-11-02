@@ -64,6 +64,7 @@ public class ImportFilePanel extends JComponent {
         return new MultiSelectField.Builder(false, true).disableTab().get();
     }
 
+    private final ValidatedTextField nameField;
     private final BeanListComboBox<Account> accountField = new BeanListComboBox<>(new AccountFormat());
     private final JComboBox<ImportType> importTypeField = new JComboBox<>(ImportType.values());
     private final JComboBox<FileType> fileTypeField = new JComboBox<>(FileType.values());
@@ -77,13 +78,15 @@ public class ImportFilePanel extends JComponent {
     private final MultiSelectField securityLabelField = createLabelField();
     private final JLabel payeeLabel;
 
-    public ImportFilePanel(List<Account> accounts, List<Payee> payees) {
+    public ImportFilePanel(FileImportsDialog owner, List<Account> accounts, List<Payee> payees) {
+        nameField = new ValidatedTextField(owner.getModel()::validateName);
         accountField.getModel().setElements(accounts, false);
         payeeField.getModel().setElements(payees, false);
         payeeField.setVisible(false);
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
                 .useScrollPane(MultiSelectField.class)
                 .setConstraints(MultiSelectField.class, FormElement.TEXT_FIELD);
+        builder.append("name", nameField);
         builder.append("importType", importTypeField);
         builder.append("fileType", fileTypeField);
         builder.append("account", accountField);
@@ -114,7 +117,8 @@ public class ImportFilePanel extends JComponent {
     }
 
     public void setImportFile(ImportFile importFile) {
-        if (importFile.getName() != null) {
+        if (importFile.getId() != null) {
+            nameField.setText(importFile.getName());
             accountField.setSelectedItem(importFile.getAccount());
             importTypeField.setSelectedItem(importFile.getImportType());
             fileTypeField.setSelectedItem(importFile.getFileType());

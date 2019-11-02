@@ -48,53 +48,55 @@ import io.github.jonestimd.swing.LabelBuilder;
 import io.github.jonestimd.swing.action.CancelAction;
 import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
-import io.github.jonestimd.swing.dialog.FormDialog;
+import io.github.jonestimd.swing.dialog.ValidatedDialog;
 import io.github.jonestimd.swing.table.TableFactory;
-import io.github.jonestimd.swing.validation.Validator;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 
-public class FileImportDialog extends FormDialog {
-    public static final String RESOURCE_PREFIX = "dialog.fileImport.";
+public class FileImportsDialog extends ValidatedDialog {
+    protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
+    protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX);
     private final Format importFileFormat = FormatFactory.format(ImportFile::getName);
     private final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     private final ImportFilePanel filePanel;
-    private final ImportFieldsPanel fieldsPanel = new ImportFieldsPanel();
-    private final PageRegionsPanel regionsPanel;
-    private final BeanListComboBox<ImportFile> importListField;
-    private final Action applyAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "apply", this::applyChanges);
-    private final Action newAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "menu.imports.new", this::newImport);
-    private final Action deleteAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "menu.imports.delete", this::deleteImport);
-    private final Action duplicateAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "menu.imports.duplicate", this::duplicateImport);
+    private final ImportFieldsPanel fieldsPanel;
+    private final BeanListComboBox<ImportFile> importFileList;
+    private final Action applyAction = actionFactory.newAction("apply", this::applyChanges);
+    private final Action newAction = actionFactory.newAction("menu.imports.new", this::newImport);
+    private final Action deleteAction = actionFactory.newAction("menu.imports.delete", this::deleteImport);
+    private final Action duplicateAction = actionFactory.newAction("menu.imports.duplicate", this::duplicateImport);
+    private final FileImportsModel model;
 
-    public FileImportDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory) {
+    public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
+        model = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
-        importListField = new BeanListComboBox<>(importFileFormat, Validator.empty(), importFiles);
-        filePanel = new ImportFilePanel(accounts, payees);
+        importFileList = BeanListComboBox.builder(importFileFormat, model).get();
+        filePanel = new ImportFilePanel(this, accounts, payees);
+        fieldsPanel = new ImportFieldsPanel(this);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), fieldsPanel);
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), regionsPanel = new PageRegionsPanel(tableFactory));
+        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         Box listPanel = Box.createHorizontalBox();
-        listPanel.add(new LabelBuilder().mnemonicAndName(LABELS.getString(RESOURCE_PREFIX + "name")).forComponent(importListField).get());
+        listPanel.add(labelFactory.newLabel("selectedImport", importFileList));
         listPanel.add(Box.createHorizontalStrut(5));
-        listPanel.add(importListField);
+        listPanel.add(importFileList);
         getFormPanel().add(listPanel, BorderLayout.NORTH);
-        importListField.addItemListener(e -> {
-            ImportFile importFile = importListField.getSelectedItem();
+        model.addSelectionListener((m, importFile) -> {
             filePanel.setImportFile(importFile);
             fieldsPanel.setImportFile(importFile);
-            regionsPanel.setImportFile(importFile);
             tabbedPane.setEnabledAt(2, importFile.getFileType() == FileType.PDF);
         });
-        if (!importFiles.isEmpty()) importListField.setSelectedIndex(0);
+        if (!importFiles.isEmpty()) importFileList.setSelectedIndex(0);
         // TODO disable panels when no import is selected
         // TODO mappings
         // TODO filter regex's, negate amount, memo
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
+        addSaveCondition(model::isChanged);
     }
 
     private void createMenuBar() {
@@ -110,6 +112,10 @@ public class FileImportDialog extends FormDialog {
     private void addTab(String mnemonicAndName, JComponent panel) {
         tabbedPane.add(mnemonicAndName.substring(1), panel);
         tabbedPane.setMnemonicAt(tabbedPane.getComponentCount()-1, mnemonicAndName.charAt(0));
+    }
+
+    public FileImportsModel getModel() {
+        return model;
     }
 
     public boolean showDialog() {

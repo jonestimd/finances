@@ -81,7 +81,7 @@ public class ConfigurationView {
     private final Action defaultsAction;
 
     public ConfigurationView(JPanel panel, List<DriverConfigurationService> driverServices) {
-        driverComboBox = new BeanListComboBox<>(FormatFactory.format(DriverConfigurationService::getName), driverServices);
+        driverComboBox = BeanListComboBox.builder(FormatFactory.format(DriverConfigurationService::getName), driverServices).get();
         driverComboBox.addItemListener(this::driverSelected);
 
         try {

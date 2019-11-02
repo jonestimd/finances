@@ -60,7 +60,7 @@ public class SecurityDialog extends FormDialog {
         Set<String> types = Streams.of(securities).map(security -> security == null ? null : security.getType())
                 .filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
         Validator<String> typeValidator = new RequiredValidator(LABELS.getString("validation.security.typeRequired"));
-        typeField = new BeanListComboBox<>(new StringFormat(), typeValidator, types);
+        typeField = BeanListComboBox.builder(new StringFormat(), types).editable(typeValidator).get();
         buildForm(getFormPanel());
     }
 

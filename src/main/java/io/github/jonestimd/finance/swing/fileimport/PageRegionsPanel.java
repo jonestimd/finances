@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -34,74 +35,67 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.ButtonBarLayout;
-import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.table.ColorTableCellEditor;
 import io.github.jonestimd.swing.table.ColorTableCellRenderer;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.TableInitializer;
 
-import static io.github.jonestimd.finance.swing.BundleType.*;
-import static io.github.jonestimd.finance.swing.fileimport.FileImportDialog.*;
-
 public class PageRegionsPanel extends JPanel {
-    private final PageRegionTableModel tableModel = new PageRegionTableModel();
     private final DecoratedTable<PageRegion, PageRegionTableModel> table;
-    private final Action addRegionAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "pdfRegion.add", this::addRegion);
-    private final Action deleteRegionAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "pdfRegion.delete", this::deleteRegion);
 
     private JDialog previewDialog;
 
-    private final Action pdfPreviewAction = new LocalizedAction(LABELS.get(), RESOURCE_PREFIX + "pdfPreview") {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (!previewDialog.isVisible()) {
-                previewDialog.pack();
-                Rectangle bounds = getTopLevelAncestor().getBounds();
-                Rectangle screen = getGraphicsConfiguration().getBounds();
-                Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
-                Dimension size = previewDialog.getSize();
-                int x = bounds.x + bounds.width;
-                int y = Math.min(bounds.y, screen.y + screen.height - size.height - screenInsets.bottom);
-                if (x + size.width > screen.x + screen.width - screenInsets.right) x = bounds.x - size.width;
-                previewDialog.setLocation(x, y);
-                previewDialog.setVisible(true);
-            }
-        }
-    };
-
-    public PageRegionsPanel(TableFactory tableFactory) {
-        super(new BorderLayout(5, 5));
+    public PageRegionsPanel(FileImportsDialog owner, TableFactory tableFactory) {
+        super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
         setBorder(BorderFactory.panelBorder());
-        table = tableFactory.validatedTableBuilder(tableModel).get();
-        table.setPreferredScrollableViewportSize(new Dimension(535, 100));
-        TableInitializer.setFixedWidth(table.getColumn(tableModel.getColorColumnAdapter()), table.getRowHeight());
-        table.getColumn(tableModel.getColorColumnAdapter()).setCellRenderer(new ColorTableCellRenderer());
-        table.getColumn(tableModel.getColorColumnAdapter()).setCellEditor(new ColorTableCellEditor());
+        setPreferredSize(new Dimension(550, 100));
+        table = tableFactory.validatedTableBuilder(new PageRegionTableModel()).get();
+        table.setDefaultRenderer(Color.class, new ColorTableCellRenderer());
+        table.setDefaultEditor(Color.class, new ColorTableCellEditor());
+        table.setDefaultRenderer(Float.class, InfinityRenderer.POSITIVE_RENDERER);
         table.setDefaultEditor(Float.class, new RegionCoordinateEditor(table));
-        table.getColumn(PageRegionColumnAdapter.TOP_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
-        table.getColumn(PageRegionColumnAdapter.LABEL_RIGHT_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
-        table.getColumn(PageRegionColumnAdapter.VALUE_RIGHT_ADAPTER).setCellRenderer(InfinityRenderer.POSITIVE_RENDERER);
+        initializeColumns();
+        Action addRegionAction = owner.actionFactory.newAction("pdfRegion.add", this::addRegion);
+        Action deleteRegionAction = owner.actionFactory.newAction("pdfRegion.delete", this::deleteRegion);
+        Action pdfPreviewAction = owner.actionFactory.newAction("pdfPreview", this::showPreview);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
+        owner.getModel().addSelectionListener((model, importFile) -> {
+            table.setModel(model.getRegionTableModel());
+            initializeColumns();
+        });
+    }
+
+    private void initializeColumns() {
+        TableInitializer.setFixedWidth(table.getColumnModel().getColumn(0), table.getRowHeight());
         table.getColumn(PageRegionColumnAdapter.BOTTOM_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.LABEL_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.VALUE_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
-    }
-
-    public void setImportFile(ImportFile importFile) {
-        tableModel.setBeans(importFile.getPageRegions());
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
         previewDialog = new PdfPreviewDialog((Window) getTopLevelAncestor(), table);
+    }
+
+    private void showPreview(ActionEvent e) {
+        if (!previewDialog.isVisible()) {
+            previewDialog.pack();
+            Rectangle bounds = getTopLevelAncestor().getBounds();
+            Rectangle screen = getGraphicsConfiguration().getBounds();
+            Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+            Dimension size = previewDialog.getSize();
+            int x = bounds.x + bounds.width;
+            int y = Math.min(bounds.y, screen.y + screen.height - size.height - screenInsets.bottom);
+            if (x + size.width > screen.x + screen.width - screenInsets.right) x = bounds.x - size.width;
+            previewDialog.setLocation(x, y);
+            previewDialog.setVisible(true);
+        }
     }
 
     private void addRegion(ActionEvent event) {
