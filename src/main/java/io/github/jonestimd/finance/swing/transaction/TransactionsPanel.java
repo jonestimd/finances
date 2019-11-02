@@ -263,6 +263,7 @@ public class TransactionsPanel extends MenuActionPanel implements AccountSelecto
     private JMenu createFileMenu() {
         final JMenu menu = ComponentFactory.newMenu(LABELS.get(), "menu.file.mnemonicAndName");
         menu.add(importFileMenuFactory.createImportMenu(this));
+        menu.add(importFileMenuFactory.getEditImportsAction());
         return menu;
     }
 

@@ -29,44 +29,33 @@ import java.io.FileInputStream;
 import java.util.List;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JRootPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.Reconciler;
 import io.github.jonestimd.finance.service.ServiceLocator;
-import io.github.jonestimd.finance.swing.FinanceTableFactory;
-import io.github.jonestimd.finance.swing.fileimport.FileImportDialog;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.DialogAction;
-import io.github.jonestimd.swing.action.LocalizedAction;
-import io.github.jonestimd.swing.window.StatusFrame;
 
-import static io.github.jonestimd.finance.swing.BundleType.*;
-
+/**
+ * Action for importing transactions from a file.
+ */
 public class ImportFileAction extends AbstractAction {
     private final ImportFile importFile;
     private final ServiceLocator serviceLocator;
-    private final FinanceTableFactory tableFactory;
     private final JFileChooser fileChooser = new JFileChooser();
-    private final Action editAction = new EditImportAction();
-    private final Action deleteAction = LocalizedAction.create(LABELS.get(), "action.file.import.delete", this::onDeleteImport);
 
-    public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator, FinanceTableFactory tableFactory) {
+    public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator) {
         super(importFile.getName());
         this.importFile = importFile;
         this.serviceLocator = serviceLocator;
-        this.tableFactory = tableFactory;
         FileFilter fileFilter = new FileNameExtensionFilter("*." + importFile.getFileType().extension, importFile.getFileType().extension);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.addChoosableFileFilter(fileFilter);
@@ -99,46 +88,6 @@ public class ImportFileAction extends AbstractAction {
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
-        }
-    }
-
-    public Action getEditAction() {
-        return editAction;
-    }
-
-    public Action getDeleteAction() {
-        return deleteAction;
-    }
-
-    private void onDeleteImport(ActionEvent event) {
-    }
-
-    private class EditImportAction extends DialogAction {
-        private List<Account> accounts;
-        private List<Payee> payees;
-
-        public EditImportAction() {
-            super(LABELS.get(), "action.file.import.edit");
-        }
-
-        @Override
-        protected void loadDialogData() {
-            accounts = serviceLocator.getAccountOperations().getAllAccounts();
-            payees = serviceLocator.getPayeeOperations().getAllPayees();
-        }
-
-        @Override
-        protected boolean displayDialog(JComponent owner) {
-            StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            return new FileImportDialog(window, accounts, payees, tableFactory).show(importFile);
-        }
-
-        @Override
-        protected void saveDialogData() {
-        }
-
-        @Override
-        protected void setSaveResultOnUI() {
         }
     }
 }

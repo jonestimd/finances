@@ -21,46 +21,77 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.transaction;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Action;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.border.LineBorder;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
+import io.github.jonestimd.finance.swing.fileimport.FileImportDialog;
 import io.github.jonestimd.finance.swing.transaction.action.ImportFileAction;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentFactory;
+import io.github.jonestimd.swing.ComponentTreeUtils;
+import io.github.jonestimd.swing.action.DialogAction;
+import io.github.jonestimd.swing.window.StatusFrame;
 import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
 public class ImportFileMenuFactory {
     public static final String MENU_KEY = "menu.file.import.mnemonicAndName";
-    public static final int BUTTON_GAP = 2;
 
     private final ServiceLocator serviceLocator;
     private final FinanceTableFactory tableFactory;
     private final List<AccountListener> accountListeners = new ArrayList<>();
     private List<ImportFileAction> importFileActions;
+    private Action editImportsAction = new DialogAction(LABELS.get(), "menu.file.editImports") {
+        private List<Account> accounts;
+        private List<Payee> payees;
+        private List<ImportFile> importFiles;
+
+        @Override
+        protected void loadDialogData() {
+            accounts = serviceLocator.getAccountOperations().getAllAccounts();
+            payees = serviceLocator.getPayeeOperations().getAllPayees();
+            importFiles = serviceLocator.getImportFileDao().getAll();
+        }
+
+        @Override
+        protected boolean displayDialog(JComponent owner) {
+            StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
+            FileImportDialog dialog = new FileImportDialog(window, accounts, payees, importFiles, tableFactory);
+            return dialog.showDialog();
+        }
+
+        @Override
+        protected void saveDialogData() {
+            // TODO
+        }
+
+        @Override
+        protected void setSaveResultOnUI() {
+            // TODO
+        }
+    };
 
     public ImportFileMenuFactory(ServiceLocator serviceLocator, FinanceTableFactory tableFactory) {
         this.serviceLocator = serviceLocator;
         this.tableFactory = tableFactory;
+    }
+
+    public Action getEditImportsAction() {
+        return editImportsAction;
     }
 
     /**
@@ -88,31 +119,7 @@ public class ImportFileMenuFactory {
     }
 
     private ImportFileAction newImportFileAction(ImportFile importFile) {
-        return new ImportFileAction(importFile, serviceLocator, tableFactory);
-    }
-
-    private JButton newMenuButton(Action action) {
-        JButton button = new JButton(action);
-        button.setBorder(new LineBorder(Color.BLACK, 1));
-        return button;
-    }
-
-    private JMenuItem newImportMenuItem(ImportFileAction action) {
-        JMenuItem item = new JMenuItem(action);
-        item.setLayout(new BoxLayout(item, BoxLayout.X_AXIS));
-        item.add(Box.createHorizontalGlue());
-        Dimension buttonSize = addButton(item, action.getEditAction());
-        addButton(item, action.getDeleteAction());
-        Insets insets = item.getInsets();
-        item.setPreferredSize(new Dimension(item.getPreferredSize().width + 2*buttonSize.width + 2*BUTTON_GAP,
-                buttonSize.height + insets.top + insets.bottom));
-        return item;
-    }
-
-    private Dimension addButton(JMenuItem item, Action action) {
-        Dimension buttonSize = item.add(newMenuButton(action)).getPreferredSize();
-        item.add(Box.createHorizontalStrut(BUTTON_GAP));
-        return buttonSize;
+        return new ImportFileAction(importFile, serviceLocator);
     }
 
     private class AccountListener implements PropertyChangeListener {
@@ -134,7 +141,7 @@ public class ImportFileMenuFactory {
             Account account = accountSelector.getSelectedAccount();
             if (importFileActions != null && account != null) {
                 importFileActions.stream().filter(action -> action.getImportFile().getAccount().equals(account))
-                        .map(ImportFileMenuFactory.this::newImportMenuItem).forEach(menu::add);
+                        .map(JMenuItem::new).forEach(menu::add);
             }
         }
     }

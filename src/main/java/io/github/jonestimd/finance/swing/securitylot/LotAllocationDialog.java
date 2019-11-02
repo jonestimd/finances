@@ -69,7 +69,8 @@ public class LotAllocationDialog extends FormDialog {
         saleDateField = builder.append("saleDate.name", TextField.plain().readOnly().get());
         securityNameField = builder.append("security.name", TextField.plain().readOnly().get());
         builder.append("purchaseTable", tableFactory.tableBuilder(saleLotsTableModel).sortedBy(SaleLotsTableModel.PURCHASE_DATE).get());
-        builder.append(new ButtonBarFactory().alignRight().border(BUTTON_BAR_BORDER, 0).add(firstInAction, lastInAction, lowestPriceAction, highestPriceAction).get());
+        builder.append(new ButtonBarFactory().alignRight().border(BUTTON_BAR_BORDER, 0)
+                .add(firstInAction, lastInAction, lowestPriceAction, highestPriceAction).get());
         saleSharesField = builder.append("saleShares.name", TextField.plain().readOnly().get());
         purchaseSharesField = builder.append("purchaseShares.name", TextField.plain().readOnly().get());
         addButton(LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "action.discardLots", this::discardLots));
