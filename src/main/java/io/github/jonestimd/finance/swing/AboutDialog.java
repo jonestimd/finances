@@ -24,7 +24,6 @@ package io.github.jonestimd.finance.swing;
 import java.awt.Window;
 
 import javax.swing.JComponent;
-import javax.swing.border.EmptyBorder;
 
 import io.github.jonestimd.swing.action.CancelAction;
 import io.github.jonestimd.swing.component.TextField;
@@ -37,7 +36,7 @@ public class AboutDialog extends MessageDialog {
         GridBagBuilder builder = new GridBagBuilder(getContentPane(), BundleType.LABELS.get(), "dialog.about.");
         builder.append("version.label", TextField.plain().readOnly().get()).setText(BundleType.LABELS.getString("dialog.about.version.value"));
         builder.append("buildDate.label", TextField.plain().readOnly().get()).setText(BundleType.LABELS.getString("dialog.about.buildDate.value"));
-        ((JComponent) getContentPane()).setBorder(new EmptyBorder(5, 5, 5, 5));
+        ((JComponent) getContentPane()).setBorder(BorderFactory.panelBorder());
         CancelAction.install(this);
     }
 

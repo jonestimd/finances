@@ -27,12 +27,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -43,10 +39,9 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
-import javax.swing.border.EmptyBorder;
 
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.FileSuggestField;
 import io.github.jonestimd.swing.table.DecoratedTable;
@@ -97,8 +92,9 @@ public class PdfPreviewDialog extends JDialog {
             gbc.fill = GridBagConstraints.NONE;
             filePanel.add(loadFileButton, gbc);
             filePanel.add(scaleField, gbc);
+            gbc.insets.right = 0;
             filePanel.add(new JLabel("%"), gbc);
-            filePanel.setBorder(new EmptyBorder(5, 5, 5, 0));
+            filePanel.setBorder(BorderFactory.panelBorder());
             getContentPane().add(filePanel, BorderLayout.SOUTH);
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -33,10 +33,10 @@ import javax.swing.Action;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.table.ColorTableCellEditor;
@@ -73,7 +73,7 @@ public class PageRegionsPanel extends JPanel {
 
     public PageRegionsPanel(TableFactory tableFactory) {
         super(new BorderLayout(5, 5));
-        setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
+        setBorder(BorderFactory.panelBorder());
         table = tableFactory.validatedTableBuilder(tableModel).get();
         table.setPreferredScrollableViewportSize(new Dimension(535, 100));
         TableInitializer.setFixedWidth(table.getColumn(tableModel.getColorColumnAdapter()), table.getRowHeight());

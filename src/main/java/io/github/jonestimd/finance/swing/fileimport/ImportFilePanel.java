@@ -31,7 +31,6 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
-import javax.swing.border.EmptyBorder;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
@@ -40,6 +39,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.domain.transaction.Payee;
+import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.finance.swing.transaction.AccountFormat;
 import io.github.jonestimd.finance.swing.transaction.PayeeFormat;
 import io.github.jonestimd.swing.ComponentFactory;
@@ -98,7 +98,7 @@ public class ImportFilePanel extends JComponent {
         builder.overlay(payeeField);
         builder.append(singlePayeeCheckbox);
         builder.append(reconcileCheckbox);
-        setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
+        setBorder(BorderFactory.panelBorder());
         singlePayeeCheckbox.getModel().addItemListener(event -> {
             if (singlePayeeCheckbox.isSelected()) replacePayeeField(payeeScrollPane, payeeField, "payee");
             else replacePayeeField(payeeField, payeeScrollPane, "payeeLabel");

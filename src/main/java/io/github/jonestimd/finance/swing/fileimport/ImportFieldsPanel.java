@@ -26,11 +26,11 @@ import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
 import io.github.jonestimd.swing.list.BeanListModel;
 
@@ -44,7 +44,7 @@ public class ImportFieldsPanel extends JComponent {
         fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
         fieldList.addListSelectionListener(this::onFieldSelected);
         setLayout(new BorderLayout(5, 10));
-        setBorder(new EmptyBorder(5, 5, 5, 5)); // TODO get from resource bundle
+        setBorder(BorderFactory.panelBorder());
         add(new JScrollPane(fieldList), BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
     }
