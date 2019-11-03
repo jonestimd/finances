@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -67,6 +68,15 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     public void setSelectedItem(Object anItem) {
         super.setSelectedItem(anItem);
         notifySelectionListeners((ImportFile) anItem);
+    }
+
+    public void addImport() {
+        ImportFile importFile = new ImportFile();
+        importFile.setName("");
+        importFile.setFields(new HashSet<>());
+        importFile.setPageRegions(new HashSet<>());
+        addElement(importFile);
+        setSelectedItem(importFile);
     }
 
     public void addSelectionListener(BiConsumer<FileImportsModel, ImportFile> listener) {

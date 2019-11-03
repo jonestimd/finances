@@ -25,9 +25,7 @@ import java.awt.BorderLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.text.Format;
-import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
 
 import javax.swing.Action;
 import javax.swing.Box;
@@ -86,7 +84,6 @@ public class FileImportsDialog extends ValidatedDialog {
         listPanel.add(importFileList);
         getFormPanel().add(listPanel, BorderLayout.NORTH);
         model.addSelectionListener((m, importFile) -> {
-            filePanel.setImportFile(importFile);
             fieldsPanel.setImportFile(importFile);
             tabbedPane.setEnabledAt(2, importFile.getFileType() == FileType.PDF);
         });
@@ -97,6 +94,8 @@ public class FileImportsDialog extends ValidatedDialog {
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(model::isChanged);
+        saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
+        applyAction.setEnabled(saveAction.isEnabled());
     }
 
     private void createMenuBar() {
@@ -124,14 +123,10 @@ public class FileImportsDialog extends ValidatedDialog {
         return false; // TODO check for valid and changed
     }
 
-    @Override
-    protected void addValidationListener(Consumer<Collection<String>> listener) {
-        super.addValidationListener(listener);
-        // TODO
-    }
-
     private void newImport(ActionEvent event) {
-        // TODO
+        ((JComponent) event.getSource()).setEnabled(false);
+        tabbedPane.setSelectedIndex(0);
+        model.addImport();
     }
 
     private void duplicateImport(ActionEvent event) {

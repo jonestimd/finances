@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JCheckBox;
@@ -52,6 +53,7 @@ import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.swing.ComponentFactory.*;
 
 public class ImportFilePanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
@@ -66,8 +68,8 @@ public class ImportFilePanel extends JComponent {
 
     private final ValidatedTextField nameField;
     private final BeanListComboBox<Account> accountField = new BeanListComboBox<>(new AccountFormat());
-    private final JComboBox<ImportType> importTypeField = new JComboBox<>(ImportType.values());
-    private final JComboBox<FileType> fileTypeField = new JComboBox<>(FileType.values());
+    private final JComboBox<ImportType> importTypeField = newComboBox(ImportType.class, LABELS.getString(RESOURCE_PREFIX + "importType.required"));
+    private final JComboBox<FileType> fileTypeField = newComboBox(FileType.class, LABELS.getString(RESOURCE_PREFIX + "fileType.required"));
     private final JTextField dateFormatField = requiredTextField("dateFormat.").get();
     private final ValidatedTextField startOffsetField = requiredTextField("startOffset.").configure().inputFilter("[0-9]*").get();
     private final JCheckBox reconcileCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
@@ -107,6 +109,8 @@ public class ImportFilePanel extends JComponent {
             else replacePayeeField(payeeField, payeeScrollPane, "payeeLabel");
             if (isVisible()) revalidate(); // TODO dialog.pack() fire event?
         });
+        owner.getModel().addSelectionListener((model, importFile) -> setImportFile(importFile));
+        setImportFile(owner.getModel().getSelectedItem());
     }
 
     private void replacePayeeField(JComponent oldComponent, JComponent newComponent, String labelKey) {
@@ -117,7 +121,7 @@ public class ImportFilePanel extends JComponent {
     }
 
     public void setImportFile(ImportFile importFile) {
-        if (importFile.getId() != null) {
+        if (importFile != null && importFile.getId() != null) {
             nameField.setText(importFile.getName());
             accountField.setSelectedItem(importFile.getAccount());
             importTypeField.setSelectedItem(importFile.getImportType());
@@ -132,6 +136,21 @@ public class ImportFilePanel extends JComponent {
                 singlePayeeCheckbox.setSelected(true);
                 payeeField.setSelectedItem(importFile.getPayee());
             }
+        }
+        else {
+            nameField.setText("");
+            accountField.setSelectedItem(null);
+            importTypeField.setSelectedItem(null);
+            fileTypeField.setSelectedItem(null);
+            startOffsetField.setText("0");
+            dateFormatField.setText("");
+            reconcileCheckbox.setSelected(false);
+            setLabels(Collections.emptySet(), FieldType.DATE, dateLabelField);
+            setLabels(Collections.emptySet(), FieldType.PAYEE, payeeLabelField);
+            setLabels(Collections.emptySet(), FieldType.SECURITY, securityLabelField);
+            singlePayeeCheckbox.setSelected(false);
+            payeeField.setSelectedItem(null);
+            nameField.requestFocusInWindow();
         }
     }
 
