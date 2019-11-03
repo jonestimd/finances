@@ -23,9 +23,9 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,16 +34,15 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.util.Streams;
-import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
-import org.apache.log4j.Logger;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -60,29 +59,15 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         proxyFactory.setSuperclass(ImportFile.class);
     }
 
-    private final Map<ImportFile, ImportFile> changeProxies = new HashMap<>();
-    private final List<ImportFileHandler> changeHandlers = new ArrayList<>();
+    private final Map<ImportFile, Map<Function<ImportFile, ?>, Object>> changes = new HashMap<>();
     private final Map<Long, PageRegionTableModel> regionTableModels = new HashMap<>();
     private final List<BiConsumer<FileImportsModel, ImportFile>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
         super(elements);
-        for (ImportFile importFile : elements) createProxy(importFile);
         if (elements.isEmpty()) addImport();
         else setSelectedItem(elements.iterator().next());
-    }
-
-    private ImportFile createProxy(ImportFile importFile) {
-        try {
-            ImportFileHandler handler = new ImportFileHandler(importFile);
-            changeHandlers.add(handler);
-            ImportFile proxy = (ImportFile) proxyFactory.create(new Class[0], new Object[0], handler);
-            changeProxies.put(importFile, proxy);
-            return proxy;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public String validateName(String name) {
@@ -113,7 +98,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         importFile.setFields(new HashSet<>());
         importFile.setPageRegions(new HashSet<>());
         addElement(importFile);
-        createProxy(importFile);
         setSelectedItem(importFile);
     }
 
@@ -130,68 +114,83 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public boolean isChanged() {
-        return changeHandlers.stream().anyMatch(ImportFileHandler::isChanged);
+        return !changes.isEmpty();
     }
 
     public String getImportName() {
-        return changeProxies.get(getSelectedItem()).getName();
+        return getProperty(ImportFile::getName);
     }
 
     public void setImportName(String name) {
-        setProperty(ImportFile::setName, name);
+        setProperty(ImportFile::getName, name);
     }
 
     public ImportType getImportType() {
-        return changeProxies.get(getSelectedItem()).getImportType();
+        return getProperty(ImportFile::getImportType);
     }
 
     public void setImportType(ImportType importType) {
-        setProperty(ImportFile::setImportType, importType);
+        setProperty(ImportFile::getImportType, importType);
     }
 
     public FileType getFileType() {
-        return changeProxies.get(getSelectedItem()).getFileType();
+        return getProperty(ImportFile::getFileType);
     }
 
     public void setFileType(FileType fileType) {
-        setProperty(ImportFile::setFileType, fileType);
+        setProperty(ImportFile::getFileType, fileType);
     }
 
     public Account getAccount() {
-        return changeProxies.get(getSelectedItem()).getAccount();
+        return getProperty(ImportFile::getAccount);
     }
 
     public void setAccount(Account account) {
-        setProperty(ImportFile::setAccount, account);
+        setProperty(ImportFile::getAccount, account);
     }
 
     public Integer getStartOffset() {
-        return changeProxies.get(getSelectedItem()).getStartOffset();
+        return getProperty(ImportFile::getStartOffset);
     }
 
     public void setStartOffset(Integer offset) {
-        setProperty(ImportFile::setStartOffset, offset);
+        setProperty(ImportFile::getStartOffset, offset);
     }
 
     public String getDateFormat() {
-        return changeProxies.get(getSelectedItem()).getDateFormat();
+        return getProperty(ImportFile::getDateFormat);
     }
 
     public void setDateFormat(String dateFormat) {
-        setProperty(ImportFile::setDateFormat, dateFormat);
+        setProperty(ImportFile::getDateFormat, dateFormat);
     }
 
     public boolean isReconcile() {
-        return changeProxies.get(getSelectedItem()).isReconcile();
+        return getProperty(ImportFile::isReconcile);
     }
 
     public void setReconcile(boolean reconcile) {
-        setProperty(ImportFile::setReconcile, reconcile);
+        setProperty(ImportFile::isReconcile, reconcile);
     }
 
-    private <T> void setProperty(BiConsumer<ImportFile, T> setter, T value) {
+    @SuppressWarnings("unchecked")
+    private <T> T getProperty(Function<ImportFile, T> getter) {
+        ImportFile selectedImport = getSelectedItem();
+        Map<Function<ImportFile, ?>, ?> importChanges = changes.getOrDefault(selectedImport, Collections.emptyMap());
+        return importChanges.containsKey(getter) ? (T) importChanges.get(getter) : getter.apply(selectedImport);
+    }
+
+    private <T> void setProperty(Function<ImportFile, T> getter, T value) {
         boolean oldChanged = isChanged();
-        setter.accept(changeProxies.get(getSelectedItem()), value);
+        ImportFile selectedImport = getSelectedItem();
+        if (Objects.equals(getter.apply(selectedImport), value)) {
+            Map<Function<ImportFile, ?>, Object> importChanges = changes.get(selectedImport);
+            if (importChanges != null) {
+                importChanges.remove(getter);
+                if (importChanges.isEmpty()) changes.remove(selectedImport);
+            }
+        }
+        else changes.computeIfAbsent(selectedImport, (i) -> new HashMap<>()).put(getter, value);
         changeSupport.firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged());
     }
 
