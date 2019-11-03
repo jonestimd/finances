@@ -87,15 +87,16 @@ public class FileImportsDialog extends ValidatedDialog {
             fieldsPanel.setImportFile(importFile);
             tabbedPane.setEnabledAt(2, importFile.getFileType() == FileType.PDF);
         });
-        if (!importFiles.isEmpty()) importFileList.setSelectedIndex(0);
-        // TODO disable panels when no import is selected
-        // TODO mappings
-        // TODO filter regex's, negate amount, memo
+        // TODO
+        //   mappings
+        //   filter regex's, negate amount, memo
+        //   add Reset button
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(model::isChanged);
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
+        model.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
     }
 
     private void createMenuBar() {

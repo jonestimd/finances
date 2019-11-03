@@ -21,6 +21,7 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.event.ItemEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +55,7 @@ import io.github.jonestimd.swing.validation.ValidatedTextField;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.swing.ComponentFactory.*;
+import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ImportFilePanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
@@ -109,8 +111,27 @@ public class ImportFilePanel extends JComponent {
             else replacePayeeField(payeeField, payeeScrollPane, "payeeLabel");
             if (isVisible()) revalidate(); // TODO dialog.pack() fire event?
         });
-        owner.getModel().addSelectionListener((model, importFile) -> setImportFile(importFile));
-        setImportFile(owner.getModel().getSelectedItem());
+        bindToModel(owner.getModel());
+        setImportFile(owner.getModel());
+    }
+
+    private void bindToModel(FileImportsModel model) {
+        bind(nameField, model::setImportName);
+        importTypeField.addItemListener(event -> model.setImportType((ImportType) event.getItem()));
+        fileTypeField.addItemListener(event -> model.setFileType((FileType) event.getItem()));
+        accountField.addItemListener(event -> model.setAccount((Account) event.getItem()));
+        bind(startOffsetField, this::parseOffset, model::setStartOffset);
+        bind(dateFormatField, model::setDateFormat);
+        reconcileCheckbox.addItemListener(event -> model.setReconcile(event.getStateChange() == ItemEvent.SELECTED));
+        model.addSelectionListener((m, importFile) -> setImportFile(model));
+    }
+
+    private Integer parseOffset(String offset) {
+        try {
+            return Integer.parseInt(offset);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private void replacePayeeField(JComponent oldComponent, JComponent newComponent, String labelKey) {
@@ -120,15 +141,16 @@ public class ImportFilePanel extends JComponent {
         payeeLabel.setText(label.substring(1));
     }
 
-    public void setImportFile(ImportFile importFile) {
+    public void setImportFile(FileImportsModel model) {
+        nameField.setText(model.getImportName());
+        importTypeField.setSelectedItem(model.getImportType());
+        fileTypeField.setSelectedItem(model.getFileType());
+        accountField.setSelectedItem(model.getAccount());
+        startOffsetField.setText(Integer.toString(model.getStartOffset()));
+        dateFormatField.setText(model.getDateFormat());
+        reconcileCheckbox.setSelected(model.isReconcile());
+        ImportFile importFile = model.getSelectedItem();
         if (importFile != null && importFile.getId() != null) {
-            nameField.setText(importFile.getName());
-            accountField.setSelectedItem(importFile.getAccount());
-            importTypeField.setSelectedItem(importFile.getImportType());
-            fileTypeField.setSelectedItem(importFile.getFileType());
-            startOffsetField.setText(Integer.toString(importFile.getStartOffset()));
-            dateFormatField.setText(importFile.getDateFormat());
-            reconcileCheckbox.setSelected(importFile.isReconcile());
             setLabels(importFile.getFields(), FieldType.DATE, dateLabelField);
             setLabels(importFile.getFields(), FieldType.PAYEE, payeeLabelField);
             setLabels(importFile.getFields(), FieldType.SECURITY, securityLabelField);
@@ -138,13 +160,6 @@ public class ImportFilePanel extends JComponent {
             }
         }
         else {
-            nameField.setText("");
-            accountField.setSelectedItem(null);
-            importTypeField.setSelectedItem(null);
-            fileTypeField.setSelectedItem(null);
-            startOffsetField.setText("0");
-            dateFormatField.setText("");
-            reconcileCheckbox.setSelected(false);
             setLabels(Collections.emptySet(), FieldType.DATE, dateLabelField);
             setLabels(Collections.emptySet(), FieldType.PAYEE, payeeLabelField);
             setLabels(Collections.emptySet(), FieldType.SECURITY, securityLabelField);

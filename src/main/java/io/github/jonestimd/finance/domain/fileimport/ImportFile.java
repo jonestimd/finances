@@ -271,11 +271,11 @@ public class ImportFile implements UniqueId<Long> {
         this.reconcile = reconcile;
     }
 
-    public int getStartOffset() {
+    public Integer getStartOffset() {
         return startOffset;
     }
 
-    public void setStartOffset(int startOffset) {
+    public void setStartOffset(Integer startOffset) {
         this.startOffset = startOffset;
     }
 
