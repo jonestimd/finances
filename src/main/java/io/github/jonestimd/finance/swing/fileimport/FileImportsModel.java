@@ -30,19 +30,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
+import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
+import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.util.Streams;
-import javassist.util.proxy.ProxyFactory;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -52,14 +55,19 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     private static final String NAME_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "name.required");
     private static final String NAME_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "name.unique");
-    private static final ProxyFactory proxyFactory;
+    private static final Map<String, Function<ImportFile, Object>> PROPERTY_GETTERS = new MapBuilder<String, Function<ImportFile, Object>>()
+        .put("name", ImportFile::getName)
+        .put("importType", ImportFile::getImportType)
+        .put("fileType", ImportFile::getFileType)
+        .put("account", ImportFile::getAccount)
+        .put("startOffset", ImportFile::getStartOffset)
+        .put("dateFormat", ImportFile::getDateFormat)
+        .put("reconcile", ImportFile::isReconcile)
+        .put("payee", ImportFile::getPayee)
+        .get();
 
-    static {
-        proxyFactory = new ProxyFactory();
-        proxyFactory.setSuperclass(ImportFile.class);
-    }
-
-    private final Map<ImportFile, Map<Function<ImportFile, ?>, Object>> changes = new HashMap<>();
+    private final Map<ImportFile, Map<String, Object>> changes = new HashMap<>();
+    private final Map<ImportFile, Map<FieldType, List<String>>> transactionLabelChanges = new HashMap<>();
     private final Map<Long, PageRegionTableModel> regionTableModels = new HashMap<>();
     private final List<BiConsumer<FileImportsModel, ImportFile>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
@@ -87,9 +95,13 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     @Override
-    public void setSelectedItem(Object anItem) {
-        super.setSelectedItem(anItem);
-        notifySelectionListeners((ImportFile) anItem);
+    public void setSelectedItem(Object importFile) {
+        super.setSelectedItem(importFile);
+        notifySelectionListeners((ImportFile) importFile);
+        Map<String, Object> importChanges = changes.getOrDefault(importFile, Collections.emptyMap());
+        for (Entry<String, Function<ImportFile, Object>> entry : PROPERTY_GETTERS.entrySet()) {
+            changeSupport.firePropertyChange(entry.getKey() + "Changed", null, importChanges.containsKey(entry.getKey()));
+        }
     }
 
     public void addImport() {
@@ -99,6 +111,10 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         importFile.setPageRegions(new HashSet<>());
         addElement(importFile);
         setSelectedItem(importFile);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
     }
 
     public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
@@ -114,130 +130,148 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public boolean isChanged() {
-        return !changes.isEmpty();
+        return !changes.isEmpty() || !transactionLabelChanges.isEmpty();
     }
 
     public String getImportName() {
-        return getProperty(ImportFile::getName);
+        return getProperty("name");
     }
 
     public void setImportName(String name) {
-        setProperty(ImportFile::getName, name);
+        setProperty("name", name);
     }
 
     public ImportType getImportType() {
-        return getProperty(ImportFile::getImportType);
+        return getProperty("importType");
     }
 
     public void setImportType(ImportType importType) {
-        setProperty(ImportFile::getImportType, importType);
+        setProperty("importType", importType);
     }
 
     public FileType getFileType() {
-        return getProperty(ImportFile::getFileType);
+        return getProperty("fileType");
     }
 
     public void setFileType(FileType fileType) {
-        setProperty(ImportFile::getFileType, fileType);
+        setProperty("fileType", fileType);
     }
 
     public Account getAccount() {
-        return getProperty(ImportFile::getAccount);
+        return getProperty("account");
     }
 
     public void setAccount(Account account) {
-        setProperty(ImportFile::getAccount, account);
+        setProperty("account", account);
     }
 
     public Integer getStartOffset() {
-        return getProperty(ImportFile::getStartOffset);
+        return getProperty("startOffset");
     }
 
     public void setStartOffset(Integer offset) {
-        setProperty(ImportFile::getStartOffset, offset);
+        setProperty("startOffset", offset);
     }
 
     public String getDateFormat() {
-        return getProperty(ImportFile::getDateFormat);
+        return getProperty("dateFormat");
     }
 
     public void setDateFormat(String dateFormat) {
-        setProperty(ImportFile::getDateFormat, dateFormat);
+        setProperty("dateFormat", dateFormat);
     }
 
     public boolean isReconcile() {
-        return getProperty(ImportFile::isReconcile);
+        return getProperty("reconcile");
     }
 
     public void setReconcile(boolean reconcile) {
-        setProperty(ImportFile::isReconcile, reconcile);
+        setProperty("reconcile", reconcile);
+    }
+
+    public Payee getPayee() {
+        return getProperty("payee");
+    }
+
+    public void setPayee(Payee payee) {
+        setProperty("payee", payee);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getProperty(Function<ImportFile, T> getter) {
+    private <T> T getProperty(String name) {
         ImportFile selectedImport = getSelectedItem();
-        Map<Function<ImportFile, ?>, ?> importChanges = changes.getOrDefault(selectedImport, Collections.emptyMap());
-        return importChanges.containsKey(getter) ? (T) importChanges.get(getter) : getter.apply(selectedImport);
+        Map<String, ?> importChanges = changes.getOrDefault(selectedImport, Collections.emptyMap());
+        return importChanges.containsKey(name) ? (T) importChanges.get(name) : (T) PROPERTY_GETTERS.get(name).apply(selectedImport);
     }
 
-    private <T> void setProperty(Function<ImportFile, T> getter, T value) {
+    private <T> void setProperty(final String name, T value) {
         boolean oldChanged = isChanged();
         ImportFile selectedImport = getSelectedItem();
-        if (Objects.equals(getter.apply(selectedImport), value)) {
-            Map<Function<ImportFile, ?>, Object> importChanges = changes.get(selectedImport);
+        boolean same = Objects.equals(PROPERTY_GETTERS.get(name).apply(selectedImport), value);
+        if (same) {
+            Map<String, Object> importChanges = changes.get(selectedImport);
             if (importChanges != null) {
-                importChanges.remove(getter);
+                importChanges.remove(name);
                 if (importChanges.isEmpty()) changes.remove(selectedImport);
             }
         }
-        else changes.computeIfAbsent(selectedImport, (i) -> new HashMap<>()).put(getter, value);
+        else changes.computeIfAbsent(selectedImport, (i) -> new HashMap<>()).put(name, value);
+        changeSupport.firePropertyChange(name + "Changed", null, !same);
         changeSupport.firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged());
     }
 
-    private static class ImportFileHandler implements MethodHandler {
-        private static final Map<String, Function<ImportFile, ?>> CHANGE_PROPERTIES = new MapBuilder<String, Function<ImportFile, ?>>()
-                .put("Name", ImportFile::getName)
-                .put("ImportType", ImportFile::getImportType)
-                .put("FileType", ImportFile::getFileType)
-                .put("Account", ImportFile::getAccount)
-                .put("StartOffset", ImportFile::getStartOffset)
-                .put("DateFormat", ImportFile::getDateFormat)
-                .put("Reconcile", ImportFile::isReconcile)
-                .get();
+    public List<String> getDateLabels() {
+        return getCurrentLabels(FieldType.DATE);
+    }
 
-        private final Map<String, Object> changes = new HashMap<>();
-        private final ImportFile delegate;
-        private final Logger logger = Logger.getLogger(getClass());
+    public void setDateLabels(List<String> dateLabels) {
+        setCurrentLabels(FieldType.DATE, dateLabels);
+    }
 
-        public ImportFileHandler(ImportFile delegate) {
-            this.delegate = delegate;
-        }
+    public List<String> getPayeeLabels() {
+        return getCurrentLabels(FieldType.PAYEE);
+    }
 
-        @Override
-        public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
-            if (thisMethod.getName().startsWith("get")) {
-                String property = thisMethod.getName().substring(3);
-                return changes.containsKey(property) ? changes.get(property) : thisMethod.invoke(delegate, args);
+    public void setPayeeLabels(List<String> payeeLabels) {
+        setCurrentLabels(FieldType.PAYEE, payeeLabels);
+    }
+
+    public List<String> getSecurityLabels() {
+        return getCurrentLabels(FieldType.SECURITY);
+    }
+
+    public void setSecurityLabels(List<String> securityLabels) {
+        setCurrentLabels(FieldType.SECURITY, securityLabels);
+    }
+
+    private List<String> getCurrentLabels(FieldType type) {
+        ImportFile selectedImport = getSelectedItem();
+        Map<FieldType, List<String>> importChanges = transactionLabelChanges.getOrDefault(selectedImport, Collections.emptyMap());
+        return importChanges.containsKey(type) ? importChanges.get(type) : getLabels(type);
+    }
+
+    private void setCurrentLabels(FieldType type, List<String> labels) {
+        boolean oldChanged = isChanged();
+        ImportFile selectedImport = getSelectedItem();
+        List<String> original = getLabels(type);
+        boolean same = original.equals(labels);
+        if (same) {
+            Map<FieldType, List<String>> importChanges = transactionLabelChanges.get(selectedImport);
+            if (importChanges != null) {
+                importChanges.remove(type);
+                if (importChanges.isEmpty()) transactionLabelChanges.remove(selectedImport);
             }
-            if (thisMethod.getName().startsWith("is")) {
-                String property = thisMethod.getName().substring(2);
-                return changes.containsKey(property) ? changes.get(property) : thisMethod.invoke(delegate, args);
-            }
-            if (thisMethod.getName().startsWith("set") && args.length == 1) {
-                String property = thisMethod.getName().substring(3);
-                if (CHANGE_PROPERTIES.containsKey(property)) {
-                    Object originalValue = CHANGE_PROPERTIES.get(property).apply(delegate);
-                    if (Objects.equals(originalValue, args[0])) changes.remove(property);
-                    else changes.put(property, args[0]);
-                }
-                else logger.warn("untracked property changed: " + property);
-                return null;
-            }
-            return thisMethod.invoke(delegate, args);
         }
+        else transactionLabelChanges.computeIfAbsent(selectedImport, (i) -> new HashMap<>()).put(type, labels);
+        changeSupport.firePropertyChange(type.name().toLowerCase() + "LabelsChanged", null, !same);
+        changeSupport.firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged());
+    }
 
-        public boolean isChanged() {
-            return !changes.isEmpty();
-        }
+    private List<String> getLabels(FieldType type) {
+        return getFields(type).findFirst().map(ImportField::getLabels).orElseGet(ArrayList::new);
+    }
+
+    private Stream<ImportField> getFields(FieldType type) {
+        return getSelectedItem().getFields().stream().filter(field -> field.getType() == type);
     }
 }
