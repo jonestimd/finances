@@ -57,6 +57,7 @@ public class ImportFieldsPanel extends JComponent {
         setBorder(BorderFactory.panelBorder());
         add(listPanel, BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
+        setImportFile(owner.getModel().getSelectedItem());
     }
 
     public void setImportFile(ImportFile importFile) {

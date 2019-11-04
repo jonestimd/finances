@@ -58,19 +58,17 @@ public class PageRegionsPanel extends JPanel {
         table.setDefaultEditor(Color.class, new ColorTableCellEditor());
         table.setDefaultRenderer(Float.class, InfinityRenderer.POSITIVE_RENDERER);
         table.setDefaultEditor(Float.class, new RegionCoordinateEditor(table));
-        initializeColumns();
+        setTableModel(owner.getModel());
         Action addRegionAction = owner.actionFactory.newAction("pdfRegion.add", this::addRegion);
         Action deleteRegionAction = owner.actionFactory.newAction("pdfRegion.delete", this::deleteRegion);
         Action pdfPreviewAction = owner.actionFactory.newAction("pdfPreview", this::showPreview);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
-        owner.getModel().addSelectionListener((model, importFile) -> {
-            table.setModel(model.getRegionTableModel());
-            initializeColumns();
-        });
+        owner.getModel().addSelectionListener((model, importFile) -> setTableModel(model));
     }
 
-    private void initializeColumns() {
+    private void setTableModel(FileImportsModel model) {
+        table.setModel(model.getRegionTableModel());
         TableInitializer.setFixedWidth(table.getColumnModel().getColumn(0), table.getRowHeight());
         table.getColumn(PageRegionColumnAdapter.BOTTOM_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.LABEL_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
