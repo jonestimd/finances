@@ -45,6 +45,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
+import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -90,6 +91,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         return regionTableModels.computeIfAbsent(getSelectedItem().getId(), (id) -> {
             PageRegionTableModel model = new PageRegionTableModel();
             model.setBeans(getSelectedItem().getPageRegions());
+            model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
             return model;
         });
     }
@@ -130,7 +132,9 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public boolean isChanged() {
-        return !changes.isEmpty() || !transactionLabelChanges.isEmpty();
+        return !changes.isEmpty()
+                || !transactionLabelChanges.isEmpty()
+                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
     }
 
     public String getImportName() {
