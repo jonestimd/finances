@@ -21,6 +21,7 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -69,7 +70,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     private final Map<ImportFile, Map<String, Object>> changes = new HashMap<>();
     private final Map<ImportFile, Map<FieldType, List<String>>> transactionLabelChanges = new HashMap<>();
-    private final Map<Long, PageRegionTableModel> regionTableModels = new HashMap<>();
+    private final Map<ImportFile, List<ImportFieldModel>> fieldModels = new HashMap<>();
+    private final Map<ImportFile, PageRegionTableModel> regionTableModels = new HashMap<>();
     private final List<BiConsumer<FileImportsModel, ImportFile>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -86,11 +88,24 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         return null;
     }
 
+    public List<ImportFieldModel> getFieldModels() {
+        return fieldModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
+            return Streams.map(importFile.getFields(), importField -> {
+                ImportFieldModel model = ImportFieldModel.create(importField);
+                model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
+                return model;
+            });
+        });
+    }
+
+    private void forwardChange(PropertyChangeEvent event) {
+        changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged());
+    }
+
     public PageRegionTableModel getRegionTableModel() {
-        if (getSelectedItem() == null) return new PageRegionTableModel();
-        return regionTableModels.computeIfAbsent(getSelectedItem().getId(), (id) -> {
+        return regionTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
             PageRegionTableModel model = new PageRegionTableModel();
-            model.setBeans(getSelectedItem().getPageRegions());
+            model.setBeans(importFile.getPageRegions());
             model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
             return model;
         });
@@ -134,7 +149,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     public boolean isChanged() {
         return !changes.isEmpty()
                 || !transactionLabelChanges.isEmpty()
-                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
+                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
+                || fieldModels.values().stream().flatMap(List::stream).anyMatch(ImportFieldModel::isChanged);
     }
 
     public String getImportName() {

@@ -21,8 +21,10 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.event.ItemEvent;
 import java.text.Format;
-import java.util.Collections;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -31,7 +33,6 @@ import javax.swing.JTextField;
 
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.FormatFactory;
@@ -43,6 +44,7 @@ import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
@@ -56,6 +58,7 @@ public class ImportFieldPanel extends JComponent {
     private final JTextField acceptRegexField = new JTextField();
     private final JTextField rejectRegexField = new JTextField();
     private final JTextField memoField = new JTextField();
+    private ImportFieldModel model;
 
     public ImportFieldPanel() {
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
@@ -69,32 +72,40 @@ public class ImportFieldPanel extends JComponent {
         builder.append("rejectRegex", rejectRegexField);
         builder.append("pageRegion", pageRegionField);
         builder.append("memo", memoField);
+        bindLabelField(labelField, ImportFieldModel::setLabels);
+        bindComboBox(typeField, ImportFieldModel::setType);
+        bindComboBox(amountFormatField, ImportFieldModel::setAmountFormat);
+        negateField.addItemListener(event -> model.setNegate(event.getStateChange() == ItemEvent.SELECTED));
+        bind(acceptRegexField, (pattern) -> model.setAcceptRegex(pattern));
+        bind(rejectRegexField, (pattern) -> model.setIgnoredRegex(pattern));
+        bind(memoField, (memo) -> model.setMemo(memo));
+        bindComboBox(pageRegionField, ImportFieldModel::setRegion);
+    }
+
+    private void bindLabelField(MultiSelectField field, BiConsumer<ImportFieldModel, List<String>> setter) {
+        field.addPropertyChangeListener(MultiSelectField.ITEMS_PROPERTY, (event) -> setter.accept(model, field.getItems()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void bindComboBox(JComboBox<T> field, BiConsumer<ImportFieldModel, T> setter) {
+        field.addItemListener(event -> {
+            if (event.getStateChange() == ItemEvent.SELECTED) setter.accept(model, (T) event.getItem());
+        });
     }
 
     public void setImportFile(ImportFile importFile) {
         pageRegionField.setModel(new BeanListComboBoxModel<>(importFile.getPageRegions()));
     }
 
-    public void setImportField(ImportField importField) {
-        if (importField != null) {
-            labelField.setItems(importField.getLabels());
-            typeField.setSelectedItem(importField.getType());
-            amountFormatField.setSelectedItem(importField.getAmountFormat());
-            negateField.setSelected(importField.isNegate());
-            acceptRegexField.setText(importField.getAcceptRegex());
-            rejectRegexField.setText(importField.getIgnoredRegex());
-            pageRegionField.setSelectedItem(importField.getRegion());
-            memoField.setText(importField.getMemo());
-        }
-        else {
-            labelField.setItems(Collections.emptyList());
-            typeField.setSelectedItem(null);
-            amountFormatField.setSelectedItem(null);
-            negateField.setSelected(false);
-            acceptRegexField.setText("");
-            rejectRegexField.setText("");
-            pageRegionField.setSelectedItem(null);
-            memoField.setText("");
-        }
+    public void setImportField(ImportFieldModel model) {
+        this.model = model;
+        labelField.setItems(model.getLabels());
+        typeField.setSelectedItem(model.getType());
+        amountFormatField.setSelectedItem(model.getAmountFormat());
+        negateField.setSelected(model.isNegate());
+        acceptRegexField.setText(model.getAcceptRegex());
+        rejectRegexField.setText(model.getIgnoredRegex());
+        pageRegionField.setSelectedItem(model.getRegion());
+        memoField.setText(model.getMemo());
     }
 }

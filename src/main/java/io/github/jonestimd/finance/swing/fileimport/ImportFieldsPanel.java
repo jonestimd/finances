@@ -31,15 +31,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
 import io.github.jonestimd.swing.list.BeanListModel;
 
 public class ImportFieldsPanel extends JComponent {
-    private final JList<ImportField> fieldList = new JList<>();
+    private final JList<ImportFieldModel> fieldList = new JList<>();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
     private final Action addAction;
     private final Action deleteAction;
@@ -48,7 +46,7 @@ public class ImportFieldsPanel extends JComponent {
         addAction = owner.actionFactory.newAction("importField.add", this::addField);
         deleteAction = owner.actionFactory.newAction("importField.delete", this::deleteField);
         // TODO hide/disable detail panel when no field selected
-        fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportField::getLabels));
+        fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportFieldModel::getLabels));
         fieldList.addListSelectionListener(this::onFieldSelected);
         JPanel listPanel = new JPanel(new BorderLayout(0, BorderFactory.GAP));
         listPanel.add(new JScrollPane(fieldList), BorderLayout.CENTER);
@@ -57,13 +55,14 @@ public class ImportFieldsPanel extends JComponent {
         setBorder(BorderFactory.panelBorder());
         add(listPanel, BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
-        setImportFile(owner.getModel().getSelectedItem());
+        owner.getModel().addSelectionListener((model, importFile) -> setImportFields(model));
+        setImportFields(owner.getModel());
     }
 
-    public void setImportFile(ImportFile importFile) {
-        fieldList.setModel(new BeanListModel<>(importFile.getFields()));
-        fieldPanel.setImportFile(importFile);
-        if (importFile.getFields().size() > 0) fieldList.setSelectedIndex(0);
+    public void setImportFields(FileImportsModel model) {
+        fieldList.setModel(new BeanListModel<>(model.getFieldModels()));
+        fieldPanel.setImportFile(model.getSelectedItem());
+        if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
