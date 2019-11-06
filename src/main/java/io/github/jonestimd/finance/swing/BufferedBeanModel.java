@@ -19,30 +19,16 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.swing.fileimport;
+package io.github.jonestimd.finance.swing;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.swing.BufferedBeanModel;
-import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
-import javassist.util.proxy.ProxyFactory;
+import java.beans.PropertyChangeListener;
 
-public abstract class ImportFieldModel extends ImportField implements BufferedBeanModel {
-    public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
-    private static final ProxyFactory factory;
+public interface BufferedBeanModel {
+    boolean isChanged();
 
-    static {
-        factory = new ProxyFactory();
-        factory.setSuperclass(ImportFieldModel.class);
-    }
+    void addPropertyChangeListener(PropertyChangeListener listener);
 
-    public static ImportFieldModel create(ImportField importField) {
-        try {
-            return (ImportFieldModel) factory.create(new Class[0], new Object[0], new BufferedBeanModelHandler<>(importField));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
-    protected ImportFieldModel() {
-    }
+    void resetChanges();
 }
