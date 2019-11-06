@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.jonestimd.collection.MapBuilder;
@@ -90,12 +91,15 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     public List<ImportFieldModel> getFieldModels() {
         return fieldModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
-            return Streams.map(importFile.getFields(), importField -> {
-                ImportFieldModel model = ImportFieldModel.create(importField);
-                model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
-                return model;
-            });
+            return importFile.getFields().stream().filter(field -> !field.getType().isTransaction())
+                    .map(this::newFieldModel).collect(Collectors.toList());
         });
+    }
+
+    private ImportFieldModel newFieldModel(ImportField field) {
+        ImportFieldModel model = ImportFieldModel.create(field);
+        model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
+        return model;
     }
 
     private void forwardChange(PropertyChangeEvent event) {
