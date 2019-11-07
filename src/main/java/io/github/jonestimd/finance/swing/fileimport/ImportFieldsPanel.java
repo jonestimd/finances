@@ -45,7 +45,6 @@ public class ImportFieldsPanel extends JComponent {
     public ImportFieldsPanel(FileImportsDialog owner) {
         addAction = owner.actionFactory.newAction("importField.add", this::addField);
         deleteAction = owner.actionFactory.newAction("importField.delete", this::deleteField);
-        // TODO hide/disable detail panel when no field selected
         fieldList.setCellRenderer(new MultiSelectListCellRenderer<>(true, ImportFieldModel::getLabels));
         fieldList.addListSelectionListener(this::onFieldSelected);
         JPanel listPanel = new JPanel(new BorderLayout(0, BorderFactory.GAP));
@@ -66,10 +65,11 @@ public class ImportFieldsPanel extends JComponent {
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
-        if (fieldList.getSelectedValue() != null) fieldPanel.setImportField(fieldList.getSelectedValue());
-        else {
-            // TODO hide field panel
+        if (fieldList.getSelectedValue() != null) {
+            fieldPanel.setImportField(fieldList.getSelectedValue());
+            fieldPanel.setVisible(true);
         }
+        else fieldPanel.setVisible(false);
     }
 
     private void addField(ActionEvent event) {
