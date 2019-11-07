@@ -56,7 +56,15 @@ public class ImportCategory {
         return category;
     }
 
+    public void setCategory(TransactionCategory category) {
+        this.category = category;
+    }
+
     public boolean isNegate() {
         return negate;
+    }
+
+    public void setNegate(boolean negate) {
+        this.negate = negate;
     }
 }

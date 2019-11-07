@@ -76,6 +76,7 @@ public class FileImportsDialog extends ValidatedDialog {
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), fieldsPanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
+        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"), new CategoriesPanel(this, tableFactory));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         Box listPanel = Box.createHorizontalBox();
@@ -87,9 +88,9 @@ public class FileImportsDialog extends ValidatedDialog {
             tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
         });
         // TODO
-        //   mappings
-        //   filter regex's, negate amount, memo
+        //   mapping tab(s) (category, payee, account, security)
         //   add Reset button
+        //   ???? filter regex's, negate amount, memo ????
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(model::isChanged);

@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import javax.swing.table.TableModel;
+
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
@@ -49,6 +51,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     private final Map<ImportFile, ImportFileModel> fileModels = new HashMap<>();
     private final Map<ImportFile, PageRegionTableModel> regionTableModels = new HashMap<>();
+    private final Map<ImportFile, ImportCategoryTableModel> categoryTableModels = new HashMap<>();
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -81,6 +84,15 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
             PageRegionTableModel model = new PageRegionTableModel();
             model.setBeans(importFile.getPageRegions());
             model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+            return model;
+        });
+    }
+
+    public ImportCategoryTableModel getCategoryTableModel() {
+        return categoryTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
+            ImportCategoryTableModel model = new ImportCategoryTableModel();
+            model.setBeans(Streams.map(importFile.getImportCategoryMap().entrySet(), ImportMapping::new));
+            // TODO table model listener
             return model;
         });
     }
