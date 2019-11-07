@@ -83,8 +83,8 @@ public class FileImportsDialog extends ValidatedDialog {
         listPanel.add(Box.createHorizontalStrut(5));
         listPanel.add(importFileList);
         getFormPanel().add(listPanel, BorderLayout.NORTH);
-        model.addSelectionListener((m, importFile) -> {
-            tabbedPane.setEnabledAt(2, importFile.getFileType() == FileType.PDF);
+        model.addSelectionListener((oldFile, newFile) -> {
+            tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
         });
         // TODO
         //   mappings

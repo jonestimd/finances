@@ -26,7 +26,7 @@ import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
 
-public abstract class ImportFieldModel extends ImportField implements BufferedBeanModel {
+public abstract class ImportFieldModel extends ImportField implements BufferedBeanModel<ImportField> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
     private static final ProxyFactory factory;
 

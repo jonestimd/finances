@@ -23,12 +23,18 @@ package io.github.jonestimd.finance.swing;
 
 import java.beans.PropertyChangeListener;
 
-public interface BufferedBeanModel {
+public interface BufferedBeanModel<T> {
+    T getBean();
+
     boolean isChanged();
 
     void addPropertyChangeListener(PropertyChangeListener listener);
 
     void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
+
+    void removePropertyChangeListener(PropertyChangeListener listener);
+
+    void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
     void resetChanges();
 }

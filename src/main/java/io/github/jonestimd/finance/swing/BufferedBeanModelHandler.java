@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,8 +38,8 @@ import javassist.util.proxy.MethodHandler;
  */
 public class BufferedBeanModelHandler<D> implements MethodHandler {
     public static final String CHANGED_PROPERTY = "changed";
-    private static final Class[] ADD_PROP_LISTENER_PARAMS = new Class[] {String.class, PropertyChangeListener.class};
-    private static final Class[] ADD_LISTENER_PARAMS = new Class[] {PropertyChangeListener.class};
+    private static final Class[] PROP_LISTENER_PARAMS = new Class[] {String.class, PropertyChangeListener.class};
+    private static final Class[] LISTENER_PARAMS = new Class[] {PropertyChangeListener.class};
 
     protected final D delegate;
     private final Map<String, Object> changeValues = new HashMap<>();
@@ -50,19 +51,36 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
 
     @Override
     public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
+        if (thisMethod.getDeclaringClass().equals(self.getClass().getSuperclass()) && !Modifier.isAbstract(thisMethod.getModifiers())) {
+            return proceed.invoke(self, args);
+        }
+        if (isFirePropertyChange(thisMethod)) {
+            firePropertyChange((String) args[0], args[1], args[2]);
+            return null;
+        }
         String methodName = thisMethod.getName();
-        if (methodName.equals("isChanged") && args.length == 0) return isChanged();
+        if (isGetter(thisMethod) && methodName.equals("getBean")) return delegate;
+        if (methodName.equals("isChanged") && args.length == 0) return isChanged(self);
         if (methodName.equals("addPropertyChangeListener")) {
-            if (Arrays.equals(thisMethod.getParameterTypes(), ADD_PROP_LISTENER_PARAMS)) {
+            if (Arrays.equals(thisMethod.getParameterTypes(), PROP_LISTENER_PARAMS)) {
                 changeSupport.addPropertyChangeListener((String) args[0], (PropertyChangeListener) args[1]);
             }
-            if (Arrays.equals(thisMethod.getParameterTypes(), ADD_LISTENER_PARAMS)) {
+            if (Arrays.equals(thisMethod.getParameterTypes(), LISTENER_PARAMS)) {
                 changeSupport.addPropertyChangeListener((PropertyChangeListener) args[0]);
             }
             return null;
         }
+        if (methodName.equals("removePropertyChangeListener")) {
+            if (Arrays.equals(thisMethod.getParameterTypes(), PROP_LISTENER_PARAMS)) {
+                changeSupport.removePropertyChangeListener((String) args[0], (PropertyChangeListener) args[1]);
+            }
+            if (Arrays.equals(thisMethod.getParameterTypes(), LISTENER_PARAMS)) {
+                changeSupport.removePropertyChangeListener((PropertyChangeListener) args[0]);
+            }
+            return null;
+        }
         if (methodName.equals("resetChanges")) {
-            resetChanges();
+            resetChanges(self);
             return null;
         }
         if (isGetter(thisMethod)) {
@@ -71,22 +89,26 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         }
         if (isSetter(thisMethod)) {
             String property = methodName.substring(3);
-            boolean oldChanged = isChanged();
+            boolean oldChanged = isChanged(self);
             if (Objects.equals(args[0], getBeanValue(thisMethod))) changeValues.remove(property);
             else changeValues.put(property, args[0]);
-            firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged());
+            firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged(self));
             firePropertyChange(CHANGED_PROPERTY + property, null, changeValues.containsKey(property));
             return null;
         }
-        if (thisMethod.getDeclaringClass().equals(self.getClass())) return proceed.invoke(self, args);
         return thisMethod.invoke(delegate, args);
     }
 
-    protected boolean isChanged() {
+    private boolean isFirePropertyChange(Method method) {
+        return method.getName().equals("firePropertyChange") && method.getParameterCount() == 3
+                && method.getParameterTypes()[0].equals(String.class);
+    }
+
+    protected boolean isChanged(Object self) {
         return !changeValues.isEmpty();
     }
 
-    protected void resetChanges() {
+    protected void resetChanges(Object self) {
         changeValues.clear();
     }
 

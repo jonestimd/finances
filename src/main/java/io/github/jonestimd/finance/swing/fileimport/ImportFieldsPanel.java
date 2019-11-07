@@ -55,18 +55,21 @@ public class ImportFieldsPanel extends JComponent {
         setBorder(BorderFactory.panelBorder());
         add(listPanel, BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
-        owner.getModel().addSelectionListener((model, importFile) -> setImportFields(model));
-        setImportFields(owner.getModel());
+        owner.getModel().addSelectionListener((oldFile, newFile) -> setImportFields(newFile));
+        setImportFields(owner.getModel().getSelectedImport());
     }
 
-    public void setImportFields(FileImportsModel model) {
+    public void setImportFields(ImportFileModel model) {
         fieldList.setModel(new BeanListModel<>(model.getFieldModels()));
-        fieldPanel.setImportFile(model.getSelectedItem());
+        fieldPanel.setImportFile(model);
         if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
-        fieldPanel.setImportField(fieldList.getSelectedValue());
+        if (fieldList.getSelectedValue() != null) fieldPanel.setImportField(fieldList.getSelectedValue());
+        else {
+            // TODO hide field panel
+        }
     }
 
     private void addField(ActionEvent event) {

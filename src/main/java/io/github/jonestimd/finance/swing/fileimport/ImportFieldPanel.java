@@ -23,6 +23,7 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.event.ItemEvent;
 import java.text.Format;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -33,6 +34,7 @@ import javax.swing.JTextField;
 
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.FormatFactory;
@@ -93,7 +95,7 @@ public class ImportFieldPanel extends JComponent {
         });
     }
 
-    public void setImportFile(ImportFile importFile) {
+    public void setImportFile(ImportFileModel importFile) {
         pageRegionField.setModel(new BeanListComboBoxModel<>(importFile.getPageRegions()));
     }
 

@@ -64,7 +64,7 @@ public class PageRegionsPanel extends JPanel {
         Action pdfPreviewAction = owner.actionFactory.newAction("pdfPreview", this::showPreview);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
-        owner.getModel().addSelectionListener((model, importFile) -> setTableModel(model));
+        owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(owner.getModel()));
     }
 
     private void setTableModel(FileImportsModel model) {

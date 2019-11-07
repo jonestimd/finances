@@ -23,7 +23,10 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.swing.JCheckBox;
@@ -34,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 
+import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
@@ -78,6 +82,8 @@ public class ImportFilePanel extends JComponent {
     private final MultiSelectField payeeLabelField = createLabelField();
     private final MultiSelectField securityLabelField = createLabelField();
     private final JLabel payeeLabel;
+    private ImportFileModel model;
+    private final PropertyChangeListener onPropertyChange;
 
     public ImportFilePanel(FileImportsDialog owner, List<Account> accounts, List<Payee> payees) {
         nameField = new ValidatedTextField(owner.getModel()::validateName);
@@ -109,61 +115,52 @@ public class ImportFilePanel extends JComponent {
             if (isVisible()) revalidate();
         });
         bindToModel(owner.getModel());
-        setImportFile(owner.getModel());
+        final Map<String, JComponent> propertyLabelMap = new MapBuilder<String, JComponent>()
+                .put("changedName", getLabel(nameField))
+                .put("changedImportType", getLabel(importTypeField))
+                .put("changedFileType", getLabel(fileTypeField))
+                .put("changedAccount", getLabel(accountField))
+                .put("changedStartOffset", getLabel(startOffsetField))
+                .put("changedDateFormat", getLabel(dateFormatField))
+                .put("changedPayee", payeeLabel)
+                .put("changedPayeeLabels", payeeLabel)
+                .put("changedReconcile", reconcileCheckbox)
+                .put("dateLabelsChanged", getLabel(dateLabelField))
+                .put("securityLabelsChanged", getLabel(securityLabelField))
+                .get();
+        onPropertyChange = (event) -> {
+            Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
+            JComponent component = propertyLabelMap.get(event.getPropertyName());
+            if (component != null) component.setForeground(labelColor);
+        };
+        setImportFile(owner.getModel().getSelectedImport());
     }
 
-    private void bindToModel(FileImportsModel model) {
-        bind(nameField, model::setImportName);
+    private void bindToModel(FileImportsModel fileImportsModel) {
+        bind(nameField, (name) -> model.setName(name));
         importTypeField.addItemListener(event -> model.setImportType((ImportType) event.getItem()));
         fileTypeField.addItemListener(event -> model.setFileType((FileType) event.getItem()));
         accountField.addItemListener(event -> model.setAccount((Account) event.getItem()));
-        bind(startOffsetField, this::parseOffset, model::setStartOffset);
-        bind(dateFormatField, model::setDateFormat);
+        bind(startOffsetField, this::parseOffset, (offset) -> model.setStartOffset(offset));
+        bind(dateFormatField, (format) -> model.setDateFormat(format));
         reconcileCheckbox.addItemListener(event -> model.setReconcile(event.getStateChange() == ItemEvent.SELECTED));
         payeeField.addItemListener(event -> model.setPayee((Payee) event.getItem()));
         singlePayeeCheckbox.addItemListener(event -> {
             if (event.getStateChange() == ItemEvent.DESELECTED) model.setPayee(null);
             else model.setPayee(payeeField.getSelectedItem());
         });
-        bindLabelField(dateLabelField, model::setDateLabels);
-        bindLabelField(payeeLabelField, model::setPayeeLabels);
-        bindLabelField(securityLabelField, model::setSecurityLabels);
-        model.addSelectionListener((m, importFile) -> setImportFile(model));
-        model.addPropertyChangeListener((event) -> {
-            Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
-            switch (event.getPropertyName()) {
-                case "nameChanged":
-                    setLabelColor(nameField, labelColor); break;
-                case "importTypeChanged":
-                    setLabelColor(importTypeField, labelColor); break;
-                case "fileTypeChanged":
-                    setLabelColor(fileTypeField, labelColor); break;
-                case "accountChanged":
-                    setLabelColor(accountField, labelColor); break;
-                case "startOffsetChanged":
-                    setLabelColor(startOffsetField, labelColor); break;
-                case "dateFormatChanged":
-                    setLabelColor(dateFormatField, labelColor); break;
-                case "payeeChanged":
-                case "payeeLabelsChanged":
-                    payeeLabel.setForeground(labelColor); break;
-                case "reconcileChanged":
-                    reconcileCheckbox.setForeground(labelColor); break;
-                case "dateLabelsChanged":
-                    setLabelColor(dateLabelField, labelColor); break;
-                case "securityLabelsChanged":
-                    setLabelColor(securityLabelField, labelColor); break;
-            }
-        });
+        bindLabelField(dateLabelField, (dateLabels) -> model.setDateLabels(dateLabels));
+        bindLabelField(payeeLabelField, (payeeLabels) -> model.setPayeeLabels(payeeLabels));
+        bindLabelField(securityLabelField, (securityLabels) -> model.setSecurityLabels(securityLabels));
+        fileImportsModel.addSelectionListener((oldFile, newFile) -> setImportFile(newFile));
     }
 
     private Color getLabelColor(boolean changed) {
         return changed ? Color.BLUE : Color.BLACK;
     }
 
-    private void setLabelColor(JComponent component, Color labelColor) {
-        JLabel label = (JLabel) component.getClientProperty("labeledBy");
-        label.setForeground(labelColor);
+    private JLabel getLabel(JComponent component) {
+        return (JLabel) component.getClientProperty("labeledBy");
     }
 
     private void bindLabelField(MultiSelectField field, Consumer<List<String>> setter) {
@@ -185,8 +182,11 @@ public class ImportFilePanel extends JComponent {
         payeeLabel.setText(label.substring(1));
     }
 
-    public void setImportFile(FileImportsModel model) {
-        nameField.setText(model.getImportName());
+    public void setImportFile(ImportFileModel model) {
+        if (this.model != null) this.model.removePropertyChangeListener(this.onPropertyChange);
+        this.model = model;
+        model.addPropertyChangeListener(this.onPropertyChange);
+        nameField.setText(model.getName());
         importTypeField.setSelectedItem(model.getImportType());
         fileTypeField.setSelectedItem(model.getFileType());
         accountField.setSelectedItem(model.getAccount());
@@ -198,6 +198,6 @@ public class ImportFilePanel extends JComponent {
         dateLabelField.setItems(model.getDateLabels());
         payeeLabelField.setItems(model.getPayeeLabels());
         securityLabelField.setItems(model.getSecurityLabels());
-        if (model.getSelectedItem().getId() == null) nameField.requestFocusInWindow();
+        if (model.getId() == null) nameField.requestFocusInWindow();
     }
 }
