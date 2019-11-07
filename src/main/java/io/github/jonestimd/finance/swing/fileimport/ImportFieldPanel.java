@@ -21,10 +21,12 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.Color;
 import java.awt.event.ItemEvent;
+import java.beans.PropertyChangeListener;
 import java.text.Format;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import javax.swing.JCheckBox;
@@ -32,10 +34,9 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 
+import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
@@ -46,6 +47,7 @@ import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.ComponentUtils.*;
 import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ImportFieldPanel extends JComponent {
@@ -61,6 +63,7 @@ public class ImportFieldPanel extends JComponent {
     private final JTextField rejectRegexField = new JTextField();
     private final JTextField memoField = new JTextField();
     private ImportFieldModel model;
+    private final PropertyChangeListener onPropertyChange;
 
     public ImportFieldPanel() {
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
@@ -74,14 +77,41 @@ public class ImportFieldPanel extends JComponent {
         builder.append("rejectRegex", rejectRegexField);
         builder.append("pageRegion", pageRegionField);
         builder.append("memo", memoField);
+        bindToModel();
+        final Map<String, JComponent> propertyLabelMap = new MapBuilder<String, JComponent>()
+                .put("changedLabel", getLabel(labelField))
+                .put("changedType", getLabel(typeField))
+                .put("changedAmountFormat", getLabel(amountFormatField))
+                .put("changedNegate", negateField)
+                .put("changedAcceptRegex", getLabel(acceptRegexField))
+                .put("changedIgnoreRegex", getLabel(rejectRegexField))
+                .put("changedMemo", getLabel(memoField))
+                .put("changedRegion", getLabel(pageRegionField))
+                .get();
+        onPropertyChange = (event) -> {
+            Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
+            JComponent component = propertyLabelMap.get(event.getPropertyName());
+            if (component != null) component.setForeground(labelColor);
+        };
+    }
+
+    private Color getLabelColor(boolean changed) {
+        return changed ? Color.BLUE : Color.BLACK;
+    }
+
+    private void bindToModel() {
         bindLabelField(labelField, ImportFieldModel::setLabels);
         bindComboBox(typeField, ImportFieldModel::setType);
         bindComboBox(amountFormatField, ImportFieldModel::setAmountFormat);
         negateField.addItemListener(event -> model.setNegate(event.getStateChange() == ItemEvent.SELECTED));
-        bind(acceptRegexField, (pattern) -> model.setAcceptRegex(pattern));
-        bind(rejectRegexField, (pattern) -> model.setIgnoredRegex(pattern));
-        bind(memoField, (memo) -> model.setMemo(memo));
+        bind(acceptRegexField, ImportFieldPanel::emptyToNull, (pattern) -> model.setAcceptRegex(pattern));
+        bind(rejectRegexField, ImportFieldPanel::emptyToNull, (pattern) -> model.setIgnoredRegex(pattern));
+        bind(memoField, ImportFieldPanel::emptyToNull, (memo) -> model.setMemo(memo));
         bindComboBox(pageRegionField, ImportFieldModel::setRegion);
+    }
+
+    private static String emptyToNull(String value) {
+        return value.isEmpty() ? null : value;
     }
 
     private void bindLabelField(MultiSelectField field, BiConsumer<ImportFieldModel, List<String>> setter) {
@@ -100,7 +130,9 @@ public class ImportFieldPanel extends JComponent {
     }
 
     public void setImportField(ImportFieldModel model) {
+        if (this.model != null) this.model.removePropertyChangeListener(this.onPropertyChange);
         this.model = model;
+        model.addPropertyChangeListener(this.onPropertyChange);
         labelField.setItems(model.getLabels());
         typeField.setSelectedItem(model.getType());
         amountFormatField.setSelectedItem(model.getAmountFormat());

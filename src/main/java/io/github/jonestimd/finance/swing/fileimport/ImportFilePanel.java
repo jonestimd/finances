@@ -23,7 +23,6 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +54,7 @@ import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.ComponentUtils.*;
 import static io.github.jonestimd.swing.ComponentFactory.*;
 import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
@@ -157,10 +157,6 @@ public class ImportFilePanel extends JComponent {
 
     private Color getLabelColor(boolean changed) {
         return changed ? Color.BLUE : Color.BLACK;
-    }
-
-    private JLabel getLabel(JComponent component) {
-        return (JLabel) component.getClientProperty("labeledBy");
     }
 
     private void bindLabelField(MultiSelectField field, Consumer<List<String>> setter) {

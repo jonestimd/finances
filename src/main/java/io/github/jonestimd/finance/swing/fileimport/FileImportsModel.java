@@ -90,11 +90,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         ImportFile oldSelection = getSelectedItem();
         super.setSelectedItem(importFile);
         notifySelectionListeners(oldSelection, (ImportFile) importFile);
-        // TODO update label colors on selection change
-        // Map<String, Object> importChanges = changes.getOrDefault(importFile, Collections.emptyMap());
-        // for (Entry<String, Function<ImportFile, Object>> entry : PROPERTY_GETTERS.entrySet()) {
-        //     changeSupport.firePropertyChange(entry.getKey() + "Changed", null, importChanges.containsKey(entry.getKey()));
-        // }
     }
 
     public void addImport() {
