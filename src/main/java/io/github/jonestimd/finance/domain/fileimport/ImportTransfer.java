@@ -21,27 +21,23 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
+import javax.persistence.AttributeOverride;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 import io.github.jonestimd.finance.domain.account.Account;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Type;
 
 @Embeddable
-public class ImportTransfer {
+@AttributeOverride(name = "alias", column = @Column(name = "account_alias", nullable = false))
+public class ImportTransfer extends ImportTransactionType<Account> {
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "account_id", nullable = false)
-    @ForeignKey(name = "import_tx_account_account_fk")
+    @JoinColumn(name = "account_id", nullable = false, foreignKey = @ForeignKey(name = "import_tx_account_account_fk"))
     private Account account;
-
-    @Column(name = "negate_amount", nullable = false)
-    @Type(type = "yes_no")
-    private boolean negate;
 
     public Account getAccount() {
         return account;
@@ -51,11 +47,13 @@ public class ImportTransfer {
         this.account = account;
     }
 
-    public boolean isNegate() {
-        return negate;
+    @Override
+    public Account getType() {
+        return account;
     }
 
-    public void setNegate(boolean negate) {
-        this.negate = negate;
+    @Override
+    public void setType(Account type) {
+        this.account = type;
     }
 }

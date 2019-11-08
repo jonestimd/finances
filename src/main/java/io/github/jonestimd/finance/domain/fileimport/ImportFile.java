@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
@@ -98,17 +99,15 @@ public class ImportFile implements UniqueId<Long> {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_category",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
-            foreignKey = @ForeignKey(name = "import_category_file_fk"))
-    @MapKeyColumn(name = "type_alias")
-    @org.hibernate.annotations.ForeignKey(name = "import_category_file_fk", inverseName = "import_category_category_fk")
-    private Map<String, ImportCategory> importCategoryMap;
+            foreignKey = @ForeignKey(name = "import_category_file_fk"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"import_file_id", "type_alias"}))
+    private Set<ImportCategory> importCategories;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_transfer_account",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
-            foreignKey = @ForeignKey(name = "import_tx_account_file_fk"))
-    @MapKeyColumn(name = "account_alias")
-    @org.hibernate.annotations.ForeignKey(name = "import_tx_account_file_fk", inverseName = "import_tx_account_account_fk")
-    private Map<String, ImportTransfer> importTransferMap;
+            foreignKey = @ForeignKey(name = "import_tx_account_file_fk"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"import_file_id", "account_alias"}))
+    private Set<ImportTransfer> importTransfers;
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "import_payee",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
@@ -193,33 +192,33 @@ public class ImportFile implements UniqueId<Long> {
         this.pageRegions = pageRegions;
     }
 
-    public Map<String, ImportCategory> getImportCategoryMap() {
-        return importCategoryMap;
+    public Set<ImportCategory> getImportCategories() {
+        return importCategories;
     }
 
-    public void setImportCategoryMap(Map<String, ImportCategory> importCategoryMap) {
-        this.importCategoryMap = importCategoryMap;
+    public void setImportCategories(Set<ImportCategory> importCategories) {
+        this.importCategories = importCategories;
     }
 
     public Map<String, TransactionCategory> getCategoryMap() {
-        return Maps.transformValues(importCategoryMap, ImportCategory::getCategory);
+        return importCategories.stream().collect(Collectors.toMap(ImportCategory::getAlias, ImportCategory::getCategory));
     }
 
     public boolean isNegate(TransactionCategory category) {
-        return category != null && importCategoryMap.values().stream().filter(c -> c.getCategory().equals(category))
+        return category != null && importCategories.stream().filter(c -> c.getCategory().equals(category))
                 .findFirst().orElse(EMPTY_IMPORT_CATEGORY).isNegate();
     }
 
-    public Map<String, ImportTransfer> getImportTransferMap() {
-        return importTransferMap;
+    public Set<ImportTransfer> getImportTransfers() {
+        return importTransfers;
     }
 
-    public void setImportTransferMap(Map<String, ImportTransfer> importTransferMap) {
-        this.importTransferMap = importTransferMap;
+    public void setImportTransfers(Set<ImportTransfer> importTransfers) {
+        this.importTransfers = importTransfers;
     }
 
     public Account getTransferAccount(String key) {
-        ImportTransfer transfer = importTransferMap.get(key);
+        ImportTransfer transfer = importTransfers.stream().filter(t -> t.getAlias().equals(key)).findFirst().orElse(null);
         return transfer == null ? null : transfer.getAccount();
     }
 

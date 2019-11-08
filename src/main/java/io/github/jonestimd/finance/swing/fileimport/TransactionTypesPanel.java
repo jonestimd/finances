@@ -21,21 +21,31 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.util.List;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
-import com.google.common.collect.ImmutableList;
-import io.github.jonestimd.finance.domain.fileimport.ImportCategory;
-import io.github.jonestimd.swing.table.model.ColumnAdapter;
-import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
-public class ImportCategoryTableModel extends ValidatedBeanListTableModel<ImportMapping<ImportCategory>> {
-    private static final List<ColumnAdapter<ImportMapping<ImportCategory>, ?>> COLUMN_ADAPTERS = ImmutableList.of(
-        ImportCategoryColumnAdapter.VALUE_ADAPTER,
-        ImportCategoryColumnAdapter.CATEGORY_ADAPTER,
-        ImportCategoryColumnAdapter.NEGATE_ADAPTER
-    );
+import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
+import io.github.jonestimd.finance.swing.BorderFactory;
+import io.github.jonestimd.swing.table.DecoratedTable;
+import io.github.jonestimd.swing.table.TableFactory;
 
-    public ImportCategoryTableModel() {
-        super(COLUMN_ADAPTERS);
+public class TransactionTypesPanel extends JPanel {
+    private final DecoratedTable<ImportTransactionType, ImportTransactionTypeTableModel> table;
+
+    public TransactionTypesPanel(FileImportsDialog owner, TableFactory tableFactory) {
+        super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
+        setBorder(BorderFactory.panelBorder());
+        setPreferredSize(new Dimension(550, 100));
+        table = tableFactory.validatedTableBuilder(new ImportTransactionTypeTableModel()).get();
+        setTableModel(owner.getModel());
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(owner.getModel()));
+    }
+
+    private void setTableModel(FileImportsModel model) {
+        table.setModel(model.getCategoryTableModel());
     }
 }

@@ -21,31 +21,21 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.util.List;
 
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
+import io.github.jonestimd.swing.table.model.ColumnAdapter;
+import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportCategory;
-import io.github.jonestimd.finance.swing.BorderFactory;
-import io.github.jonestimd.swing.table.DecoratedTable;
-import io.github.jonestimd.swing.table.TableFactory;
+public class ImportTransactionTypeTableModel extends ValidatedBeanListTableModel<ImportTransactionType> {
+    private static final List<ColumnAdapter<ImportTransactionType, ?>> COLUMN_ADAPTERS = ImmutableList.of(
+        TransactionTypeColumnAdapter.VALUE_ADAPTER,
+        TransactionTypeColumnAdapter.TRANSACTION_TYPE_ADAPTER,
+        TransactionTypeColumnAdapter.NEGATE_ADAPTER
+    );
 
-public class CategoriesPanel extends JPanel {
-    private final DecoratedTable<ImportMapping<ImportCategory>, ImportCategoryTableModel> table;
-
-    public CategoriesPanel(FileImportsDialog owner, TableFactory tableFactory) {
-        super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
-        setBorder(BorderFactory.panelBorder());
-        setPreferredSize(new Dimension(550, 100));
-        table = tableFactory.validatedTableBuilder(new ImportCategoryTableModel()).get();
-        setTableModel(owner.getModel());
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(owner.getModel()));
-    }
-
-    private void setTableModel(FileImportsModel model) {
-        table.setModel(model.getCategoryTableModel());
+    public ImportTransactionTypeTableModel() {
+        super(COLUMN_ADAPTERS);
     }
 }

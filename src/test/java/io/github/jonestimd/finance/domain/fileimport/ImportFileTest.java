@@ -18,7 +18,7 @@ public class ImportFileTest {
     @Test
     public void isNegateReturnsFalseForUnmappedCategory() throws Exception {
         ImportFile importFile = new ImportFile();
-        importFile.setImportCategoryMap(Collections.emptyMap());
+        importFile.setImportCategories(Collections.emptySet());
 
         assertThat(importFile.isNegate(new TransactionCategory("category code"))).isFalse();
     }
@@ -27,16 +27,16 @@ public class ImportFileTest {
     public void isNegateReturnsFalseForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
         ImportFile importFile = new ImportFile();
-        importFile.setImportCategoryMap(Collections.singletonMap("alias", new ImportCategory(category, false)));
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", category, false)));
 
         assertThat(importFile.isNegate(category)).isFalse();
     }
 
     @Test
-    public void isNegateReturnstrueForCategory() throws Exception {
+    public void isNegateReturnsTrueForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
         ImportFile importFile = new ImportFile();
-        importFile.setImportCategoryMap(Collections.singletonMap("alias", new ImportCategory(category, true)));
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", category, true)));
 
         assertThat(importFile.isNegate(category)).isTrue();
     }
@@ -44,7 +44,7 @@ public class ImportFileTest {
     @Test
     public void getTransferAccountReturnsNullForNoMatch() throws Exception {
         ImportFile importFile = new ImportFile();
-        importFile.setImportTransferMap(Collections.emptyMap());
+        importFile.setImportTransfers(Collections.emptySet());
 
         assertThat(importFile.getTransferAccount("")).isNull();
     }

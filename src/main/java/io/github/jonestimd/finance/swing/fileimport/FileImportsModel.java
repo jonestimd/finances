@@ -32,9 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import javax.swing.table.TableModel;
-
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
@@ -51,7 +50,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     private final Map<ImportFile, ImportFileModel> fileModels = new HashMap<>();
     private final Map<ImportFile, PageRegionTableModel> regionTableModels = new HashMap<>();
-    private final Map<ImportFile, ImportCategoryTableModel> categoryTableModels = new HashMap<>();
+    private final Map<ImportFile, ImportTransactionTypeTableModel> categoryTableModels = new HashMap<>();
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -88,11 +87,14 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         });
     }
 
-    public ImportCategoryTableModel getCategoryTableModel() {
+    public ImportTransactionTypeTableModel getCategoryTableModel() {
         return categoryTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
-            ImportCategoryTableModel model = new ImportCategoryTableModel();
-            model.setBeans(Streams.map(importFile.getImportCategoryMap().entrySet(), ImportMapping::new));
-            // TODO table model listener
+            ImportTransactionTypeTableModel model = new ImportTransactionTypeTableModel();
+            List<ImportTransactionType> beans = new ArrayList<>();
+            beans.addAll(importFile.getImportCategories());
+            beans.addAll(importFile.getImportTransfers());
+            model.setBeans(beans);
+            model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
             return model;
         });
     }
@@ -138,6 +140,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     public boolean isChanged() {
         return fileModels.values().stream().anyMatch(BufferedBeanModel::isChanged)
-                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
+                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
+                || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
     }
 }
