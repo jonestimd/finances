@@ -61,6 +61,12 @@ public class PageRegionTableModel extends ValidatedBeanListTableModel<PageRegion
     }
 
     @Override
+    public void queueAdd(PageRegion bean) {
+        super.queueAdd(bean);
+        getColorColumnAdapter().addBean(bean);
+    }
+
+    @Override
     protected void setValue(Object value, int rowIndex, int columnIndex) {
         if (columnIndex > 0) super.setValue(value, rowIndex, columnIndex);
         else { // bypass change tracker for color changes
@@ -73,15 +79,19 @@ public class PageRegionTableModel extends ValidatedBeanListTableModel<PageRegion
         private static final List<Color> DEFAULT_COLORS = ImmutableList.of(
                 Color.BLUE, Color.RED, Color.GREEN, Color.MAGENTA, Color.PINK, Color.CYAN, Color.ORANGE);
 
-        private final Map<Long, Color> rowColors = new HashMap<>();
+        private final Map<PageRegion, Color> rowColors = new HashMap<>();
         private int nextColor = 0;
 
         public void setBeans(Collection<PageRegion> pageRegions) {
             rowColors.clear();
             for (PageRegion pageRegion : pageRegions) {
-                rowColors.put(pageRegion.getId(), DEFAULT_COLORS.get(nextColor));
-                nextColor = (nextColor + 1)%DEFAULT_COLORS.size();
+                addBean(pageRegion);
             }
+        }
+
+        private void addBean(PageRegion pageRegion) {
+            rowColors.put(pageRegion, DEFAULT_COLORS.get(nextColor));
+            nextColor = (nextColor + 1)%DEFAULT_COLORS.size();
         }
 
         @Override
@@ -111,12 +121,12 @@ public class PageRegionTableModel extends ValidatedBeanListTableModel<PageRegion
 
         @Override
         public Color getValue(PageRegion region) {
-            return rowColors.getOrDefault(region.getId(), Color.GRAY);
+            return rowColors.getOrDefault(region, Color.GRAY);
         }
 
         @Override
         public void setValue(PageRegion region, Color color) {
-            rowColors.put(region.getId(), color);
+            rowColors.put(region, color);
         }
     }
 }

@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -30,45 +29,28 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 
-import javax.swing.Action;
 import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
-import io.github.jonestimd.finance.swing.BorderFactory;
-import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.table.ColorTableCellEditor;
 import io.github.jonestimd.swing.table.ColorTableCellRenderer;
-import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.TableInitializer;
 
-public class PageRegionsPanel extends JPanel {
-    private final DecoratedTable<PageRegion, PageRegionTableModel> table;
-
+public class PageRegionsPanel extends ImportTablePanel<PageRegion, PageRegionTableModel> {
     private JDialog previewDialog;
 
     public PageRegionsPanel(FileImportsDialog owner, TableFactory tableFactory) {
-        super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
-        setBorder(BorderFactory.panelBorder());
-        setPreferredSize(new Dimension(550, 100));
-        table = tableFactory.validatedTableBuilder(new PageRegionTableModel()).get();
+        super(owner, "pdfRegion", owner.getModel()::getRegionTableModel, PageRegion::new, tableFactory);
         table.setDefaultRenderer(Color.class, new ColorTableCellRenderer());
         table.setDefaultEditor(Color.class, new ColorTableCellEditor());
         table.setDefaultRenderer(Float.class, InfinityRenderer.POSITIVE_RENDERER);
         table.setDefaultEditor(Float.class, new RegionCoordinateEditor(table));
-        setTableModel(owner.getModel());
-        Action addRegionAction = owner.actionFactory.newAction("pdfRegion.add", this::addRegion);
-        Action deleteRegionAction = owner.actionFactory.newAction("pdfRegion.delete", this::deleteRegion);
-        Action pdfPreviewAction = owner.actionFactory.newAction("pdfPreview", this::showPreview);
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        add(new ButtonBarFactory().alignRight().add(addRegionAction, deleteRegionAction, pdfPreviewAction).get(), BorderLayout.SOUTH);
-        owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(owner.getModel()));
+        addAction(owner.actionFactory.newAction("pdfPreview", this::showPreview));
     }
 
-    private void setTableModel(FileImportsModel model) {
-        table.setModel(model.getRegionTableModel());
+    protected void setTableModel(PageRegionTableModel model) {
+        super.setTableModel(model);
         TableInitializer.setFixedWidth(table.getColumnModel().getColumn(0), table.getRowHeight());
         table.getColumn(PageRegionColumnAdapter.BOTTOM_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
         table.getColumn(PageRegionColumnAdapter.LABEL_LEFT_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);
@@ -94,13 +76,5 @@ public class PageRegionsPanel extends JPanel {
             previewDialog.setLocation(x, y);
             previewDialog.setVisible(true);
         }
-    }
-
-    private void addRegion(ActionEvent event) {
-        // TODO
-    }
-
-    private void deleteRegion(ActionEvent event) {
-        // TODO
     }
 }

@@ -21,20 +21,36 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.util.List;
+import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.domain.transaction.TransactionType;
 
-import com.google.common.collect.ImmutableList;
-import io.github.jonestimd.swing.table.model.ColumnAdapter;
-import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
+/**
+ * Placeholder model for displaying/editing category/transfer mappings in the UI.
+ */
+public class ImportTransactionTypeModel extends ImportTransactionType<TransactionType> {
+    private TransactionType type;
 
-public class ImportTransactionTypeTableModel extends ValidatedBeanListTableModel<ImportTransactionTypeModel> {
-    private static final List<ColumnAdapter<ImportTransactionTypeModel, ?>> COLUMN_ADAPTERS = ImmutableList.of(
-        TransactionTypeColumnAdapter.VALUE_ADAPTER,
-        TransactionTypeColumnAdapter.TRANSACTION_TYPE_ADAPTER,
-        TransactionTypeColumnAdapter.NEGATE_ADAPTER
-    );
+    public ImportTransactionTypeModel() {
+    }
 
-    public ImportTransactionTypeTableModel() {
-        super(COLUMN_ADAPTERS);
+    public ImportTransactionTypeModel(ImportTransactionType<?> bean) {
+        this.type = bean.getType();
+        setAlias(bean.getAlias());
+        setNegate(bean.isNegate());
+    }
+
+    @Override
+    public TransactionType getType() {
+        return type;
+    }
+
+    @Override
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
+
+    public boolean isCategory() {
+        return type instanceof TransactionCategory;
     }
 }

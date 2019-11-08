@@ -31,9 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
@@ -79,6 +79,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public PageRegionTableModel getRegionTableModel() {
+        if (getSelectedItem() == null) return new PageRegionTableModel();
         return regionTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
             PageRegionTableModel model = new PageRegionTableModel();
             model.setBeans(importFile.getPageRegions());
@@ -88,12 +89,11 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public ImportTransactionTypeTableModel getCategoryTableModel() {
+        if (getSelectedItem() == null) return new ImportTransactionTypeTableModel();
         return categoryTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
             ImportTransactionTypeTableModel model = new ImportTransactionTypeTableModel();
-            List<ImportTransactionType> beans = new ArrayList<>();
-            beans.addAll(importFile.getImportCategories());
-            beans.addAll(importFile.getImportTransfers());
-            model.setBeans(beans);
+            Stream.concat(importFile.getImportCategories().stream(), importFile.getImportTransfers().stream())
+                    .map(ImportTransactionTypeModel::new).forEach(model::addRow);
             model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
             return model;
         });

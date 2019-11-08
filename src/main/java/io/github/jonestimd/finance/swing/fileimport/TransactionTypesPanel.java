@@ -21,31 +21,10 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-
-import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
-import io.github.jonestimd.finance.swing.BorderFactory;
-import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
 
-public class TransactionTypesPanel extends JPanel {
-    private final DecoratedTable<ImportTransactionType, ImportTransactionTypeTableModel> table;
-
+public class TransactionTypesPanel extends ImportTablePanel<ImportTransactionTypeModel, ImportTransactionTypeTableModel> {
     public TransactionTypesPanel(FileImportsDialog owner, TableFactory tableFactory) {
-        super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
-        setBorder(BorderFactory.panelBorder());
-        setPreferredSize(new Dimension(550, 100));
-        table = tableFactory.validatedTableBuilder(new ImportTransactionTypeTableModel()).get();
-        setTableModel(owner.getModel());
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(owner.getModel()));
-    }
-
-    private void setTableModel(FileImportsModel model) {
-        table.setModel(model.getCategoryTableModel());
+        super(owner, "transactionType", owner.getModel()::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory);
     }
 }

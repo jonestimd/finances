@@ -25,30 +25,30 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class TransactionTypeColumnAdapter<V> extends FunctionColumnAdapter<ImportTransactionType, V> {
+public class TransactionTypeColumnAdapter<V> extends FunctionColumnAdapter<ImportTransactionTypeModel, V> {
     public static final String RESOURCE_PREFIX = "table.importTransactionType.column.";
     private static final String VALUE_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "alias.required");
     private static final String VALUE_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "alias.unique");
     private static final String TYPE_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "transactionType.required");
 
     protected TransactionTypeColumnAdapter(String columnId, Class<? super V> valueType,
-            Function<ImportTransactionType, V> getter, BiConsumer<ImportTransactionType, V> setter) {
+            Function<ImportTransactionTypeModel, V> getter, BiConsumer<ImportTransactionTypeModel, V> setter) {
         super(LABELS.get(), RESOURCE_PREFIX, columnId, valueType, getter, setter);
     }
 
     public static final ValidatedTypeColumnAdapter<String> VALUE_ADAPTER =
-        new ValidatedTypeColumnAdapter<String>("alias", String.class, ImportTransactionType::getAlias, ImportTransactionType::setAlias) {
+        new ValidatedTypeColumnAdapter<String>("alias", String.class,
+                ImportTransactionTypeModel::getAlias, ImportTransactionTypeModel::setAlias) {
             @Override
-            public String validate(int selectedIndex, String value, List<? extends ImportTransactionType> beans) {
+            public String validate(int selectedIndex, String value, List<? extends ImportTransactionTypeModel> beans) {
                 if (value == null || value.trim().isEmpty()) return VALUE_REQUIRED;
-                ImportTransactionType row = beans.get(selectedIndex);
+                ImportTransactionTypeModel row = beans.get(selectedIndex);
                 if (beans.stream().filter(mapping -> mapping != row).anyMatch(mapping -> mapping.getAlias().equals(value))) {
                     return VALUE_UNIQUE;
                 }
@@ -58,20 +58,21 @@ public class TransactionTypeColumnAdapter<V> extends FunctionColumnAdapter<Impor
 
     public static final ValidatedTypeColumnAdapter<TransactionType> TRANSACTION_TYPE_ADAPTER =
         new ValidatedTypeColumnAdapter<TransactionType>("transactionType", TransactionType.class,
-                ImportTransactionType::getType, ImportTransactionType::setType) {
+                ImportTransactionTypeModel::getType, ImportTransactionTypeModel::setType) {
             @Override
-            public String validate(int selectedIndex, TransactionType type, List<? extends ImportTransactionType> beans) {
+            public String validate(int selectedIndex, TransactionType type, List<? extends ImportTransactionTypeModel> beans) {
                 return type == null ? TYPE_REQUIRED : null;
             }
         };
 
     public static final TransactionTypeColumnAdapter<Boolean> NEGATE_ADAPTER =
-        new TransactionTypeColumnAdapter<>("negate", Boolean.class, ImportTransactionType::isNegate, ImportTransactionType::setNegate);
+        new TransactionTypeColumnAdapter<>("negate", Boolean.class,
+                ImportTransactionTypeModel::isNegate, ImportTransactionTypeModel::setNegate);
 
     private static abstract class ValidatedTypeColumnAdapter<V> extends TransactionTypeColumnAdapter<V>
-            implements ValidatedColumnAdapter<ImportTransactionType, V> {
+            implements ValidatedColumnAdapter<ImportTransactionTypeModel, V> {
         public ValidatedTypeColumnAdapter(String columnId, Class<? super V> valueType,
-                Function<ImportTransactionType, V> getter, BiConsumer<ImportTransactionType, V> setter) {
+                Function<ImportTransactionTypeModel, V> getter, BiConsumer<ImportTransactionTypeModel, V> setter) {
             super(columnId, valueType, getter, setter);
         }
     }
