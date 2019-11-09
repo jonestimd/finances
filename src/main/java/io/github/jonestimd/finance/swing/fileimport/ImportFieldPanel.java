@@ -25,6 +25,8 @@ import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.beans.PropertyChangeListener;
 import java.text.Format;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -53,8 +55,10 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
     private static final Format REGION_FORMAT = FormatFactory.format(PageRegion::getName);
+    private static final FieldType[] FIELD_TYPES = Arrays.stream(FieldType.values()).filter(type -> !type.isTransaction())
+            .sorted(Comparator.comparing(Object::toString)).toArray(FieldType[]::new);
 
-    private final JComboBox<FieldType> typeField = new JComboBox<>(FieldType.values());
+    private final JComboBox<FieldType> typeField = new JComboBox<>(FIELD_TYPES);
     private final BeanListComboBox<PageRegion> pageRegionField = new BeanListComboBox<>(REGION_FORMAT);
     private final MultiSelectField labelField = new MultiSelectField.Builder(false, true).disableTab().get();
     private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
