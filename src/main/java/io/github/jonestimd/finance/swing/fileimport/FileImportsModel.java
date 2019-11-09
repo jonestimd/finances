@@ -37,6 +37,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
+import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -51,6 +52,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     private final Map<ImportFile, ImportFileModel> fileModels = new HashMap<>();
     private final Map<ImportFile, PageRegionTableModel> regionTableModels = new HashMap<>();
     private final Map<ImportFile, ImportTransactionTypeTableModel> categoryTableModels = new HashMap<>();
+    private final Map<ImportFile, ImportPayeeTableModel> payeeTableModels = new HashMap<>();
+    private final Map<ImportFile, ImportSecurityTableModel> securityTableModels = new HashMap<>();
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -99,6 +102,26 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         });
     }
 
+    public ImportPayeeTableModel getPayeeTableModel() {
+        if (getSelectedItem() == null) return new ImportPayeeTableModel();
+        return payeeTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
+            ImportPayeeTableModel model = new ImportPayeeTableModel();
+            model.setBeans(Streams.map(importFile.getPayeeMap().entrySet(), ImportMapping::new));
+            model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+            return model;
+        });
+    }
+
+    public ImportSecurityTableModel getSecurityTableModel() {
+        if (getSelectedItem() == null) return new ImportSecurityTableModel();
+        return securityTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
+            ImportSecurityTableModel model = new ImportSecurityTableModel();
+            model.setBeans(Streams.map(importFile.getSecurityMap().entrySet(), ImportMapping::new));
+            model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+            return model;
+        });
+    }
+
     @Override
     public void setSelectedItem(Object importFile) {
         ImportFile oldSelection = getSelectedItem();
@@ -141,6 +164,15 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     public boolean isChanged() {
         return fileModels.values().stream().anyMatch(BufferedBeanModel::isChanged)
                 || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
-                || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
+                || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
+                || payeeTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
+                || securityTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
+    }
+
+    public boolean isValid() {
+        return regionTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
+                && categoryTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
+                && payeeTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
+                && securityTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors);
     }
 }

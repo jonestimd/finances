@@ -21,33 +21,17 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.util.Map.Entry;
+import java.util.List;
 
-public class ImportMapping<T> {
-    private String alias;
-    private T bean;
+import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.asset.Security;
+import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-    public ImportMapping() {
-    }
+public class ImportSecurityTableModel extends ValidatedBeanListTableModel<ImportMapping<Security>> {
+    private static final List<ImportMappingColumnAdapter<?, ?>> COLUMN_ADAPTERS = ImmutableList.of(
+            ImportMappingColumnAdapter.ALIAS_COLUMN_ADAPTER, ImportMappingColumnAdapter.SECURITY_COLUMN_ADAPTER);
 
-    public ImportMapping(Entry<String, T> entry) {
-        this.alias = entry.getKey();
-        this.bean = entry.getValue();
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public T getBean() {
-        return bean;
-    }
-
-    public void setBean(T bean) {
-        this.bean = bean;
+    public ImportSecurityTableModel() {
+        super(COLUMN_ADAPTERS);
     }
 }

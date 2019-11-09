@@ -21,10 +21,17 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import io.github.jonestimd.swing.table.TableFactory;
+import java.util.List;
 
-public class TransactionTypesPanel extends ImportTablePanel<ImportTransactionTypeModel, ImportTransactionTypeTableModel> {
-    public TransactionTypesPanel(FileImportsDialog owner, TableFactory tableFactory) {
-        super(owner, "transactionType", owner.getModel()::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory);
+import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.transaction.Payee;
+import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
+
+public class ImportPayeeTableModel extends ValidatedBeanListTableModel<ImportMapping<Payee>> {
+    private static final List<ImportMappingColumnAdapter<?, ?>> COLUMN_ADAPTERS = ImmutableList.of(
+            ImportMappingColumnAdapter.ALIAS_COLUMN_ADAPTER, ImportMappingColumnAdapter.PAYEE_COLUMN_ADAPTER);
+
+    public ImportPayeeTableModel() {
+        super(COLUMN_ADAPTERS);
     }
 }

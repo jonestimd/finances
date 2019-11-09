@@ -76,7 +76,12 @@ public class FileImportsDialog extends ValidatedDialog {
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), fieldsPanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"), new TransactionTypesPanel(this, tableFactory));
+        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
+                new ImportTablePanel<>(this, "transactionType", model::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
+        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.payees"),
+                new ImportTablePanel<>(this, "importMapping", model::getPayeeTableModel, ImportMapping::new, tableFactory));
+        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.securities"),
+                new ImportTablePanel<>(this, "importMapping", model::getSecurityTableModel, ImportMapping::new, tableFactory));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         Box listPanel = Box.createHorizontalBox();
@@ -87,9 +92,7 @@ public class FileImportsDialog extends ValidatedDialog {
         model.addSelectionListener((oldFile, newFile) -> {
             tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
         });
-        // TODO
-        //   mapping tab(s) (payee, security)
-        //   add Reset button
+        // TODO add Reset button
         //   ???? filter regex's, negate amount, memo ????
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
@@ -97,6 +100,7 @@ public class FileImportsDialog extends ValidatedDialog {
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
         model.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
+        addSaveCondition(model::isValid);
     }
 
     private void createMenuBar() {
