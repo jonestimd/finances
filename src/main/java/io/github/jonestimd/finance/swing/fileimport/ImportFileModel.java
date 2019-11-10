@@ -36,8 +36,11 @@ import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
 
+import static org.apache.commons.lang.StringUtils.*;
+
 public abstract class ImportFileModel extends ImportFile implements BufferedBeanModel<ImportFile> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
+    public static final String FIELDS_PROPERTY = "fields";
     private static final ProxyFactory factory;
 
     static {
@@ -116,6 +119,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     public ImportFieldModel addFieldModel(ImportField field) {
         ImportFieldModel model = newFieldModel(field);
         fieldModels.add(model);
+        firePropertyChange(FIELDS_PROPERTY, null, fieldModels);
         return model;
     }
 
@@ -130,6 +134,16 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
+
+    public String validate() {
+        if (getFieldModels().isEmpty()) return "At least one field is required"; // TODO resource bundle
+        return null;
+    }
+
+    public boolean isValid() {
+        return isNotBlank(getName()) && getImportType() != null && getFileType() != null && isNotBlank(getDateFormat())
+                && getStartOffset() != null && !getDateLabels().isEmpty() && (fieldModels == null || !fieldModels.isEmpty());
+    }
 
     private static class Handler extends BufferedBeanModelHandler<ImportFile> {
 

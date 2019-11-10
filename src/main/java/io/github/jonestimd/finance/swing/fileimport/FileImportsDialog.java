@@ -24,6 +24,7 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.awt.BorderLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.text.Format;
 import java.util.List;
 
@@ -48,6 +49,8 @@ import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.dialog.ValidatedDialog;
 import io.github.jonestimd.swing.table.TableFactory;
+import io.github.jonestimd.swing.validation.ValidatedComponent;
+import io.github.jonestimd.swing.validation.ValidationSupport;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
@@ -56,7 +59,7 @@ public class FileImportsDialog extends ValidatedDialog {
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX);
     private final Format importFileFormat = FormatFactory.format(ImportFile::getName);
-    private final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    private final ValidatedTabPane tabbedPane = new ValidatedTabPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
     private final BeanListComboBox<ImportFile> importFileList;
@@ -64,24 +67,25 @@ public class FileImportsDialog extends ValidatedDialog {
     private final Action newAction = actionFactory.newAction("menu.imports.new", this::newImport);
     private final Action deleteAction = actionFactory.newAction("menu.imports.delete", this::deleteImport);
     private final Action duplicateAction = actionFactory.newAction("menu.imports.duplicate", this::duplicateImport);
-    private final FileImportsModel model;
+    private final FileImportsModel importsModel;
+    private final PropertyChangeListener onFieldsChange = (event) -> tabbedPane.validateValue();
 
     public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
-        model = new FileImportsModel(importFiles);
+        importsModel = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
-        importFileList = BeanListComboBox.builder(importFileFormat, model).get();
+        importFileList = BeanListComboBox.builder(importFileFormat, importsModel).get();
         filePanel = new ImportFilePanel(this, accounts, payees);
         fieldsPanel = new ImportFieldsPanel(this);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), fieldsPanel);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
-                new ImportTablePanel<>(this, "transactionType", model::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
+                new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.payees"),
-                new ImportTablePanel<>(this, "importMapping", model::getPayeeTableModel, ImportMapping::new, tableFactory));
+                new ImportTablePanel<>(this, "importMapping", importsModel::getPayeeTableModel, ImportMapping::new, tableFactory));
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.securities"),
-                new ImportTablePanel<>(this, "importMapping", model::getSecurityTableModel, ImportMapping::new, tableFactory));
+                new ImportTablePanel<>(this, "importMapping", importsModel::getSecurityTableModel, ImportMapping::new, tableFactory));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         Box listPanel = Box.createHorizontalBox();
@@ -89,18 +93,21 @@ public class FileImportsDialog extends ValidatedDialog {
         listPanel.add(Box.createHorizontalStrut(5));
         listPanel.add(importFileList);
         getFormPanel().add(listPanel, BorderLayout.NORTH);
-        model.addSelectionListener((oldFile, newFile) -> {
+        importsModel.addSelectionListener((oldFile, newFile) -> {
+            if (oldFile != null) oldFile.removePropertyChangeListener(ImportFileModel.FIELDS_PROPERTY, onFieldsChange);
+            newFile.addPropertyChangeListener(ImportFileModel.FIELDS_PROPERTY, onFieldsChange);
             tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
+            tabbedPane.validateValue();
         });
         // TODO add Reset button
         //   ???? filter regex's, negate amount, memo ????
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
-        addSaveCondition(model::isChanged);
+        addSaveCondition(importsModel::isChanged);
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
-        model.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
-        addSaveCondition(model::isValid);
+        importsModel.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
+        addSaveCondition(importsModel::isValid);
     }
 
     private void createMenuBar() {
@@ -119,7 +126,7 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     public FileImportsModel getModel() {
-        return model;
+        return importsModel;
     }
 
     public boolean showDialog() {
@@ -131,7 +138,7 @@ public class FileImportsDialog extends ValidatedDialog {
     private void newImport(ActionEvent event) {
         ((JComponent) event.getSource()).setEnabled(false);
         tabbedPane.setSelectedIndex(0);
-        model.addImport();
+        importsModel.addImport();
     }
 
     private void duplicateImport(ActionEvent event) {
@@ -144,5 +151,33 @@ public class FileImportsDialog extends ValidatedDialog {
 
     private void applyChanges(ActionEvent event) {
         // TODO
+    }
+
+    private class ValidatedTabPane extends JTabbedPane implements ValidatedComponent {
+        private final ValidationSupport<ImportFileModel> validationSupport = new ValidationSupport<>(this, ImportFileModel::validate);
+
+        public ValidatedTabPane() {
+            super(JTabbedPane.TOP);
+        }
+
+        @Override
+        public void validateValue() {
+            validationSupport.validateValue(importsModel.getSelectedImport());
+        }
+
+        @Override
+        public String getValidationMessages() {
+            return validationSupport.getMessages();
+        }
+
+        @Override
+        public void addValidationListener(PropertyChangeListener listener) {
+            validationSupport.addValidationListener(listener);
+        }
+
+        @Override
+        public void removeValidationListener(PropertyChangeListener listener) {
+            validationSupport.removeValidationListener(listener);
+        }
     }
 }

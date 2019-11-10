@@ -132,8 +132,13 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     public void addImport() {
         ImportFile importFile = new ImportFile();
         importFile.setName("");
+        importFile.setDateFormat("");
         importFile.setFields(new HashSet<>());
         importFile.setPageRegions(new HashSet<>());
+        importFile.setImportCategories(new HashSet<>());
+        importFile.setImportTransfers(new HashSet<>());
+        importFile.setPayeeMap(new HashMap<>());
+        importFile.setSecurityMap(new HashMap<>());
         addElement(importFile);
         newImportFileModel(importFile);
         setSelectedItem(importFile);
@@ -170,7 +175,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public boolean isValid() {
-        return regionTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
+        return fileModels.values().stream().allMatch(ImportFileModel::isValid)
+                && regionTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && categoryTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && payeeTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && securityTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors);
