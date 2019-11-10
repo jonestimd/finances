@@ -66,7 +66,7 @@ public class ImportFilePanel extends JComponent {
     }
 
     private MultiSelectField createLabelField() {
-        return new MultiSelectField.Builder(false, true).disableTab().get();
+        return MultiSelectField.builder(false, true).disableTab().get();
     }
 
     private final ValidatedTextField nameField;

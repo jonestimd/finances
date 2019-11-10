@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -45,8 +46,10 @@ import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.component.MultiSelectField;
+import io.github.jonestimd.swing.component.ValidatedMultiSelectField;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
+import io.github.jonestimd.swing.validation.ValidationBorder;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ComponentUtils.*;
@@ -55,13 +58,15 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
     private static final Format REGION_FORMAT = FormatFactory.format(PageRegion::getName);
-    private static final FieldType[] FIELD_TYPES = Arrays.stream(FieldType.values()).filter(type -> !type.isTransaction())
-            .sorted(Comparator.comparing(Object::toString)).toArray(FieldType[]::new);
+    private static final String TYPE_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "type.required");
+    private static final String AMOUNT_FORMAT_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "amountFormat.required");
+    private static final List<FieldType> FIELD_TYPES = Arrays.stream(FieldType.values()).filter(type -> !type.isTransaction())
+            .sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
 
-    private final JComboBox<FieldType> typeField = new JComboBox<>(FIELD_TYPES);
+    private final ValidatedMultiSelectField labelField;
+    private final JComboBox<FieldType> typeField = ComponentFactory.newComboBox(FIELD_TYPES, TYPE_REQUIRED);
+    private final JComboBox<AmountFormat> amountFormatField = ComponentFactory.newComboBox(AmountFormat.class, AMOUNT_FORMAT_REQUIRED);
     private final BeanListComboBox<PageRegion> pageRegionField = new BeanListComboBox<>(REGION_FORMAT);
-    private final MultiSelectField labelField = new MultiSelectField.Builder(false, true).disableTab().get();
-    private final JComboBox<AmountFormat> amountFormatField = new JComboBox<>(AmountFormat.values());
     private final JCheckBox negateField = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateAmount");
     private final JTextField acceptRegexField = new JTextField();
     private final JTextField rejectRegexField = new JTextField();
@@ -73,7 +78,11 @@ public class ImportFieldPanel extends JComponent {
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
                 .useScrollPane(MultiSelectField.class)
                 .setConstraints(MultiSelectField.class, FormElement.TEXT_AREA);
-        builder.append("label", labelField);
+        labelField = builder.append("label", MultiSelectField.builder(false, true)
+                .pendingItemValidator((field, text) -> ImportFieldModel.isValidColumn(text))
+                .disableTab()
+                .validator(this::validateLabel).get());
+        ValidationBorder.addToViewport(labelField);
         builder.unrelatedVerticalGap().append("type", typeField);
         builder.append("amountFormat", amountFormatField);
         builder.append(negateField);
@@ -97,6 +106,10 @@ public class ImportFieldPanel extends JComponent {
             JComponent component = propertyLabelMap.get(event.getPropertyName());
             if (component != null) component.setForeground(labelColor);
         };
+    }
+
+    private String validateLabel(List<String> columns) {
+        return model == null ? null : model.validateLabel(columns);
     }
 
     private Color getLabelColor(boolean changed) {
@@ -130,7 +143,9 @@ public class ImportFieldPanel extends JComponent {
     }
 
     public void setImportFile(ImportFileModel importFile) {
-        pageRegionField.setModel(new BeanListComboBoxModel<>(importFile.getPageRegions()));
+        BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(importFile.getPageRegions());
+        regionsModel.insertElementAt(null, 0);
+        pageRegionField.setModel(regionsModel);
     }
 
     public void setImportField(ImportFieldModel model) {

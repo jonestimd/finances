@@ -21,14 +21,22 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.util.HashSet;
+import java.util.List;
+
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
 
+import static io.github.jonestimd.finance.swing.BundleType.*;
+
 public abstract class ImportFieldModel extends ImportField implements BufferedBeanModel<ImportField> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
     private static final ProxyFactory factory;
+    private static final String LABEL_REQUIRED = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.required");
+    private static final String DUPLICATE_COLUMNS = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.duplicateColumns");
+    private static final String BLANK_COLUMNS = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.blankColumns");
 
     static {
         factory = new ProxyFactory();
@@ -37,12 +45,27 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
 
     public static ImportFieldModel create(ImportField importField) {
         try {
-            return (ImportFieldModel) factory.create(new Class[0], new Object[0], new BufferedBeanModelHandler<>(importField));
+            return (ImportFieldModel) factory.create(new Class[] {}, new Object[] {}, new BufferedBeanModelHandler<>(importField));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     protected ImportFieldModel() {
+    }
+
+    public boolean isValid() {
+        return validateLabel(getLabels()) == null && getType() != null && getAmountFormat() != null;
+    }
+
+    public String validateLabel(List<String> columns) {
+        if (columns.isEmpty()) return LABEL_REQUIRED;
+        if (new HashSet<>(columns).size() < columns.size()) return DUPLICATE_COLUMNS;
+        if (!columns.stream().allMatch(ImportFieldModel::isValidColumn)) return BLANK_COLUMNS;
+        return null;
+    }
+
+    public static boolean isValidColumn(String column) {
+        return !column.trim().isEmpty();
     }
 }

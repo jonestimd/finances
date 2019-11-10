@@ -47,18 +47,16 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public static ImportFileModel create(ImportFile importFile) {
         try {
-            return (ImportFileModel) factory.create(new Class[] {ImportFile.class}, new Object[] {importFile}, new Handler(importFile));
+            return (ImportFileModel) factory.create(new Class[] {}, new Object[] {}, new Handler(importFile));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private final ImportFile delegate;
     private final Map<FieldType, List<String>> labelChanges = new HashMap<>();
     private List<ImportFieldModel> fieldModels;
 
-    protected ImportFileModel(ImportFile delegate) {
-        this.delegate = delegate;
+    protected ImportFileModel() {
     }
 
     public List<String> getDateLabels() {
@@ -104,15 +102,21 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     private Stream<ImportField> getFields(FieldType type) {
-        return delegate.getFields().stream().filter(field -> field.getType() == type);
+        return getFields().stream().filter(field -> field.getType() == type);
     }
 
     public List<ImportFieldModel> getFieldModels() {
         if (fieldModels == null) {
-            fieldModels = delegate.getFields().stream().filter(field -> !field.getType().isTransaction())
+            fieldModels = getFields().stream().filter(field -> !field.getType().isTransaction())
                     .map(this::newFieldModel).collect(Collectors.toList());
         }
         return fieldModels;
+    }
+
+    public ImportFieldModel addFieldModel(ImportField field) {
+        ImportFieldModel model = newFieldModel(field);
+        fieldModels.add(model);
+        return model;
     }
 
     private ImportFieldModel newFieldModel(ImportField field) {
