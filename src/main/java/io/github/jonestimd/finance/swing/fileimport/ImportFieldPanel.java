@@ -83,7 +83,7 @@ public class ImportFieldPanel extends JComponent {
         builder.append("memo", memoField);
         bindToModel();
         final Map<String, JComponent> propertyLabelMap = new MapBuilder<String, JComponent>()
-                .put("changedLabel", getLabel(labelField))
+                .put("changedLabels", getLabel(labelField))
                 .put("changedType", getLabel(typeField))
                 .put("changedAmountFormat", getLabel(amountFormatField))
                 .put("changedNegate", negateField)
