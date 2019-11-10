@@ -31,10 +31,9 @@ import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
@@ -54,22 +53,24 @@ import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 
 public class FileImportsDialog extends ValidatedDialog {
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
-    protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX);
+    protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
     private final Format importFileFormat = FormatFactory.format(ImportFile::getName);
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
     private final BeanListComboBox<ImportFile> importFileList;
     private final Action applyAction = actionFactory.newAction("apply", this::applyChanges);
-    private final Action newAction = actionFactory.newAction("menu.imports.new", this::newImport);
-    private final Action deleteAction = actionFactory.newAction("menu.imports.delete", this::deleteImport);
-    private final Action duplicateAction = actionFactory.newAction("menu.imports.duplicate", this::duplicateImport);
+    private final Action resetAction = actionFactory.newAction("reset", this::resetChanges);
+    private final Action newAction = actionFactory.newAction("new", this::newImport);
+    private final Action deleteAction = actionFactory.newAction("delete", this::deleteImport);
+    private final Action duplicateAction = actionFactory.newAction("duplicate", this::duplicateImport);
     private final FileImportsModel importsModel;
 
     public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
         importsModel = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
+        buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(importFileFormat, importsModel).get();
         filePanel = new ImportFilePanel(this, accounts, payees);
         fieldsPanel = new ImportFieldsPanel(this);
@@ -92,8 +93,6 @@ public class FileImportsDialog extends ValidatedDialog {
         importsModel.addSelectionListener((oldFile, newFile) -> {
             tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
         });
-        // TODO add Reset button
-        //   ???? filter regex's, negate amount, memo ????
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(importsModel::isChanged);
@@ -101,15 +100,16 @@ public class FileImportsDialog extends ValidatedDialog {
         applyAction.setEnabled(saveAction.isEnabled());
         importsModel.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
         addSaveCondition(importsModel::isValid);
+        // cancelAction.setConfirmClose(); // TODO check for unsaved changes
     }
 
     private void createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu editMenu = ComponentFactory.newMenu(LABELS.get(), RESOURCE_PREFIX + "menu.imports.mnemonicAndName");
-        editMenu.add(new JMenuItem(newAction));
-        editMenu.add(new JMenuItem(deleteAction));
-        editMenu.add(new JMenuItem(duplicateAction));
-        menuBar.add(editMenu);
+        JToolBar toolBar = ComponentFactory.newMenuToolBar();
+        toolBar.add(ComponentFactory.newToolbarButton(newAction));
+        toolBar.add(ComponentFactory.newToolbarButton(deleteAction));
+        toolBar.add(ComponentFactory.newToolbarButton(duplicateAction));
+        menuBar.add(toolBar);
         setJMenuBar(menuBar);
     }
 
@@ -129,7 +129,6 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     private void newImport(ActionEvent event) {
-        ((JComponent) event.getSource()).setEnabled(false);
         tabbedPane.setSelectedIndex(0);
         importsModel.addImport();
     }
@@ -143,6 +142,10 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     private void applyChanges(ActionEvent event) {
+        // TODO
+    }
+
+    private void resetChanges(ActionEvent event) {
         // TODO
     }
 }
