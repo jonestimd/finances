@@ -49,9 +49,12 @@ import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.MultiSelectField;
 import io.github.jonestimd.swing.component.TextField;
 import io.github.jonestimd.swing.component.TextField.Validated;
+import io.github.jonestimd.swing.component.ValidatedMultiSelectField;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
+import io.github.jonestimd.swing.validation.ValidationBorder;
+import io.github.jonestimd.swing.validation.Validator;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ComponentUtils.*;
@@ -60,15 +63,21 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ImportFilePanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
+    public static final String DATE_LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "dateLabel.required");
 
     private static Validated requiredTextField(String resourcePrefix) {
         return TextField.validated(LABELS.get(), RESOURCE_PREFIX + resourcePrefix).required("required");
     }
 
-    private MultiSelectField createLabelField() {
+    private static MultiSelectField createLabelField() {
         return MultiSelectField.builder(false, true).disableTab().get();
     }
 
+    private static ValidatedMultiSelectField createValidatedLabelField(Validator<List<String>> validator) {
+        return MultiSelectField.builder(false, true).disableTab().validator(validator).get();
+    }
+
+    private ImportFileModel model;
     private final ValidatedTextField nameField;
     private final BeanListComboBox<Account> accountField = new BeanListComboBox<>(new AccountFormat());
     private final JComboBox<ImportType> importTypeField = newComboBox(ImportType.class, LABELS.getString(RESOURCE_PREFIX + "importType.required"));
@@ -78,11 +87,10 @@ public class ImportFilePanel extends JComponent {
     private final JCheckBox reconcileCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
     private final JCheckBox singlePayeeCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "singlePayee");
     private final BeanListComboBox<Payee> payeeField = new BeanListComboBox<>(new PayeeFormat());
-    private final MultiSelectField dateLabelField = createLabelField();
+    private final ValidatedMultiSelectField dateLabelField = createValidatedLabelField(labels -> labels.isEmpty() ? DATE_LABEL_REQUIRED : null);
     private final MultiSelectField payeeLabelField = createLabelField();
     private final MultiSelectField securityLabelField = createLabelField();
     private final JLabel payeeLabel;
-    private ImportFileModel model;
     private final PropertyChangeListener onPropertyChange;
 
     public ImportFilePanel(FileImportsDialog owner, List<Account> accounts, List<Payee> payees) {
@@ -101,6 +109,7 @@ public class ImportFilePanel extends JComponent {
         builder.append("dateFormat", dateFormatField);
         builder.append(new JSeparator(), FormElement.TOP_LABEL);
         builder.append("dateLabel", dateLabelField);
+        ValidationBorder.addToViewport(dateLabelField);
         builder.append("securityLabel", securityLabelField);
         JScrollPane payeeScrollPane = builder.append("payeeLabel", new JScrollPane(payeeLabelField), FormElement.TEXT_FIELD);
         payeeField.setPreferredSize(payeeScrollPane.getPreferredSize());
