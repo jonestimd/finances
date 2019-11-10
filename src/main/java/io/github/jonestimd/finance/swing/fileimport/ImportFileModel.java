@@ -36,11 +36,13 @@ import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
 
+import static io.github.jonestimd.finance.swing.BundleType.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 public abstract class ImportFileModel extends ImportFile implements BufferedBeanModel<ImportFile> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
     public static final String FIELDS_PROPERTY = "fields";
+    public static final String FIELDS_REQUIRED = LABELS.getString("dialog.fileImport.importField.required");
     private static final ProxyFactory factory;
 
     static {
@@ -135,9 +137,8 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
 
-    public String validate() {
-        if (getFieldModels().isEmpty()) return "At least one field is required"; // TODO resource bundle
-        return null;
+    public String validateFields() {
+        return getFieldModels().isEmpty() ? FIELDS_REQUIRED : null;
     }
 
     public boolean isValid() {

@@ -40,9 +40,11 @@ import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
 import io.github.jonestimd.swing.list.BeanListModel;
+import io.github.jonestimd.swing.validation.ValidatedComponent;
+import io.github.jonestimd.swing.validation.ValidationSupport;
 
 public class ImportFieldsPanel extends JComponent {
-    private final JList<ImportFieldModel> fieldList = new JList<>();
+    private final FieldList fieldList = new FieldList();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
     private final Action addAction;
     private final Action deleteAction;
@@ -76,6 +78,7 @@ public class ImportFieldsPanel extends JComponent {
         fieldPanel.setImportFile(model);
         model.getFieldModels().forEach(fieldModel -> fieldModel.addPropertyChangeListener(repaintList));
         if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
+        fieldList.validateValue();
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
@@ -91,10 +94,12 @@ public class ImportFieldsPanel extends JComponent {
         fieldModel.addPropertyChangeListener(repaintList);
         listModel.addElement(fieldModel);
         fieldList.setSelectedIndex(listModel.getSize()-1);
+        fieldList.validateValue();
     }
 
     private void deleteField(ActionEvent event) {
         // TODO
+        fieldList.validateValue();
     }
 
     private static class ListCellRenderer extends MultiSelectListCellRenderer<ImportFieldModel> {
@@ -113,6 +118,30 @@ public class ImportFieldsPanel extends JComponent {
                 else setBackground(SELECTED_ERROR_BACKGROUND);
             }
             return this;
+        }
+    }
+
+    private class FieldList extends JList<ImportFieldModel> implements ValidatedComponent {
+        private final ValidationSupport<ImportFileModel> validationSupport = new ValidationSupport<>(this, ImportFileModel::validateFields);
+
+        @Override
+        public void validateValue() {
+            validationSupport.validateValue(fileModel);
+        }
+
+        @Override
+        public String getValidationMessages() {
+            return validationSupport.getMessages();
+        }
+
+        @Override
+        public void addValidationListener(PropertyChangeListener listener) {
+            validationSupport.addValidationListener(listener);
+        }
+
+        @Override
+        public void removeValidationListener(PropertyChangeListener listener) {
+            validationSupport.removeValidationListener(listener);
         }
     }
 }
