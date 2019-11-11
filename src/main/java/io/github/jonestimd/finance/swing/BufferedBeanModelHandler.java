@@ -28,9 +28,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.common.collect.ImmutableList;
 import javassist.util.proxy.MethodHandler;
 
 /**
@@ -40,6 +42,7 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
     public static final String CHANGED_PROPERTY = "changed";
     private static final Class[] PROP_LISTENER_PARAMS = new Class[] {String.class, PropertyChangeListener.class};
     private static final Class[] LISTENER_PARAMS = new Class[] {PropertyChangeListener.class};
+    private static final List<String> SELF_METHODS = ImmutableList.of("equals", "hashCode");
 
     protected final D delegate;
     private final Map<String, Object> changeValues = new HashMap<>();
@@ -51,7 +54,7 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
 
     @Override
     public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
-        if (thisMethod.getDeclaringClass().equals(self.getClass().getSuperclass()) && !Modifier.isAbstract(thisMethod.getModifiers())) {
+        if (isSelfMethod(self, thisMethod)) {
             return proceed.invoke(self, args);
         }
         if (isFirePropertyChange(thisMethod)) {
@@ -90,13 +93,24 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         if (isSetter(thisMethod)) {
             String property = methodName.substring(3);
             boolean oldChanged = isChanged(self);
-            if (Objects.equals(args[0], getBeanValue(thisMethod))) changeValues.remove(property);
+            Object oldValue = getBeanValue(thisMethod);
+            if (Objects.equals(args[0], oldValue)) changeValues.remove(property);
             else changeValues.put(property, args[0]);
             firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged(self));
+            firePropertyChange(normalCase(property), oldValue, args[0]);
             firePropertyChange(CHANGED_PROPERTY + property, null, changeValues.containsKey(property));
             return null;
         }
         return thisMethod.invoke(delegate, args);
+    }
+
+    private boolean isSelfMethod(Object self, Method thisMethod) {
+        return thisMethod.getDeclaringClass().equals(self.getClass().getSuperclass()) && !Modifier.isAbstract(thisMethod.getModifiers())
+                || SELF_METHODS.contains(thisMethod.getName());
+    }
+
+    private String normalCase(String name) {
+        return Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
 
     private boolean isFirePropertyChange(Method method) {

@@ -24,7 +24,6 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.awt.BorderLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.text.Format;
 import java.util.List;
 
 import javax.swing.Action;
@@ -54,11 +53,10 @@ import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 public class FileImportsDialog extends ValidatedDialog {
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
-    private final Format importFileFormat = FormatFactory.format(ImportFile::getName);
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
-    private final BeanListComboBox<ImportFile> importFileList;
+    private final BeanListComboBox<ImportFileModel> importFileList;
     private final Action applyAction = actionFactory.newAction("apply", this::applyChanges);
     private final Action resetAction = actionFactory.newAction("reset", this::resetChanges);
     private final Action newAction = actionFactory.newAction("new", this::newImport);
@@ -71,7 +69,7 @@ public class FileImportsDialog extends ValidatedDialog {
         importsModel = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
-        importFileList = BeanListComboBox.builder(importFileFormat, importsModel).get();
+        importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
         filePanel = new ImportFilePanel(this, accounts, payees);
         fieldsPanel = new ImportFieldsPanel(this);
         addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
@@ -99,6 +97,7 @@ public class FileImportsDialog extends ValidatedDialog {
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
         importsModel.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
+        importsModel.addPropertyChangeListener("names", event -> importFileList.repaint());
         addSaveCondition(importsModel::isValid);
         // cancelAction.setConfirmClose(); // TODO check for unsaved changes
     }

@@ -68,7 +68,7 @@ public class ImportFieldsPanel extends JComponent {
             oldFile.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
             setFileModel(newFile);
         });
-        setFileModel(owner.getModel().getSelectedImport());
+        setFileModel(owner.getModel().getSelectedItem());
     }
 
     private void setFileModel(ImportFileModel model) {

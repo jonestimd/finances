@@ -142,7 +142,7 @@ public class ImportFilePanel extends JComponent {
             JComponent component = propertyLabelMap.get(event.getPropertyName());
             if (component != null) component.setForeground(labelColor);
         };
-        setImportFile(owner.getModel().getSelectedImport());
+        setImportFile(owner.getModel().getSelectedItem());
     }
 
     private void bindToModel(FileImportsModel fileImportsModel) {

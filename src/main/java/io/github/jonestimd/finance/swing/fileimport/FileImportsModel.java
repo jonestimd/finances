@@ -42,43 +42,46 @@ import io.github.jonestimd.util.Streams;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
+public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
     public static final String CHANGED_PROPERTY = "changed";
 
     private static final String NAME_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "name.required");
     private static final String NAME_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "name.unique");
 
-    private final Map<ImportFile, ImportFileModel> fileModels = new HashMap<>();
-    private final Map<ImportFile, PageRegionTableModel> regionTableModels = new HashMap<>();
-    private final Map<ImportFile, ImportTransactionTypeTableModel> categoryTableModels = new HashMap<>();
-    private final Map<ImportFile, ImportPayeeTableModel> payeeTableModels = new HashMap<>();
-    private final Map<ImportFile, ImportSecurityTableModel> securityTableModels = new HashMap<>();
+    private final Map<ImportFileModel, PageRegionTableModel> regionTableModels = new HashMap<>();
+    private final Map<ImportFileModel, ImportTransactionTypeTableModel> categoryTableModels = new HashMap<>();
+    private final Map<ImportFileModel, ImportPayeeTableModel> payeeTableModels = new HashMap<>();
+    private final Map<ImportFileModel, ImportSecurityTableModel> securityTableModels = new HashMap<>();
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
-        super(elements);
-        elements.forEach(this::newImportFileModel);
+        elements.forEach(element -> addElement(newImportFileModel(element)));
         if (elements.isEmpty()) addImport();
-        else setSelectedItem(elements.iterator().next());
+        else setSelectedItem(getElementAt(0));
     }
 
     public String validateName(String name) {
         if (name.trim().isEmpty()) return NAME_REQUIRED;
-        List<ImportFile> matches = Streams.filter(this, file -> file.getName().equalsIgnoreCase(name));
+        List<ImportFileModel> matches = Streams.filter(this, file -> file.getName().equalsIgnoreCase(name));
         if (matches.size() > 1 || !matches.isEmpty() && matches.get(0) != getSelectedItem()) return NAME_UNIQUE;
         return null;
     }
 
-    private void newImportFileModel(ImportFile importFile) {
+    private ImportFileModel newImportFileModel(ImportFile importFile) {
         ImportFileModel model = ImportFileModel.create(importFile);
-        fileModels.put(importFile, model);
         model.addPropertyChangeListener(ImportFileModel.CHANGED_PROPERTY, this::forwardChange);
+        model.addPropertyChangeListener("name", this::forwardNameChange);
+        return model;
     }
 
     private void forwardChange(PropertyChangeEvent event) {
         changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged());
+    }
+
+    private void forwardNameChange(PropertyChangeEvent event) {
+        changeSupport.firePropertyChange("names", null, null);
     }
 
     public PageRegionTableModel getRegionTableModel() {
@@ -124,9 +127,9 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
 
     @Override
     public void setSelectedItem(Object importFile) {
-        ImportFile oldSelection = getSelectedItem();
+        ImportFileModel oldSelection = getSelectedItem();
         super.setSelectedItem(importFile);
-        notifySelectionListeners(oldSelection, (ImportFile) importFile);
+        selectionListeners.forEach(listener -> listener.accept(oldSelection, (ImportFileModel) importFile));
     }
 
     public void addImport() {
@@ -139,13 +142,9 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         importFile.setImportTransfers(new HashSet<>());
         importFile.setPayeeMap(new HashMap<>());
         importFile.setSecurityMap(new HashMap<>());
-        addElement(importFile);
-        newImportFileModel(importFile);
-        setSelectedItem(importFile);
-    }
-
-    public ImportFileModel getSelectedImport() {
-        return fileModels.get(getSelectedItem());
+        ImportFileModel model = newImportFileModel(importFile);
+        addElement(model);
+        setSelectedItem(model);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -160,14 +159,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
         selectionListeners.add(listener);
     }
 
-    private void notifySelectionListeners(ImportFile oldFile, ImportFile newFile) {
-        ImportFileModel oldModel = fileModels.get(oldFile);
-        ImportFileModel newModel = fileModels.get(newFile);
-        selectionListeners.forEach(listener -> listener.accept(oldModel, newModel));
-    }
-
     public boolean isChanged() {
-        return fileModels.values().stream().anyMatch(BufferedBeanModel::isChanged)
+        return Streams.of(this).anyMatch(BufferedBeanModel::isChanged)
                 || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || payeeTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
@@ -175,7 +168,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFile> {
     }
 
     public boolean isValid() {
-        return fileModels.values().stream().allMatch(ImportFileModel::isValid)
+        return Streams.of(this).allMatch(ImportFileModel::isValid)
                 && regionTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && categoryTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && payeeTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
