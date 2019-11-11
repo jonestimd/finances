@@ -98,7 +98,8 @@ public class ImportFieldsPanel extends JComponent {
     }
 
     private void deleteField(ActionEvent event) {
-        // TODO
+        fileModel.removeFieldModel(fieldList.getSelectedValue());
+        listModel.removeElementAt(fieldList.getSelectedIndex());
         fieldList.validateValue();
     }
 

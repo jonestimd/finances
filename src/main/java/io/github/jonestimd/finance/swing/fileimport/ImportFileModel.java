@@ -60,6 +60,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     private final Map<FieldType, List<String>> labelChanges = new HashMap<>();
     private List<ImportFieldModel> fieldModels;
+    private List<ImportFieldModel> deletedFields = new ArrayList<>();
 
     protected ImportFileModel() {
     }
@@ -125,6 +126,13 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         return model;
     }
 
+    public void removeFieldModel(ImportFieldModel fieldModel) {
+        fieldModels.remove(fieldModel);
+        deletedFields.add(fieldModel);
+        firePropertyChange(FIELDS_PROPERTY, null, fieldModels);
+        firePropertyChange(CHANGED_PROPERTY, null, isChanged());
+    }
+
     private ImportFieldModel newFieldModel(ImportField field) {
         ImportFieldModel model = ImportFieldModel.create(field);
         model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
@@ -147,7 +155,6 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     private static class Handler extends BufferedBeanModelHandler<ImportFile> {
-
         public Handler(ImportFile delegate) {
             super(delegate);
         }
@@ -156,6 +163,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         protected boolean isChanged(Object self) {
             ImportFileModel model = (ImportFileModel) self;
             return super.isChanged(self)
+                    || !model.deletedFields.isEmpty()
                     || model.fieldModels != null && model.fieldModels.stream().anyMatch(BufferedBeanModel::isChanged)
                     || !model.labelChanges.isEmpty();
         }
