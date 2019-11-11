@@ -26,6 +26,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
@@ -57,9 +60,13 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
-        elements.forEach(element -> addElement(newImportFileModel(element)));
         if (elements.isEmpty()) addImport();
-        else setSelectedItem(getElementAt(0));
+        else {
+            List<? extends ImportFile> importFiles = Lists.newArrayList(elements);
+            importFiles.sort(Comparator.comparing(ImportFile::getName));
+            importFiles.forEach(element -> addElement(newImportFileModel(element)));
+            setSelectedItem(getElementAt(0));
+        }
     }
 
     public String validateName(String name) {
