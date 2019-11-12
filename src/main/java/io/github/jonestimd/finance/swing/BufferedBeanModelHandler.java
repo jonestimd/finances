@@ -36,9 +36,19 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
 
 /**
- * Method handler for {@link BufferedBeanModel}.
+ * Method handler for {@link BufferedBeanModel}.  To use, declare an abstract class like the following and
+ * create {@link Proxy}s using this class as the {@link MethodHandler}.
+ * <pre>
+ * public abstract class Model extends Bean implements {@link BufferedBeanModel}<Bean> {
+ *     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
+ * }
+ * </pre>
+ * The <code>firePropertyChange</code> method is optional.  It can be called within the <code>Model</code>
+ * to fire property change events.  Any concrete methods declared on the <code>Model</code> will be used as is.
+ * @param <D> the class of the delegate object (the <code>Bean</code> class)
  */
 public class BufferedBeanModelHandler<D> implements MethodHandler {
     public static final String CHANGED_PROPERTY = "changed";
@@ -146,7 +156,7 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
                 method.getName().startsWith("get") || method.getName().startsWith("is") && method.getReturnType().equals(boolean.class));
     }
 
-    private boolean isSetter(Method method) {
+    protected boolean isSetter(Method method) {
         return method.getName().startsWith("set") && method.getParameterCount() == 1;
     }
 
