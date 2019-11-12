@@ -26,7 +26,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +35,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
@@ -180,5 +180,16 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
                 && categoryTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && payeeTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && securityTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors);
+    }
+
+    public void resetChanges() {
+        setElements(Streams.filter(this, UniqueId::isSaved));
+        this.forEach(ImportFileModel::resetChanges);
+        regionTableModels.values().forEach(BufferedBeanListTableModel::revert);
+        categoryTableModels.values().forEach(BufferedBeanListTableModel::revert);
+        payeeTableModels.values().forEach(BufferedBeanListTableModel::revert);
+        securityTableModels.values().forEach(BufferedBeanListTableModel::revert);
+        if (getSelectedItem().isNew() && this.getSize() > 0) setSelectedItem(getElementAt(0));
+        else if (this.getSize() == 0) addImport();
     }
 }

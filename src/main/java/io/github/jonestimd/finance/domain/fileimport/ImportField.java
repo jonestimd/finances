@@ -44,6 +44,7 @@ import javax.persistence.Table;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
@@ -53,7 +54,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "import_field")
 @SequenceGenerator(name = "id_generator", sequenceName = "import_field_id_seq")
-public class ImportField {
+public class ImportField implements UniqueId<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)

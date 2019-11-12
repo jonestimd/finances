@@ -32,6 +32,10 @@ public interface UniqueId<T> {
         return getId() == null;
     }
 
+    default boolean isSaved() {
+        return getId() != null;
+    }
+
     static <T> boolean isSameId(UniqueId<T> u1, UniqueId<T> u2) {
         return u1 != null && u2 != null && Objects.equals(u1.getId(), u2.getId());
     }

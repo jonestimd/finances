@@ -66,12 +66,12 @@ public class ImportFieldsPanel extends JComponent {
         add(fieldPanel, BorderLayout.CENTER);
         owner.getModel().addSelectionListener((oldFile, newFile) -> {
             oldFile.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
-            setFileModel(newFile);
+            setImportFile(newFile);
         });
-        setFileModel(owner.getModel().getSelectedItem());
+        setImportFile(owner.getModel().getSelectedItem());
     }
 
-    private void setFileModel(ImportFileModel model) {
+    public void setImportFile(ImportFileModel model) {
         this.fileModel = model;
         this.listModel = new BeanListModel<>(model.getFieldModels());
         fieldList.setModel(listModel);

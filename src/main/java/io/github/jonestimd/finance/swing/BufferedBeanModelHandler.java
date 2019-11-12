@@ -28,9 +28,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import javassist.util.proxy.MethodHandler;
@@ -84,6 +86,7 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         }
         if (methodName.equals("resetChanges")) {
             resetChanges(self);
+            firePropertyChange(CHANGED_PROPERTY, null, false);
             return null;
         }
         if (isGetter(thisMethod)) {
@@ -123,7 +126,13 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
     }
 
     protected void resetChanges(Object self) {
+        Set<String> changedProps = new HashSet<>(changeValues.keySet());
         changeValues.clear();
+        changedProps.forEach(prop -> {
+            firePropertyChange(normalCase(prop), null, null);
+            firePropertyChange(CHANGED_PROPERTY + prop, null, false);
+        });
+        firePropertyChange(CHANGED_PROPERTY, null, false);
     }
 
     protected Object getBeanValue(Method setter) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {

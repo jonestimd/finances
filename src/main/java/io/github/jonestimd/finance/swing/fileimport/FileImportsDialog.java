@@ -35,6 +35,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
@@ -56,6 +57,10 @@ public class FileImportsDialog extends ValidatedDialog {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
+    private final PageRegionsPanel regionsPanel;
+    private final ImportTablePanel<ImportTransactionTypeModel, ImportTransactionTypeTableModel> categoriesPanel;
+    private final ImportTablePanel<ImportMapping<Payee>, ImportPayeeTableModel> payeesPanel;
+    private final ImportTablePanel<ImportMapping<Security>, ImportSecurityTableModel> securitiesPanel;
     private final BeanListComboBox<ImportFileModel> importFileList;
     private final Action applyAction = actionFactory.newAction("apply", this::applyChanges);
     private final Action resetAction = actionFactory.newAction("reset", this::resetChanges);
@@ -70,16 +75,14 @@ public class FileImportsDialog extends ValidatedDialog {
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
-        filePanel = new ImportFilePanel(this, accounts, payees);
-        fieldsPanel = new ImportFieldsPanel(this);
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), filePanel);
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), fieldsPanel);
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
+        filePanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), new ImportFilePanel(this, accounts, payees));
+        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), new ImportFieldsPanel(this));
+        regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
+        categoriesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
                 new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.payees"),
+        payeesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.payees"),
                 new ImportTablePanel<>(this, "importMapping", importsModel::getPayeeTableModel, ImportMapping::new, tableFactory));
-        addTab(LABELS.getString(RESOURCE_PREFIX + "tab.securities"),
+        securitiesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.securities"),
                 new ImportTablePanel<>(this, "importMapping", importsModel::getSecurityTableModel, ImportMapping::new, tableFactory));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
@@ -112,9 +115,10 @@ public class FileImportsDialog extends ValidatedDialog {
         setJMenuBar(menuBar);
     }
 
-    private void addTab(String mnemonicAndName, JComponent panel) {
+    private <C extends JComponent> C addTab(String mnemonicAndName, C panel) {
         tabbedPane.add(mnemonicAndName.substring(1), panel);
         tabbedPane.setMnemonicAt(tabbedPane.getComponentCount()-1, mnemonicAndName.charAt(0));
+        return panel;
     }
 
     public FileImportsModel getModel() {
@@ -145,6 +149,12 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     private void resetChanges(ActionEvent event) {
-        // TODO
+        importsModel.resetChanges();
+        filePanel.setImportFile(importsModel.getSelectedItem());
+        fieldsPanel.setImportFile(importsModel.getSelectedItem());
+        regionsPanel.setTableModel(importsModel.getRegionTableModel());
+        categoriesPanel.setTableModel(importsModel.getCategoryTableModel());
+        payeesPanel.setTableModel(importsModel.getPayeeTableModel());
+        securitiesPanel.setTableModel(importsModel.getSecurityTableModel());
     }
 }

@@ -24,8 +24,10 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +36,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
+import io.github.jonestimd.util.Streams;
 import javassist.util.proxy.ProxyFactory;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -172,7 +175,15 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         protected void resetChanges(Object self) {
             ImportFileModel model = (ImportFileModel) self;
             super.resetChanges(self);
+            Set<FieldType> changedTypes = new HashSet<>(model.labelChanges.keySet());
             model.labelChanges.clear();
+            changedTypes.forEach(type -> firePropertyChange(type.name().toLowerCase() + "LabelsChanged", null, false));
+            if (model.fieldModels != null) {
+                model.fieldModels = Streams.filter(model.fieldModels, ImportFieldModel::isSaved);
+                model.fieldModels.forEach(ImportFieldModel::resetChanges);
+                model.deletedFields.clear();
+                firePropertyChange(FIELDS_PROPERTY, null, model.fieldModels);
+            }
         }
     }
 }
