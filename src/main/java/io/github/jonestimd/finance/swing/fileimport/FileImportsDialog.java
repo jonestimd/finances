@@ -76,7 +76,7 @@ public class FileImportsDialog extends ValidatedDialog {
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
         filePanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), new ImportFilePanel(this, accounts, payees));
-        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.fields"), new ImportFieldsPanel(this));
+        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this));
         regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         categoriesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
                 new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
