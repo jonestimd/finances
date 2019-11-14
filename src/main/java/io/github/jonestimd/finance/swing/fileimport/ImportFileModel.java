@@ -131,7 +131,10 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public void removeFieldModel(ImportFieldModel fieldModel) {
         fieldModels.remove(fieldModel);
-        deletedFields.add(fieldModel);
+        if (fieldModel.isSaved()) {
+            fieldModel.resetChanges();
+            deletedFields.add(fieldModel);
+        }
         firePropertyChange(FIELDS_PROPERTY, null, fieldModels);
         firePropertyChange(CHANGED_PROPERTY, null, isChanged());
     }
@@ -181,6 +184,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
             if (model.fieldModels != null) {
                 model.fieldModels = Streams.filter(model.fieldModels, ImportFieldModel::isSaved);
                 model.fieldModels.forEach(ImportFieldModel::resetChanges);
+                model.fieldModels.addAll(model.deletedFields);
                 model.deletedFields.clear();
                 firePropertyChange(FIELDS_PROPERTY, null, model.fieldModels);
             }
