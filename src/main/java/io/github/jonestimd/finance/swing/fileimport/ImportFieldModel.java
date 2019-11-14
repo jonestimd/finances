@@ -24,41 +24,73 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.util.HashSet;
 import java.util.List;
 
+import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
+import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
+import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.fileimport.ImportFieldPanel.*;
 
 public abstract class ImportFieldModel extends ImportField implements BufferedBeanModel<ImportField> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
     private static final ProxyFactory factory;
-    private static final String LABEL_REQUIRED = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.required");
-    private static final String DUPLICATE_COLUMNS = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.duplicateColumns");
-    private static final String BLANK_COLUMNS = LABELS.getString(ImportFieldPanel.RESOURCE_PREFIX + "label.blankColumns");
+    private static final String LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "label.required");
+    private static final String DUPLICATE_COLUMNS = LABELS.getString(RESOURCE_PREFIX + "label.duplicateColumns");
+    private static final String BLANK_COLUMNS = LABELS.getString(RESOURCE_PREFIX + "label.blankColumns");
+    private static final String TYPE_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "type.required");
+    private static final String TYPE_AMOUNT_COLUMN_INVALID = LABELS.getString(RESOURCE_PREFIX + "type.amountColumn.invalid");
+    private static final String AMOUNT_FORMAT_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "amountFormat.required");
+    private static final String FORMAT_COLUMN_INVALID = LABELS.getString(RESOURCE_PREFIX + "amountFormat.invalidColumn");
 
     static {
         factory = new ProxyFactory();
         factory.setSuperclass(ImportFieldModel.class);
     }
 
-    public static ImportFieldModel create(ImportField importField) {
+    public static ImportFieldModel create(ImportField importField, ImportFileModel fileModel) {
         try {
-            return (ImportFieldModel) factory.create(new Class[] {}, new Object[] {}, new BufferedBeanModelHandler<>(importField));
+            BufferedBeanModelHandler<ImportField> handler = new BufferedBeanModelHandler<>(importField);
+            return (ImportFieldModel) factory.create(new Class[]{ImportFileModel.class}, new Object[]{fileModel}, handler);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected ImportFieldModel() {
+    private final ImportFileModel fileModel;
+
+    protected ImportFieldModel(ImportFileModel fileModel) {
+        this.fileModel = fileModel;
+        fileModel.addPropertyChangeListener("importType", (event) -> {
+            firePropertyChange("valid", null, isValid());
+        });
     }
 
     public boolean isValid() {
-        return validateLabel(getLabels()) == null && getType() != null && getAmountFormat() != null;
+        return validateLabel(getLabels()) == null && validateType(getType()) == null && validateAmountFormat(getAmountFormat()) == null;
     }
 
-    public String validateLabel(List<String> columns) {
+    public String validateType(FieldType type) {
+        if (type == null) return TYPE_REQUIRED;
+        if (fileModel.getImportType() == ImportType.MULTI_DETAIL_ROWS && type == FieldType.AMOUNT) return TYPE_AMOUNT_COLUMN_INVALID;
+        return null;
+    }
+
+    public String validateAmountFormat(AmountFormat format) {
+        if (fileModel.getImportType() == ImportType.MULTI_DETAIL_ROWS) {
+            if (format == null) return AMOUNT_FORMAT_REQUIRED;
+        }
+        else if (getType() == FieldType.AMOUNT) {
+            if (format == null) return AMOUNT_FORMAT_REQUIRED;
+        }
+        else if (format != null) return FORMAT_COLUMN_INVALID;
+        return null;
+    }
+
+    public static String validateLabel(List<String> columns) {
         if (columns.isEmpty()) return LABEL_REQUIRED;
         if (new HashSet<>(columns).size() < columns.size()) return DUPLICATE_COLUMNS;
         if (!columns.stream().allMatch(ImportFieldModel::isValidColumn)) return BLANK_COLUMNS;
@@ -68,4 +100,6 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
     public static boolean isValidColumn(String column) {
         return !column.trim().isEmpty();
     }
+
+    protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
 }

@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.beans.PropertyChangeListener;
 import java.text.Format;
@@ -30,13 +31,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import com.google.common.collect.ImmutableList;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
@@ -50,6 +54,7 @@ import io.github.jonestimd.swing.component.ValidatedMultiSelectField;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidationBorder;
+import io.github.jonestimd.swing.validation.Validator;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ComponentUtils.*;
@@ -58,20 +63,22 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
     private static final Format REGION_FORMAT = FormatFactory.format(PageRegion::getName);
-    private static final String TYPE_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "type.required");
-    private static final String AMOUNT_FORMAT_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "amountFormat.required");
     private static final List<FieldType> FIELD_TYPES = Arrays.stream(FieldType.values()).filter(type -> !type.isTransaction())
             .sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
+    private static final List<String> REVALIDATE_PROPERTIES = ImmutableList.of("valid", "type");
 
+
+    private ImportFieldModel model;
     private final ValidatedMultiSelectField labelField;
-    private final JComboBox<FieldType> typeField = ComponentFactory.newComboBox(FIELD_TYPES, TYPE_REQUIRED);
-    private final JComboBox<AmountFormat> amountFormatField = ComponentFactory.newComboBox(AmountFormat.class, AMOUNT_FORMAT_REQUIRED);
+    private final BeanListComboBox<FieldType> typeField = BeanListComboBox.builder(FIELD_TYPES)
+            .validated(modelValidator(ImportFieldModel::validateType)).get();
+    private final BeanListComboBox<AmountFormat> amountFormatField = BeanListComboBox.builder(AmountFormat.class).optional()
+            .validated(modelValidator(ImportFieldModel::validateAmountFormat)).get();
     private final BeanListComboBox<PageRegion> pageRegionField = new BeanListComboBox<>(REGION_FORMAT);
     private final JCheckBox negateField = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateAmount");
     private final JTextField acceptRegexField = new JTextField();
     private final JTextField rejectRegexField = new JTextField();
     private final JTextField memoField = new JTextField();
-    private ImportFieldModel model;
     private final PropertyChangeListener onPropertyChange;
 
     public ImportFieldPanel() {
@@ -99,17 +106,26 @@ public class ImportFieldPanel extends JComponent {
                 .put("changedAcceptRegex", getLabel(acceptRegexField))
                 .put("changedIgnoreRegex", getLabel(rejectRegexField))
                 .put("changedMemo", getLabel(memoField))
-                .put("changedRegion", getLabel(pageRegionField))
-                .get();
+                .put("changedRegion", getLabel(pageRegionField)).get();
         onPropertyChange = (event) -> {
-            Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
-            JComponent component = propertyLabelMap.get(event.getPropertyName());
-            if (component != null) component.setForeground(labelColor);
+            if (REVALIDATE_PROPERTIES.contains(event.getPropertyName())) {
+                typeField.validateValue();
+                amountFormatField.validateValue();
+            }
+            else {
+                Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
+                JComponent component = propertyLabelMap.get(event.getPropertyName());
+                if (component != null) component.setForeground(labelColor);
+            }
         };
     }
 
+    private <T> Validator<T> modelValidator(BiFunction<ImportFieldModel, T, String> validator) {
+        return (value) -> model == null ? null : validator.apply(model, value);
+    }
+
     private String validateLabel(List<String> columns) {
-        return model == null ? null : model.validateLabel(columns);
+        return model == null ? null : ImportFieldModel.validateLabel(columns);
     }
 
     private Color getLabelColor(boolean changed) {
@@ -160,5 +176,16 @@ public class ImportFieldPanel extends JComponent {
         rejectRegexField.setText(model.getIgnoredRegex());
         pageRegionField.setSelectedItem(model.getRegion());
         memoField.setText(model.getMemo());
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        // don't show validation messages when not visible
+        for (int i = 0; i < getComponentCount(); i++) {
+            Component component = getComponent(i);
+            if (component instanceof JScrollPane) ((JScrollPane) component).getViewport().getView().setVisible(visible);
+            else component.setVisible(visible);
+        }
     }
 }

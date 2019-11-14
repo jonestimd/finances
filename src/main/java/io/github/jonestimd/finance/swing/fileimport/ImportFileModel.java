@@ -137,7 +137,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     private ImportFieldModel newFieldModel(ImportField field) {
-        ImportFieldModel model = ImportFieldModel.create(field);
+        ImportFieldModel model = ImportFieldModel.create(field, this);
         model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
         return model;
     }

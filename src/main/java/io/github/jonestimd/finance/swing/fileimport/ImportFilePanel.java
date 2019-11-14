@@ -147,7 +147,9 @@ public class ImportFilePanel extends JComponent {
 
     private void bindToModel(FileImportsModel fileImportsModel) {
         bind(nameField, (name) -> model.setName(name));
-        importTypeField.addItemListener(event -> model.setImportType((ImportType) event.getItem()));
+        importTypeField.addItemListener(event -> {
+            if (event.getStateChange() == ItemEvent.SELECTED) model.setImportType((ImportType) event.getItem());
+        });
         fileTypeField.addItemListener(event -> model.setFileType((FileType) event.getItem()));
         accountField.addItemListener(event -> model.setAccount((Account) event.getItem()));
         bind(startOffsetField, this::parseOffset, (offset) -> model.setStartOffset(offset));
