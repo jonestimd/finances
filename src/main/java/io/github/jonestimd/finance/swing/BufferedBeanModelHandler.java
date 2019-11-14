@@ -106,8 +106,9 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         if (isSetter(thisMethod)) {
             String property = methodName.substring(3);
             boolean oldChanged = isChanged(self);
-            Object oldValue = getBeanValue(thisMethod);
-            if (Objects.equals(args[0], oldValue)) changeValues.remove(property);
+            Object originalValue = getBeanValue(thisMethod);
+            Object oldValue = changeValues.getOrDefault(property, originalValue);
+            if (Objects.equals(args[0], originalValue)) changeValues.remove(property);
             else changeValues.put(property, args[0]);
             firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged(self));
             firePropertyChange(normalCase(property), oldValue, args[0]);
