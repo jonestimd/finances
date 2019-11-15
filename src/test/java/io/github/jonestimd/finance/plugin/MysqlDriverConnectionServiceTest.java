@@ -60,13 +60,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -93,8 +90,8 @@ public class MysqlDriverConnectionServiceTest {
         final String superUrl = "jdbc:mysql://localhost:3306";
         preparedStatements.clear();
         statements.clear();
-        when(driver.acceptsURL(url)).thenReturn(true);
-        when(driver.acceptsURL(superUrl)).thenReturn(true);
+        lenient().when(driver.acceptsURL(url)).thenReturn(true);
+        lenient().when(driver.acceptsURL(superUrl)).thenReturn(true);
         when(driver.connect(eq(url), any(Properties.class))).thenReturn(userConnection);
         when(userConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
         when(driver.connect(eq(superUrl), any(Properties.class))).thenAnswer(invocation -> {

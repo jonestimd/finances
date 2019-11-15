@@ -21,13 +21,12 @@ import io.github.jonestimd.finance.swing.SelectionDialog;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
-import io.github.jonestimd.mockito.MockitoHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.domain.account.AccountType.*;
 import static org.assertj.core.api.Assertions.*;
@@ -97,7 +96,7 @@ public class MoveActionTest {
 
         moveAction.displayDialog(null);
 
-        ArgumentCaptor<List<Account>> accountsCaptor = MockitoHelper.captor();
+        ArgumentCaptor<List<Account>> accountsCaptor = ArgumentCaptor.forClass(List.class);
         verify(dialog).show(accountsCaptor.capture());
         assertThat(accountsCaptor.getValue()).hasSize(2);
         assertThat(accountsCaptor.getValue().contains(currentAccount)).isFalse();
@@ -112,7 +111,7 @@ public class MoveActionTest {
 
         moveAction.displayDialog(null);
 
-        ArgumentCaptor<List<Account>> accountsCaptor = MockitoHelper.captor();
+        ArgumentCaptor<List<Account>> accountsCaptor = ArgumentCaptor.forClass(List.class);
         verify(dialog).show(accountsCaptor.capture());
         assertThat(accountsCaptor.getValue()).hasSize(2);
         assertThat(accountsCaptor.getValue().stream().allMatch(account -> account.getType().isSecurity())).isTrue();

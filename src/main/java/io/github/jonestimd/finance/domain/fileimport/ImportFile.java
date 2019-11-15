@@ -26,6 +26,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -307,5 +309,18 @@ public class ImportFile implements UniqueId<Long> {
             new SingleDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);
         }
         return new GroupedDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);
+    }
+
+    public static ImportFile newImport() {
+        ImportFile importFile = new ImportFile();
+        importFile.setName("");
+        importFile.setDateFormat("");
+        importFile.setFields(new HashSet<>());
+        importFile.setPageRegions(new HashSet<>());
+        importFile.setImportCategories(new HashSet<>());
+        importFile.setImportTransfers(new HashSet<>());
+        importFile.setPayeeMap(new HashMap<>());
+        importFile.setSecurityMap(new HashMap<>());
+        return importFile;
     }
 }

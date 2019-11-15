@@ -140,16 +140,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     }
 
     public void addImport() {
-        ImportFile importFile = new ImportFile();
-        importFile.setName("");
-        importFile.setDateFormat("");
-        importFile.setFields(new HashSet<>());
-        importFile.setPageRegions(new HashSet<>());
-        importFile.setImportCategories(new HashSet<>());
-        importFile.setImportTransfers(new HashSet<>());
-        importFile.setPayeeMap(new HashMap<>());
-        importFile.setSecurityMap(new HashMap<>());
-        ImportFileModel model = newImportFileModel(importFile);
+        ImportFileModel model = newImportFileModel(ImportFile.newImport());
         addElement(model);
         setSelectedItem(model);
     }

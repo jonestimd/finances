@@ -7,7 +7,6 @@ import io.github.jonestimd.finance.domain.TestDomainUtils;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.account.AccountType;
 import io.github.jonestimd.finance.domain.asset.Security;
-import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
@@ -28,7 +27,7 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
     }
 
     protected void initializeAccountHolder() throws Exception {
-        when(payeeOperations.getAllPayees()).thenReturn(Collections.<Payee>emptyList());
+        when(payeeOperations.getAllPayees()).thenReturn(Collections.emptyList());
         converter = getQifContext().getSecurityTransactionConverter();
         currentAccount = TestDomainUtils.createAccount("account", AccountType.BROKERAGE);
         accountHolder = new AccountHolder();
@@ -76,9 +75,8 @@ public class SecurityTransactionConverterTest extends QifTestFixture {
         assertThat(saveCapture.getAllValues().get(1).get(0).getSecurity()).isSameAs(security);
     }
 
-    @SuppressWarnings("deprecation")
     private ArgumentCaptor<List<Transaction>> captureSaveTransactions(int count) {
-        ArgumentCaptor<List<Transaction>> saveCapture = new ArgumentCaptor<List<Transaction>>();
+        ArgumentCaptor<List<Transaction>> saveCapture = ArgumentCaptor.forClass(List.class);
         verify(transactionService, times(count)).saveTransactions(saveCapture.capture());
         return saveCapture;
     }

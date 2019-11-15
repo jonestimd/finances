@@ -38,13 +38,11 @@ import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.FileSuggestField;
 import io.github.jonestimd.swing.validation.ValidatedPasswordField;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
-import org.hamcrest.Description;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static io.github.jonestimd.finance.swing.BundleType.*;
@@ -108,7 +106,7 @@ public class ConfigurationViewTest {
     public void requiresFieldsBasedOnDriver() throws Exception {
         JPanel panel = new JPanel();
         when(service1.isEnabled(DIRECTORY)).thenReturn(true);
-        when(service1.isRequired(DIRECTORY)).thenReturn(true);
+        // when(service1.isRequired(DIRECTORY)).thenReturn(true);
         when(service2.isEnabled(not(DIRECTORY))).thenReturn(true);
         when(service2.isRequired(HOST)).thenReturn(true);
         List<DriverConfigurationService> services = Arrays.asList(service1, service2);
@@ -264,7 +262,6 @@ public class ConfigurationViewTest {
         return suffix == null ? null : LABELS.getString(RESOURCE_PREFIX + field.toString() + suffix);
     }
 
-    @SuppressWarnings("unchecked")
     private BeanListComboBox<DriverConfigurationService> getDriverComboBox(JPanel panel) {
         return (BeanListComboBox<DriverConfigurationService>) find(panel, "Database Type");
     }
@@ -283,17 +280,6 @@ public class ConfigurationViewTest {
     }
 
     private static Field not(Field item) {
-        return Mockito.argThat(new ArgumentMatcher<Field>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public boolean matches(Object obj) {
-                return obj != item;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("not " + item.name());
-            }
-        });
+        return Mockito.argThat(obj -> obj != item);
     }
 }

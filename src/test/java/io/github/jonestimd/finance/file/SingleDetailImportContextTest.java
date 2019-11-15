@@ -129,7 +129,6 @@ public class SingleDetailImportContextTest {
         when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
-        when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
         List<Transaction> transactions = context.parseTransactions(inputStream);
 

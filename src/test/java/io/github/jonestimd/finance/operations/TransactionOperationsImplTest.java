@@ -30,15 +30,11 @@ import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
-import io.github.jonestimd.mockito.MockitoHelper;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.*;
 
 public class TransactionOperationsImplTest {
@@ -400,7 +396,7 @@ public class TransactionOperationsImplTest {
 
         transactionOperations.saveSecurityLots(lots);
 
-        ArgumentCaptor<Stream<SecurityLot>> captor = MockitoHelper.captor();
+        ArgumentCaptor<Stream<SecurityLot>> captor = ArgumentCaptor.forClass(Stream.class);
         verify(securityLotDao).deleteAll(captor.capture());
         assertThat(captor.getValue().count()).isEqualTo(0);
         verify(securityLotDao).saveAll(captor.capture());
@@ -419,7 +415,7 @@ public class TransactionOperationsImplTest {
 
         transactionOperations.saveSecurityLots(lots);
 
-        ArgumentCaptor<Stream<SecurityLot>> captor = MockitoHelper.captor();
+        ArgumentCaptor<Stream<SecurityLot>> captor = ArgumentCaptor.forClass(Stream.class);
         verify(securityLotDao).deleteAll(captor.capture());
         List<SecurityLot> deleted = captor.getValue().collect(Collectors.toList());
         assertThat(deleted).containsOnly(lots.get(0), lots.get(1), lots.get(2));
@@ -441,7 +437,7 @@ public class TransactionOperationsImplTest {
     }
 
     @Test
-    public void findAvaliableLotsReturnsLotsForUnallocatedShares() throws Exception {
+    public void findAvailableLotsReturnsLotsForUnallocatedShares() throws Exception {
         Security security = new Security();
         TransactionDetail sale = new TransactionDetailBuilder().nextId().onTransaction().get();
         TransactionDetail allocatedPurchase = new TransactionDetailBuilder().nextId().onTransaction().get();
@@ -508,7 +504,7 @@ public class TransactionOperationsImplTest {
         when(category.getSubcategoryIds()).thenReturn(Stream.of(-1L, -2L));
         TransactionDetail otherMatch = new TransactionDetail();
         when(categoryDao.findByPartialCode(anyString())).thenReturn(Collections.singletonList(category));
-        when(transactionDetailDao.findByCategoryIds(anyListOf(Long.class))).thenReturn(Collections.singletonList(categoryMatch));
+        when(transactionDetailDao.findByCategoryIds(anyList())).thenReturn(Collections.singletonList(categoryMatch));
         when(transactionDetailDao.findByString(anyString())).thenReturn(Collections.singletonList(otherMatch));
 
         assertThat(transactionOperations.findAllDetails(searchText)).contains(categoryMatch, otherMatch);

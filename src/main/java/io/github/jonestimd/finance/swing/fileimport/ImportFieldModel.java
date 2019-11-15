@@ -80,10 +80,7 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
     }
 
     public String validateAmountFormat(AmountFormat format) {
-        if (fileModel.getImportType() == ImportType.MULTI_DETAIL_ROWS) {
-            if (format == null) return AMOUNT_FORMAT_REQUIRED;
-        }
-        else if (getType() == FieldType.AMOUNT) {
+        if (fileModel.getImportType() == ImportType.MULTI_DETAIL_ROWS || getType() == FieldType.AMOUNT) {
             if (format == null) return AMOUNT_FORMAT_REQUIRED;
         }
         else if (format != null) return FORMAT_COLUMN_INVALID;

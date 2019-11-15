@@ -133,7 +133,7 @@ public class TransactionDetailPanelTest {
         when(transactionTable.getCellRect(anyInt(), anyInt(), anyBoolean())).thenReturn(cellRect);
         when(contentPane.getComponents()).thenReturn(new Component[]{transactionTable});
         when(transactionsWindow.getContentPane()).thenReturn(contentPane);
-        when(frameManager.showFrame(any(FrameAction.class))).thenReturn(transactionsWindow);
+        when(frameManager.showFrame(any())).thenReturn(transactionsWindow);
         TransactionDetailPanel panel = new TransactionDetailPanel(tableFactory, Lists.newArrayList(detail), frameManager);
         ComponentTreeUtils.findComponent(panel, DecoratedTable.class).setRowSelectionInterval(0, 0);
         showFrame(panel);
@@ -161,7 +161,7 @@ public class TransactionDetailPanelTest {
         when(transactionTable.getCellRect(anyInt(), anyInt(), anyBoolean())).thenReturn(cellRect);
         when(contentPane.getComponents()).thenReturn(new Component[]{transactionTable});
         when(transactionsWindow.getContentPane()).thenReturn(contentPane);
-        when(frameManager.showFrame(any(FrameAction.class))).thenReturn(transactionsWindow);
+        when(frameManager.showFrame(any())).thenReturn(transactionsWindow);
         TransactionDetailPanel panel = new TransactionDetailPanel(tableFactory, Lists.newArrayList(detail), frameManager);
         ComponentTreeUtils.findComponent(panel, DecoratedTable.class).setRowSelectionInterval(0, 0);
         showFrame(panel);

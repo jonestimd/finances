@@ -26,7 +26,6 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +44,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -67,7 +64,7 @@ public class DriverConfigurationServiceTest {
 
     @Before
     public void setDriver() throws Exception {
-        when(driver.acceptsURL(url)).thenReturn(true);
+        lenient().when(driver.acceptsURL(url)).thenReturn(true);
         when(driver.connect(any(String.class), any(Properties.class))).thenReturn(connection);
         DriverUtils.setDriver(url, driver);
     }
@@ -124,7 +121,7 @@ public class DriverConfigurationServiceTest {
         verify(connection).prepareStatement("select * from company");
         verify(connection).close();
         verify(statement).getMetaData();
-        verifyZeroInteractions(updateProgress);
+        verifyNoInteractions(updateProgress);
     }
 
     @Test
@@ -143,7 +140,7 @@ public class DriverConfigurationServiceTest {
         verify(connection).prepareStatement("select * from company");
         verify(connection).close();
         verify(statement).getMetaData();
-        verifyZeroInteractions(updateProgress);
+        verifyNoInteractions(updateProgress);
     }
 
     private class TestDriverConfigurationService extends DriverConfigurationService {

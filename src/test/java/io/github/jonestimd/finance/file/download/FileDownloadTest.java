@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -108,7 +109,7 @@ public class FileDownloadTest {
                 "result = { format = json, extract = [{ name = var, selector = x }] } }");
         final CloseableHttpResponse response = mock(CloseableHttpResponse.class);
         final HttpEntity entity = mock(HttpEntity.class);
-        final InputStream stream = new ByteArrayInputStream("{\"x\":\"value\"}".getBytes("UTF-8"));
+        final InputStream stream = new ByteArrayInputStream("{\"x\":\"value\"}".getBytes(StandardCharsets.UTF_8));
         doReturn(Collections.singletonList(filesStep)).when(config).getConfigList("fileList");
         when(client.execute(any(HttpGet.class))).thenReturn(response);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, null));
@@ -127,7 +128,7 @@ public class FileDownloadTest {
                 "result = { format = html, files.selector = { path = li, fields = [\"text()\"] } } }");
         final CloseableHttpResponse response = mock(CloseableHttpResponse.class);
         final HttpEntity entity = mock(HttpEntity.class);
-        final InputStream stream = new ByteArrayInputStream("<html><body><li>file url</li></body></html>".getBytes("UTF-8"));
+        final InputStream stream = new ByteArrayInputStream("<html><body><li>file url</li></body></html>".getBytes(StandardCharsets.UTF_8));
         doReturn(Collections.singletonList(filesStep)).when(config).getConfigList("fileList");
         when(context.getBaseUrl()).thenReturn("http://example.com");
         when(client.execute(any(HttpGet.class))).thenReturn(response);
@@ -158,7 +159,7 @@ public class FileDownloadTest {
         final Config downloadStep = ConfigFactory.parseString("{ method = get, path = /files, save = true }");
         final CloseableHttpResponse response = mock(CloseableHttpResponse.class);
         final HttpEntity entity = mock(HttpEntity.class);
-        final InputStream stream = new ByteArrayInputStream("statement content".getBytes("UTF-8"));
+        final InputStream stream = new ByteArrayInputStream("statement content".getBytes(StandardCharsets.UTF_8));
         final List<Object> fileKeys = Collections.singletonList("file key");
         final File statement = new File("./test.txt");
         if (statement.exists()) statement.delete();
@@ -179,19 +180,19 @@ public class FileDownloadTest {
 
     @Test
     public void downloadNewStatementsSkipsExistingFile() throws Exception {
-        final Config downloadStep = ConfigFactory.parseString("{ method = get, path = /files, save = true }");
-        final CloseableHttpResponse response = mock(CloseableHttpResponse.class);
+        // final Config downloadStep = ConfigFactory.parseString("{ method = get, path = /files, save = true }");
+        // final CloseableHttpResponse response = mock(CloseableHttpResponse.class);
         final List<Object> fileKeys = Collections.singletonList("file key");
         final File statement = new File("./test.txt");
         statement.createNewFile();
         doReturn(Collections.emptyList()).when(config).getConfigList("fileList");
-        doReturn(Collections.singletonList(downloadStep)).when(config).getConfigList("download");
+        // doReturn(Collections.singletonList(downloadStep)).when(config).getConfigList("download");
         when(context.getFileList()).thenReturn(Collections.singletonList(fileKeys));
         when(context.getFile(fileKeys)).thenReturn(statement);
 
         download.downloadNewStatements();
 
-        verifyZeroInteractions(client);
+        verifyNoInteractions(client);
         statement.deleteOnExit();
     }
 }

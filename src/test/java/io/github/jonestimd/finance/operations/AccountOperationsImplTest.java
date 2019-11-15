@@ -15,7 +15,6 @@ import io.github.jonestimd.finance.domain.account.AccountBuilder;
 import io.github.jonestimd.finance.domain.account.Company;
 import io.github.jonestimd.finance.domain.event.DomainEvent;
 import io.github.jonestimd.finance.swing.event.EventType;
-import io.github.jonestimd.mockito.MockitoHelper;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -103,7 +102,6 @@ public class AccountOperationsImplTest {
         verify(companyDao).deleteAll(inCompanies);
     }
 
-    @SuppressWarnings("unchecked")
     private Iterable<Account> answerSaveAllAccounts(InvocationOnMock invocation) {
         List<Account> accounts = (List<Account>) invocation.getArguments()[0];
         accounts.forEach(account -> {
@@ -113,7 +111,6 @@ public class AccountOperationsImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void saveAllAccounts() throws Exception {
         Company oldCompany = new Company(1L);
         Account account1 = TestDomainUtils.createAccount("account 1");
@@ -127,11 +124,10 @@ public class AccountOperationsImplTest {
         assertThat(events).hasSize(2);
         checkEvent((DomainEvent<Long, Account>) events.get(0), Account.class, EventType.ADDED, account2, account3);
         checkEvent((DomainEvent<Long, Account>) events.get(1), Account.class, EventType.CHANGED, account1);
-        verifyZeroInteractions(companyDao);
+        verifyNoInteractions(companyDao);
         verify(accountDao).saveAll(accounts);
     }
 
-    @SuppressWarnings("unchecked")
     private Iterable<Company> answerSaveAllCompanies(InvocationOnMock invocation) {
         Collection<Company> companies = (Collection<Company>) invocation.getArguments()[0];
         companies.forEach(company -> {
@@ -141,7 +137,6 @@ public class AccountOperationsImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void saveAllAccountsWithReparentAndRename() throws Exception {
         Company newCompany = new Company("new company");
         Company oldCompany = new Company(1L);
@@ -150,7 +145,7 @@ public class AccountOperationsImplTest {
         Account account3 = new AccountBuilder().name("account 3").company(oldCompany).get();
         List<Account> accounts = Arrays.asList(account1, account2, account3);
         when(accountDao.saveAll(accounts)).thenAnswer(this::answerSaveAllAccounts);
-        when(companyDao.saveAll(anyListOf(Company.class))).thenAnswer(this::answerSaveAllCompanies);
+        when(companyDao.saveAll(anyIterable())).thenAnswer(this::answerSaveAllCompanies);
 
         List<DomainEvent<?, ?>> events = accountOperations.saveAll(accounts);
 
@@ -158,7 +153,7 @@ public class AccountOperationsImplTest {
         checkEvent((DomainEvent<Long, Company>) events.get(0), Company.class, EventType.ADDED, newCompany);
         checkEvent((DomainEvent<Long, Account>) events.get(1), Account.class, EventType.ADDED, account2, account3);
         checkEvent((DomainEvent<Long, Account>) events.get(2), Account.class, EventType.CHANGED, account1);
-        ArgumentCaptor<Collection<Company>> captor = MockitoHelper.captor();
+        ArgumentCaptor<Collection<Company>> captor = ArgumentCaptor.forClass(Collection.class);
         verify(companyDao).saveAll(captor.capture());
         assertThat(captor.getValue()).containsExactly(newCompany);
         verify(accountDao).saveAll(accounts);
@@ -172,7 +167,6 @@ public class AccountOperationsImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void saveAllAccountsConsolidatesNewCompany() throws Exception {
         Company company1 = new Company("new company");
         Company company2 = new Company("new company");
@@ -180,14 +174,14 @@ public class AccountOperationsImplTest {
         Account account2 = new AccountBuilder().id(2L).name("account 2").company(company2).get();
         List<Account> accounts = Arrays.asList(account1, account2);
         when(accountDao.saveAll(accounts)).thenAnswer(this::answerSaveAllAccounts);
-        when(companyDao.saveAll(anyListOf(Company.class))).thenAnswer(this::answerSaveAllCompanies);
+        when(companyDao.saveAll(anyIterable())).thenAnswer(this::answerSaveAllCompanies);
 
         List<DomainEvent<?, ?>> events = accountOperations.saveAll(accounts);
 
         assertThat(events).hasSize(2);
         checkEvent((DomainEvent<Long, Company>) events.get(0), Company.class, EventType.ADDED, company1);
         checkEvent((DomainEvent<Long, Account>) events.get(1), Account.class, EventType.CHANGED, account1, account2);
-        ArgumentCaptor<Collection<Company>> captor = MockitoHelper.captor();
+        ArgumentCaptor<Collection<Company>> captor = ArgumentCaptor.forClass(Collection.class);
         verify(companyDao).saveAll(captor.capture());
         assertThat(captor.getValue()).containsExactly(company1);
         verify(accountDao).saveAll(accounts);
