@@ -48,7 +48,7 @@ public class ImportFieldsPanel extends JComponent {
     private final FieldList fieldList = new FieldList();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
     private final Action addAction;
-    private final Action deleteAction; // TODO disable when no field selected
+    private final Action deleteAction;
     private final PropertyChangeListener repaintList = (event) -> fieldList.repaint();
     private ImportFileModel fileModel;
     private BeanListModel<ImportFieldModel> listModel;
@@ -88,11 +88,10 @@ public class ImportFieldsPanel extends JComponent {
     }
 
     private void onFieldSelected(ListSelectionEvent event) {
-        if (fieldList.getSelectedValue() != null) {
-            fieldPanel.setImportField(fieldList.getSelectedValue());
-            fieldPanel.setVisible(true);
-        }
-        else fieldPanel.setVisible(false);
+        boolean selected = fieldList.getSelectedValue() != null;
+        deleteAction.setEnabled(selected);
+        fieldPanel.setVisible(selected);
+        if (selected) fieldPanel.setImportField(fieldList.getSelectedValue());
     }
 
     private void addField(ActionEvent event) {
