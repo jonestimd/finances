@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
@@ -58,6 +59,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
@@ -69,6 +71,7 @@ import io.github.jonestimd.finance.file.GroupedDetailImportContext;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.MultiDetailImportContext;
 import io.github.jonestimd.finance.file.SingleDetailImportContext;
+import io.github.jonestimd.util.Streams;
 import org.hibernate.annotations.Type;
 
 import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
@@ -78,7 +81,7 @@ import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @SequenceGenerator(name = "id_generator", sequenceName = "import_file_id_seq")
 @NamedQuery(name = ImportFile.FIND_ONE_BY_NAME, query = "from ImportFile where name = :name")
-public class ImportFile implements UniqueId<Long> {
+public class ImportFile implements UniqueId<Long>, Cloneable {
     public static final String FIND_ONE_BY_NAME = "ImportFile.findOneByName";
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
@@ -309,6 +312,28 @@ public class ImportFile implements UniqueId<Long> {
             new SingleDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);
         }
         return new GroupedDetailImportContext(this, payeeMapper, securityMapper, categoryMapper);
+    }
+
+    public ImportFile clone() {
+        try {
+            ImportFile clone = (ImportFile) super.clone();
+            clone.id = null;
+            Map<PageRegion, PageRegion> regionMap = pageRegions.stream().collect(Collectors.toMap(Function.identity(), PageRegion::clone));
+            clone.pageRegions = new HashSet<>(regionMap.values());
+            clone.fields = new HashSet<>();
+            for (ImportField field : fields) {
+                ImportField cloneField = field.clone();
+                if (cloneField.getRegion() != null) cloneField.setRegion(regionMap.get(cloneField.getRegion()));
+                clone.fields.add(cloneField);
+            }
+            clone.importTransfers = importTransfers.stream().map(ImportTransfer::clone).collect(Collectors.toSet());
+            clone.importCategories = importCategories.stream().map(ImportCategory::clone).collect(Collectors.toSet());
+            clone.payeeMap = new HashMap<>(payeeMap);
+            clone.securityMap = new HashMap<>(securityMap);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static ImportFile newImport() {

@@ -34,7 +34,7 @@ import javax.persistence.UniqueConstraint;
 @Table(name = "import_page_region",
        uniqueConstraints = { @UniqueConstraint(name = "import_page_region_ak", columnNames = {"import_file_id", "name"}) })
 @SequenceGenerator(name = "id_generator", sequenceName = "import_page_region_id_seq")
-public class PageRegion {
+public class PageRegion implements Cloneable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
@@ -152,5 +152,15 @@ public class PageRegion {
 
     public void setValueRight(Float valueRight) {
         this.valueRight = valueRight;
+    }
+
+    public PageRegion clone() {
+        try {
+            PageRegion clone = (PageRegion) super.clone();
+            clone.id = null;
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

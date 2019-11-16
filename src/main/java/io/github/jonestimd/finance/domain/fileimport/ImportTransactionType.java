@@ -30,7 +30,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import org.hibernate.annotations.Type;
 
 @MappedSuperclass
-public abstract class ImportTransactionType<T extends TransactionType> {
+public abstract class ImportTransactionType<T extends TransactionType> implements Cloneable {
     @Column(name = "alias", nullable = false)
     private String alias;
 
@@ -73,5 +73,13 @@ public abstract class ImportTransactionType<T extends TransactionType> {
 
     public int hashCode() {
         return alias == null ? 0 : alias.hashCode();
+    }
+
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

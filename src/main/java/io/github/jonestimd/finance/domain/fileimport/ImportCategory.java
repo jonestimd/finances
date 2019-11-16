@@ -65,4 +65,9 @@ public class ImportCategory extends ImportTransactionType<TransactionCategory> {
     public void setType(TransactionCategory type) {
         this.category = category;
     }
+
+    @Override
+    public ImportCategory clone() {
+        return (ImportCategory) super.clone();
+    }
 }

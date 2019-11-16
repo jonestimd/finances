@@ -144,7 +144,8 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     private void duplicateImport(ActionEvent event) {
-        // TODO
+        tabbedPane.setSelectedIndex(0);
+        importsModel.duplicateImport();
     }
 
     private void deleteImport(ActionEvent event) {

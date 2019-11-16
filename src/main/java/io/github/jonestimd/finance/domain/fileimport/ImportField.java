@@ -22,6 +22,7 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "import_field")
 @SequenceGenerator(name = "id_generator", sequenceName = "import_field_id_seq")
-public class ImportField implements UniqueId<Long> {
+public class ImportField implements UniqueId<Long>, Cloneable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
@@ -233,6 +234,17 @@ public class ImportField implements UniqueId<Long> {
         }
         BigDecimal amount = amountFormat.toBigDecimal(value.replaceAll("[^0-9.\\-]", ""));
         return negate ? amount.negate() : amount;
+    }
+
+    public ImportField clone() {
+        try {
+            ImportField clone = (ImportField) super.clone();
+            clone.id = null;
+            clone.labels = new ArrayList<>(labels);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

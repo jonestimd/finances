@@ -56,4 +56,9 @@ public class ImportTransfer extends ImportTransactionType<Account> {
     public void setType(Account type) {
         this.account = type;
     }
+
+    @Override
+    public ImportTransfer clone() {
+        return (ImportTransfer) super.clone();
+    }
 }

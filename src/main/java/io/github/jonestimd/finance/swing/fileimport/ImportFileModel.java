@@ -169,6 +169,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         protected boolean isChanged(Object self) {
             ImportFileModel model = (ImportFileModel) self;
             return super.isChanged(self)
+                    || model.isNew()
                     || !model.deletedFields.isEmpty()
                     || model.fieldModels != null && model.fieldModels.stream().anyMatch(BufferedBeanModel::isChanged)
                     || !model.labelChanges.isEmpty();

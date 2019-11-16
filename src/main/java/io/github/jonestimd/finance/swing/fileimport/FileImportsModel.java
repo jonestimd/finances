@@ -145,6 +145,13 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         setSelectedItem(model);
     }
 
+    public void duplicateImport() {
+        ImportFileModel model = newImportFileModel(getSelectedItem().clone());
+        model.setName("Copy of " + model.getName());
+        addElement(model);
+        setSelectedItem(model);
+    }
+
     public void deleteImport() {
         ImportFileModel selectedItem = getSelectedItem();
         if (selectedItem.isSaved()) deletedImports.add(selectedItem.getBean());
