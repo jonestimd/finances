@@ -23,7 +23,9 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -146,24 +148,38 @@ public class ImportFilePanel extends JComponent {
     }
 
     private void bindToModel(FileImportsModel fileImportsModel) {
-        bind(nameField, (name) -> model.setName(name));
+        bind(nameField, nullSafeConsumer(name -> model.setName(name)));
         importTypeField.addItemListener(event -> {
-            if (event.getStateChange() == ItemEvent.SELECTED) model.setImportType((ImportType) event.getItem());
+            if (model != null && event.getStateChange() == ItemEvent.SELECTED) model.setImportType((ImportType) event.getItem());
         });
-        fileTypeField.addItemListener(event -> model.setFileType((FileType) event.getItem()));
-        accountField.addItemListener(event -> model.setAccount((Account) event.getItem()));
-        bind(startOffsetField, this::parseOffset, (offset) -> model.setStartOffset(offset));
-        bind(dateFormatField, (format) -> model.setDateFormat(format));
-        reconcileCheckbox.addItemListener(event -> model.setReconcile(event.getStateChange() == ItemEvent.SELECTED));
-        payeeField.addItemListener(event -> model.setPayee((Payee) event.getItem()));
+        fileTypeField.addItemListener(nullSafeListener(event -> model.setFileType((FileType) event.getItem())));
+        accountField.addItemListener(nullSafeListener(event -> model.setAccount((Account) event.getItem())));
+        bind(startOffsetField, this::parseOffset, nullSafeConsumer(offset -> model.setStartOffset(offset)));
+        bind(dateFormatField, nullSafeConsumer(format -> model.setDateFormat(format)));
+        reconcileCheckbox.addItemListener(nullSafeListener(event -> model.setReconcile(event.getStateChange() == ItemEvent.SELECTED)));
+        payeeField.addItemListener(nullSafeListener(event -> model.setPayee((Payee) event.getItem())));
         singlePayeeCheckbox.addItemListener(event -> {
-            if (event.getStateChange() == ItemEvent.DESELECTED) model.setPayee(null);
-            else model.setPayee(payeeField.getSelectedItem());
+            if (model != null) {
+                if (event.getStateChange() == ItemEvent.DESELECTED) model.setPayee(null);
+                else model.setPayee(payeeField.getSelectedItem());
+            }
         });
-        bindLabelField(dateLabelField, (dateLabels) -> model.setDateLabels(dateLabels));
-        bindLabelField(payeeLabelField, (payeeLabels) -> model.setPayeeLabels(payeeLabels));
-        bindLabelField(securityLabelField, (securityLabels) -> model.setSecurityLabels(securityLabels));
+        bindLabelField(dateLabelField, nullSafeConsumer(dateLabels -> model.setDateLabels(dateLabels)));
+        bindLabelField(payeeLabelField, nullSafeConsumer(payeeLabels -> model.setPayeeLabels(payeeLabels)));
+        bindLabelField(securityLabelField, nullSafeConsumer(securityLabels -> model.setSecurityLabels(securityLabels)));
         fileImportsModel.addSelectionListener((oldFile, newFile) -> setImportFile(newFile));
+    }
+
+    private <T> Consumer<T> nullSafeConsumer(Consumer<T> listener) {
+        return (value) -> {
+            if (model != null) listener.accept(value);
+        };
+    }
+
+    private ItemListener nullSafeListener(ItemListener listener) {
+        return (event) -> {
+            if (model != null) listener.itemStateChanged(event);
+        };
     }
 
     private Color getLabelColor(boolean changed) {
@@ -192,19 +208,52 @@ public class ImportFilePanel extends JComponent {
     public void setImportFile(ImportFileModel model) {
         if (this.model != null) this.model.removePropertyChangeListener(this.onPropertyChange);
         this.model = model;
-        model.addPropertyChangeListener(this.onPropertyChange);
-        nameField.setText(model.getName());
-        importTypeField.setSelectedItem(model.getImportType());
-        fileTypeField.setSelectedItem(model.getFileType());
-        accountField.setSelectedItem(model.getAccount());
-        startOffsetField.setText(Integer.toString(model.getStartOffset()));
-        dateFormatField.setText(model.getDateFormat());
-        reconcileCheckbox.setSelected(model.isReconcile());
-        payeeField.setSelectedItem(model.getPayee());
-        singlePayeeCheckbox.setSelected(model.getPayee() != null); // set after payeeField so binding won't clear model's payee
-        dateLabelField.setItems(model.getDateLabels());
-        payeeLabelField.setItems(model.getPayeeLabels());
-        securityLabelField.setItems(model.getSecurityLabels());
-        if (model.getId() == null) nameField.requestFocusInWindow();
+        if (model != null) {
+            model.addPropertyChangeListener(this.onPropertyChange);
+            setFieldsEnabled(true);
+            nameField.setText(model.getName());
+            importTypeField.setSelectedItem(model.getImportType());
+            fileTypeField.setSelectedItem(model.getFileType());
+            accountField.setSelectedItem(model.getAccount());
+            startOffsetField.setText(Integer.toString(model.getStartOffset()));
+            dateFormatField.setText(model.getDateFormat());
+            reconcileCheckbox.setSelected(model.isReconcile());
+            payeeField.setSelectedItem(model.getPayee());
+            singlePayeeCheckbox.setSelected(model.getPayee() != null); // set after payeeField so binding won't clear model's payee
+            dateLabelField.setItems(model.getDateLabels());
+            payeeLabelField.setItems(model.getPayeeLabels());
+            securityLabelField.setItems(model.getSecurityLabels());
+            if (model.getId() == null) nameField.requestFocusInWindow();
+        }
+        else {
+            setFieldsEnabled(false);
+            nameField.setText("");
+            importTypeField.setSelectedItem(null);
+            fileTypeField.setSelectedItem(null);
+            accountField.setSelectedItem(null);
+            startOffsetField.setText("");
+            dateFormatField.setText("");
+            reconcileCheckbox.setSelected(false);
+            payeeField.setSelectedItem(null);
+            singlePayeeCheckbox.setSelected(false);
+            dateLabelField.setItems(Collections.emptyList());
+            payeeLabelField.setItems(Collections.emptyList());
+            securityLabelField.setItems(Collections.emptyList());
+        }
+    }
+
+    private void setFieldsEnabled(boolean enabled) {
+        nameField.setEditable(enabled);
+        importTypeField.setEnabled(enabled);
+        fileTypeField.setEnabled(enabled);
+        accountField.setEnabled(enabled);
+        startOffsetField.setEditable(enabled);
+        dateFormatField.setEditable(enabled);
+        reconcileCheckbox.setEnabled(enabled);
+        payeeField.setEnabled(enabled);
+        singlePayeeCheckbox.setEnabled(enabled);
+        dateLabelField.setEditable(enabled);
+        payeeLabelField.setEditable(enabled);
+        securityLabelField.setEditable(enabled);
     }
 }

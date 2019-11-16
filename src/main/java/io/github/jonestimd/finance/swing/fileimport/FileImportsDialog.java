@@ -91,18 +91,25 @@ public class FileImportsDialog extends ValidatedDialog {
         listPanel.add(Box.createHorizontalStrut(5));
         listPanel.add(importFileList);
         getFormPanel().add(listPanel, BorderLayout.NORTH);
-        importsModel.addSelectionListener((oldFile, newFile) -> {
-            tabbedPane.setEnabledAt(2, newFile.getFileType() == FileType.PDF);
-        });
+        importsModel.addPropertyChangeListener("fileType", event -> tabbedPane.setEnabledAt(2, event.getNewValue() == FileType.PDF));
+        importsModel.addSelectionListener((oldFile, newFile) -> setImportFile(newFile));
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(importsModel::isChanged);
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
         importsModel.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
-        importsModel.addPropertyChangeListener("names", event -> importFileList.repaint());
+        importsModel.addPropertyChangeListener("name", event -> importFileList.repaint());
         addSaveCondition(importsModel::isValid);
         // cancelAction.setConfirmClose(); // TODO check for unsaved changes
+    }
+
+    private void setImportFile(ImportFileModel newFile) {
+        boolean enabled = newFile != null;
+        deleteAction.setEnabled(enabled);
+        duplicateAction.setEnabled(enabled);
+        for (int i = 1; i < tabbedPane.getTabCount(); i++) tabbedPane.setEnabledAt(i, enabled);
+        tabbedPane.setEnabledAt(2, enabled && newFile.getFileType() == FileType.PDF);
     }
 
     private void createMenuBar() {
@@ -141,7 +148,7 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     private void deleteImport(ActionEvent event) {
-        // TODO
+        importsModel.deleteImport();
     }
 
     private void applyChanges(ActionEvent event) {

@@ -27,6 +27,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -47,7 +48,7 @@ public class ImportFieldsPanel extends JComponent {
     private final FieldList fieldList = new FieldList();
     private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
     private final Action addAction;
-    private final Action deleteAction;
+    private final Action deleteAction; // TODO disable when no field selected
     private final PropertyChangeListener repaintList = (event) -> fieldList.repaint();
     private ImportFileModel fileModel;
     private BeanListModel<ImportFieldModel> listModel;
@@ -65,20 +66,25 @@ public class ImportFieldsPanel extends JComponent {
         add(listPanel, BorderLayout.WEST);
         add(fieldPanel, BorderLayout.CENTER);
         owner.getModel().addSelectionListener((oldFile, newFile) -> {
-            oldFile.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
+            if (oldFile != null) oldFile.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
             setImportFile(newFile);
         });
         setImportFile(owner.getModel().getSelectedItem());
     }
 
     public void setImportFile(ImportFileModel model) {
+        if (this.fileModel != null) {
+            this.fileModel.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
+        }
         this.fileModel = model;
-        this.listModel = new BeanListModel<>(model.getFieldModels());
+        this.listModel = new BeanListModel<>(model == null ? Collections.emptyList() : model.getFieldModels());
         fieldList.setModel(listModel);
         fieldPanel.setImportFile(model);
-        model.getFieldModels().forEach(fieldModel -> fieldModel.addPropertyChangeListener(repaintList));
-        if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
-        fieldList.validateValue();
+        if (model != null) {
+            model.getFieldModels().forEach(fieldModel -> fieldModel.addPropertyChangeListener(repaintList));
+            if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
+            fieldList.validateValue();
+        }
     }
 
     private void onFieldSelected(ListSelectionEvent event) {

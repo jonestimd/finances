@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -57,6 +56,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     private final Map<ImportFileModel, ImportPayeeTableModel> payeeTableModels = new HashMap<>();
     private final Map<ImportFileModel, ImportSecurityTableModel> securityTableModels = new HashMap<>();
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
+    private final List<ImportFile> deletedImports = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
@@ -77,17 +77,18 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     private ImportFileModel newImportFileModel(ImportFile importFile) {
         ImportFileModel model = ImportFileModel.create(importFile);
-        model.addPropertyChangeListener(ImportFileModel.CHANGED_PROPERTY, this::forwardChange);
-        model.addPropertyChangeListener("name", this::forwardNameChange);
+        model.addPropertyChangeListener(ImportFileModel.CHANGED_PROPERTY, this::forwardChanged);
+        model.addPropertyChangeListener("name", this::forwardChange);
+        model.addPropertyChangeListener("fileType", this::forwardChange);
         return model;
     }
 
-    private void forwardChange(PropertyChangeEvent event) {
+    private void forwardChanged(PropertyChangeEvent event) {
         changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged());
     }
 
-    private void forwardNameChange(PropertyChangeEvent event) {
-        changeSupport.firePropertyChange("names", null, null);
+    private void forwardChange(PropertyChangeEvent event) {
+        changeSupport.firePropertyChange(event.getPropertyName(), null, event.getNewValue());
     }
 
     public PageRegionTableModel getRegionTableModel() {
@@ -144,6 +145,18 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         setSelectedItem(model);
     }
 
+    public void deleteImport() {
+        ImportFileModel selectedItem = getSelectedItem();
+        if (selectedItem.isSaved()) deletedImports.add(selectedItem.getBean());
+        regionTableModels.remove(selectedItem);
+        categoryTableModels.remove(selectedItem);
+        payeeTableModels.remove(selectedItem);
+        securityTableModels.remove(selectedItem);
+        removeElement(selectedItem);
+        if (getSize() > 0) setSelectedItem(getElementAt(0));
+        else setSelectedItem(null);
+    }
+
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.addPropertyChangeListener(listener);
     }
@@ -161,7 +174,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
                 || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || payeeTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
-                || securityTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged);
+                || securityTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
+                || !deletedImports.isEmpty();
     }
 
     public boolean isValid() {
@@ -175,6 +189,8 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     public void resetChanges() {
         setElements(Streams.filter(this, UniqueId::isSaved));
         this.forEach(ImportFileModel::resetChanges);
+        this.deletedImports.forEach(importFile -> addElement(newImportFileModel(importFile)));
+        this.deletedImports.clear();
         regionTableModels.values().forEach(BufferedBeanListTableModel::revert);
         categoryTableModels.values().forEach(BufferedBeanListTableModel::revert);
         payeeTableModels.values().forEach(BufferedBeanListTableModel::revert);

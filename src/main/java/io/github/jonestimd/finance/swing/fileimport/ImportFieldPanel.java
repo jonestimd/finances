@@ -159,9 +159,11 @@ public class ImportFieldPanel extends JComponent {
     }
 
     public void setImportFile(ImportFileModel importFile) {
-        BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(importFile.getPageRegions());
-        regionsModel.insertElementAt(null, 0);
-        pageRegionField.setModel(regionsModel);
+        if (importFile != null) {
+            BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(importFile.getPageRegions());
+            regionsModel.insertElementAt(null, 0);
+            pageRegionField.setModel(regionsModel);
+        }
     }
 
     public void setImportField(ImportFieldModel model) {
