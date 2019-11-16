@@ -60,8 +60,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
-        if (elements.isEmpty()) addImport();
-        else {
+        if (!elements.isEmpty()) {
             List<? extends ImportFile> importFiles = Lists.newArrayList(elements);
             importFiles.sort(Comparator.comparing(ImportFile::getName));
             importFiles.forEach(element -> addElement(newImportFileModel(element)));
@@ -180,7 +179,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         categoryTableModels.values().forEach(BufferedBeanListTableModel::revert);
         payeeTableModels.values().forEach(BufferedBeanListTableModel::revert);
         securityTableModels.values().forEach(BufferedBeanListTableModel::revert);
-        if (getSelectedItem().isNew() && this.getSize() > 0) setSelectedItem(getElementAt(0));
-        else if (this.getSize() == 0) addImport();
+        if (this.getSize() > 0) setSelectedItem(getElementAt(0));
     }
 }
