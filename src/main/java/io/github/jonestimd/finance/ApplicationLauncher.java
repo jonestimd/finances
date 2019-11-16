@@ -87,7 +87,7 @@ public class ApplicationLauncher {
         }
     }
 
-    public ApplicationLauncher() throws URISyntaxException, IOException {
+    public ApplicationLauncher() throws IOException {
         if (! System.getProperties().containsKey("install.dir")) System.setProperty("install.dir", getInstallDirectory());
         config.load(getClass().getResourceAsStream("/launcher.properties"));
         logger.debug("install dir: " + System.getProperty("install.dir"));
@@ -96,7 +96,7 @@ public class ApplicationLauncher {
         gatherFiles(config.getProperty("extension.classpath"), pluginUrls::add);
     }
 
-    private void gatherFiles(String paths, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
+    private void gatherFiles(String paths, Consumer<URL> consumer) throws MalformedURLException {
         if (paths != null) {
             for (String dir: paths.split("\n")) {
                 addDirectory(resolvePlaceholders(dir), consumer);
@@ -104,13 +104,13 @@ public class ApplicationLauncher {
         }
     }
 
-    private String getInstallDirectory() throws URISyntaxException, UnsupportedEncodingException {
+    private String getInstallDirectory() throws UnsupportedEncodingException {
         String path = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
         File source = new File(URLDecoder.decode(path, "UTF-8"));
         return source.isFile() ? source.getParent() : source.getPath();
     }
 
-    private void addDirectory(String path, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
+    private void addDirectory(String path, Consumer<URL> consumer) throws MalformedURLException {
         logger.debug("adding file(s) " + path);
         if (path.endsWith("/*")) {
             addPaths(new File(path.substring(0, path.length() - 2)), consumer);
@@ -178,7 +178,7 @@ public class ApplicationLauncher {
         logger.debug("classpath files: " + classpathUrls);
         if (!classpathUrls.isEmpty()) {
             ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-            Method appendClassPath = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            Method appendClassPath = systemClassLoader.getClass().getDeclaredMethod("addURL", URL.class);
             appendClassPath.setAccessible(true);
             classpathUrls.forEach(url -> {
                 try {
@@ -192,6 +192,6 @@ public class ApplicationLauncher {
 
     private URLClassLoader createClassLoader() {
         logger.debug("plugin files: " + pluginUrls);
-        return new URLClassLoader(pluginUrls.toArray(new URL[pluginUrls.size()]), getClass().getClassLoader());
+        return new URLClassLoader(pluginUrls.toArray(new URL[0]), getClass().getClassLoader());
     }
 }
