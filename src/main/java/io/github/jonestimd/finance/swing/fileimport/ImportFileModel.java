@@ -65,14 +65,36 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     private List<ImportFieldModel> fieldModels;
     private List<ImportFieldModel> deletedFields = new ArrayList<>();
     private PageRegionTableModel pageRegionTableModel = new PageRegionTableModel();
+    private ImportTransactionTypeTableModel categoryTableModel = new ImportTransactionTypeTableModel();
+    private ImportPayeeTableModel payeeTableModel = new ImportPayeeTableModel();
+    private ImportSecurityTableModel securityTableModel = new ImportSecurityTableModel();
 
     protected ImportFileModel(ImportFile importFile) {
         pageRegionTableModel.setBeans(importFile.getPageRegions());
         pageRegionTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+        Stream.concat(importFile.getImportCategories().stream(), importFile.getImportTransfers().stream())
+                .map(ImportTransactionTypeModel::new).forEach(categoryTableModel::addRow);
+        categoryTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+        payeeTableModel.setBeans(Streams.map(importFile.getPayeeMap().entrySet(), ImportMapping::new));
+        payeeTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+        securityTableModel.setBeans(Streams.map(importFile.getSecurityMap().entrySet(), ImportMapping::new));
+        securityTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
     }
 
     public PageRegionTableModel getPageRegionTableModel() {
         return pageRegionTableModel;
+    }
+
+    public ImportTransactionTypeTableModel getCategoryTableModel() {
+        return categoryTableModel;
+    }
+
+    public ImportPayeeTableModel getPayeeTableModel() {
+        return payeeTableModel;
+    }
+
+    public ImportSecurityTableModel getSecurityTableModel() {
+        return securityTableModel;
     }
 
     public List<String> getDateLabels() {
@@ -164,7 +186,9 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public boolean isValid() {
         return isNotBlank(getName()) && getImportType() != null && getFileType() != null && isNotBlank(getDateFormat())
-                && pageRegionTableModel.isNoErrors() && getStartOffset() != null && !getDateLabels().isEmpty()
+                && pageRegionTableModel.isNoErrors() && categoryTableModel.isNoErrors()
+                && payeeTableModel.isNoErrors() && securityTableModel.isNoErrors()
+                && getStartOffset() != null && !getDateLabels().isEmpty()
                 && (fieldModels == null || !fieldModels.isEmpty() && fieldModels.stream().allMatch(ImportFieldModel::isValid));
     }
 
@@ -179,6 +203,9 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
             return super.isChanged(self)
                     || model.isNew()
                     || model.pageRegionTableModel.isChanged()
+                    || model.categoryTableModel.isChanged()
+                    || model.payeeTableModel.isChanged()
+                    || model.securityTableModel.isChanged()
                     || !model.deletedFields.isEmpty()
                     || model.fieldModels != null && model.fieldModels.stream().anyMatch(BufferedBeanModel::isChanged)
                     || !model.labelChanges.isEmpty();
@@ -197,6 +224,9 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
                 model.fieldModels.addAll(model.deletedFields);
                 model.deletedFields.clear();
                 model.pageRegionTableModel.revert();
+                model.categoryTableModel.revert();
+                model.payeeTableModel.revert();
+                model.securityTableModel.revert();
                 firePropertyChange(FIELDS_PROPERTY, null, model.fieldModels);
             }
         }
