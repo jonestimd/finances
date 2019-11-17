@@ -33,6 +33,8 @@ import java.io.IOException;
 
 import javax.swing.JComponent;
 import javax.swing.Scrollable;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.swing.table.DecoratedTable;
@@ -57,11 +59,17 @@ public class PdfPanel extends JComponent implements Scrollable {
 
     public PdfPanel(DecoratedTable<PageRegion, PageRegionTableModel> regionsTable) {
         this.regionsTable = regionsTable;
-        regionsTable.getModel().addTableModelListener(event -> repaint());
+        TableModelListener modelListener = (event) -> repaint();
+        regionsTable.getModel().addTableModelListener(modelListener);
         regionsTable.getSelectionModel().addListSelectionListener(event -> repaint());
 
         setOpaque(true);
         setSize();
+        regionsTable.addPropertyChangeListener("model", (event) -> {
+            if (event.getOldValue() != null) ((TableModel) event.getOldValue()).removeTableModelListener(modelListener);
+            if (event.getNewValue() != null) ((TableModel) event.getNewValue()).addTableModelListener(modelListener);
+            repaint();
+        });
     }
 
     public void setDocument(String fileName) {
