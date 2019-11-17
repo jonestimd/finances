@@ -76,7 +76,8 @@ public class ImportFieldPanel extends JComponent {
             .validated(modelValidator(ImportFieldModel::validateType)).get();
     private final BeanListComboBox<AmountFormat> amountFormatField = BeanListComboBox.builder(AmountFormat.class).optional()
             .validated(modelValidator(ImportFieldModel::validateAmountFormat)).get();
-    private final BeanListComboBox<PageRegion> pageRegionField = new BeanListComboBox<>(REGION_FORMAT);
+    private final BeanListComboBox<PageRegion> pageRegionField = BeanListComboBox.<PageRegion>builder(REGION_FORMAT)
+            .validated(modelValidator(ImportFieldModel::validateRegion)).get();
     private final JCheckBox negateField = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "negateAmount");
     private final JTextField acceptRegexField = new JTextField();
     private final JTextField rejectRegexField = new JTextField();
@@ -116,6 +117,7 @@ public class ImportFieldPanel extends JComponent {
             if (REVALIDATE_PROPERTIES.contains(event.getPropertyName())) {
                 typeField.validateValue();
                 amountFormatField.validateValue();
+                pageRegionField.validateValue();
             }
             else {
                 Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
@@ -168,7 +170,7 @@ public class ImportFieldPanel extends JComponent {
         this.fileModel = fileModel;
         if (fileModel != null) {
             fileModel.addPropertyChangeListener("fileType", onFileTypeChange);
-            BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(fileModel.getPageRegions());
+            BeanListComboBoxModel<PageRegion> regionsModel = new TableModelComboBoxAdapter<>(fileModel.getPageRegionTableModel());
             regionsModel.insertElementAt(null, 0);
             pageRegionField.setModel(regionsModel);
             pageRegionField.setEnabled(fileModel.getFileType() == FileType.PDF);
@@ -185,7 +187,7 @@ public class ImportFieldPanel extends JComponent {
         negateField.setSelected(model.isNegate());
         acceptRegexField.setText(model.getAcceptRegex());
         rejectRegexField.setText(model.getIgnoredRegex());
-        pageRegionField.setSelectedItem(model.getRegion());
+        pageRegionField.getModel().setSelectedItem(model.getRegion()); // set selection on model in case the region has been deleted
         memoField.setText(model.getMemo());
     }
 

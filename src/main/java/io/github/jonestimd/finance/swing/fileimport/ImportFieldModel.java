@@ -26,8 +26,10 @@ import java.util.List;
 
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import javassist.util.proxy.ProxyFactory;
@@ -45,6 +47,7 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
     private static final String TYPE_AMOUNT_COLUMN_INVALID = LABELS.getString(RESOURCE_PREFIX + "type.amountColumn.invalid");
     private static final String AMOUNT_FORMAT_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "amountFormat.required");
     private static final String FORMAT_COLUMN_INVALID = LABELS.getString(RESOURCE_PREFIX + "amountFormat.invalidColumn");
+    private static final String REGION_DELETED = LABELS.getString(RESOURCE_PREFIX + "pageRegion.deleted");
 
     static {
         factory = new ProxyFactory();
@@ -64,13 +67,13 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
 
     protected ImportFieldModel(ImportFileModel fileModel) {
         this.fileModel = fileModel;
-        fileModel.addPropertyChangeListener("importType", (event) -> {
-            firePropertyChange("valid", null, isValid());
-        });
+        fileModel.addPropertyChangeListener("importType", (event) -> firePropertyChange("valid", null, isValid()));
+        fileModel.getPageRegionTableModel().addTableModelListener(event -> firePropertyChange("valid", null, isValid()));
     }
 
     public boolean isValid() {
-        return validateLabel(getLabels()) == null && validateType(getType()) == null && validateAmountFormat(getAmountFormat()) == null;
+        return validateLabel(getLabels()) == null && validateType(getType()) == null
+                && validateAmountFormat(getAmountFormat()) == null && validateRegion(getRegion()) == null;
     }
 
     public String validateType(FieldType type) {
@@ -96,6 +99,15 @@ public abstract class ImportFieldModel extends ImportField implements BufferedBe
 
     public static boolean isValidColumn(String column) {
         return !column.trim().isEmpty();
+    }
+
+    public String validateRegion(PageRegion pageRegion) {
+        if (fileModel.getFileType() == FileType.PDF) {
+            if (pageRegion != null && fileModel.getPageRegionTableModel().getPendingDeletes().contains(pageRegion)) {
+                return REGION_DELETED;
+            }
+        }
+        return null;
     }
 
     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);

@@ -51,7 +51,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     private static final String NAME_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "name.required");
     private static final String NAME_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "name.unique");
 
-    private final Map<ImportFileModel, PageRegionTableModel> regionTableModels = new HashMap<>();
     private final Map<ImportFileModel, ImportTransactionTypeTableModel> categoryTableModels = new HashMap<>();
     private final Map<ImportFileModel, ImportPayeeTableModel> payeeTableModels = new HashMap<>();
     private final Map<ImportFileModel, ImportSecurityTableModel> securityTableModels = new HashMap<>();
@@ -93,12 +92,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     public PageRegionTableModel getRegionTableModel() {
         if (getSelectedItem() == null) return new PageRegionTableModel();
-        return regionTableModels.computeIfAbsent(getSelectedItem(), (importFile) -> {
-            PageRegionTableModel model = new PageRegionTableModel();
-            model.setBeans(importFile.getPageRegions());
-            model.addTableModelListener(e -> changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
-            return model;
-        });
+        return getSelectedItem().getPageRegionTableModel();
     }
 
     public ImportTransactionTypeTableModel getCategoryTableModel() {
@@ -155,7 +149,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     public void deleteImport() {
         ImportFileModel selectedItem = getSelectedItem();
         if (selectedItem.isSaved()) deletedImports.add(selectedItem.getBean());
-        regionTableModels.remove(selectedItem);
         categoryTableModels.remove(selectedItem);
         payeeTableModels.remove(selectedItem);
         securityTableModels.remove(selectedItem);
@@ -178,7 +171,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     public boolean isChanged() {
         return Streams.of(this).anyMatch(BufferedBeanModel::isChanged)
-                || regionTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || categoryTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || payeeTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
                 || securityTableModels.values().stream().anyMatch(BufferedBeanListTableModel::isChanged)
@@ -187,7 +179,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     public boolean isValid() {
         return Streams.of(this).allMatch(ImportFileModel::isValid)
-                && regionTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && categoryTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && payeeTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors)
                 && securityTableModels.values().stream().allMatch(ValidatedBeanListTableModel::isNoErrors);
@@ -198,7 +189,6 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         this.forEach(ImportFileModel::resetChanges);
         this.deletedImports.forEach(importFile -> addElement(newImportFileModel(importFile)));
         this.deletedImports.clear();
-        regionTableModels.values().forEach(BufferedBeanListTableModel::revert);
         categoryTableModels.values().forEach(BufferedBeanListTableModel::revert);
         payeeTableModels.values().forEach(BufferedBeanListTableModel::revert);
         securityTableModels.values().forEach(BufferedBeanListTableModel::revert);

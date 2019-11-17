@@ -55,7 +55,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public static ImportFileModel create(ImportFile importFile) {
         try {
-            return (ImportFileModel) factory.create(new Class[] {}, new Object[] {}, new Handler(importFile));
+            return (ImportFileModel) factory.create(new Class[] {ImportFile.class}, new Object[] {importFile}, new Handler(importFile));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -64,8 +64,15 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     private final Map<FieldType, List<String>> labelChanges = new HashMap<>();
     private List<ImportFieldModel> fieldModels;
     private List<ImportFieldModel> deletedFields = new ArrayList<>();
+    private PageRegionTableModel pageRegionTableModel = new PageRegionTableModel();
 
-    protected ImportFileModel() {
+    protected ImportFileModel(ImportFile importFile) {
+        pageRegionTableModel.setBeans(importFile.getPageRegions());
+        pageRegionTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+    }
+
+    public PageRegionTableModel getPageRegionTableModel() {
+        return pageRegionTableModel;
     }
 
     public List<String> getDateLabels() {
@@ -157,7 +164,8 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public boolean isValid() {
         return isNotBlank(getName()) && getImportType() != null && getFileType() != null && isNotBlank(getDateFormat())
-                && getStartOffset() != null && !getDateLabels().isEmpty() && (fieldModels == null || !fieldModels.isEmpty());
+                && pageRegionTableModel.isNoErrors() && getStartOffset() != null && !getDateLabels().isEmpty()
+                && (fieldModels == null || !fieldModels.isEmpty() && fieldModels.stream().allMatch(ImportFieldModel::isValid));
     }
 
     private static class Handler extends BufferedBeanModelHandler<ImportFile> {
@@ -170,6 +178,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
             ImportFileModel model = (ImportFileModel) self;
             return super.isChanged(self)
                     || model.isNew()
+                    || model.pageRegionTableModel.isChanged()
                     || !model.deletedFields.isEmpty()
                     || model.fieldModels != null && model.fieldModels.stream().anyMatch(BufferedBeanModel::isChanged)
                     || !model.labelChanges.isEmpty();
@@ -187,6 +196,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
                 model.fieldModels.forEach(ImportFieldModel::resetChanges);
                 model.fieldModels.addAll(model.deletedFields);
                 model.deletedFields.clear();
+                model.pageRegionTableModel.revert();
                 firePropertyChange(FIELDS_PROPERTY, null, model.fieldModels);
             }
         }
