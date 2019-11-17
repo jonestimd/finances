@@ -44,6 +44,7 @@ import com.google.common.collect.ImmutableList;
 import io.github.jonestimd.collection.MapBuilder;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
@@ -69,6 +70,7 @@ public class ImportFieldPanel extends JComponent {
 
 
     private ImportFieldModel model;
+    private ImportFileModel fileModel;
     private final ValidatedMultiSelectField labelField;
     private final BeanListComboBox<FieldType> typeField = BeanListComboBox.builder(FIELD_TYPES)
             .validated(modelValidator(ImportFieldModel::validateType)).get();
@@ -80,6 +82,9 @@ public class ImportFieldPanel extends JComponent {
     private final JTextField rejectRegexField = new JTextField();
     private final JTextField memoField = new JTextField();
     private final PropertyChangeListener onPropertyChange;
+    private final PropertyChangeListener onFileTypeChange = (event) -> {
+        pageRegionField.setEnabled(event.getNewValue() == FileType.PDF);
+    };
 
     public ImportFieldPanel() {
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
@@ -158,11 +163,15 @@ public class ImportFieldPanel extends JComponent {
         });
     }
 
-    public void setImportFile(ImportFileModel importFile) {
-        if (importFile != null) {
-            BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(importFile.getPageRegions());
+    public void setImportFile(ImportFileModel fileModel) {
+        if (this.fileModel != null) this.fileModel.removePropertyChangeListener("fileType", onFileTypeChange);
+        this.fileModel = fileModel;
+        if (fileModel != null) {
+            fileModel.addPropertyChangeListener("fileType", onFileTypeChange);
+            BeanListComboBoxModel<PageRegion> regionsModel = new BeanListComboBoxModel<>(fileModel.getPageRegions());
             regionsModel.insertElementAt(null, 0);
             pageRegionField.setModel(regionsModel);
+            pageRegionField.setEnabled(fileModel.getFileType() == FileType.PDF);
         }
     }
 
