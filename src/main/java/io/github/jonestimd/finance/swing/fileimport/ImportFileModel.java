@@ -145,8 +145,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public List<ImportFieldModel> getFieldModels() {
         if (fieldModels == null) {
-            fieldModels = getFields().stream().filter(field -> !field.getType().isTransaction())
-                    .map(this::newFieldModel).collect(Collectors.toList());
+            fieldModels = getFields().stream().map(this::newFieldModel).collect(Collectors.toList());
         }
         return fieldModels;
     }

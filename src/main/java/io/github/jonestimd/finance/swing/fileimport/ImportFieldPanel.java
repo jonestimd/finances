@@ -26,13 +26,10 @@ import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.beans.PropertyChangeListener;
 import java.text.Format;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -64,15 +61,12 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 public class ImportFieldPanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.importField.";
     private static final Format REGION_FORMAT = FormatFactory.format(PageRegion::getName);
-    private static final List<FieldType> FIELD_TYPES = Arrays.stream(FieldType.values()).filter(type -> !type.isTransaction())
-            .sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
     private static final List<String> REVALIDATE_PROPERTIES = ImmutableList.of("valid", "type");
-
 
     private ImportFieldModel model;
     private ImportFileModel fileModel;
     private final ValidatedMultiSelectField labelField;
-    private final BeanListComboBox<FieldType> typeField = BeanListComboBox.builder(FIELD_TYPES)
+    private final BeanListComboBox<FieldType> typeField = BeanListComboBox.builder(FieldType.class)
             .validated(modelValidator(ImportFieldModel::validateType)).get();
     private final BeanListComboBox<AmountFormat> amountFormatField = BeanListComboBox.builder(AmountFormat.class).optional()
             .validated(modelValidator(ImportFieldModel::validateAmountFormat)).get();
@@ -124,6 +118,7 @@ public class ImportFieldPanel extends JComponent {
                 JComponent component = propertyLabelMap.get(event.getPropertyName());
                 if (component != null) component.setForeground(labelColor);
             }
+            if ("type".equals(event.getPropertyName())) setFieldsEnabled();
         };
     }
 
@@ -189,6 +184,16 @@ public class ImportFieldPanel extends JComponent {
         rejectRegexField.setText(model.getIgnoredRegex());
         pageRegionField.getModel().setSelectedItem(model.getRegion()); // set selection on model in case the region has been deleted
         memoField.setText(model.getMemo());
+        setFieldsEnabled();
+    }
+
+    private void setFieldsEnabled() {
+        boolean detailField = model.getType() != null && !model.getType().isTransaction();
+        amountFormatField.setEnabled(detailField);
+        negateField.setEnabled(detailField);
+        acceptRegexField.setEditable(detailField);
+        rejectRegexField.setEditable(detailField);
+        memoField.setEditable(detailField);
     }
 
     @Override
