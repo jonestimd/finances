@@ -21,18 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.jonestimd.finance.domain.fileimport.FieldType;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
@@ -44,7 +34,7 @@ import static org.apache.commons.lang.StringUtils.*;
 
 public abstract class ImportFileModel extends ImportFile implements BufferedBeanModel<ImportFile> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
-    public static final String FIELDS_PROPERTY = "fields";
+    public static final String FIELDS_PROPERTY = "fields"; // TODO
     public static final String FIELDS_REQUIRED = LABELS.getString("dialog.fileImport.importField.required");
     private static final ProxyFactory factory;
 
@@ -55,30 +45,40 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public static ImportFileModel create(ImportFile importFile) {
         try {
-            return (ImportFileModel) factory.create(new Class[] {ImportFile.class}, new Object[] {importFile}, new Handler(importFile));
+            ImportFileModel model = (ImportFileModel) factory.create(new Class[]{}, new Object[]{}, new Handler(importFile));
+            model.init();
+            return model;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private final Map<FieldType, List<String>> labelChanges = new HashMap<>();
-    private List<ImportFieldModel> fieldModels;
-    private List<ImportFieldModel> deletedFields = new ArrayList<>();
+    private ImportFieldTableModel importFieldTableModel;
     private PageRegionTableModel pageRegionTableModel = new PageRegionTableModel();
     private ImportTransactionTypeTableModel categoryTableModel = new ImportTransactionTypeTableModel();
     private ImportPayeeTableModel payeeTableModel = new ImportPayeeTableModel();
     private ImportSecurityTableModel securityTableModel = new ImportSecurityTableModel();
 
-    protected ImportFileModel(ImportFile importFile) {
-        pageRegionTableModel.setBeans(importFile.getPageRegions());
+    protected ImportFileModel() {
+    }
+
+    protected void init() {
+        importFieldTableModel = new ImportFieldTableModel(this);
+        importFieldTableModel.setBeans(getBean().getFields());
+        importFieldTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+        pageRegionTableModel.setBeans(getBean().getPageRegions());
         pageRegionTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
-        Stream.concat(importFile.getImportCategories().stream(), importFile.getImportTransfers().stream())
+        Stream.concat(getBean().getImportCategories().stream(), getBean().getImportTransfers().stream())
                 .map(ImportTransactionTypeModel::new).forEach(categoryTableModel::addRow);
         categoryTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
-        payeeTableModel.setBeans(Streams.map(importFile.getPayeeMap().entrySet(), ImportMapping::new));
+        payeeTableModel.setBeans(Streams.map(getBean().getPayeeMap().entrySet(), ImportMapping::new));
         payeeTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
-        securityTableModel.setBeans(Streams.map(importFile.getSecurityMap().entrySet(), ImportMapping::new));
+        securityTableModel.setBeans(Streams.map(getBean().getSecurityMap().entrySet(), ImportMapping::new));
         securityTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+    }
+
+    public ImportFieldTableModel getImportFieldTableModel() {
+        return importFieldTableModel;
     }
 
     public PageRegionTableModel getPageRegionTableModel() {
@@ -97,98 +97,12 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         return securityTableModel;
     }
 
-    public List<String> getDateLabels() {
-        return getCurrentLabels(FieldType.DATE);
-    }
-
-    public void setDateLabels(List<String> dateLabels) {
-        setCurrentLabels(FieldType.DATE, dateLabels);
-    }
-
-    public List<String> getPayeeLabels() {
-        return getCurrentLabels(FieldType.PAYEE);
-    }
-
-    public void setPayeeLabels(List<String> payeeLabels) {
-        setCurrentLabels(FieldType.PAYEE, payeeLabels);
-    }
-
-    public List<String> getSecurityLabels() {
-        return getCurrentLabels(FieldType.SECURITY);
-    }
-
-    public void setSecurityLabels(List<String> securityLabels) {
-        setCurrentLabels(FieldType.SECURITY, securityLabels);
-    }
-
-    private List<String> getCurrentLabels(FieldType type) {
-        return labelChanges.containsKey(type) ? labelChanges.get(type) : getLabels(type);
-    }
-
-    private void setCurrentLabels(FieldType type, List<String> labels) {
-        boolean oldChanged = isChanged();
-        List<String> original = getLabels(type);
-        boolean same = original.equals(labels);
-        if (same) labelChanges.remove(type);
-        else labelChanges.put(type, labels);
-        firePropertyChange(type.name().toLowerCase() + "LabelsChanged", null, !same);
-        firePropertyChange(CHANGED_PROPERTY, oldChanged, isChanged());
-    }
-
-    private List<String> getLabels(FieldType type) {
-        return getFields(type).findFirst().map(ImportField::getLabels).orElseGet(ArrayList::new);
-    }
-
-    private Stream<ImportField> getFields(FieldType type) {
-        return getFields().stream().filter(field -> field.getType() == type);
-    }
-
-    public List<ImportFieldModel> getFieldModels() {
-        if (fieldModels == null) {
-            fieldModels = getFields().stream().map(this::newFieldModel).collect(Collectors.toList());
-        }
-        return fieldModels;
-    }
-
-    public ImportFieldModel addFieldModel(ImportField field) {
-        ImportFieldModel model = newFieldModel(field);
-        fieldModels.add(model);
-        firePropertyChange(FIELDS_PROPERTY, null, fieldModels);
-        return model;
-    }
-
-    public void removeFieldModel(ImportFieldModel fieldModel) {
-        fieldModels.remove(fieldModel);
-        if (fieldModel.isSaved()) {
-            fieldModel.resetChanges();
-            deletedFields.add(fieldModel);
-        }
-        firePropertyChange(FIELDS_PROPERTY, null, fieldModels);
-        firePropertyChange(CHANGED_PROPERTY, null, isChanged());
-    }
-
-    private ImportFieldModel newFieldModel(ImportField field) {
-        ImportFieldModel model = ImportFieldModel.create(field, this);
-        model.addPropertyChangeListener(ImportFieldModel.CHANGED_PROPERTY, this::forwardChange);
-        return model;
-    }
-
-    private void forwardChange(PropertyChangeEvent event) {
-        firePropertyChange(CHANGED_PROPERTY, null, isChanged());
-    }
-
     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
-
-    public String validateFields() {
-        return getFieldModels().isEmpty() ? FIELDS_REQUIRED : null;
-    }
 
     public boolean isValid() {
         return isNotBlank(getName()) && getImportType() != null && getFileType() != null && isNotBlank(getDateFormat())
-                && pageRegionTableModel.isNoErrors() && categoryTableModel.isNoErrors()
-                && payeeTableModel.isNoErrors() && securityTableModel.isNoErrors()
-                && getStartOffset() != null && !getDateLabels().isEmpty()
-                && (fieldModels == null || !fieldModels.isEmpty() && fieldModels.stream().allMatch(ImportFieldModel::isValid));
+                && importFieldTableModel.isNoErrors() && pageRegionTableModel.isNoErrors() && categoryTableModel.isNoErrors()
+                && payeeTableModel.isNoErrors() && securityTableModel.isNoErrors() && getStartOffset() != null;
     }
 
     private static class Handler extends BufferedBeanModelHandler<ImportFile> {
@@ -201,33 +115,22 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
             ImportFileModel model = (ImportFileModel) self;
             return super.isChanged(self)
                     || model.isNew()
+                    || model.importFieldTableModel.isChanged()
                     || model.pageRegionTableModel.isChanged()
                     || model.categoryTableModel.isChanged()
                     || model.payeeTableModel.isChanged()
-                    || model.securityTableModel.isChanged()
-                    || !model.deletedFields.isEmpty()
-                    || model.fieldModels != null && model.fieldModels.stream().anyMatch(BufferedBeanModel::isChanged)
-                    || !model.labelChanges.isEmpty();
+                    || model.securityTableModel.isChanged();
         }
 
         @Override
         protected void resetChanges(Object self) {
             ImportFileModel model = (ImportFileModel) self;
             super.resetChanges(self);
-            Set<FieldType> changedTypes = new HashSet<>(model.labelChanges.keySet());
-            model.labelChanges.clear();
-            changedTypes.forEach(type -> firePropertyChange(type.name().toLowerCase() + "LabelsChanged", null, false));
-            if (model.fieldModels != null) {
-                model.fieldModels = Streams.filter(model.fieldModels, ImportFieldModel::isSaved);
-                model.fieldModels.forEach(ImportFieldModel::resetChanges);
-                model.fieldModels.addAll(model.deletedFields);
-                model.deletedFields.clear();
-                model.pageRegionTableModel.revert();
-                model.categoryTableModel.revert();
-                model.payeeTableModel.revert();
-                model.securityTableModel.revert();
-                firePropertyChange(FIELDS_PROPERTY, null, model.fieldModels);
-            }
+            model.importFieldTableModel.revert();
+            model.pageRegionTableModel.revert();
+            model.categoryTableModel.revert();
+            model.payeeTableModel.revert();
+            model.securityTableModel.revert();
         }
     }
 }

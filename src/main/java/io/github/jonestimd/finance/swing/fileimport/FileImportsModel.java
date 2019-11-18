@@ -82,6 +82,10 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         changeSupport.firePropertyChange(event.getPropertyName(), null, event.getNewValue());
     }
 
+    public ImportFieldTableModel getImportFieldTableModel() {
+        return getSelectedItem() == null ? new ImportFieldTableModel(null) : getSelectedItem().getImportFieldTableModel();
+    }
+
     public PageRegionTableModel getRegionTableModel() {
         return getSelectedItem() == null ? new PageRegionTableModel() : getSelectedItem().getPageRegionTableModel();
     }

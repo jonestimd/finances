@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -33,8 +32,6 @@ import java.util.function.Consumer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 
@@ -51,12 +48,9 @@ import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.MultiSelectField;
 import io.github.jonestimd.swing.component.TextField;
 import io.github.jonestimd.swing.component.TextField.Validated;
-import io.github.jonestimd.swing.component.ValidatedMultiSelectField;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
-import io.github.jonestimd.swing.validation.ValidationBorder;
-import io.github.jonestimd.swing.validation.Validator;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ComponentUtils.*;
@@ -65,18 +59,9 @@ import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
 public class ImportFilePanel extends JComponent {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
-    public static final String DATE_LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "dateLabel.required");
 
     private static Validated requiredTextField(String resourcePrefix) {
         return TextField.validated(LABELS.get(), RESOURCE_PREFIX + resourcePrefix).required("required");
-    }
-
-    private static MultiSelectField createLabelField() {
-        return MultiSelectField.builder(false, true).disableTab().get();
-    }
-
-    private static ValidatedMultiSelectField createValidatedLabelField(Validator<List<String>> validator) {
-        return MultiSelectField.builder(false, true).disableTab().validator(validator).get();
     }
 
     private ImportFileModel model;
@@ -89,17 +74,12 @@ public class ImportFilePanel extends JComponent {
     private final JCheckBox reconcileCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "reconcileMode");
     private final JCheckBox singlePayeeCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "singlePayee");
     private final BeanListComboBox<Payee> payeeField = new BeanListComboBox<>(new PayeeFormat());
-    private final ValidatedMultiSelectField dateLabelField = createValidatedLabelField(labels -> labels.isEmpty() ? DATE_LABEL_REQUIRED : null);
-    private final MultiSelectField payeeLabelField = createLabelField();
-    private final MultiSelectField securityLabelField = createLabelField();
-    private final JLabel payeeLabel;
     private final PropertyChangeListener onPropertyChange;
 
     public ImportFilePanel(FileImportsDialog owner, List<Account> accounts, List<Payee> payees) {
         nameField = new ValidatedTextField(owner.getModel()::validateName);
         accountField.getModel().setElements(accounts, false);
         payeeField.getModel().setElements(payees, false);
-        payeeField.setVisible(false);
         GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
                 .useScrollPane(MultiSelectField.class)
                 .setConstraints(MultiSelectField.class, FormElement.TEXT_FIELD);
@@ -110,20 +90,13 @@ public class ImportFilePanel extends JComponent {
         builder.append("startOffset", startOffsetField);
         builder.append("dateFormat", dateFormatField);
         builder.append(new JSeparator(), FormElement.TOP_LABEL);
-        builder.append("dateLabel", dateLabelField);
-        ValidationBorder.addToViewport(dateLabelField);
-        builder.append("securityLabel", securityLabelField);
-        JScrollPane payeeScrollPane = builder.append("payeeLabel", new JScrollPane(payeeLabelField), FormElement.TEXT_FIELD);
-        payeeField.setPreferredSize(payeeScrollPane.getPreferredSize());
-        this.payeeLabel = builder.getLastLabel();
+        builder.append("payee", payeeField);
         builder.overlay(payeeField);
         builder.append(singlePayeeCheckbox);
         builder.append(reconcileCheckbox);
         setBorder(BorderFactory.panelBorder());
         singlePayeeCheckbox.getModel().addItemListener(event -> {
-            if (singlePayeeCheckbox.isSelected()) replacePayeeField(payeeScrollPane, payeeField, "payee");
-            else replacePayeeField(payeeField, payeeScrollPane, "payeeLabel");
-            if (isVisible()) revalidate();
+            payeeField.setEnabled(singlePayeeCheckbox.isSelected());
         });
         bindToModel(owner.getModel());
         final Map<String, JComponent> propertyLabelMap = new MapBuilder<String, JComponent>()
@@ -133,11 +106,8 @@ public class ImportFilePanel extends JComponent {
                 .put("changedAccount", getLabel(accountField))
                 .put("changedStartOffset", getLabel(startOffsetField))
                 .put("changedDateFormat", getLabel(dateFormatField))
-                .put("changedPayee", payeeLabel)
-                .put("changedPayeeLabels", payeeLabel)
+                .put("changedPayee", getLabel(payeeField))
                 .put("changedReconcile", reconcileCheckbox)
-                .put("dateLabelsChanged", getLabel(dateLabelField))
-                .put("securityLabelsChanged", getLabel(securityLabelField))
                 .get();
         onPropertyChange = (event) -> {
             Color labelColor = getLabelColor(event.getNewValue() == Boolean.TRUE);
@@ -164,9 +134,6 @@ public class ImportFilePanel extends JComponent {
                 else model.setPayee(payeeField.getSelectedItem());
             }
         });
-        bindLabelField(dateLabelField, nullSafeConsumer(dateLabels -> model.setDateLabels(dateLabels)));
-        bindLabelField(payeeLabelField, nullSafeConsumer(payeeLabels -> model.setPayeeLabels(payeeLabels)));
-        bindLabelField(securityLabelField, nullSafeConsumer(securityLabels -> model.setSecurityLabels(securityLabels)));
         fileImportsModel.addSelectionListener((oldFile, newFile) -> setImportFile(newFile));
     }
 
@@ -186,23 +153,12 @@ public class ImportFilePanel extends JComponent {
         return changed ? Color.BLUE : Color.BLACK;
     }
 
-    private void bindLabelField(MultiSelectField field, Consumer<List<String>> setter) {
-        field.addPropertyChangeListener(MultiSelectField.ITEMS_PROPERTY, (event) -> setter.accept(field.getItems()));
-    }
-
     private Integer parseOffset(String offset) {
         try {
             return Integer.parseInt(offset);
         } catch (NumberFormatException ex) {
             return null;
         }
-    }
-
-    private void replacePayeeField(JComponent oldComponent, JComponent newComponent, String labelKey) {
-        oldComponent.setVisible(false);
-        newComponent.setVisible(true);
-        String label = LABELS.getString(RESOURCE_PREFIX + labelKey);
-        payeeLabel.setText(label.substring(1));
     }
 
     public void setImportFile(ImportFileModel model) {
@@ -220,9 +176,6 @@ public class ImportFilePanel extends JComponent {
             reconcileCheckbox.setSelected(model.isReconcile());
             payeeField.setSelectedItem(model.getPayee());
             singlePayeeCheckbox.setSelected(model.getPayee() != null); // set after payeeField so binding won't clear model's payee
-            dateLabelField.setItems(model.getDateLabels());
-            payeeLabelField.setItems(model.getPayeeLabels());
-            securityLabelField.setItems(model.getSecurityLabels());
             if (model.getId() == null) nameField.requestFocusInWindow();
         }
         else {
@@ -236,9 +189,6 @@ public class ImportFilePanel extends JComponent {
             reconcileCheckbox.setSelected(false);
             payeeField.setSelectedItem(null);
             singlePayeeCheckbox.setSelected(false);
-            dateLabelField.setItems(Collections.emptyList());
-            payeeLabelField.setItems(Collections.emptyList());
-            securityLabelField.setItems(Collections.emptyList());
         }
     }
 
@@ -250,10 +200,7 @@ public class ImportFilePanel extends JComponent {
         startOffsetField.setEditable(enabled);
         dateFormatField.setEditable(enabled);
         reconcileCheckbox.setEnabled(enabled);
-        payeeField.setEnabled(enabled);
+        payeeField.setEnabled(enabled && singlePayeeCheckbox.isSelected());
         singlePayeeCheckbox.setEnabled(enabled);
-        dateLabelField.setEditable(enabled);
-        payeeLabelField.setEditable(enabled);
-        securityLabelField.setEditable(enabled);
     }
 }

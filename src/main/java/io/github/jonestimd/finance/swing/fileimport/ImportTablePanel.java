@@ -49,7 +49,7 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
         super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
         this.itemFactory = itemFactory;
         setBorder(BorderFactory.panelBorder());
-        setPreferredSize(new Dimension(550, 100));
+        setPreferredSize(new Dimension(750, 300));
         Action addAction = owner.actionFactory.newAction(actionPrefix + ".add", this::addItem);
         deleteAction = owner.actionFactory.newAction(actionPrefix + ".delete", this::deleteItem);
         deleteAction.setEnabled(false);

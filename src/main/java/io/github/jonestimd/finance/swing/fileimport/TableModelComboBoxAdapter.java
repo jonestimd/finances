@@ -21,6 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import javax.swing.event.TableModelListener;
+
 import io.github.jonestimd.swing.component.BeanListComboBoxModel;
 import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
 
@@ -29,12 +31,27 @@ import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
  * the combo box.
  */
 public class TableModelComboBoxAdapter<T> extends BeanListComboBoxModel<T> {
-    public TableModelComboBoxAdapter(BufferedBeanListTableModel<T> source) {
-        super(source.getBeans());
-        source.addTableModelListener(event -> {
-            setElements(source.getBeans());
-            source.getPendingDeletes().forEach(this::removeElement);
-            fireContentsChanged(this, 0, getSize() - 1);
-        });
+    private final boolean optional;
+    private BufferedBeanListTableModel<T> source;
+    private final TableModelListener tableModelListener = (event) -> updateItems();
+
+    public TableModelComboBoxAdapter(boolean optional) {
+        this.optional = optional;
+    }
+
+    public void setSource(BufferedBeanListTableModel<T> source) {
+        if (this.source != null) this.source.removeTableModelListener(tableModelListener);
+        this.source = source;
+        if (source != null) {
+            source.addTableModelListener(tableModelListener);
+            updateItems();
+        }
+    }
+
+    private void updateItems() {
+        setElements(source.getBeans());
+        if (optional) insertElementAt(null, 0);
+        source.getPendingDeletes().forEach(this::removeElement);
+        fireContentsChanged(this, 0, getSize() - 1);
     }
 }

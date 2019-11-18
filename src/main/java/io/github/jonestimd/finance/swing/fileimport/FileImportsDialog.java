@@ -76,7 +76,7 @@ public class FileImportsDialog extends ValidatedDialog {
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
         filePanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), new ImportFilePanel(this, accounts, payees));
-        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this));
+        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this, tableFactory));
         regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         categoriesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
                 new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
@@ -159,7 +159,7 @@ public class FileImportsDialog extends ValidatedDialog {
     private void resetChanges(ActionEvent event) {
         importsModel.resetChanges();
         filePanel.setImportFile(importsModel.getSelectedItem());
-        fieldsPanel.setImportFile(importsModel.getSelectedItem());
+        fieldsPanel.setTableModel(importsModel.getImportFieldTableModel());
         regionsPanel.setTableModel(importsModel.getRegionTableModel());
         categoriesPanel.setTableModel(importsModel.getCategoryTableModel());
         payeesPanel.setTableModel(importsModel.getPayeeTableModel());

@@ -121,7 +121,7 @@ public class SwingContext {
     private Map<String, TableCellRenderer> columnRenderers() {
         MapBuilder<String, TableCellRenderer> builder = new MapBuilder<>();
         pluginContext.getTableColumnRenderers().forEach(builder::put);
-        return builder.put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat(), Highlighter.NOOP_HIGHLIGHTER)).get();
+        return builder.put("securityShares", new FormatTableCellRenderer(FormatFactory.numberFormat())).get();
     }
 
     private Container getSingletonPanel(WindowType type) {

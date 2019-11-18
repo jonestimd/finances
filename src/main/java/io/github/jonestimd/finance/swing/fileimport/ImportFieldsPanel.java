@@ -21,133 +21,57 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeListener;
+import java.text.Format;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
-import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.event.ListSelectionEvent;
+import javax.swing.JComboBox;
+import javax.swing.event.TableModelListener;
 
+import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
+import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.swing.BorderFactory;
-import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.component.MultiSelectListCellRenderer;
-import io.github.jonestimd.swing.list.BeanListModel;
-import io.github.jonestimd.swing.validation.ValidatedComponent;
-import io.github.jonestimd.swing.validation.ValidationSupport;
+import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.swing.FormatFactory;
+import io.github.jonestimd.swing.component.BeanListComboBox;
+import io.github.jonestimd.swing.component.ComboBoxCellEditor;
+import io.github.jonestimd.swing.table.FormatTableCellRenderer;
+import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
+import io.github.jonestimd.swing.table.PopupListTableCellEditor;
+import io.github.jonestimd.swing.table.TableFactory;
 
-public class ImportFieldsPanel extends JComponent {
-    private final FieldList fieldList = new FieldList();
-    private final ImportFieldPanel fieldPanel = new ImportFieldPanel();
-    private final Action addAction;
-    private final Action deleteAction;
-    private final PropertyChangeListener repaintList = (event) -> fieldList.repaint();
-    private ImportFileModel fileModel;
-    private BeanListModel<ImportFieldModel> listModel;
+public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportFieldTableModel> {
+    private static final Format REGION_FORMAT = FormatFactory.format(ImportFieldsPanel::pageRegionName);
 
-    public ImportFieldsPanel(FileImportsDialog owner) {
-        addAction = owner.actionFactory.newAction("importField.add", this::addField);
-        deleteAction = owner.actionFactory.newAction("importField.delete", this::deleteField);
-        fieldList.setCellRenderer(new ListCellRenderer());
-        fieldList.addListSelectionListener(this::onFieldSelected);
-        JPanel listPanel = new JPanel(new BorderLayout(0, BorderFactory.GAP));
-        listPanel.add(new JScrollPane(fieldList), BorderLayout.CENTER);
-        listPanel.add(new ButtonBarFactory().alignRight().add(addAction, deleteAction).get(), BorderLayout.SOUTH);
-        setLayout(new BorderLayout(5, 10));
-        setBorder(BorderFactory.panelBorder());
-        add(listPanel, BorderLayout.WEST);
-        add(fieldPanel, BorderLayout.CENTER);
+    private final TableModelComboBoxAdapter<PageRegion> pageRegionModel = new TableModelComboBoxAdapter<>(true);
+    private TableModelListener regionModelListener = (event) -> table.getModel().validatePageRegions();
+
+    public ImportFieldsPanel(FileImportsDialog owner, TableFactory tableFactory) {
+        super(owner, "importField", owner.getModel()::getImportFieldTableModel, ImportFieldsPanel::newImportField, tableFactory);
+        table.setDefaultRenderer(List.class, new MultiSelectTableCellRenderer<>(true));
+        table.setDefaultRenderer(PageRegion.class, new FormatTableCellRenderer(REGION_FORMAT));
+        table.setDefaultEditor(List.class, PopupListTableCellEditor.builder(Function.identity(), Function.identity()).build());
+        table.setDefaultEditor(FieldType.class, new ComboBoxCellEditor(new JComboBox<>(FieldType.values())));
+        table.setDefaultEditor(AmountFormat.class, new ComboBoxCellEditor(BeanListComboBox.builder(AmountFormat.class).optional().get()));
+        table.setDefaultEditor(PageRegion.class, new ComboBoxCellEditor(new BeanListComboBox<>(REGION_FORMAT, pageRegionModel)));
         owner.getModel().addSelectionListener((oldFile, newFile) -> {
-            if (oldFile != null) oldFile.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
-            setImportFile(newFile);
+            if (oldFile != null) oldFile.getPageRegionTableModel().removeTableModelListener(regionModelListener);
+            if (newFile != null) setFileImport(newFile);
         });
-        setImportFile(owner.getModel().getSelectedItem());
+        if (owner.getModel().getSelectedItem() != null) setFileImport(owner.getModel().getSelectedItem());
     }
 
-    public void setImportFile(ImportFileModel model) {
-        if (this.fileModel != null) {
-            this.fileModel.getFieldModels().forEach(fieldModel -> fieldModel.removePropertyChangeListener(repaintList));
-        }
-        this.fileModel = model;
-        this.listModel = new BeanListModel<>(model == null ? Collections.emptyList() : model.getFieldModels());
-        fieldList.setModel(listModel);
-        fieldPanel.setImportFile(model);
-        if (model != null) {
-            model.getFieldModels().forEach(fieldModel -> fieldModel.addPropertyChangeListener(repaintList));
-            if (model.getFieldModels().size() > 0) fieldList.setSelectedIndex(0);
-            fieldList.validateValue();
-        }
+    private void setFileImport(ImportFileModel fileModel) {
+        pageRegionModel.setSource(fileModel.getPageRegionTableModel());
+        fileModel.getPageRegionTableModel().addTableModelListener(regionModelListener);
     }
 
-    private void onFieldSelected(ListSelectionEvent event) {
-        boolean selected = fieldList.getSelectedValue() != null;
-        deleteAction.setEnabled(selected);
-        fieldPanel.setVisible(selected);
-        if (selected) fieldPanel.setImportField(fieldList.getSelectedValue());
+    private static ImportField newImportField() {
+        return new ImportField(new ArrayList<>(), null);
     }
 
-    private void addField(ActionEvent event) {
-        ImportFieldModel fieldModel = fileModel.addFieldModel(new ImportField(new ArrayList<>(), null));
-        fieldModel.addPropertyChangeListener(repaintList);
-        listModel.addElement(fieldModel);
-        fieldList.setSelectedIndex(listModel.getSize()-1);
-        fieldList.validateValue();
-    }
-
-    private void deleteField(ActionEvent event) {
-        fileModel.removeFieldModel(fieldList.getSelectedValue());
-        listModel.removeElementAt(fieldList.getSelectedIndex());
-        fieldList.validateValue();
-    }
-
-    private static class ListCellRenderer extends MultiSelectListCellRenderer<ImportFieldModel> {
-        private static final Color SELECTED_ERROR_BACKGROUND = new Color(255, 215, 215);
-
-        public ListCellRenderer() {
-            super(true, ImportFieldModel::getLabels);
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends ImportFieldModel> list, ImportFieldModel value,
-                int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (!value.isValid()) {
-                if (isSelected) setBackground(Color.PINK);
-                else setBackground(SELECTED_ERROR_BACKGROUND);
-            }
-            return this;
-        }
-    }
-
-    private class FieldList extends JList<ImportFieldModel> implements ValidatedComponent {
-        private final ValidationSupport<ImportFileModel> validationSupport = new ValidationSupport<>(this, ImportFileModel::validateFields);
-
-        @Override
-        public void validateValue() {
-            validationSupport.validateValue(fileModel);
-        }
-
-        @Override
-        public String getValidationMessages() {
-            return validationSupport.getMessages();
-        }
-
-        @Override
-        public void addValidationListener(PropertyChangeListener listener) {
-            validationSupport.addValidationListener(listener);
-        }
-
-        @Override
-        public void removeValidationListener(PropertyChangeListener listener) {
-            validationSupport.removeValidationListener(listener);
-        }
+    private static String pageRegionName(PageRegion region) {
+        return region.getName() == null ? "" : region.getName();
     }
 }

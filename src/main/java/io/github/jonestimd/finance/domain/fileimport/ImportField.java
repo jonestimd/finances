@@ -176,7 +176,7 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     }
 
     public void setMemo(String memo) {
-        this.memo = memo;
+        this.memo = memo != null && !memo.trim().isEmpty() ? memo : null;
     }
 
     public String getIgnoredRegex() {
@@ -184,7 +184,7 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     }
 
     public void setIgnoredRegex(String ignoreRegex) {
-        this.ignoreRegex = ignoreRegex;
+        this.ignoreRegex = ignoreRegex != null && !ignoreRegex.isEmpty() ? ignoreRegex : null;
     }
 
     public String getAcceptRegex() {
@@ -192,7 +192,7 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     }
 
     public void setAcceptRegex(String acceptRegex) {
-        this.acceptRegex = acceptRegex;
+        this.acceptRegex = acceptRegex != null && !acceptRegex.isEmpty() ? acceptRegex : null;
     }
 
     public TransactionCategory getCategory() {
