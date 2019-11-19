@@ -49,7 +49,7 @@ public class PageRegionsPanel extends ImportTablePanel<PageRegion, PageRegionTab
         addAction(owner.actionFactory.newAction("pdfPreview", this::showPreview));
     }
 
-    protected void setTableModel(PageRegionTableModel model) {
+    public void setTableModel(PageRegionTableModel model) {
         super.setTableModel(model);
         TableInitializer.setFixedWidth(table.getColumnModel().getColumn(0), table.getRowHeight());
         table.getColumn(PageRegionColumnAdapter.BOTTOM_ADAPTER).setCellRenderer(InfinityRenderer.NEGATIVE_RENDERER);

@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.event.TableModelListener;
 
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
@@ -38,11 +38,12 @@ import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
-public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> extends JPanel {
+public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> extends ValidatedTabPanel {
     protected final DecoratedTable<T, M> table;
     private final Supplier<T> itemFactory;
     private final JComponent buttonBar;
     private final Action deleteAction;
+    private final TableModelListener validationListener = (event) -> setTabForeground();
 
     public ImportTablePanel(FileImportsDialog owner, String actionPrefix, Supplier<M> modelGetter,
             Supplier<T> itemFactory, TableFactory tableFactory) {
@@ -70,8 +71,11 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
         buttonBar.add(new JButton(action));
     }
 
-    protected void setTableModel(M model) {
+    public void setTableModel(M model) {
+        table.getModel().removeTableModelListener(validationListener);
         table.setModel(model);
+        model.addTableModelListener(validationListener);
+        setTabForeground();
     }
 
     private void addItem(ActionEvent event) {
@@ -79,6 +83,11 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
     }
 
     private void deleteItem(ActionEvent event) {
+        if (table.isEditing()) table.editingStopped(null);
         table.getSelectedItems().forEach(row -> table.getModel().queueDelete(row));
+    }
+
+    protected boolean isNoErrors() {
+        return table.getModel().isNoErrors();
     }
 }

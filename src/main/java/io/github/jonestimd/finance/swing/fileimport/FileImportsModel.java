@@ -47,7 +47,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     private static final String NAME_UNIQUE = LABELS.getString(RESOURCE_PREFIX + "name.unique");
 
     private final List<BiConsumer<ImportFileModel, ImportFileModel>> selectionListeners = new ArrayList<>();
-    private final List<ImportFile> deletedImports = new ArrayList<>();
+    private final List<ImportFileModel> deletedImports = new ArrayList<>();
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     public FileImportsModel(Collection<? extends ImportFile> elements) {
@@ -124,7 +124,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     public void deleteImport() {
         ImportFileModel selectedItem = getSelectedItem();
-        if (selectedItem.isSaved()) deletedImports.add(selectedItem.getBean());
+        if (selectedItem.isSaved()) deletedImports.add(selectedItem);
         removeElement(selectedItem);
         if (getSize() > 0) setSelectedItem(getElementAt(0));
         else setSelectedItem(null);
@@ -152,9 +152,9 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
 
     public void resetChanges() {
         setElements(Streams.filter(this, UniqueId::isSaved));
-        this.forEach(ImportFileModel::resetChanges);
-        this.deletedImports.forEach(importFile -> addElement(newImportFileModel(importFile)));
+        this.deletedImports.forEach(this::addElement);
         this.deletedImports.clear();
+        this.forEach(ImportFileModel::resetChanges);
         if (this.getSize() > 0) setSelectedItem(getElementAt(0));
     }
 }

@@ -41,7 +41,7 @@ public class ImportFieldTableModel extends ValidatedBeanListTableModel<ImportFie
             new ImportFieldTableColumnAdapter.RegionTypeColumnAdapter(importFile),
             ImportFieldTableColumnAdapter.MEMO_ADAPTER
         ));
-        importFile.addPropertyChangeListener("importType", event -> {
+        if (importFile != null) importFile.addPropertyChangeListener("importType", event -> {
             for (int i = 0; i < getRowCount(); i++) {
                 fireTableCellUpdated(i, FIELD_TYPE_INDEX);
                 fireTableCellUpdated(i, AMOUNT_FORMAT_INDEX);

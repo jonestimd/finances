@@ -25,6 +25,7 @@ import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -51,13 +52,14 @@ import io.github.jonestimd.swing.component.TextField.Validated;
 import io.github.jonestimd.swing.layout.FormElement;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
+import io.github.jonestimd.swing.validation.ValidationTracker;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.ComponentUtils.*;
 import static io.github.jonestimd.swing.ComponentFactory.*;
 import static io.github.jonestimd.swing.component.ComponentBinder.*;
 
-public class ImportFilePanel extends JComponent {
+public class ImportFilePanel extends ValidatedTabPanel {
     public static final String RESOURCE_PREFIX = "dialog.fileImport.";
 
     private static Validated requiredTextField(String resourcePrefix) {
@@ -75,6 +77,7 @@ public class ImportFilePanel extends JComponent {
     private final JCheckBox singlePayeeCheckbox = ComponentFactory.newCheckBox(LABELS.get(), RESOURCE_PREFIX + "singlePayee");
     private final BeanListComboBox<Payee> payeeField = new BeanListComboBox<>(new PayeeFormat());
     private final PropertyChangeListener onPropertyChange;
+    private boolean isNoErrors = true;
 
     public ImportFilePanel(FileImportsDialog owner, List<Account> accounts, List<Payee> payees) {
         nameField = new ValidatedTextField(owner.getModel()::validateName);
@@ -96,7 +99,7 @@ public class ImportFilePanel extends JComponent {
         builder.append(reconcileCheckbox);
         setBorder(BorderFactory.panelBorder());
         singlePayeeCheckbox.getModel().addItemListener(event -> {
-            model.setSinglePayee(singlePayeeCheckbox.isSelected());
+            if (model != null) model.setSinglePayee(singlePayeeCheckbox.isSelected());
             payeeField.setEnabled(singlePayeeCheckbox.isSelected());
         });
         bindToModel(owner.getModel());
@@ -116,6 +119,12 @@ public class ImportFilePanel extends JComponent {
             if (component != null) component.setForeground(labelColor);
         };
         setImportFile(owner.getModel().getSelectedItem());
+        ValidationTracker.install(this::setValidationMessages, this);
+    }
+
+    private void setValidationMessages(Collection<String> messages) {
+        isNoErrors = messages.isEmpty();
+        setTabForeground();
     }
 
     private void bindToModel(FileImportsModel fileImportsModel) {
@@ -172,7 +181,7 @@ public class ImportFilePanel extends JComponent {
             importTypeField.setSelectedItem(model.getImportType());
             fileTypeField.setSelectedItem(model.getFileType());
             accountField.setSelectedItem(model.getAccount());
-            startOffsetField.setText(Integer.toString(model.getStartOffset()));
+            startOffsetField.setText(model.getStartOffset() == null ? "" : model.getStartOffset().toString());
             dateFormatField.setText(model.getDateFormat());
             reconcileCheckbox.setSelected(model.isReconcile());
             payeeField.setSelectedItem(model.getPayee());
@@ -203,5 +212,10 @@ public class ImportFilePanel extends JComponent {
         reconcileCheckbox.setEnabled(enabled);
         payeeField.setEnabled(enabled && singlePayeeCheckbox.isSelected());
         singlePayeeCheckbox.setEnabled(enabled);
+    }
+
+    @Override
+    protected boolean isNoErrors() {
+        return isNoErrors;
     }
 }

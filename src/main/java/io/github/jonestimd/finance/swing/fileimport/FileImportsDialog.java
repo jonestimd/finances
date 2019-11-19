@@ -93,6 +93,7 @@ public class FileImportsDialog extends ValidatedDialog {
         getFormPanel().add(listPanel, BorderLayout.NORTH);
         importsModel.addPropertyChangeListener("fileType", event -> tabbedPane.setEnabledAt(2, event.getNewValue() == FileType.PDF));
         importsModel.addSelectionListener((oldFile, newFile) -> setImportFile(newFile));
+        if (importsModel.getSelectedItem() != null) setImportFile(importsModel.getSelectedItem());
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
         addSaveCondition(importsModel::isChanged);

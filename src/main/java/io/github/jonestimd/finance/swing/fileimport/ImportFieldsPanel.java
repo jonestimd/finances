@@ -92,6 +92,11 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
         return region.getName() == null ? "" : region.getName();
     }
 
+    @Override
+    protected boolean isNoErrors() {
+        return super.isNoErrors() && validationHolder.validationMessages == null;
+    }
+
     /**
      * Hidden component that provides validation on the table as a whole.  Nesting it inside the panel
      * keeps the errors visible when other tabs are selected (JTabbedPane uses setVisible() which hides
@@ -109,6 +114,7 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
             String oldMessages = this.validationMessages;
             this.validationMessages = getValidationMessages();
             firePropertyChange(VALIDATION_MESSAGES, oldMessages, this.validationMessages);
+            setTabForeground();
         }
 
         @Override
