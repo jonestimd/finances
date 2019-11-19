@@ -62,6 +62,10 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
         table.getSelectionModel().addListSelectionListener(event -> deleteAction.setEnabled(table.getSelectedRowCount() > 0));
     }
 
+    protected void addToButtonBar(JComponent component, int index) {
+        buttonBar.add(component, index);
+    }
+
     protected void addAction(Action action) {
         buttonBar.add(new JButton(action));
     }

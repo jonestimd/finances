@@ -21,12 +21,15 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.Dimension;
+import java.beans.PropertyChangeListener;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelListener;
 
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
@@ -40,15 +43,31 @@ import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
 import io.github.jonestimd.swing.table.PopupListTableCellEditor;
 import io.github.jonestimd.swing.table.TableFactory;
+import io.github.jonestimd.swing.validation.ValidatedComponent;
+import io.github.jonestimd.util.Streams;
+
+import static io.github.jonestimd.finance.swing.BundleType.*;
+import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 
 public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportFieldTableModel> {
+    private static final String DATE_LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "importField.labels.date.required");
+    private static final String DATE_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.date.limit");
+    private static final String PAYEE_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.payee.limit");
+    private static final String PAYEE_LABEL_INVALID = LABELS.getString(RESOURCE_PREFIX + "importField.labels.payee.invalid");
+    private static final String SECURITY_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.security.limit");
+    private static final String FIELDS_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "importField.required");
     private static final Format REGION_FORMAT = FormatFactory.format(ImportFieldsPanel::pageRegionName);
 
+    private final ValidationHolder validationHolder = new ValidationHolder();
     private final TableModelComboBoxAdapter<PageRegion> pageRegionModel = new TableModelComboBoxAdapter<>(true);
     private TableModelListener regionModelListener = (event) -> table.getModel().validatePageRegions();
+    private TableModelListener fieldModelListener = (event) -> validationHolder.validateValue();
+    private PropertyChangeListener singlePayeeListener = (event) -> validationHolder.validateValue();
+    private ImportFileModel fileModel;
 
     public ImportFieldsPanel(FileImportsDialog owner, TableFactory tableFactory) {
         super(owner, "importField", owner.getModel()::getImportFieldTableModel, ImportFieldsPanel::newImportField, tableFactory);
+        addToButtonBar(validationHolder, 0);
         table.setDefaultRenderer(List.class, new MultiSelectTableCellRenderer<>(true));
         table.setDefaultRenderer(PageRegion.class, new FormatTableCellRenderer(REGION_FORMAT));
         table.setDefaultEditor(List.class, PopupListTableCellEditor.builder(Function.identity(), Function.identity()).build());
@@ -56,15 +75,23 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
         table.setDefaultEditor(AmountFormat.class, new ComboBoxCellEditor(BeanListComboBox.builder(AmountFormat.class).optional().get()));
         table.setDefaultEditor(PageRegion.class, new ComboBoxCellEditor(new BeanListComboBox<>(REGION_FORMAT, pageRegionModel)));
         owner.getModel().addSelectionListener((oldFile, newFile) -> {
-            if (oldFile != null) oldFile.getPageRegionTableModel().removeTableModelListener(regionModelListener);
+            if (oldFile != null) {
+                oldFile.getPageRegionTableModel().removeTableModelListener(regionModelListener);
+                oldFile.getImportFieldTableModel().removeTableModelListener(fieldModelListener);
+                oldFile.removePropertyChangeListener("singlePayee", singlePayeeListener);
+            }
             if (newFile != null) setFileImport(newFile);
         });
         if (owner.getModel().getSelectedItem() != null) setFileImport(owner.getModel().getSelectedItem());
     }
 
     private void setFileImport(ImportFileModel fileModel) {
+        this.fileModel = fileModel;
         pageRegionModel.setSource(fileModel.getPageRegionTableModel());
         fileModel.getPageRegionTableModel().addTableModelListener(regionModelListener);
+        fileModel.getImportFieldTableModel().addTableModelListener(fieldModelListener);
+        fileModel.addPropertyChangeListener("singlePayee", singlePayeeListener);
+        validationHolder.validateValue();
     }
 
     private static ImportField newImportField() {
@@ -73,5 +100,56 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
 
     private static String pageRegionName(PageRegion region) {
         return region.getName() == null ? "" : region.getName();
+    }
+
+    /**
+     * Hidden component that provides validation on the table as a whole.  Nesting it inside the panel
+     * keeps the errors visible when other tabs are selected (JTabbedPane uses setVisible() which hides
+     * messages for that panel but not its children).
+     */
+    private class ValidationHolder extends JComponent implements ValidatedComponent {
+        private String validationMessages;
+
+        public ValidationHolder() {
+            setPreferredSize(new Dimension());
+        }
+
+        @Override
+        public void validateValue() {
+            String oldMessages = this.validationMessages;
+            this.validationMessages = getValidationMessages();
+            firePropertyChange(VALIDATION_MESSAGES, oldMessages, this.validationMessages);
+        }
+
+        @Override
+        public String getValidationMessages() {
+            List<String> messages = new ArrayList<>();
+            ImportFieldTableModel tableModel = table.getModel();
+            if (tableModel.getBeans().size() == tableModel.getPendingDeletes().size()) messages.add(FIELDS_REQUIRED);
+            List<ImportField> dateFields = getFields(FieldType.DATE);
+            if (dateFields.isEmpty()) messages.add(DATE_LABEL_REQUIRED);
+            if (dateFields.size() > 1) messages.add(DATE_LABEL_LIMIT);
+            List<ImportField> payeeFields = getFields(FieldType.PAYEE);
+            if (fileModel.isSinglePayee() && !payeeFields.isEmpty()) messages.add(PAYEE_LABEL_INVALID);
+            if (payeeFields.size() > 1) messages.add(PAYEE_LABEL_LIMIT);
+            if (getFields(FieldType.SECURITY).size() > 1) messages.add(SECURITY_LABEL_LIMIT);
+            return messages.isEmpty() ? null : String.join("\n", messages);
+        }
+
+        private List<ImportField> getFields(FieldType type) {
+            List<ImportField> importFields = Streams.filter(table.getModel().getBeans(), (field) -> field.getType() == type);
+            importFields.removeAll(table.getModel().getPendingDeletes());
+            return importFields;
+        }
+
+        @Override
+        public void addValidationListener(PropertyChangeListener listener) {
+            addPropertyChangeListener(VALIDATION_MESSAGES, listener);
+        }
+
+        @Override
+        public void removeValidationListener(PropertyChangeListener listener) {
+            removePropertyChangeListener(VALIDATION_MESSAGES, listener);
+        }
     }
 }

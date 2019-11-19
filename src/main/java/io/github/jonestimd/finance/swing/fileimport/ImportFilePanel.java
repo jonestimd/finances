@@ -96,6 +96,7 @@ public class ImportFilePanel extends JComponent {
         builder.append(reconcileCheckbox);
         setBorder(BorderFactory.panelBorder());
         singlePayeeCheckbox.getModel().addItemListener(event -> {
+            model.setSinglePayee(singlePayeeCheckbox.isSelected());
             payeeField.setEnabled(singlePayeeCheckbox.isSelected());
         });
         bindToModel(owner.getModel());

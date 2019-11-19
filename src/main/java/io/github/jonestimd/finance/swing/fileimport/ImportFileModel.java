@@ -29,13 +29,10 @@ import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import io.github.jonestimd.util.Streams;
 import javassist.util.proxy.ProxyFactory;
 
-import static io.github.jonestimd.finance.swing.BundleType.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 public abstract class ImportFileModel extends ImportFile implements BufferedBeanModel<ImportFile> {
     public static final String CHANGED_PROPERTY = BufferedBeanModelHandler.CHANGED_PROPERTY;
-    public static final String FIELDS_PROPERTY = "fields"; // TODO
-    public static final String FIELDS_REQUIRED = LABELS.getString("dialog.fileImport.importField.required");
     private static final ProxyFactory factory;
 
     static {
@@ -53,6 +50,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         }
     }
 
+    private boolean singlePayee;
     private ImportFieldTableModel importFieldTableModel;
     private PageRegionTableModel pageRegionTableModel = new PageRegionTableModel();
     private ImportTransactionTypeTableModel categoryTableModel = new ImportTransactionTypeTableModel();
@@ -63,6 +61,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     protected void init() {
+        singlePayee = getPayee() != null;
         importFieldTableModel = new ImportFieldTableModel(this);
         importFieldTableModel.setBeans(getBean().getFields());
         importFieldTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
@@ -75,6 +74,16 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         payeeTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
         securityTableModel.setBeans(Streams.map(getBean().getSecurityMap().entrySet(), ImportMapping::new));
         securityTableModel.addTableModelListener(event -> firePropertyChange(CHANGED_PROPERTY, null, isChanged()));
+    }
+
+    public boolean isSinglePayee() {
+        return singlePayee;
+    }
+
+    public void setSinglePayee(boolean singlePayee) {
+        boolean oldValue = this.singlePayee;
+        this.singlePayee = singlePayee;
+        firePropertyChange("singlePayee", oldValue, singlePayee);
     }
 
     public ImportFieldTableModel getImportFieldTableModel() {

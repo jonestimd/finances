@@ -47,7 +47,6 @@ public class ImportFieldTableColumnAdapter<V> extends FunctionColumnAdapter<Impo
     private static final String AMOUNT_FORMAT_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "amountFormat.required");
     private static final String FORMAT_COLUMN_INVALID = LABELS.getString(RESOURCE_PREFIX + "amountFormat.invalidColumn");
     private static final String REGION_DELETED = LABELS.getString(RESOURCE_PREFIX + "pageRegion.deleted");
-    private static final String DATE_LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "labels.date.required"); // TODO
 
     protected ImportFieldTableColumnAdapter(String columnId, Class<? super V> valueType,
             Function<ImportField, V> getter, BiConsumer<ImportField, V> setter) {
