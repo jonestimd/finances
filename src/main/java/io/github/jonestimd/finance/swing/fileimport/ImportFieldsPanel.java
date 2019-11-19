@@ -44,18 +44,8 @@ import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
 import io.github.jonestimd.swing.table.PopupListTableCellEditor;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.validation.ValidatedComponent;
-import io.github.jonestimd.util.Streams;
-
-import static io.github.jonestimd.finance.swing.BundleType.*;
-import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 
 public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportFieldTableModel> {
-    private static final String DATE_LABEL_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "importField.labels.date.required");
-    private static final String DATE_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.date.limit");
-    private static final String PAYEE_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.payee.limit");
-    private static final String PAYEE_LABEL_INVALID = LABELS.getString(RESOURCE_PREFIX + "importField.labels.payee.invalid");
-    private static final String SECURITY_LABEL_LIMIT = LABELS.getString(RESOURCE_PREFIX + "importField.labels.security.limit");
-    private static final String FIELDS_REQUIRED = LABELS.getString(RESOURCE_PREFIX + "importField.required");
     private static final Format REGION_FORMAT = FormatFactory.format(ImportFieldsPanel::pageRegionName);
 
     private final ValidationHolder validationHolder = new ValidationHolder();
@@ -123,23 +113,7 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
 
         @Override
         public String getValidationMessages() {
-            List<String> messages = new ArrayList<>();
-            ImportFieldTableModel tableModel = table.getModel();
-            if (tableModel.getBeans().size() == tableModel.getPendingDeletes().size()) messages.add(FIELDS_REQUIRED);
-            List<ImportField> dateFields = getFields(FieldType.DATE);
-            if (dateFields.isEmpty()) messages.add(DATE_LABEL_REQUIRED);
-            if (dateFields.size() > 1) messages.add(DATE_LABEL_LIMIT);
-            List<ImportField> payeeFields = getFields(FieldType.PAYEE);
-            if (fileModel.isSinglePayee() && !payeeFields.isEmpty()) messages.add(PAYEE_LABEL_INVALID);
-            if (payeeFields.size() > 1) messages.add(PAYEE_LABEL_LIMIT);
-            if (getFields(FieldType.SECURITY).size() > 1) messages.add(SECURITY_LABEL_LIMIT);
-            return messages.isEmpty() ? null : String.join("\n", messages);
-        }
-
-        private List<ImportField> getFields(FieldType type) {
-            List<ImportField> importFields = Streams.filter(table.getModel().getBeans(), (field) -> field.getType() == type);
-            importFields.removeAll(table.getModel().getPendingDeletes());
-            return importFields;
+            return new FieldTypeValidator(fileModel).validateImportFields();
         }
 
         @Override

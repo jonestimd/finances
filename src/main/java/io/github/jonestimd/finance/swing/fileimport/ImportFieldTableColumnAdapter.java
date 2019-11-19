@@ -78,18 +78,19 @@ public class ImportFieldTableColumnAdapter<V> extends FunctionColumnAdapter<Impo
 
     public static class FieldTypeColumnAdapter extends ValidatedFieldColumnAdapter<FieldType> {
         private final ImportFileModel importFile;
+        private final FieldTypeValidator validator;
 
         public FieldTypeColumnAdapter(ImportFileModel importFile) {
             super("type", FieldType.class, ImportField::getType, ImportField::setType);
             this.importFile = importFile;
+            this.validator = new FieldTypeValidator(importFile);
         }
 
         @Override
         public String validate(int selectedIndex, FieldType type, List<? extends ImportField> beans) {
             if (type == null) return TYPE_REQUIRED;
             if (importFile.getImportType() == ImportType.MULTI_DETAIL_ROWS && type == FieldType.AMOUNT) return TYPE_AMOUNT_COLUMN_INVALID;
-            // TODO check for multiple payee, security or date fields (transaction fields)
-            return null;
+            return validator.getValidationMessages(beans.get(selectedIndex));
         }
     }
 

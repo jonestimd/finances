@@ -51,7 +51,12 @@ public class ImportFieldTableModel extends ValidatedBeanListTableModel<ImportFie
 
     @Override
     public void fireTableCellUpdated(int rowIndex, int columnIndex) {
-        if (columnIndex == FIELD_TYPE_INDEX) fireTableRowsUpdated(rowIndex, rowIndex);
+        if (columnIndex == FIELD_TYPE_INDEX) {
+            fireTableRowsUpdated(rowIndex, rowIndex);
+            for (int i = 0; i < getRowCount(); i++) {
+                if (i != rowIndex && !isPendingDelete(i)) super.fireTableCellUpdated(i, columnIndex);
+            }
+        }
         else super.fireTableCellUpdated(rowIndex, columnIndex);
     }
 
