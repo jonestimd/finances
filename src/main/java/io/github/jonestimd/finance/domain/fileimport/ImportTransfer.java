@@ -39,6 +39,14 @@ public class ImportTransfer extends ImportTransactionType<Account> {
     @JoinColumn(name = "account_id", nullable = false, foreignKey = @ForeignKey(name = "import_tx_account_account_fk"))
     private Account account;
 
+    public ImportTransfer() {
+    }
+
+    public ImportTransfer(String alias, boolean negate, Account account) {
+        super(alias, negate);
+        this.account = account;
+    }
+
     public Account getAccount() {
         return account;
     }

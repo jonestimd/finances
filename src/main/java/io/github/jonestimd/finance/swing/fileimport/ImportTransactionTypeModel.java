@@ -21,7 +21,10 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.fileimport.ImportCategory;
 import io.github.jonestimd.finance.domain.fileimport.ImportTransactionType;
+import io.github.jonestimd.finance.domain.fileimport.ImportTransfer;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 
@@ -52,5 +55,17 @@ public class ImportTransactionTypeModel extends ImportTransactionType<Transactio
 
     public boolean isCategory() {
         return type instanceof TransactionCategory;
+    }
+
+    public boolean isTransfer() {
+        return type instanceof Account;
+    }
+
+    public ImportCategory asCategory() {
+        return new ImportCategory(getAlias(), isNegate(), (TransactionCategory) type);
+    }
+
+    public ImportTransfer asTransfer() {
+        return new ImportTransfer(getAlias(), isNegate(), (Account) type);
     }
 }

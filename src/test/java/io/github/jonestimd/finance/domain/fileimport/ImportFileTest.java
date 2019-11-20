@@ -27,7 +27,7 @@ public class ImportFileTest {
     public void isNegateReturnsFalseForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
         ImportFile importFile = new ImportFile();
-        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", category, false)));
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", false, category)));
 
         assertThat(importFile.isNegate(category)).isFalse();
     }
@@ -36,7 +36,7 @@ public class ImportFileTest {
     public void isNegateReturnsTrueForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
         ImportFile importFile = new ImportFile();
-        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", category, true)));
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", true, category)));
 
         assertThat(importFile.isNegate(category)).isTrue();
     }

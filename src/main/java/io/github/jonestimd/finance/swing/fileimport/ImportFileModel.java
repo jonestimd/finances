@@ -21,11 +21,18 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
+import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 import javassist.util.proxy.ProxyFactory;
 
@@ -86,6 +93,22 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         firePropertyChange("singlePayee", oldValue, singlePayee);
     }
 
+    private void commitNestedChanges() {
+        importFieldTableModel.revert();
+        pageRegionTableModel.revert();
+        categoryTableModel.revert();
+        payeeTableModel.revert();
+        securityTableModel.revert();
+    }
+
+    private void resetNestedChanges() {
+        importFieldTableModel.revert();
+        pageRegionTableModel.revert();
+        categoryTableModel.revert();
+        payeeTableModel.revert();
+        securityTableModel.revert();
+    }
+
     public ImportFieldTableModel getImportFieldTableModel() {
         return importFieldTableModel;
     }
@@ -104,6 +127,41 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
 
     public ImportSecurityTableModel getSecurityTableModel() {
         return securityTableModel;
+    }
+
+    public boolean commitTables() {
+        boolean changed = commitTable(pageRegionTableModel, this::toSet, getBean()::setPageRegions);
+        changed |= commitTable(payeeTableModel, this::toMap, getBean()::setPayeeMap);
+        changed |= commitTable(securityTableModel, this::toMap, getBean()::setSecurityMap);
+        changed |= commitTransactionTypes();
+        return changed;
+    }
+
+    private <T> Map<String, T> toMap(BufferedBeanListTableModel<ImportMapping<T>> tableModel) {
+        return tableModel.getBeans().stream().collect(Collectors.toMap(ImportMapping::getAlias, ImportMapping::getBean));
+    }
+
+    private <T> Set<T> toSet(BufferedBeanListTableModel<T> tableModel) {
+        return new HashSet<>(tableModel.getBeans());
+    }
+
+    private <T, M extends BufferedBeanListTableModel<T>, V> boolean commitTable(M tableModel, Function<M, V> getter, Consumer<V> setter) {
+        if (tableModel.isChanged()) {
+            tableModel.commit();
+            setter.accept(getter.apply(tableModel));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean commitTransactionTypes() {
+        if (categoryTableModel.isChanged()) {
+            categoryTableModel.commit();
+            getBean().setImportCategories(categoryTableModel.getCategories());
+            getBean().setImportTransfers(categoryTableModel.getTransfers());
+            return true;
+        }
+        return false;
     }
 
     protected abstract void firePropertyChange(String property, Object oldValue, Object newValue);
@@ -132,14 +190,17 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         }
 
         @Override
+        protected void commitChanges(Object self) {
+            ImportFileModel model = (ImportFileModel) self;
+            super.commitChanges(self);
+            model.commitNestedChanges();
+        }
+
+        @Override
         protected void resetChanges(Object self) {
             ImportFileModel model = (ImportFileModel) self;
             super.resetChanges(self);
-            model.importFieldTableModel.revert();
-            model.pageRegionTableModel.revert();
-            model.categoryTableModel.revert();
-            model.payeeTableModel.revert();
-            model.securityTableModel.revert();
+            model.resetNestedChanges();
         }
     }
 }

@@ -22,8 +22,14 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.fileimport.ImportCategory;
+import io.github.jonestimd.finance.domain.fileimport.ImportTransfer;
 import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
@@ -36,5 +42,17 @@ public class ImportTransactionTypeTableModel extends ValidatedBeanListTableModel
 
     public ImportTransactionTypeTableModel() {
         super(COLUMN_ADAPTERS);
+    }
+
+    public Set<ImportCategory> getCategories() {
+        return getBeans(ImportTransactionTypeModel::isCategory, ImportTransactionTypeModel::asCategory);
+    }
+
+    public Set<ImportTransfer> getTransfers() {
+        return getBeans(ImportTransactionTypeModel::isTransfer, ImportTransactionTypeModel::asTransfer);
+    }
+
+    private <T> Set<T> getBeans(Predicate<ImportTransactionTypeModel> filter, Function<ImportTransactionTypeModel, T> converter) {
+        return getBeans().stream().filter(filter).map(converter).collect(Collectors.toSet());
     }
 }

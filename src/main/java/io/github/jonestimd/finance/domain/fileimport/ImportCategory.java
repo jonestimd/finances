@@ -35,7 +35,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 @Embeddable
 @AttributeOverride(name = "alias", column = @Column(name = "type_alias", nullable = false))
 public class ImportCategory extends ImportTransactionType<TransactionCategory> {
-    public static final ImportCategory EMPTY_IMPORT_CATEGORY = new ImportCategory(null, null, false);
+    public static final ImportCategory EMPTY_IMPORT_CATEGORY = new ImportCategory(null, false, null);
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "tx_category_id", nullable = false, foreignKey = @ForeignKey(name = "import_category_category_fk"))
@@ -43,7 +43,7 @@ public class ImportCategory extends ImportTransactionType<TransactionCategory> {
 
     public ImportCategory() {}
 
-    public ImportCategory(String alias, TransactionCategory category, boolean negate) {
+    public ImportCategory(String alias, boolean negate, TransactionCategory category) {
         super(alias, negate);
         this.category = category;
     }

@@ -70,7 +70,7 @@ public class ImportFileMenuFactory {
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            FileImportsDialog dialog = new FileImportsDialog(window, accounts, payees, importFiles, tableFactory);
+            FileImportsDialog dialog = new FileImportsDialog(window, accounts, payees, importFiles, tableFactory, serviceLocator.getImportFileDao());
             return dialog.showDialog();
         }
 

@@ -27,7 +27,9 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.Lists;
@@ -128,6 +130,14 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         removeElement(selectedItem);
         if (getSize() > 0) setSelectedItem(getElementAt(0));
         else setSelectedItem(null);
+    }
+
+    public Set<ImportFile> getChanges() {
+        Set<ImportFile> changes = new HashSet<>();
+        for (ImportFileModel fileModel : this) {
+            if (fileModel.commitTables() || fileModel.isChanged()) changes.add(fileModel.commitChanges());
+        }
+        return changes;
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {

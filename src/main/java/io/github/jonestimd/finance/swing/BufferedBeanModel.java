@@ -36,5 +36,7 @@ public interface BufferedBeanModel<T> {
 
     void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
+    T commitChanges();
+
     void resetChanges();
 }

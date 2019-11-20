@@ -27,6 +27,7 @@ import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.Action;
 import javax.swing.Box;
@@ -39,6 +40,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
 
+import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
@@ -47,6 +49,7 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.LabelBuilder;
+import io.github.jonestimd.swing.action.BackgroundAction;
 import io.github.jonestimd.swing.action.CancelAction;
 import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
@@ -61,6 +64,7 @@ public class FileImportsDialog extends ValidatedDialog {
     protected static final String EMPTY_PLACEHOLDER = LABELS.getString("error.empty.placeholder");
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
+    private final ImportFileDao importFileDao;
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
@@ -69,15 +73,17 @@ public class FileImportsDialog extends ValidatedDialog {
     private final ImportTablePanel<ImportMapping<Payee>, ImportPayeeTableModel> payeesPanel;
     private final ImportTablePanel<ImportMapping<Security>, ImportSecurityTableModel> securitiesPanel;
     private final BeanListComboBox<ImportFileModel> importFileList;
-    private final Action applyAction = actionFactory.newAction("apply", this::applyChanges);
+    private final Action applyAction = new ApplyAction();
     private final Action resetAction = actionFactory.newAction("reset", this::resetChanges);
     private final Action newAction = actionFactory.newAction("new", this::newImport);
     private final Action deleteAction = actionFactory.newAction("delete", this::deleteImport);
     private final Action duplicateAction = actionFactory.newAction("duplicate", this::duplicateImport);
     private final FileImportsModel importsModel;
 
-    public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory) {
+    public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory,
+            ImportFileDao importFileDao) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
+        this.importFileDao = importFileDao;
         importsModel = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
@@ -161,10 +167,6 @@ public class FileImportsDialog extends ValidatedDialog {
         importsModel.deleteImport();
     }
 
-    private void applyChanges(ActionEvent event) {
-        // TODO
-    }
-
     private void resetChanges(ActionEvent event) {
         importsModel.resetChanges();
         filePanel.setImportFile(importsModel.getSelectedItem());
@@ -191,6 +193,28 @@ public class FileImportsDialog extends ValidatedDialog {
                 if (value.getName().trim().isEmpty()) ((JLabel) renderer).setText(EMPTY_PLACEHOLDER);
             }
             return renderer;
+        }
+    }
+
+    protected class ApplyAction extends BackgroundAction<Set<ImportFile>> {
+        protected ApplyAction() {
+            super(FileImportsDialog.this, LABELS.get(), RESOURCE_PREFIX + "action.apply");
+        }
+
+        @Override
+        protected boolean confirmAction(ActionEvent event) {
+            return true;
+        }
+
+        @Override
+        protected Set<ImportFile> performTask() {
+            Set<ImportFile> changedImports = importsModel.getChanges();
+            return importFileDao.saveAll(changedImports);
+        }
+
+        @Override
+        protected void updateUI(Set<ImportFile> result) {
+            // nothing to do because models contain saved entities
         }
     }
 }

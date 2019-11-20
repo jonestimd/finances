@@ -31,8 +31,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableList;
 import javassist.util.proxy.MethodHandler;
@@ -94,6 +96,11 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
             }
             return null;
         }
+        if (methodName.equals("commitChanges")) {
+            commitChanges(self);
+            firePropertyChange(CHANGED_PROPERTY, null, false);
+            return delegate;
+        }
         if (methodName.equals("resetChanges")) {
             resetChanges(self);
             firePropertyChange(CHANGED_PROPERTY, null, false);
@@ -136,6 +143,15 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         return !changeValues.isEmpty();
     }
 
+    protected void commitChanges(Object self) {
+        for (Entry<String, Object> entry : changeValues.entrySet()) {
+            setBeanValue(entry.getKey(), entry.getValue());
+            firePropertyChange(CHANGED_PROPERTY + entry.getKey(), null, false);
+        }
+        changeValues.clear();
+        firePropertyChange(CHANGED_PROPERTY, null, false);
+    }
+
     protected void resetChanges(Object self) {
         Set<String> changedProps = new HashSet<>(changeValues.keySet());
         changeValues.clear();
@@ -150,6 +166,17 @@ public class BufferedBeanModelHandler<D> implements MethodHandler {
         String prefix = (setter.getParameterTypes()[0].equals(boolean.class)) ? "is" : "get";
         Method getter = setter.getDeclaringClass().getMethod(prefix + setter.getName().substring(3));
         return getter.invoke(delegate);
+    }
+
+    protected void setBeanValue(String property, Object value) {
+        try {
+            Predicate<Method> isMethod = (method) -> method.getName().equals("set" + property) && method.getParameterCount() == 1;
+            Method setter = Arrays.stream(delegate.getClass().getMethods()).filter(isMethod).findFirst().get();
+            setter.invoke(delegate, value);
+            firePropertyChange(normalCase(property), null, value);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     protected boolean isGetter(Method method) {
