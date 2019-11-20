@@ -22,6 +22,8 @@
 package io.github.jonestimd.finance.swing.fileimport;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.List;
@@ -30,9 +32,12 @@ import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenuBar;
 import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
+import javax.swing.ListCellRenderer;
 
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
@@ -52,6 +57,8 @@ import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.fileimport.FileImportsModel.*;
 
 public class FileImportsDialog extends ValidatedDialog {
+    protected static final Color ERROR_COLOR = LABELS.getColor("error.foreground.color");
+    protected static final String EMPTY_PLACEHOLDER = LABELS.getString("error.empty.placeholder");
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
     private final JTabbedPane tabbedPane = new JTabbedPane();
@@ -75,6 +82,7 @@ public class FileImportsDialog extends ValidatedDialog {
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
+        importFileList.setRenderer(new ImportListRenderer(importFileList.getRenderer()));
         filePanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), new ImportFilePanel(this, accounts, payees));
         fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this, tableFactory));
         regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
@@ -165,5 +173,24 @@ public class FileImportsDialog extends ValidatedDialog {
         categoriesPanel.setTableModel(importsModel.getCategoryTableModel());
         payeesPanel.setTableModel(importsModel.getPayeeTableModel());
         securitiesPanel.setTableModel(importsModel.getSecurityTableModel());
+    }
+
+    protected static class ImportListRenderer implements ListCellRenderer<ImportFileModel> {
+        private final ListCellRenderer<? super ImportFileModel> delegate;
+
+        protected ImportListRenderer(ListCellRenderer<? super ImportFileModel> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends ImportFileModel> list, ImportFileModel value, int index,
+                boolean isSelected, boolean cellHasFocus) {
+            Component renderer = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value != null && !value.isValid()) {
+                renderer.setForeground(ERROR_COLOR);
+                if (value.getName().trim().isEmpty()) ((JLabel) renderer).setText(EMPTY_PLACEHOLDER);
+            }
+            return renderer;
+        }
     }
 }
