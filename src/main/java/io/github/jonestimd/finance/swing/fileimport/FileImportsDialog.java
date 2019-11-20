@@ -110,11 +110,11 @@ public class FileImportsDialog extends ValidatedDialog {
         if (importsModel.getSelectedItem() != null) setImportFile(importsModel.getSelectedItem());
         createMenuBar();
         getRootPane().getActionMap().remove(CancelAction.ACTION_MAP_KEY);
-        addSaveCondition(importsModel::isChanged);
         saveAction.addPropertyChangeListener(event -> applyAction.setEnabled(saveAction.isEnabled()));
         applyAction.setEnabled(saveAction.isEnabled());
         importsModel.addPropertyChangeListener(FileImportsModel.CHANGED_PROPERTY, event -> updateSaveEnabled());
         importsModel.addPropertyChangeListener("name", event -> importFileList.repaint());
+        addSaveCondition(importsModel::isChanged);
         addSaveCondition(importsModel::isValid);
         // cancelAction.setConfirmClose(); // TODO check for unsaved changes
     }
@@ -208,13 +208,16 @@ public class FileImportsDialog extends ValidatedDialog {
 
         @Override
         protected Set<ImportFile> performTask() {
+            List<ImportFile> deletes = importsModel.getDeletes();
+            if (!deletes.isEmpty()) importFileDao.deleteAll(deletes);
             Set<ImportFile> changedImports = importsModel.getChanges();
             return importFileDao.saveAll(changedImports);
         }
 
         @Override
         protected void updateUI(Set<ImportFile> result) {
-            // nothing to do because models contain saved entities
+            updateSaveEnabled(); // new imports now have IDs
+            // nothing else to do because models contain saved entities
         }
     }
 }

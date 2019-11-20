@@ -129,7 +129,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
         return securityTableModel;
     }
 
-    public boolean commitTables() {
+    protected boolean commitTables() {
         boolean changed = commitTable(pageRegionTableModel, this::toSet, getBean()::setPageRegions);
         changed |= commitTable(payeeTableModel, this::toMap, getBean()::setPayeeMap);
         changed |= commitTable(securityTableModel, this::toMap, getBean()::setSecurityMap);

@@ -132,6 +132,19 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
         else setSelectedItem(null);
     }
 
+    /**
+     * Get the list of deleted imports.  Also clears the list.
+     */
+    public List<ImportFile> getDeletes() {
+        List<ImportFile> deletes = Streams.map(deletedImports, ImportFileModel::getBean);
+        deletedImports.clear();
+        changeSupport.firePropertyChange(CHANGED_PROPERTY, null, isChanged());
+        return deletes;
+    }
+
+    /**
+     * Get the set of modified imports.  Also commits the changes.
+     */
     public Set<ImportFile> getChanges() {
         Set<ImportFile> changes = new HashSet<>();
         for (ImportFileModel fileModel : this) {
