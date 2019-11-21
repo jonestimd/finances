@@ -148,7 +148,7 @@ public class FileImportsModel extends BeanListComboBoxModel<ImportFileModel> {
     public Set<ImportFile> getChanges() {
         Set<ImportFile> changes = new HashSet<>();
         for (ImportFileModel fileModel : this) {
-            if (fileModel.commitTables() || fileModel.isChanged()) changes.add(fileModel.commitChanges());
+            if (fileModel.isChanged()) changes.add(fileModel.commitChanges());
         }
         return changes;
     }
