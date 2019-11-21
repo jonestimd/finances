@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import javax.persistence.AttributeOverride;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
@@ -35,7 +34,7 @@ import io.github.jonestimd.finance.domain.account.Account;
 @Embeddable
 @AttributeOverride(name = "alias", column = @Column(name = "account_alias", nullable = false))
 public class ImportTransfer extends ImportTransactionType<Account> {
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id", nullable = false, foreignKey = @ForeignKey(name = "import_tx_account_account_fk"))
     private Account account;
 

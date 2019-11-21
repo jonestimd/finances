@@ -59,7 +59,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Maps;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
@@ -71,7 +70,6 @@ import io.github.jonestimd.finance.file.GroupedDetailImportContext;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.MultiDetailImportContext;
 import io.github.jonestimd.finance.file.SingleDetailImportContext;
-import io.github.jonestimd.util.Streams;
 import org.hibernate.annotations.Type;
 
 import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
@@ -112,7 +110,7 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
             foreignKey = @ForeignKey(name = "import_tx_account_file_fk"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"import_file_id", "account_alias"}))
     private Set<ImportTransfer> importTransfers;
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "import_payee",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
             foreignKey = @ForeignKey(name = "import_payee_file_fk"),
@@ -121,7 +119,7 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
     @MapKeyColumn(name = "payee_alias")
     @org.hibernate.annotations.ForeignKey(name = "import_payee_file_fk", inverseName = "import_payee_payee_fk")
     private Map<String, Payee> payeeMap;
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "import_security",
             joinColumns = @JoinColumn(name = "import_file_id", nullable = false),
             foreignKey = @ForeignKey(name = "import_security_file_fk"),

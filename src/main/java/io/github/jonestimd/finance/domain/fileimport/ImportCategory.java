@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import javax.persistence.AttributeOverride;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
@@ -37,7 +36,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 public class ImportCategory extends ImportTransactionType<TransactionCategory> {
     public static final ImportCategory EMPTY_IMPORT_CATEGORY = new ImportCategory(null, false, null);
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tx_category_id", nullable = false, foreignKey = @ForeignKey(name = "import_category_category_fk"))
     private TransactionCategory category;
 
