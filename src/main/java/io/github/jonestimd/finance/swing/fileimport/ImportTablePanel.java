@@ -47,6 +47,11 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
 
     public ImportTablePanel(FileImportsDialog owner, String actionPrefix, Supplier<M> modelGetter,
             Supplier<T> itemFactory, TableFactory tableFactory) {
+        this(owner, actionPrefix, modelGetter, itemFactory, tableFactory, 0);
+    }
+
+    public ImportTablePanel(FileImportsDialog owner, String actionPrefix, Supplier<M> modelGetter,
+            Supplier<T> itemFactory, TableFactory tableFactory, int sortColumn) {
         super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
         this.itemFactory = itemFactory;
         setBorder(BorderFactory.panelBorder());
@@ -54,7 +59,7 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
         Action addAction = owner.actionFactory.newAction(actionPrefix + ".add", this::addItem);
         deleteAction = owner.actionFactory.newAction(actionPrefix + ".delete", this::deleteItem);
         deleteAction.setEnabled(false);
-        table = tableFactory.validatedTableBuilder(modelGetter.get()).get();
+        table = tableFactory.validatedTableBuilder(modelGetter.get()).sortedBy(sortColumn).get();
         setTableModel(modelGetter.get());
         add(new JScrollPane(table), BorderLayout.CENTER);
         buttonBar = new ButtonBarFactory().alignRight().add(addAction, deleteAction).get();

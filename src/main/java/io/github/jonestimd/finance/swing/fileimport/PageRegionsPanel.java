@@ -41,7 +41,7 @@ public class PageRegionsPanel extends ImportTablePanel<PageRegion, PageRegionTab
     private JDialog previewDialog;
 
     public PageRegionsPanel(FileImportsDialog owner, TableFactory tableFactory) {
-        super(owner, "pdfRegion", owner.getModel()::getRegionTableModel, PageRegion::new, tableFactory);
+        super(owner, "pdfRegion", owner.getModel()::getRegionTableModel, PageRegion::new, tableFactory, 1);
         table.setDefaultRenderer(Color.class, new ColorTableCellRenderer());
         table.setDefaultEditor(Color.class, new ColorTableCellEditor());
         table.setDefaultRenderer(Float.class, InfinityRenderer.POSITIVE_RENDERER);
