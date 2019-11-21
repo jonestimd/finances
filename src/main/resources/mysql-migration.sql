@@ -46,3 +46,9 @@ alter table import_page_region add column name varchar(250);
 update import_page_region set name = id;
 alter table import_page_region modify column name varchar(250) not null;
 alter table import_page_region add unique index import_page_region_ak(import_file_id, name);
+
+-- remove generated column
+
+alter table import_category	drop column tx_category_id;
+
+alter table import_category change transaction_category_id tx_category_id bigint(20);
