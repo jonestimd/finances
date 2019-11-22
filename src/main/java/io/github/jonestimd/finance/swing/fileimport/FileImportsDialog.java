@@ -153,6 +153,7 @@ public class FileImportsDialog extends ValidatedDialog {
     public boolean showDialog() {
         pack();
         setVisible(true);
+        // TODO check for cancelled/saved
         return false; // TODO check for valid and changed
     }
 
