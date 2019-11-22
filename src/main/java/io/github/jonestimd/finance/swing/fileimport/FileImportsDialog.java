@@ -40,12 +40,13 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
 
-import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.operations.FileImportOperations;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.LabelBuilder;
@@ -64,7 +65,7 @@ public class FileImportsDialog extends ValidatedDialog {
     protected static final String EMPTY_PLACEHOLDER = LABELS.getString("error.empty.placeholder");
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
-    private final ImportFileDao importFileDao;
+    private final FileImportOperations fileImportOperations;
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
@@ -80,17 +81,17 @@ public class FileImportsDialog extends ValidatedDialog {
     private final Action duplicateAction = actionFactory.newAction("duplicate", this::duplicateImport);
     private final FileImportsModel importsModel;
 
-    public FileImportsDialog(Window owner, List<Account> accounts, List<Payee> payees, List<ImportFile> importFiles, TableFactory tableFactory,
-            ImportFileDao importFileDao) {
+    public FileImportsDialog(Window owner, List<Account> accounts, List<TransactionCategory> categories, List<Payee> payees,
+            List<ImportFile> importFiles, TableFactory tableFactory, FileImportOperations fileImportOperations) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
-        this.importFileDao = importFileDao;
+        this.fileImportOperations = fileImportOperations;
         importsModel = new FileImportsModel(importFiles);
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
         importFileList.setRenderer(new ImportListRenderer(importFileList.getRenderer()));
         filePanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.file"), new ImportFilePanel(this, accounts, payees));
-        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this, tableFactory));
+        fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this, tableFactory, accounts, categories));
         regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         categoriesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
                 new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
@@ -209,9 +210,9 @@ public class FileImportsDialog extends ValidatedDialog {
         @Override
         protected Set<ImportFile> performTask() {
             List<ImportFile> deletes = importsModel.getDeletes();
-            if (!deletes.isEmpty()) importFileDao.deleteAll(deletes);
+            if (!deletes.isEmpty()) fileImportOperations.deleteAll(deletes);
             Set<ImportFile> changedImports = importsModel.getChanges();
-            return importFileDao.saveAll(changedImports);
+            return fileImportOperations.saveAll(changedImports);
         }
 
         @Override

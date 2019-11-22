@@ -26,12 +26,17 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.google.common.collect.ImmutableList;
+import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.domain.transaction.TransactionType;
+import io.github.jonestimd.swing.table.model.ConstantColumnAdapter;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
@@ -75,6 +80,37 @@ public class ImportFieldTableColumnAdapter<V> extends FunctionColumnAdapter<Impo
 
     public static final DetailFieldColumnAdapter<String> MEMO_ADAPTER =
             new DetailFieldColumnAdapter<>("memo", String.class, ImportField::getMemo, ImportField::setMemo);
+
+    public static class CategoryColumnAdapter extends ConstantColumnAdapter<ImportField, TransactionType> {
+        private static final List<FieldType> TYPES = ImmutableList.of(FieldType.CATEGORY, FieldType.TRANSFER_ACCOUNT);
+        private final ImportFileModel importFile;
+
+        public CategoryColumnAdapter(ImportFileModel importFile) {
+            super(LABELS.get(), RESOURCE_PREFIX, "category", TransactionType.class, true);
+            this.importFile = importFile;
+        }
+
+        @Override
+        public boolean isEditable(ImportField field) {
+            return super.isEditable(field) && importFile.getImportType() == ImportType.MULTI_DETAIL_ROWS && TYPES.contains(field.getType());
+        }
+
+        @Override
+        public TransactionType getValue(ImportField field) {
+            if (isEditable(field)) return field.getType() == FieldType.CATEGORY ? field.getCategory() : field.getTransferAccount();
+            return null;
+        }
+
+        @Override
+        public void setValue(ImportField importField, TransactionType type) {
+            if (type == null) {
+                importField.setCategory(null);
+                importField.setTransferAccount(null);
+            }
+            if (type instanceof TransactionCategory) importField.setCategory((TransactionCategory) type);
+            if (type instanceof Account) importField.setTransferAccount((Account) type);
+        }
+    }
 
     public static class FieldTypeColumnAdapter extends ValidatedFieldColumnAdapter<FieldType> {
         private final ImportFileModel importFile;

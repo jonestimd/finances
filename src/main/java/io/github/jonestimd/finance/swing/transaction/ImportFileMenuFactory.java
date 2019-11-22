@@ -34,6 +34,7 @@ import javax.swing.JMenuItem;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.finance.swing.event.AccountSelector;
@@ -57,20 +58,23 @@ public class ImportFileMenuFactory {
     private List<ImportFileAction> importFileActions;
     private Action editImportsAction = new DialogAction(LABELS.get(), "menu.file.editImports") {
         private List<Account> accounts;
+        private List<TransactionCategory> categories;
         private List<Payee> payees;
         private List<ImportFile> importFiles;
 
         @Override
         protected void loadDialogData() {
             accounts = serviceLocator.getAccountOperations().getAllAccounts();
+            categories = serviceLocator.getTransactionCategoryOperations().getAllTransactionCategories();
             payees = serviceLocator.getPayeeOperations().getAllPayees();
-            importFiles = serviceLocator.getImportFileDao().getAll();
+            importFiles = serviceLocator.getFileImportOperations().getAll();
         }
 
         @Override
         protected boolean displayDialog(JComponent owner) {
             StatusFrame window = ComponentTreeUtils.findAncestor(owner, StatusFrame.class);
-            FileImportsDialog dialog = new FileImportsDialog(window, accounts, payees, importFiles, tableFactory, serviceLocator.getImportFileDao());
+            FileImportsDialog dialog = new FileImportsDialog(window, accounts, categories, payees, importFiles, tableFactory,
+                    serviceLocator.getFileImportOperations());
             return dialog.showDialog();
         }
 
@@ -102,7 +106,7 @@ public class ImportFileMenuFactory {
         if (importFileActions == null) {
             accountListeners.add(accountListener);
             if (accountListeners.size() == 1) {
-                BackgroundTask.task(serviceLocator.getImportFileDao()::getAll, this::createMenus).run();
+                BackgroundTask.task(serviceLocator.getFileImportOperations()::getAll, this::createMenus).run();
             }
         }
         else {

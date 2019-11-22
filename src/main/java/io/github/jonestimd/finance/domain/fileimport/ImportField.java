@@ -248,7 +248,7 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     }
 
     /**
-     * Set the amount and memo on a transaction detail for a multidetail import record.
+     * Set the amount and memo on a transaction detail for a multi-detail import record.
      */
     public void updateDetail(TransactionDetail detail, String amount) {
         detail.setMemo(memo);

@@ -23,6 +23,10 @@ package io.github.jonestimd.finance.swing.fileimport;
 
 import com.google.common.collect.ImmutableList;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
+import io.github.jonestimd.finance.swing.fileimport.ImportFieldTableColumnAdapter.AmountFormatColumnAdapter;
+import io.github.jonestimd.finance.swing.fileimport.ImportFieldTableColumnAdapter.CategoryColumnAdapter;
+import io.github.jonestimd.finance.swing.fileimport.ImportFieldTableColumnAdapter.FieldTypeColumnAdapter;
+import io.github.jonestimd.finance.swing.fileimport.ImportFieldTableColumnAdapter.RegionTypeColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 
 public class ImportFieldTableModel extends ValidatedBeanListTableModel<ImportField> {
@@ -33,12 +37,13 @@ public class ImportFieldTableModel extends ValidatedBeanListTableModel<ImportFie
     public ImportFieldTableModel(ImportFileModel importFile) {
         super(ImmutableList.of(
             ImportFieldTableColumnAdapter.LABELS_ADAPTER,
-            new ImportFieldTableColumnAdapter.FieldTypeColumnAdapter(importFile),
-            new ImportFieldTableColumnAdapter.AmountFormatColumnAdapter(importFile),
+            new FieldTypeColumnAdapter(importFile),
+            new CategoryColumnAdapter(importFile),
+            new AmountFormatColumnAdapter(importFile),
             ImportFieldTableColumnAdapter.NEGATE_ADAPTER,
             ImportFieldTableColumnAdapter.ACCEPT_REGEX_ADAPTER,
             ImportFieldTableColumnAdapter.REJECT_REGEX_ADAPTER,
-            new ImportFieldTableColumnAdapter.RegionTypeColumnAdapter(importFile),
+            new RegionTypeColumnAdapter(importFile),
             ImportFieldTableColumnAdapter.MEMO_ADAPTER
         ));
         if (importFile != null) importFile.addPropertyChangeListener("importType", event -> {

@@ -32,7 +32,11 @@ import java.util.stream.Stream;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.HibernateDaoContext;
 import io.github.jonestimd.finance.dao.ImportFileDao;
+import io.github.jonestimd.finance.domain.fileimport.FieldType;
+import io.github.jonestimd.finance.domain.fileimport.FileType;
+import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
+import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.service.ServiceContext;
 import io.github.jonestimd.finance.service.ServiceLocator;
@@ -54,6 +58,42 @@ public class FileImportOperationsImpl implements FileImportOperations {
         this.payeeOperations = serviceLocator.getPayeeOperations();
         this.assetOperations = serviceLocator.getAssetOperations();
         this.categoryOperations = serviceLocator.getTransactionCategoryOperations();
+    }
+
+    @Override
+    public List<ImportFile> getAll() {
+        return importFileDao.getAll();
+    }
+
+    @Override
+    public <T extends Iterable<ImportFile>> T saveAll(T importFiles) {
+        for (ImportFile importFile : importFiles) {
+            if (importFile.getFileType() != FileType.PDF) {
+                importFile.getPageRegions().clear();
+                importFile.getFields().forEach(field -> field.setRegion(null));
+            }
+            if (importFile.getImportType() != ImportType.MULTI_DETAIL_ROWS) {
+                for (ImportField field : importFile.getFields()) {
+                    field.setCategory(null);
+                    field.setTransferAccount(null);
+                }
+            }
+            for (ImportField field : importFile.getFields()) {
+                if (field.getType().isTransaction()) {
+                    field.setAcceptRegex(null);
+                    field.setIgnoredRegex(null);
+                    field.setMemo(null);
+                }
+                if (field.getType() != FieldType.CATEGORY) field.setCategory(null);
+                if (field.getType() != FieldType.TRANSFER_ACCOUNT) field.setTransferAccount(null);
+            }
+        }
+        return importFileDao.saveAll(importFiles);
+    }
+
+    @Override
+    public void deleteAll(Iterable<? extends ImportFile> importFiles) {
+        importFileDao.deleteAll(importFiles);
     }
 
     @Override

@@ -21,28 +21,36 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.swing.fileimport;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.event.TableModelListener;
 
+import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.fileimport.AmountFormat;
 import io.github.jonestimd.finance.domain.fileimport.FieldType;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.PageRegion;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.finance.swing.FormatFactory;
+import io.github.jonestimd.finance.swing.transaction.TransactionTypeFormat;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.ComboBoxCellEditor;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
 import io.github.jonestimd.swing.table.PopupListTableCellEditor;
 import io.github.jonestimd.swing.table.TableFactory;
+import io.github.jonestimd.swing.table.model.BeanListTableModel;
 import io.github.jonestimd.swing.validation.ValidatedComponent;
 
 public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportFieldTableModel> {
@@ -55,12 +63,13 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
     private PropertyChangeListener singlePayeeListener = (event) -> validationHolder.validateValue();
     private ImportFileModel fileModel;
 
-    public ImportFieldsPanel(FileImportsDialog owner, TableFactory tableFactory) {
+    public ImportFieldsPanel(FileImportsDialog owner, TableFactory tableFactory, List<Account> accounts, List<TransactionCategory> categories) {
         super(owner, "importField", owner.getModel()::getImportFieldTableModel, ImportFieldsPanel::newImportField, tableFactory);
         addToButtonBar(validationHolder, 0);
         table.setDefaultRenderer(List.class, new MultiSelectTableCellRenderer<>(true));
         table.setDefaultRenderer(PageRegion.class, new FormatTableCellRenderer(REGION_FORMAT));
         table.setDefaultEditor(List.class, PopupListTableCellEditor.builder(Function.identity(), Function.identity()).build());
+        table.setDefaultEditor(TransactionType.class, new TransactionTypeCellEditor(accounts, categories));
         table.setDefaultEditor(FieldType.class, new ComboBoxCellEditor(new JComboBox<>(FieldType.values())));
         table.setDefaultEditor(AmountFormat.class, new ComboBoxCellEditor(BeanListComboBox.builder(AmountFormat.class).optional().get()));
         table.setDefaultEditor(PageRegion.class, new ComboBoxCellEditor(new BeanListComboBox<>(REGION_FORMAT, pageRegionModel)));
@@ -130,6 +139,35 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
         @Override
         public void removeValidationListener(PropertyChangeListener listener) {
             removePropertyChangeListener(VALIDATION_MESSAGES, listener);
+        }
+    }
+
+    private static class TransactionTypeCellEditor extends ComboBoxCellEditor {
+        private final List<Account> accounts;
+        private final List<TransactionCategory> categories;
+
+        public TransactionTypeCellEditor(List<Account> accounts, List<TransactionCategory> categories) {
+            super(new BeanListComboBox(new TransactionTypeFormat()));
+            this.accounts = new ArrayList<>(accounts);
+            this.accounts.sort(Comparator.comparing(Account::qualifiedName));
+            this.accounts.add(0, null);
+            this.categories = new ArrayList<>(categories);
+            this.categories.sort(Comparator.comparing(TransactionCategory::qualifiedName));
+            this.categories.add(0, null);
+        }
+
+        @SuppressWarnings("unchecked")
+        protected BeanListComboBox<TransactionType> getComboBox() {
+            return (BeanListComboBox<TransactionType>) getComponent();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            int index = table.convertRowIndexToModel(row);
+            ImportField field = (ImportField) ((BeanListTableModel)table.getModel()).getRow(index);
+            if (field.getType() == FieldType.CATEGORY) getComboBox().getModel().setElements(categories, false);
+            else getComboBox().getModel().setElements(accounts, false);
+            return super.getTableCellEditorComponent(table, value, isSelected, row, column);
         }
     }
 }

@@ -5,11 +5,8 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import io.github.jonestimd.finance.domain.fileimport.FileType;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.fileimport.ImportType;
 import javassist.util.proxy.MethodHandler;
@@ -25,24 +22,6 @@ import static org.mockito.Mockito.*;
 public class ImportFileModelTest {
     private ImportFile importFile = ImportFile.newImport();
     private ImportFileModel model = ImportFileModel.create(importFile);
-
-    @Test
-    public void setLabelsUpdatesIsChanged() throws Exception {
-        testSetLabels(model::setDateLabels, "date", model::getDateLabels);
-        testSetLabels(model::setPayeeLabels, "payee", model::getPayeeLabels);
-        testSetLabels(model::setSecurityLabels, "security", model::getSecurityLabels);
-    }
-
-    private void testSetLabels(Consumer<List<String>> setter, String label, Supplier<List<String>> getter) throws Exception {
-        assertThat(model.isChanged()).isFalse();
-
-        setter.accept(singletonList(label));
-
-        assertThat(model.isChanged()).isTrue();
-        assertThat(getter.get()).containsExactly(label);
-        assertThat(importFile.getFields()).isEmpty();
-        setter.accept(emptyList());
-    }
 
     @Test
     public void isValid_fieldsNotLoaded() throws Exception {
@@ -62,7 +41,6 @@ public class ImportFileModelTest {
         model.setFileType(fileType);
         model.setDateFormat(dateFormat);
         model.setStartOffset(startOffset);
-        model.setDateLabels(dateLabels);
 
         assertThat(model.isValid()).isEqualTo(valid);
     }
@@ -80,9 +58,6 @@ public class ImportFileModelTest {
     public void resetChanges() throws Exception {
         PropertyChangeListener listener = mock(PropertyChangeListener.class);
         model.setName("name");
-        model.setDateLabels(singletonList("date"));
-        model.setPayeeLabels(singletonList("payee"));
-        model.setSecurityLabels(singletonList("security"));
         // model.getFieldModels();
         // model.addFieldModel(new ImportField());
         model.addPropertyChangeListener(listener);
@@ -90,9 +65,6 @@ public class ImportFileModelTest {
         model.resetChanges();
 
         assertThat(model.getName()).isEqualTo("");
-        assertThat(model.getDateLabels()).isEmpty();
-        assertThat(model.getPayeeLabels()).isEmpty();
-        assertThat(model.getSecurityLabels()).isEmpty();
         // assertThat(model.getFieldModels()).isEmpty();
         MethodHandler source = ((ProxyObject) model).getHandler();
         verify(listener).propertyChange(matches(new PropertyChangeEvent(source, "name", null, null)));

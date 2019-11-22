@@ -1,8 +1,8 @@
 package io.github.jonestimd.finance.service;
 
-import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.operations.AssetOperations;
+import io.github.jonestimd.finance.operations.FileImportOperations;
 import io.github.jonestimd.finance.operations.PayeeOperations;
 import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.operations.TransactionGroupOperations;
@@ -16,7 +16,7 @@ public class MockServiceContext implements ServiceLocator {
     private TransactionGroupOperations transactionGroupOperations = mock(TransactionGroupOperations.class);
     private TransactionCategoryOperations TransactionCategoryOperations = mock(TransactionCategoryOperations.class);
     private TransactionService transactionService = mock(TransactionService.class);
-    private ImportFileDao importFileDao = mock(ImportFileDao.class);
+    private FileImportOperations fileImportOperations = mock(FileImportOperations.class);
 
     @Override
     public AccountOperations getAccountOperations() {
@@ -49,8 +49,8 @@ public class MockServiceContext implements ServiceLocator {
     }
 
     @Override
-    public ImportFileDao getImportFileDao() {
-        return importFileDao;
+    public FileImportOperations getFileImportOperations() {
+        return fileImportOperations;
     }
 
     @Override
