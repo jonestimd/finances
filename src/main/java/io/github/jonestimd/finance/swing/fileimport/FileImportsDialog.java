@@ -49,7 +49,9 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.operations.FileImportOperations;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
+import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.LabelBuilder;
+import io.github.jonestimd.swing.SettingsPersister;
 import io.github.jonestimd.swing.action.BackgroundAction;
 import io.github.jonestimd.swing.action.CancelAction;
 import io.github.jonestimd.swing.action.LocalizedAction;
@@ -176,6 +178,12 @@ public class FileImportsDialog extends ValidatedDialog {
         categoriesPanel.setTableModel(importsModel.getCategoryTableModel());
         payeesPanel.setTableModel(importsModel.getPayeeTableModel());
         securitiesPanel.setTableModel(importsModel.getSecurityTableModel());
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        ComponentTreeUtils.visitComponentTree(getContentPane(), JComponent.class, SettingsPersister::saveSettings);
     }
 
     protected static class ImportListRenderer implements ListCellRenderer<ImportFileModel> {

@@ -34,6 +34,7 @@ import javax.swing.event.TableModelListener;
 
 import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
+import io.github.jonestimd.swing.SettingsPersister;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
@@ -94,5 +95,11 @@ public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> exten
 
     protected boolean isNoErrors() {
         return table.getModel().isNoErrors();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        SettingsPersister.saveSettings(table);
     }
 }
