@@ -36,32 +36,26 @@ import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.SettingsPersister;
 import io.github.jonestimd.swing.table.DecoratedTable;
-import io.github.jonestimd.swing.table.TableFactory;
-import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
+import io.github.jonestimd.swing.table.model.ChangeBufferTableModel;
+import io.github.jonestimd.swing.table.model.ValidatedTableModel;
 
-public class ImportTablePanel<T, M extends ValidatedBeanListTableModel<T>> extends ValidatedTabPanel {
+public class ImportTablePanel<T, M extends ChangeBufferTableModel<T> & ValidatedTableModel> extends ValidatedTabPanel {
     protected final DecoratedTable<T, M> table;
     private final Supplier<T> itemFactory;
     private final JComponent buttonBar;
     private final Action deleteAction;
     private final TableModelListener validationListener = (event) -> setTabForeground();
 
-    public ImportTablePanel(FileImportsDialog owner, String actionPrefix, Supplier<M> modelGetter,
-            Supplier<T> itemFactory, TableFactory tableFactory) {
-        this(owner, actionPrefix, modelGetter, itemFactory, tableFactory, 0);
-    }
-
-    public ImportTablePanel(FileImportsDialog owner, String actionPrefix, Supplier<M> modelGetter,
-            Supplier<T> itemFactory, TableFactory tableFactory, int sortColumn) {
+    public ImportTablePanel(FileImportsDialog owner, String actionPrefix, DecoratedTable<T, M> table,
+            Supplier<M> modelGetter, Supplier<T> itemFactory) {
         super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
         this.itemFactory = itemFactory;
+        this.table = table;
         setBorder(BorderFactory.panelBorder());
         setPreferredSize(new Dimension(800, 300));
         Action addAction = owner.actionFactory.newAction(actionPrefix + ".add", this::addItem);
         deleteAction = owner.actionFactory.newAction(actionPrefix + ".delete", this::deleteItem);
         deleteAction.setEnabled(false);
-        table = tableFactory.validatedTableBuilder(modelGetter.get()).sortedBy(sortColumn).get();
-        setTableModel(modelGetter.get());
         add(new JScrollPane(table), BorderLayout.CENTER);
         buttonBar = new ButtonBarFactory().alignRight().add(addAction, deleteAction).get();
         add(buttonBar, BorderLayout.SOUTH);

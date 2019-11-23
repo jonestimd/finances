@@ -64,7 +64,8 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
     private ImportFileModel fileModel;
 
     public ImportFieldsPanel(FileImportsDialog owner, TableFactory tableFactory, List<Account> accounts, List<TransactionCategory> categories) {
-        super(owner, "importField", owner.getModel()::getImportFieldTableModel, ImportFieldsPanel::newImportField, tableFactory);
+        super(owner, "importField", tableFactory.initialize(new ImportFieldTable(owner.getModel().getImportFieldTableModel())),
+                owner.getModel()::getImportFieldTableModel, ImportFieldsPanel::newImportField);
         addToButtonBar(validationHolder, 0);
         table.setDefaultRenderer(List.class, new MultiSelectTableCellRenderer<>(true));
         table.setDefaultRenderer(PageRegion.class, new FormatTableCellRenderer(REGION_FORMAT));

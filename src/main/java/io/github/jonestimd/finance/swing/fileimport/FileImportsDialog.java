@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -96,11 +96,17 @@ public class FileImportsDialog extends ValidatedDialog {
         fieldsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.columns"), new ImportFieldsPanel(this, tableFactory, accounts, categories));
         regionsPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.pageRegions"), new PageRegionsPanel(this, tableFactory));
         categoriesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.categories"),
-                new ImportTablePanel<>(this, "transactionType", importsModel::getCategoryTableModel, ImportTransactionTypeModel::new, tableFactory));
+                new ImportTablePanel<>(this, "transactionType",
+                        tableFactory.validatedTableBuilder(importsModel.getCategoryTableModel()).sortedBy(0).get(),
+                        importsModel::getCategoryTableModel, ImportTransactionTypeModel::new));
         payeesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.payees"),
-                new ImportTablePanel<>(this, "importMapping", importsModel::getPayeeTableModel, ImportMapping::new, tableFactory));
+                new ImportTablePanel<>(this, "importMapping",
+                        tableFactory.validatedTableBuilder(importsModel.getPayeeTableModel()).sortedBy(0).get(),
+                        importsModel::getPayeeTableModel, ImportMapping::new));
         securitiesPanel = addTab(LABELS.getString(RESOURCE_PREFIX + "tab.securities"),
-                new ImportTablePanel<>(this, "importMapping", importsModel::getSecurityTableModel, ImportMapping::new, tableFactory));
+                new ImportTablePanel<>(this, "importMapping",
+                        tableFactory.validatedTableBuilder(importsModel.getSecurityTableModel()).sortedBy(0).get(),
+                        importsModel::getSecurityTableModel, ImportMapping::new));
         getFormPanel().setLayout(new BorderLayout(0, 10));
         getFormPanel().add(tabbedPane, BorderLayout.CENTER);
         Box listPanel = Box.createHorizontalBox();

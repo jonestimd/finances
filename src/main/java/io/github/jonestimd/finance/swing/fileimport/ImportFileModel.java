@@ -121,7 +121,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     private void commitTables() {
-        commitTable(importFieldTableModel, getBean().getFields());
+        // TODO commitTable(importFieldTableModel, getBean().getFields());
         commitTable(pageRegionTableModel, getBean().getPageRegions());
         commitTable(payeeTableModel, this::toMap, getBean()::setPayeeMap);
         commitTable(securityTableModel, this::toMap, getBean()::setSecurityMap);
