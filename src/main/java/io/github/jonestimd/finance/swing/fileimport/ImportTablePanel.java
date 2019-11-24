@@ -60,6 +60,7 @@ public class ImportTablePanel<T, M extends ChangeBufferTableModel<T> & Validated
         buttonBar = new ButtonBarFactory().alignRight().add(addAction, deleteAction).get();
         add(buttonBar, BorderLayout.SOUTH);
         owner.getModel().addSelectionListener((oldFile, newFile) -> setTableModel(modelGetter.get()));
+        setTableModel(modelGetter.get());
         table.getSelectionModel().addListSelectionListener(event -> deleteAction.setEnabled(table.getSelectedRowCount() > 0));
     }
 
@@ -80,13 +81,11 @@ public class ImportTablePanel<T, M extends ChangeBufferTableModel<T> & Validated
 
     private void addItem(ActionEvent event) {
         table.getModel().queueAdd(itemFactory.get());
-        setTabForeground();
     }
 
     private void deleteItem(ActionEvent event) {
         if (table.isEditing()) table.editingStopped(null);
         table.getSelectedItems().forEach(row -> table.getModel().queueDelete(row));
-        setTabForeground();
     }
 
     protected boolean isNoErrors() {
