@@ -35,7 +35,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.operations.inventory.LotAllocationStrategy;
 import io.github.jonestimd.finance.swing.FinanceTableFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
-import io.github.jonestimd.swing.action.ActionAdapter;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.action.MnemonicAction;
 import io.github.jonestimd.swing.component.TextField;
 import io.github.jonestimd.swing.dialog.FormDialog;
@@ -69,10 +69,15 @@ public class LotAllocationDialog extends FormDialog {
         saleDateField = builder.append("saleDate.name", TextField.plain().readOnly().get());
         securityNameField = builder.append("security.name", TextField.plain().readOnly().get());
         builder.append("purchaseTable", tableFactory.tableBuilder(saleLotsTableModel).sortedBy(SaleLotsTableModel.PURCHASE_DATE).get());
-        builder.append(new ButtonBarFactory().alignRight().border(BUTTON_BAR_BORDER, 0).add(firstInAction, lastInAction, lowestPriceAction, highestPriceAction).get());
+        builder.append(new ButtonBarFactory().alignRight().border(BUTTON_BAR_BORDER, 0)
+                .add(firstInAction, lastInAction, lowestPriceAction, highestPriceAction).get());
         saleSharesField = builder.append("saleShares.name", TextField.plain().readOnly().get());
         purchaseSharesField = builder.append("purchaseShares.name", TextField.plain().readOnly().get());
-        addButton(ActionAdapter.forMnemonicAndName(this::discardLots, LABELS.getString(RESOURCE_PREFIX + "action.discardLots.mnemonicAndName")));
+        addButton(LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "action.discardLots", this::discardLots));
+        addSaveCondition(() -> {
+            BigDecimal allocatedShares = getAllocatedShares();
+            return allocatedShares.signum() == 0 || totalShares.compareTo(allocatedShares) == 0;
+        });
     }
 
     private void discardLots(ActionEvent event) {
@@ -95,12 +100,16 @@ public class LotAllocationDialog extends FormDialog {
     }
 
     private void setAllocatedShares(TableModelEvent event) {
+        purchaseSharesField.setText(getAllocatedShares().toString());
+        updateSaveEnabled();
+    }
+
+    private BigDecimal getAllocatedShares() {
         BigDecimal allocatedShares = BigDecimal.ZERO;
         for (SecurityLot row : saleLotsTableModel.getBeans()) {
             allocatedShares = allocatedShares.add(row.getSaleShares());
         }
-        purchaseSharesField.setText(allocatedShares.toString());
-        setSaveEnabled(saleLotsTableModel.isChanged() && (allocatedShares.signum() == 0 || totalShares.compareTo(allocatedShares) == 0));
+        return allocatedShares;
     }
 
     private class AllocationAction extends MnemonicAction {

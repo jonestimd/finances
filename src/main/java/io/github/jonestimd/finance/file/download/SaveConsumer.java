@@ -29,7 +29,7 @@ import java.io.InputStream;
 import io.github.jonestimd.function.FailableConsumer;
 import org.apache.http.HttpEntity;
 
-public class SaveConsumer implements FailableConsumer<HttpEntity> {
+public class SaveConsumer implements FailableConsumer<HttpEntity, IOException> {
     private final File file;
 
     public SaveConsumer(File file) {

@@ -62,7 +62,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static org.assertj.core.api.Assertions.*;
@@ -102,8 +102,8 @@ public class PostgresDriverConnectionServiceTest {
         preparedStatements.put(USER_TEST_QUERY, userStatement);
         preparedStatements.put(SCHEMA_TEST_QUERY, schemaStatement);
         statements.clear();
-        when(driver.acceptsURL(url)).thenReturn(true);
-        when(driver.acceptsURL(superUrl)).thenReturn(true);
+        lenient().when(driver.acceptsURL(url)).thenReturn(true);
+        lenient().when(driver.acceptsURL(superUrl)).thenReturn(true);
         when(driver.connect(eq(url), any(Properties.class))).thenReturn(userConnection);
         when(userConnection.prepareStatement(anyString())).thenAnswer(this::addPreparedStatement);
         when(driver.connect(eq(superUrl), any(Properties.class))).thenAnswer(invocation -> {
@@ -200,7 +200,7 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(statements).isEmpty();
         verifyTestDatabaseQuery();
         assertThat(superConnections).isEmpty();
-        verifyZeroInteractions(userStatement, schemaStatement);
+        verifyNoInteractions(userStatement, schemaStatement);
         verify(userConnection).close();
     }
 
@@ -220,7 +220,7 @@ public class PostgresDriverConnectionServiceTest {
         assertThat(statements).isEmpty();
         verifyTestDatabaseQuery();
         assertThat(superConnections).isEmpty();
-        verifyZeroInteractions(userStatement, schemaStatement);
+        verifyNoInteractions(userStatement, schemaStatement);
         verify(userConnection).close();
     }
 

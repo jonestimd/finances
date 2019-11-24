@@ -3,7 +3,7 @@ package io.github.jonestimd.finance.swing.transaction;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.Collections;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -15,13 +15,11 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
 import org.fest.util.Objects;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 public class TransactionTableModelTest {
@@ -29,7 +27,7 @@ public class TransactionTableModelTest {
     public void appendDetail() throws Exception {
         TableModelListener listener = mock(TableModelListener.class);
         TransactionTableModel model = new TransactionTableModel(new Account());
-        model.setBeans(Arrays.asList(new Transaction(null, null, null, false, null)));
+        model.setBeans(Collections.singletonList(new Transaction(null, null, null, false, null)));
         model.addTableModelListener(listener);
 
         model.queueAppendSubRow(model.getRowCount());
@@ -236,7 +234,7 @@ public class TransactionTableModelTest {
         return argThat(new PropertyChangeMatcher(propertyName, oldValue, newValue));
     }
 
-    private static class PropertyChangeMatcher extends BaseMatcher<PropertyChangeEvent> {
+    private static class PropertyChangeMatcher implements ArgumentMatcher<PropertyChangeEvent> {
         private final String name;
         private final Object oldValue;
         private final Object newValue;
@@ -248,19 +246,10 @@ public class TransactionTableModelTest {
         }
 
         @Override
-        public boolean matches(Object argument) {
-            PropertyChangeEvent event = (PropertyChangeEvent) argument;
+        public boolean matches(PropertyChangeEvent event) {
             return (name == null || Objects.areEqual(name, event.getPropertyName()))
                     && Objects.areEqual(oldValue, event.getOldValue())
                     && Objects.areEqual(newValue, event.getNewValue());
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description
-                .appendText("propertyName=").appendValue(name)
-                .appendText(" oldValue=").appendValue(oldValue)
-                .appendText(" newValue=").appendValue(newValue);
         }
     }
 }

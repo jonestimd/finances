@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,32 +19,40 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.domain.fileimport.csv;
+package io.github.jonestimd.finance.swing.fileimport;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.awt.Color;
+import java.awt.LayoutManager;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
-import com.google.common.collect.ListMultimap;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.file.ImportFieldMapper;
-import io.github.jonestimd.finance.file.csv.CsvParser;
+import io.github.jonestimd.swing.ComponentTreeUtils;
 
-@Entity
-@DiscriminatorValue("CSV")
-public class CsvImportFile extends ImportFile {
-    public CsvImportFile() {}
+import static io.github.jonestimd.finance.swing.BundleType.*;
 
-    @Override
-    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws IOException {
-        return new ImportFieldMapper(getFields()).mapFields(new CsvParser(stream).getStream());
+public abstract class ValidatedTabPanel extends JPanel {
+    private static final Color ERROR_COLOR = LABELS.getColor("error.foreground.color");
+    private JTabbedPane tabbedPane;
+    private int tabIndex = -1;
+
+    public ValidatedTabPanel() {
+    }
+
+    public ValidatedTabPanel(LayoutManager layout) {
+        super(layout);
+    }
+
+    protected abstract boolean isNoErrors();
+
+    protected void setTabForeground() {
+        if (tabbedPane != null) tabbedPane.setForegroundAt(tabIndex, isNoErrors() ? null : ERROR_COLOR);
     }
 
     @Override
-    public String getFileExtension() {
-        return "csv";
+    public void addNotify() {
+        super.addNotify();
+        tabbedPane = ComponentTreeUtils.findAncestor(this, JTabbedPane.class);
+        tabIndex = tabbedPane.indexOfComponent(this);
     }
 }

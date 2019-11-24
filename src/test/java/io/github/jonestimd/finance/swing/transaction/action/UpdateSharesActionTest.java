@@ -11,10 +11,7 @@ import javax.swing.SwingUtilities;
 
 import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.domain.TestSequence;
-import io.github.jonestimd.finance.domain.account.AccountBuilder;
-import io.github.jonestimd.finance.domain.account.AccountType;
 import io.github.jonestimd.finance.domain.asset.Security;
-import io.github.jonestimd.finance.domain.asset.SecuritySummary;
 import io.github.jonestimd.finance.domain.transaction.SecurityAction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
@@ -32,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -76,11 +73,11 @@ public class UpdateSharesActionTest {
     public void trainMocks() throws Exception {
         when(table.getModel()).thenReturn(tableModel);
         when(tableModel.getRowCount()).thenReturn(rowCount);
-        when(tableModel.getColumnIndex(TransactionColumnAdapter.DATE_ADAPTER)).thenReturn(dateColumn);
+        lenient().when(tableModel.getColumnIndex(TransactionColumnAdapter.DATE_ADAPTER)).thenReturn(dateColumn);
         when(categoryOperations.getSecurityAction(SecurityAction.SELL.code())).thenReturn(securityAction);
         when(categoryOperations.getSecurityAction(SecurityAction.BUY.code())).thenReturn(securityAction);
         when(categoryOperations.getSecurityAction(SecurityAction.COMMISSION_AND_FEES.code())).thenReturn(feesAction);
-        when(dialog.show(anyListOf(SecuritySummary.class), any(TransactionDetail.class)))
+        when(dialog.show(anyList(), any(TransactionDetail.class)))
                 .thenAnswer(invocation -> {
                     shown = true;
                     return !cancelled;
@@ -108,8 +105,8 @@ public class UpdateSharesActionTest {
     @Test
     public void updatesEnabledWhenModelChanges() throws Exception {
         TransactionTableModel model2 = mock(TransactionTableModel.class);
-        when(tableModel.getAccount()).thenReturn(new AccountBuilder().type(AccountType.BANK).get());
-        when(model2.getAccount()).thenReturn(new AccountBuilder().type(AccountType.BROKERAGE).get());
+        // when(tableModel.getAccount()).thenReturn(new AccountBuilder().type(AccountType.BANK).get());
+        // when(model2.getAccount()).thenReturn(new AccountBuilder().type(AccountType.BROKERAGE).get());
 
         UpdateSharesAction action = new UpdateSharesAction(table, assetOperations, categoryOperations);
 

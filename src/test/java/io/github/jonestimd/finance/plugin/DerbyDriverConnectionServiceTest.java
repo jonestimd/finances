@@ -42,12 +42,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Field.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -67,7 +66,7 @@ public class DerbyDriverConnectionServiceTest {
 
     @Before
     public void setDriver() throws Exception {
-        when(driver.acceptsURL(url)).thenReturn(true);
+        lenient().when(driver.acceptsURL(url)).thenReturn(true);
         when(driver.connect(any(String.class), any(Properties.class))).thenReturn(connection);
         DriverUtils.setDriver(url, driver);
     }
@@ -163,7 +162,7 @@ public class DerbyDriverConnectionServiceTest {
         assertThat(output.getParentFile()).isDirectory();
         verify(updateProgress).accept("Creating database...");
         verify(connection).close();
-        verifyZeroInteractions(statement);
+        verifyNoInteractions(statement);
     }
 
     @Test
@@ -180,7 +179,7 @@ public class DerbyDriverConnectionServiceTest {
         verify(connection).prepareStatement("select * from company");
         verify(connection).close();
         verify(statement).getMetaData();
-        verifyZeroInteractions(updateProgress);
+        verifyNoInteractions(updateProgress);
     }
 
     @Test
@@ -197,7 +196,7 @@ public class DerbyDriverConnectionServiceTest {
         verify(connection).prepareStatement("select * from company");
         verify(connection).close();
         verify(statement).getMetaData();
-        verifyZeroInteractions(updateProgress);
+        verifyNoInteractions(updateProgress);
     }
 
     private boolean deleteAll(File file) {

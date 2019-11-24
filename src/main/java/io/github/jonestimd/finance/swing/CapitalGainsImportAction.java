@@ -47,13 +47,13 @@ import io.github.jonestimd.finance.swing.securitylot.LotAllocationDialog;
 import io.github.jonestimd.function.MessageConsumer;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
 import io.github.jonestimd.swing.window.StatusFrame;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class CapitalGainsImportAction extends MnemonicAction {
+public class CapitalGainsImportAction extends LocalizedAction {
     public static final String MESSAGE_PREFIX = "import.capitalGains";
     public static final String RESOURCE_PREFIX = "action." + MESSAGE_PREFIX;
     public static final String ERROR_DIALOG_TITLE = RESOURCE_PREFIX + ".failed.title";

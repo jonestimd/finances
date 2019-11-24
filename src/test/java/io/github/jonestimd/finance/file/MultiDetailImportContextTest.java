@@ -3,7 +3,7 @@ package io.github.jonestimd.finance.file;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -37,15 +37,13 @@ public class MultiDetailImportContextTest {
     private DomainMapper<Payee> payeeMapper;
     @Mock
     private DomainMapper<Security> securityMapper;
-    @Mock
-    private DomainMapper<TransactionCategory> categoryMapper;
 
     private final InputStream inputStream = new ByteArrayInputStream("".getBytes());
 
-    private final ImportField dateField = new ImportFieldBuilder().type(DATE).dateFormat("MM/dd/yyyy").get();
+    private final ImportField dateField = new ImportFieldBuilder().type(DATE).get();
     private final ImportField payeeField = new ImportFieldBuilder().type(PAYEE).get();
-    private final ImportField categoryField = new ImportFieldBuilder().type(CATEGORY).label(CATEGORY_NAME).amountFormat(FIXED).get();
-    private final ImportField transferField = new ImportFieldBuilder().type(TRANSFER_ACCOUNT).label(ACCOUNT_NAME).amountFormat(FIXED).get();
+    private final ImportField transferField = new ImportFieldBuilder().type(TRANSFER_ACCOUNT).label(ACCOUNT_NAME)
+            .amountFormat(FIXED).account(new Account()).get();
 
     public void trainImportFile(Iterable<ListMultimap<ImportField, String>> rows) throws Exception {
         when(importFile.parse(inputStream)).thenReturn(rows);
@@ -53,12 +51,15 @@ public class MultiDetailImportContextTest {
 
     @Test
     public void setsDateOnTransaction() throws Exception {
+        final Date date = new Date();
+        when(importFile.parseDate(anyString())).thenReturn(date);
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(dateField, "03/10/2012")));
 
-        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
+        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
-        assertThat(transactions.get(0).getDate()).isEqualTo(new SimpleDateFormat("MM/dd/yyyy").parse("03/10/2012"));
+        assertThat(transactions.get(0).getDate()).isSameAs(date);
+        verify(importFile).parseDate("03/10/2012");
     }
 
     @Test
@@ -67,7 +68,7 @@ public class MultiDetailImportContextTest {
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(payeeField, "payee name")));
         when(payeeMapper.get("payee name")).thenReturn(payee);
 
-        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
+        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getPayee()).isSameAs(payee);
@@ -76,10 +77,11 @@ public class MultiDetailImportContextTest {
     @Test
     public void addsDetailWithCategory() throws Exception {
         final TransactionCategory category = new TransactionCategory();
+        final ImportField categoryField = new ImportFieldBuilder().type(CATEGORY)
+                .label(CATEGORY_NAME).amountFormat(FIXED).category(category).get();
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(categoryField, "123456")));
-        when(categoryMapper.get(CATEGORY_NAME)).thenReturn(category);
 
-        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
+        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getDetails()).hasSize(1);
@@ -89,25 +91,22 @@ public class MultiDetailImportContextTest {
 
     @Test
     public void addsDetailWithTransfer() throws Exception {
-        final Account acount = new Account();
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(transferField, "123456")));
-        when(importFile.getTransferAccount(ACCOUNT_NAME)).thenReturn(acount);
 
-        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
+        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getDetails()).hasSize(1);
-        assertThat(transactions.get(0).getDetails().get(0).getRelatedDetail().getTransaction().getAccount()).isSameAs(acount);
+        assertThat(transactions.get(0).getDetails().get(0).getRelatedDetail().getTransaction().getAccount())
+                .isSameAs(transferField.getTransferAccount());
         assertThat(transactions.get(0).getDetails().get(0).getAmount().compareTo(new BigDecimal("1234.56"))).isEqualTo(0);
     }
 
     @Test
     public void removesZeroAmountDetails() throws Exception {
-        final Account acount = new Account();
         trainImportFile(ImmutableList.of(ImmutableListMultimap.of(transferField, "0.00")));
-        when(importFile.getTransferAccount(ACCOUNT_NAME)).thenReturn(acount);
 
-        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper).parseTransactions(inputStream);
+        List<Transaction> transactions = new MultiDetailImportContext(importFile, payeeMapper, securityMapper).parseTransactions(inputStream);
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getDetails()).isEmpty();

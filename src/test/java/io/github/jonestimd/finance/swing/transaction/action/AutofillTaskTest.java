@@ -17,7 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -42,7 +42,7 @@ public class AutofillTaskTest {
 
     @Test
     public void executeDoesNothingIfTransactionIsNotEmpty() throws Exception {
-        when(transactionTable.getParent()).thenReturn(frame);
+        // when(transactionTable.getParent()).thenReturn(frame);
         Transaction transaction = new TransactionBuilder().details(new TransactionDetail(null, BigDecimal.TEN, null, null)).get();
 
         assertThat(AutofillTask.execute(transactionService, transaction, transactionTable)).isNull();

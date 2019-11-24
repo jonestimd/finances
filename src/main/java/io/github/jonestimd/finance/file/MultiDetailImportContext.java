@@ -29,7 +29,6 @@ import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
-import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 
 /**
@@ -37,20 +36,17 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
  * of this type includes category specific columns that contain the amount for the associated category.
  */
 public class MultiDetailImportContext extends ImportContext {
-    public MultiDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
-            DomainMapper<TransactionCategory> categoryMapper) {
-        super(importFile, payeeMapper, securityMapper, categoryMapper);
+    public MultiDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper) {
+        super(importFile, payeeMapper, securityMapper);
     }
 
     @Override
     protected void setCategory(TransactionDetail detail, ImportField field, List<String> values) {
-        detail.setCategory(categoryMapper.get(field.getAlias()));
         field.updateDetail(detail, values.get(0));
     }
 
     @Override
     protected void setTransferAccount(TransactionDetail detail, ImportField field, List<String> values) {
-        detail.setRelatedDetail(new TransactionDetail(importFile.getTransferAccount(field.getAlias()), detail));
         field.updateDetail(detail, values.get(0));
     }
 

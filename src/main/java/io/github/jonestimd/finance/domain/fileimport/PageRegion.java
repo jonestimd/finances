@@ -26,40 +26,38 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.hibernate.annotations.ForeignKey;
+import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "import_page_region")
+@Table(name = "import_page_region",
+       uniqueConstraints = { @UniqueConstraint(name = "import_page_region_ak", columnNames = {"import_file_id", "name"}) })
 @SequenceGenerator(name = "id_generator", sequenceName = "import_page_region_id_seq")
-public class PageRegion {
+public class PageRegion implements Cloneable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
     private Long id;
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "import_file_id") @ForeignKey(name = "import_page_region_file_fk")
-    private ImportFile importFile;
-    @Column(name = "top", nullable = false)
+    @Column(name = "name", nullable = false, length = 250)
+    private String name;
+    @Column(name = "top")
     private Float top;
-    @Column(name = "bottom", nullable = false)
+    @Column(name = "bottom")
     private Float bottom;
-    @Column(name = "label_left", nullable = false)
+    @Column(name = "label_left")
     private Float labelLeft;
-    @Column(name = "label_right", nullable = false)
+    @Column(name = "label_right")
     private Float labelRight;
-    @Column(name = "value_left", nullable = false)
+    @Column(name = "value_left")
     private Float valueLeft;
-    @Column(name = "value_right", nullable = false)
+    @Column(name = "value_right")
     private Float valueRight;
 
     public PageRegion() {}
 
-    public PageRegion(Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
+    public PageRegion(String name, Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
+        this.name = name;
         this.top = top;
         this.bottom = bottom;
         this.labelLeft = labelLeft;
@@ -76,39 +74,55 @@ public class PageRegion {
         this.id = id;
     }
 
-    public ImportFile getImportFile() {
-        return importFile;
+    public String getName() {
+        return name;
     }
 
-    public void setImportFile(ImportFile importFile) {
-        this.importFile = importFile;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public float getTop() {
+    public float top() {
         return top == null ? Float.POSITIVE_INFINITY : top;
+    }
+
+    public Float getTop() {
+        return top;
     }
 
     public void setTop(Float top) {
         this.top = top;
     }
 
-    public float getBottom() {
+    public float bottom() {
         return bottom == null ? Float.NEGATIVE_INFINITY : bottom;
+    }
+
+    public Float getBottom() {
+        return bottom;
     }
 
     public void setBottom(Float bottom) {
         this.bottom = bottom;
     }
 
-    public float getLabelLeft() {
+    public float labelLeft() {
         return labelLeft == null ? Float.NEGATIVE_INFINITY : labelLeft;
+    }
+
+    public Float getLabelLeft() {
+        return labelLeft;
     }
 
     public void setLabelLeft(Float labelLeft) {
         this.labelLeft = labelLeft;
     }
 
-    public float getLabelRight() {
+    public Float getLabelRight() {
+        return labelRight;
+    }
+
+    public float labelRight() {
         return labelRight == null ? Float.POSITIVE_INFINITY : labelRight;
     }
 
@@ -116,7 +130,11 @@ public class PageRegion {
         this.labelRight = labelRight;
     }
 
-    public float getValueLeft() {
+    public Float getValueLeft() {
+        return valueLeft;
+    }
+
+    public float valueLeft() {
         return valueLeft == null ? Float.NEGATIVE_INFINITY : valueLeft;
     }
 
@@ -124,11 +142,25 @@ public class PageRegion {
         this.valueLeft = valueLeft;
     }
 
-    public float getValueRight() {
+    public float valueRight() {
         return valueRight == null ? Float.POSITIVE_INFINITY : valueRight;
+    }
+
+    public Float getValueRight() {
+        return valueRight;
     }
 
     public void setValueRight(Float valueRight) {
         this.valueRight = valueRight;
+    }
+
+    public PageRegion clone() {
+        try {
+            PageRegion clone = (PageRegion) super.clone();
+            clone.id = null;
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -21,42 +21,52 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
-import javax.persistence.CascadeType;
+import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Type;
 
 @Embeddable
-public class ImportCategory {
-    public static final ImportCategory EMPTY_IMPORT_CATEGORY = new ImportCategory(null, false);
+@AttributeOverride(name = "alias", column = @Column(name = "type_alias", nullable = false))
+public class ImportCategory extends ImportTransactionType<TransactionCategory> {
+    public static final ImportCategory EMPTY_IMPORT_CATEGORY = new ImportCategory(null, false, null);
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "tx_category_id", nullable = false)
-    @ForeignKey(name = "import_category_category_fk")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tx_category_id", nullable = false, foreignKey = @ForeignKey(name = "import_category_category_fk"))
     private TransactionCategory category;
-
-    @Column(name = "negate_amount", nullable = false)
-    @Type(type = "yes_no")
-    private boolean negate;
 
     public ImportCategory() {}
 
-    public ImportCategory(TransactionCategory category, boolean negate) {
+    public ImportCategory(String alias, boolean negate, TransactionCategory category) {
+        super(alias, negate);
         this.category = category;
-        this.negate = negate;
     }
 
     public TransactionCategory getCategory() {
         return category;
     }
 
-    public boolean isNegate() {
-        return negate;
+    public void setCategory(TransactionCategory category) {
+        this.category = category;
+    }
+
+    @Override
+    public TransactionCategory getType() {
+        return category;
+    }
+
+    @Override
+    public void setType(TransactionCategory type) {
+        this.category = category;
+    }
+
+    @Override
+    public ImportCategory clone() {
+        return (ImportCategory) super.clone();
     }
 }

@@ -32,7 +32,7 @@ import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
-import io.github.jonestimd.swing.validation.BeanPropertyValidator;
+import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
 public class TransactionColumnAdapter<V> extends FunctionColumnAdapter<Transaction, V> {
     private TransactionColumnAdapter(String columnId, Class<V> valueType, Function<Transaction, V> getter, BiConsumer<Transaction, V> setter) {
@@ -57,8 +57,8 @@ public class TransactionColumnAdapter<V> extends FunctionColumnAdapter<Transacti
     public static final TransactionColumnAdapter<Payee> PAYEE_ADAPTER =
         new TransactionColumnAdapter<>(Transaction.PAYEE, Payee.class, Transaction::getPayee, Transaction::setPayee);
 
-    public static final TransactionColumnAdapter<Security> SECURITY_ADAPTER =
-        new ValidatedColumnAdapter<Security>(Transaction.SECURITY, Security.class, Transaction::getSecurity, Transaction::setSecurity) {
+    public static final ValidatedColumnAdapter<Transaction, Security> SECURITY_ADAPTER =
+        new ValidatedTransactionColumnAdapter<Security>(Transaction.SECURITY, Security.class, Transaction::getSecurity, Transaction::setSecurity) {
             private final String requiredMessage = BundleType.LABELS.getString("validation.transaction.securityRequired");
 
             @Override
@@ -68,8 +68,8 @@ public class TransactionColumnAdapter<V> extends FunctionColumnAdapter<Transacti
             }
         };
 
-    public static abstract class ValidatedColumnAdapter<V> extends TransactionColumnAdapter<V> implements BeanPropertyValidator<Transaction, V> {
-        private ValidatedColumnAdapter(String columnId, Class<V> valueType, Function<Transaction, V> getter, BiConsumer<Transaction, V> setter) {
+    private static abstract class ValidatedTransactionColumnAdapter<V> extends TransactionColumnAdapter<V> implements ValidatedColumnAdapter<Transaction, V> {
+        public ValidatedTransactionColumnAdapter(String columnId, Class<V> valueType, Function<Transaction, V> getter, BiConsumer<Transaction, V> setter) {
             super(columnId, valueType, getter, setter);
         }
     }

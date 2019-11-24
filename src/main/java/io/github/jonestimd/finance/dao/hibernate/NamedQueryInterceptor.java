@@ -25,7 +25,11 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
+import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.dao.BaseDao;
 import io.github.jonestimd.reflect.GenericsHelper;
 import org.hibernate.MappingException;
@@ -53,13 +57,30 @@ public class NamedQueryInterceptor<ENTITY, PK extends Serializable> implements I
     }
 
     public NamedQueryInterceptor(Class<ENTITY> entityClass, SessionFactory sessionFactory) {
-        this(new HibernateDao<ENTITY, PK>(sessionFactory, entityClass), entityClass, sessionFactory);
+        this(new HibernateDao<>(sessionFactory, entityClass), entityClass, sessionFactory);
     }
 
     public NamedQueryInterceptor(BaseDao<ENTITY, PK> target, Class<?> entityClass, SessionFactory sessionFactory) {
         this.target = target;
         this.queryPrefix = getQueryPrefix(entityClass);
         this.sessionFactory = sessionFactory;
+    }
+
+    private List<String> getParameterNames(String[] queryParameters, String nameList) {
+        List<String> remaining = Lists.newArrayList(queryParameters);
+        List<String> names = new ArrayList<>();
+        while (! nameList.isEmpty() && ! remaining.isEmpty()) {
+            String match = findParameter(nameList, remaining);
+            names.add(match);
+            remaining.remove(match);
+            nameList = nameList.substring(match.length());
+        }
+        return names;
+    }
+
+    private String findParameter(String nameList, Collection<String> queryParameters) {
+        return queryParameters.stream().filter(name -> nameList.startsWith(name.toLowerCase()))
+                .findFirst().orElseThrow(IllegalArgumentException::new);
     }
 
     @Override
@@ -70,9 +91,10 @@ public class NamedQueryInterceptor<ENTITY, PK extends Serializable> implements I
         Session session = sessionFactory.getCurrentSession();
         try {
             Query query = session.getNamedQuery(queryPrefix + method.getName());
+            int index = method.getName().indexOf("By");
+            List<String> names = getParameterNames(query.getNamedParameters(), method.getName().substring(index+2).toLowerCase());
             for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
-                query.setParameter(i, args[i]);
+                query.setParameter(names.get(i), args[i]);
             }
             if (method.getName().startsWith("findOne")) {
                 return query.uniqueResult();

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,6 +56,7 @@ import io.github.jonestimd.finance.swing.BundleType;
 import io.github.jonestimd.finance.swing.event.DomainEventListener;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.swing.table.model.BufferedHeaderDetailTableModel;
+import io.github.jonestimd.swing.table.model.ColumnAdapter;
 import io.github.jonestimd.swing.table.model.DetailAdapter;
 import io.github.jonestimd.swing.table.model.EmptyColumnAdapter;
 import io.github.jonestimd.swing.table.model.ReadOnlyColumnAdapter;
@@ -113,7 +114,6 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     private final DomainEventListener<Long, TransactionGroup> groupListener = new DetailDomainEventHandler<>(TransactionDetailColumnAdapter.GROUP_ADAPTER);
     private final DomainEventListener<Long, TransactionCategory> categoryListener = new DetailDomainEventHandler<>(CATEGORY_ADAPTER);
 
-    @SuppressWarnings("unchecked")
     public TransactionTableModel(Account account) {
         super(ROW_ADAPTER, UniqueId::getId);
         this.account = account;
@@ -126,22 +126,21 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
                 TransactionColumnAdapter.AMOUNT_ADAPTER,
                 new BalanceColumnAdapter()));
         setDetailColumnAdapters(Collections.singletonList(Arrays.asList(
-                new EmptyColumnAdapter<>("dummyColumn0"),
+                new EmptyColumnAdapter<>("dummyColumn0", String.class),
                 TransactionDetailColumnAdapter.GROUP_ADAPTER,
                 TransactionDetailColumnAdapter.TYPE_ADAPTER,
                 TransactionDetailColumnAdapter.MEMO_ADAPTER,
-                new EmptyColumnAdapter<>("dummyColumn1"),
+                new EmptyColumnAdapter<>("dummyColumn1", String.class),
                 TransactionDetailColumnAdapter.AMOUNT_ADAPTER,
-                new EmptyColumnAdapter<>("dummyColumn2"))));
+                new EmptyColumnAdapter<>("dummyColumn2", String.class))));
         clearedColumn = getColumnIndex(TransactionColumnAdapter.CLEARED_ADAPTER);
         amountColumn = getColumnIndex(TransactionColumnAdapter.AMOUNT_ADAPTER);
         balanceColumn = getColumnCount() - 1;
     }
 
-    @SuppressWarnings("unchecked")
     protected TransactionTableModel(Account account,
-                                    TransactionColumnAdapter<? extends Asset> assetColumnAdapter,
-                                    TransactionDetailColumnAdapter<BigDecimal> assetQuantityAdapter) {
+                                    ColumnAdapter<Transaction, ? extends Asset> assetColumnAdapter,
+                                    ColumnAdapter<TransactionDetail, BigDecimal> assetQuantityAdapter) {
         super(ROW_ADAPTER, UniqueId::getId);
         this.account = account;
         setColumnAdapters(Arrays.asList(
@@ -159,9 +158,9 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
                 TransactionDetailColumnAdapter.TYPE_ADAPTER,
                 TransactionDetailColumnAdapter.MEMO_ADAPTER,
                 assetQuantityAdapter,
-                new EmptyColumnAdapter<>("dummyColumn0"),
+                new EmptyColumnAdapter<>("dummyColumn0", String.class),
                 TransactionDetailColumnAdapter.AMOUNT_ADAPTER,
-                new EmptyColumnAdapter<>("dummyColumn1"))));
+                new EmptyColumnAdapter<>("dummyColumn1", String.class))));
         clearedColumn = getColumnIndex(TransactionColumnAdapter.CLEARED_ADAPTER);
         amountColumn = getColumnIndex(TransactionColumnAdapter.AMOUNT_ADAPTER);
         balanceColumn = getColumnCount() - 1;

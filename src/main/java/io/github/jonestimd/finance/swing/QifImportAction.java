@@ -46,13 +46,13 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.function.MessageConsumer;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.dialog.ExceptionDialog;
 import io.github.jonestimd.swing.window.StatusFrame;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
-public class QifImportAction extends MnemonicAction {
+public class QifImportAction extends LocalizedAction {
     public static final String MESSAGE_PREFIX = "import.qif";
     public static final String RESOURCE_PREFIX = "action." + MESSAGE_PREFIX;
     public static final String ERROR_DIALOG_TITLE = RESOURCE_PREFIX + ".failed.title";

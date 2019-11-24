@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,35 +19,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.domain.fileimport.pdf;
+package io.github.jonestimd.finance.swing;
 
-import java.io.InputStream;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+public class BorderFactory {
+    public static final int GAP = 5;
 
-import com.google.common.collect.ListMultimap;
-import io.github.jonestimd.finance.domain.fileimport.ImportField;
-import io.github.jonestimd.finance.domain.fileimport.ImportFile;
-import io.github.jonestimd.finance.domain.fileimport.ImportType;
-import io.github.jonestimd.finance.file.pdf.PdfFieldValueExtractor;
-
-@Entity
-@DiscriminatorValue("PDF")
-public class PdfImportFile extends ImportFile {
-    public PdfImportFile() {}
-
-    public PdfImportFile(String name) {
-        super(name, ImportType.MULTI_DETAIL_ROWS);
-    }
-
-    @Override
-    public Iterable<ListMultimap<ImportField, String>> parse(InputStream stream) throws Exception {
-        return new PdfFieldValueExtractor(getFields()).parse(stream);
-    }
-
-    @Override
-    public String getFileExtension() {
-        return "pdf";
+    public static Border panelBorder() {
+        return new EmptyBorder(GAP, GAP, GAP, GAP);
     }
 }

@@ -44,7 +44,7 @@ import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.event.SelectAccountAction;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.MenuActionPanel;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.window.FrameManager;
@@ -96,7 +96,7 @@ public class TransactionDetailPanel extends MenuActionPanel {
         table.scrollRectToVisible(table.getCellRect(row, 0, true));
     }
 
-    private class GotoAction extends MnemonicAction implements SelectAccountAction {
+    private class GotoAction extends LocalizedAction implements SelectAccountAction {
         public GotoAction() {
             super(LABELS.get(), "action.transaction.goto");
             setEnabled(detailTable.getSelectedRowCount() == 1);

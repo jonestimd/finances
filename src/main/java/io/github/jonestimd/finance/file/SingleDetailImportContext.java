@@ -40,9 +40,12 @@ import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
  * this type includes separate columns for the category name/alias and the detail amount.
  */
 public class SingleDetailImportContext extends ImportContext {
+    protected final DomainMapper<TransactionCategory> categoryMapper;
+
     public SingleDetailImportContext(ImportFile importFile, DomainMapper<Payee> payeeMapper, DomainMapper<Security> securityMapper,
             DomainMapper<TransactionCategory> categoryMapper) {
-        super(importFile, payeeMapper, securityMapper, categoryMapper);
+        super(importFile, payeeMapper, securityMapper);
+        this.categoryMapper = categoryMapper;
     }
 
     @Override

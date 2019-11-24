@@ -57,7 +57,8 @@ public class UpdateSharesDialog extends FormDialog {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
         GridBagBuilder builder = new GridBagBuilder(getFormPanel(), LABELS.get(), RESOURCE_PREFIX);
         dateField = builder.append("date.mnemonicAndName", new DateField(LABELS.getString("format.date.pattern")));
-        securityField = builder.append("security.mnemonicAndName", new BeanListComboBox<>(new SecuritySummaryFormat(), LABELS.getString(RESOURCE_PREFIX + "security.required")));
+        securityField = builder.append("security.mnemonicAndName", BeanListComboBox.<SecuritySummary>builder(new SecuritySummaryFormat())
+                .required(LABELS.getString(RESOURCE_PREFIX + "security.required")).get());
         currentSharesField = builder.append("currentShares.mnemonicAndName", TextField.formatted(FormatFactory.numberFormat()).readOnly().get());
         currentSharesField.setEditable(false);
         currentSharesField.setHorizontalAlignment(JTextField.RIGHT);

@@ -95,7 +95,7 @@ public class HibernateDaoContext implements DaoRepository {
     private DomainEventInterceptor eventInterceptor = new DomainEventInterceptor(eventHandlerSupplier);
 
     public static HibernateDaoContext connect(boolean createSchema, DriverService driverService, Config config, Consumer<String> updateProgress)
-            throws IOException, SQLException {
+            throws SQLException {
         HibernateDaoContext daoContext = new HibernateDaoContext(driverService, config);
         if (createSchema) {
             updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));

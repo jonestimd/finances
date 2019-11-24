@@ -2,6 +2,9 @@ package io.github.jonestimd.finance.domain.fileimport;
 
 import java.util.Collections;
 
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
+
 public class ImportFieldBuilder {
     private final ImportField field = new ImportField();
 
@@ -15,8 +18,13 @@ public class ImportFieldBuilder {
         return this;
     }
 
-    public ImportFieldBuilder dateFormat(String dateFormat) {
-        field.setDateFormat(dateFormat);
+    public ImportFieldBuilder category(TransactionCategory category) {
+        field.setCategory(category);
+        return this;
+    }
+
+    public ImportFieldBuilder account(Account account) {
+        field.setTransferAccount(account);
         return this;
     }
 
@@ -31,12 +39,12 @@ public class ImportFieldBuilder {
     }
 
     public ImportFieldBuilder rightEdge(Float rightEdge) {
-        field.setRegion(new PageRegion(null, null, null, rightEdge, null, rightEdge));
+        field.setRegion(new PageRegion("region", null, null, null, rightEdge, null, rightEdge));
         return this;
     }
 
     public ImportFieldBuilder bounds(Float top, Float bottom, Float labelLeft, Float labelRight, Float valueLeft, Float valueRight) {
-        field.setRegion(new PageRegion(top, bottom, labelLeft, labelRight, valueLeft, valueRight));
+        field.setRegion(new PageRegion("region", top, bottom, labelLeft, labelRight, valueLeft, valueRight));
         return this;
     }
 

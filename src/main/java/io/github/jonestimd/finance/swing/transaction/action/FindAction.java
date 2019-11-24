@@ -34,13 +34,13 @@ import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.finance.swing.transaction.TransactionDetailPanel;
 import io.github.jonestimd.swing.BackgroundTask;
 import io.github.jonestimd.swing.ComponentTreeUtils;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
 
 import static io.github.jonestimd.finance.swing.WindowType.*;
 
-public class FindAction extends MnemonicAction {
+public class FindAction extends LocalizedAction {
     private static final String RESOURCE_PREFIX = "action.transaction.find";
     private static final String DIALOG_TITLE = BundleType.LABELS.getString(RESOURCE_PREFIX + ".dialog.title");
     private static final String INPUT_LABEL = BundleType.LABELS.getString(RESOURCE_PREFIX + ".input.label");

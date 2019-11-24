@@ -21,9 +21,9 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.service;
 
-import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.operations.AssetOperations;
+import io.github.jonestimd.finance.operations.FileImportOperations;
 import io.github.jonestimd.finance.operations.PayeeOperations;
 import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.operations.TransactionGroupOperations;
@@ -42,7 +42,7 @@ public interface ServiceLocator {
 
     AssetOperations getAssetOperations();
 
-    ImportFileDao getImportFileDao();
+    FileImportOperations getFileImportOperations();
 
     <I,T extends I> I transactional(T target, Class<I> iface);
 }

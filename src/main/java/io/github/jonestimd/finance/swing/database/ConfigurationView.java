@@ -42,7 +42,7 @@ import com.typesafe.config.ConfigFactory;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService;
 import io.github.jonestimd.finance.plugin.DriverConfigurationService.Field;
 import io.github.jonestimd.finance.swing.FormatFactory;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.FileSuggestField;
 import io.github.jonestimd.swing.layout.GridBagBuilder;
@@ -81,7 +81,7 @@ public class ConfigurationView {
     private final Action defaultsAction;
 
     public ConfigurationView(JPanel panel, List<DriverConfigurationService> driverServices) {
-        driverComboBox = new BeanListComboBox<>(FormatFactory.format(DriverConfigurationService::getName), driverServices);
+        driverComboBox = BeanListComboBox.builder(FormatFactory.format(DriverConfigurationService::getName), driverServices).get();
         driverComboBox.addItemListener(this::driverSelected);
 
         try {
@@ -114,7 +114,7 @@ public class ConfigurationView {
         onChange(passwordField, confirmField::validateValue);
         setModel(new HashMap<>());
 
-        this.defaultsAction = MnemonicAction.forListener(this::setDefaults, LABELS.get(), RESOURCE_PREFIX + "action.defaults");
+        this.defaultsAction = LocalizedAction.create(LABELS.get(), RESOURCE_PREFIX + "action.defaults", this::setDefaults);
     }
 
     public void setMessage(String message) {

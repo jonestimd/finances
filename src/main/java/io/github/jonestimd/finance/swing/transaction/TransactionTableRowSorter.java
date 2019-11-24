@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2019 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,13 +35,10 @@ public class TransactionTableRowSorter extends HeaderDetailTableRowSorter<Transa
     }
 
     protected static class TransactionTableRowComparator extends HeaderDetailTableRowComparator<Transaction> {
-        private final Ordering<HeaderDetailViewToModel<Transaction>> beanIndexOrdering = Ordering.from(new Comparator<HeaderDetailViewToModel<Transaction>>() {
-            @Override
-            public int compare(HeaderDetailViewToModel<Transaction> t1, HeaderDetailViewToModel<Transaction> t2) {
-                return t1.getBeanIndex() - t2.getBeanIndex();
-            }
-        });
-        private final Comparator<HeaderDetailViewToModel<Transaction>> modelIndexComparator = (t1, t2) -> t1.getModelIndex() - t2.getModelIndex();
+        private final Ordering<HeaderDetailViewToModel<Transaction>> beanIndexOrdering
+                = Ordering.from(Comparator.comparingInt(HeaderDetailViewToModel::getBeanIndex));
+        private final Comparator<HeaderDetailViewToModel<Transaction>> modelIndexComparator
+                = Comparator.comparingInt(HeaderDetailViewToModel::getModelIndex);
         private final TransactionTable table;
 
         public TransactionTableRowComparator(TransactionTable table) {

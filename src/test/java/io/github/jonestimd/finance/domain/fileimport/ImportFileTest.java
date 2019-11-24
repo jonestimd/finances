@@ -2,7 +2,6 @@ package io.github.jonestimd.finance.domain.fileimport;
 
 import java.util.Collections;
 
-import io.github.jonestimd.finance.domain.fileimport.csv.CsvImportFile;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.junit.Test;
 
@@ -11,15 +10,15 @@ import static org.assertj.core.api.Assertions.*;
 public class ImportFileTest {
     @Test
     public void isNegateReturnsFalseForNullCategory() throws Exception {
-        ImportFile importFile = new CsvImportFile();
+        ImportFile importFile = new ImportFile();
 
         assertThat(importFile.isNegate(null)).isFalse();
     }
 
     @Test
     public void isNegateReturnsFalseForUnmappedCategory() throws Exception {
-        ImportFile importFile = new CsvImportFile();
-        importFile.setImportCategoryMap(Collections.emptyMap());
+        ImportFile importFile = new ImportFile();
+        importFile.setImportCategories(Collections.emptySet());
 
         assertThat(importFile.isNegate(new TransactionCategory("category code"))).isFalse();
     }
@@ -27,25 +26,25 @@ public class ImportFileTest {
     @Test
     public void isNegateReturnsFalseForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
-        ImportFile importFile = new CsvImportFile();
-        importFile.setImportCategoryMap(Collections.singletonMap("alias", new ImportCategory(category, false)));
+        ImportFile importFile = new ImportFile();
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", false, category)));
 
         assertThat(importFile.isNegate(category)).isFalse();
     }
 
     @Test
-    public void isNegateReturnstrueForCategory() throws Exception {
+    public void isNegateReturnsTrueForCategory() throws Exception {
         TransactionCategory category = new TransactionCategory("category code");
-        ImportFile importFile = new CsvImportFile();
-        importFile.setImportCategoryMap(Collections.singletonMap("alias", new ImportCategory(category, true)));
+        ImportFile importFile = new ImportFile();
+        importFile.setImportCategories(Collections.singleton(new ImportCategory("alias", true, category)));
 
         assertThat(importFile.isNegate(category)).isTrue();
     }
 
     @Test
     public void getTransferAccountReturnsNullForNoMatch() throws Exception {
-        CsvImportFile importFile = new CsvImportFile();
-        importFile.setImportTransferMap(Collections.emptyMap());
+        ImportFile importFile = new ImportFile();
+        importFile.setImportTransfers(Collections.emptySet());
 
         assertThat(importFile.getTransferAccount("")).isNull();
     }

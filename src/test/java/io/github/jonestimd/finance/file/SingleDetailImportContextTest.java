@@ -3,6 +3,7 @@ package io.github.jonestimd.finance.file;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.collect.ImmutableListMultimap;
@@ -39,7 +40,7 @@ public class SingleDetailImportContextTest {
     @Mock
     private DomainMapper<TransactionCategory> categoryMapper;
 
-    private final ImportField dateField = new ImportFieldBuilder().type(FieldType.DATE).dateFormat("MM/dd/yyyy").get();
+    private final ImportField dateField = new ImportFieldBuilder().type(FieldType.DATE).get();
     private final ImportField payeeField = new ImportFieldBuilder().type(FieldType.PAYEE).get();
     private final ImportField amountField = new ImportFieldBuilder().type(FieldType.AMOUNT).amountFormat(AmountFormat.DECIMAL).get();
     private final ImportField sharesField = new ImportFieldBuilder().type(FieldType.ASSET_QUANTITY).amountFormat(AmountFormat.DECIMAL).get();
@@ -47,9 +48,11 @@ public class SingleDetailImportContextTest {
 
     @Test
     public void populatesTransaction() throws Exception {
+        final Date date = new Date();
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final Payee payee = new Payee();
         final Account account = new Account();
+        when(importFile.parseDate(anyString())).thenReturn(date);
         when(importFile.getAccount()).thenReturn(account);
         when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME)));
         ImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
@@ -59,8 +62,9 @@ public class SingleDetailImportContextTest {
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getAccount()).isSameAs(account);
-        assertThat(transactions.get(0).getDate()).isEqualTo(new SimpleDateFormat("yyyy/MM/dd").parse("1990/01/15"));
+        assertThat(transactions.get(0).getDate()).isSameAs(date);
         assertThat(transactions.get(0).getPayee()).isSameAs(payee);
+        verify(importFile).parseDate("01/15/1990");
     }
 
     @Test
@@ -125,7 +129,6 @@ public class SingleDetailImportContextTest {
         when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);
         SingleDetailImportContext context = new SingleDetailImportContext(importFile, payeeMapper, securityMapper, categoryMapper);
-        when(categoryMapper.get(CATEGORY_CODE)).thenReturn(category);
 
         List<Transaction> transactions = context.parseTransactions(inputStream);
 

@@ -22,9 +22,7 @@
 package io.github.jonestimd.finance.domain.fileimport;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +45,9 @@ import javax.persistence.Table;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import io.github.jonestimd.finance.domain.UniqueId;
+import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Type;
@@ -54,7 +55,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "import_field")
 @SequenceGenerator(name = "id_generator", sequenceName = "import_field_id_seq")
-public class ImportField {
+public class ImportField implements UniqueId<Long>, Cloneable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @Column(name = "id", nullable = false)
@@ -76,8 +77,6 @@ public class ImportField {
     @Column(name = "number_format", length = 15)
     @Enumerated(EnumType.STRING)
     private AmountFormat amountFormat;
-    @Column(name = "date_format", length = 50)
-    private String dateFormat;
     @Column(name = "negate", nullable = false)
     @Type(type = "yes_no")
     private boolean negate;
@@ -87,6 +86,12 @@ public class ImportField {
     private String ignoreRegex;
     @Column(name = "accept_regex", length = 2000)
     private String acceptRegex;
+    @ManyToOne
+    @JoinColumn(name = "tx_category_id") @ForeignKey(name = "import_field_tx_category_fk")
+    private TransactionCategory category;
+    @ManyToOne
+    @JoinColumn(name = "transfer_account_id") @ForeignKey(name = "import_field_transfer_account_fk")
+    private Account transferAccount;
 
     public ImportField() {
         this(null, null);
@@ -133,21 +138,21 @@ public class ImportField {
     }
 
     public boolean isInRegion(float x, float y) {
-        return  region == null || region.getTop() >= y && y >= region.getBottom()
-                && Math.min(region.getLabelLeft(), region.getValueLeft()) <= x
-                && x <= Math.max(region.getLabelRight(), region.getValueRight());
+        return  region == null || region.top() >= y && y >= region.bottom()
+                && Math.min(region.labelLeft(), region.valueLeft()) <= x
+                && x <= Math.max(region.labelRight(), region.valueRight());
     }
 
     public boolean isLabelRegion(float x) {
-        return region == null || region.getLabelLeft() <= x && x <= region.getLabelRight();
+        return region == null || region.labelLeft() <= x && x <= region.labelRight();
     }
 
     public boolean isValueRegion(float x) {
-        return region == null || region.getValueLeft() <= x && x <= region.getValueRight();
+        return region == null || region.valueLeft() <= x && x <= region.valueRight();
     }
 
     public boolean isPastRightEdge(float x) {
-        return  region != null && x > region.getValueRight() && x > region.getLabelRight();
+        return  region != null && x > region.valueRight() && x > region.labelRight();
     }
 
     public AmountFormat getAmountFormat() {
@@ -156,14 +161,6 @@ public class ImportField {
 
     public void setAmountFormat(AmountFormat amountFormat) {
         this.amountFormat = amountFormat;
-    }
-
-    public String getDateFormat() {
-        return dateFormat;
-    }
-
-    public void setDateFormat(String dateFormat) {
-        this.dateFormat = dateFormat;
     }
 
     public boolean isNegate() {
@@ -179,7 +176,7 @@ public class ImportField {
     }
 
     public void setMemo(String memo) {
-        this.memo = memo;
+        this.memo = memo != null && !memo.trim().isEmpty() ? memo : null;
     }
 
     public String getIgnoredRegex() {
@@ -187,7 +184,7 @@ public class ImportField {
     }
 
     public void setIgnoredRegex(String ignoreRegex) {
-        this.ignoreRegex = ignoreRegex;
+        this.ignoreRegex = ignoreRegex != null && !ignoreRegex.isEmpty() ? ignoreRegex : null;
     }
 
     public String getAcceptRegex() {
@@ -195,7 +192,23 @@ public class ImportField {
     }
 
     public void setAcceptRegex(String acceptRegex) {
-        this.acceptRegex = acceptRegex;
+        this.acceptRegex = acceptRegex != null && !acceptRegex.isEmpty() ? acceptRegex : null;
+    }
+
+    public TransactionCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TransactionCategory category) {
+        this.category = category;
+    }
+
+    public Account getTransferAccount() {
+        return transferAccount;
+    }
+
+    public void setTransferAccount(Account transferAccount) {
+        this.transferAccount = transferAccount;
     }
 
     public boolean hasLabel(String value) {
@@ -207,7 +220,7 @@ public class ImportField {
     }
 
     public String getValue(Map<String, String> record) {
-        String value = Joiner.on('\n').join(labels.stream().map(label -> record.getOrDefault(label, "")).collect(Collectors.toList()));
+        String value = labels.stream().map(label -> record.getOrDefault(label, "")).collect(Collectors.joining("\n"));
         return filterValue(value) ? null : value;
     }
 
@@ -223,20 +236,27 @@ public class ImportField {
         return negate ? amount.negate() : amount;
     }
 
-    public Date parseDate(String dateString) {
+    public ImportField clone() {
         try {
-            return new SimpleDateFormat(dateFormat).parse(dateString);
-        } catch (ParseException ex) {
-            throw new RuntimeException(ex);
+            ImportField clone = (ImportField) super.clone();
+            clone.id = null;
+            clone.labels = new ArrayList<>(labels);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * Set the amount and memo on a transaction detail for a multidetail import record.
+     * Set the amount and memo on a transaction detail for a multi-detail import record.
      */
     public void updateDetail(TransactionDetail detail, String amount) {
         detail.setMemo(memo);
         detail.setAmount(parseAmount(amount));
+        if (category != null) detail.setCategory(category);
+        if (transferAccount != null) {
+            detail.setRelatedDetail(new TransactionDetail(transferAccount, detail));
+        }
     }
 
     public String toString() {

@@ -21,8 +21,14 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
+import io.github.jonestimd.finance.swing.BundleType;
+
 public enum ImportType {
     MULTI_DETAIL_ROWS,
     SINGLE_DETAIL_ROWS,
     GROUPED_DETAIL_ROWS;
+
+    public String toString() {
+        return BundleType.REFERENCE.getString("importType." + name());
+    }
 }

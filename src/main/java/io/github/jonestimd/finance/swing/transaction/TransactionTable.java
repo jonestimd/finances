@@ -42,12 +42,12 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.finance.swing.BundleType;
-import io.github.jonestimd.swing.action.MnemonicAction;
+import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.table.MixedRowTable;
 
 public class TransactionTable extends MixedRowTable<Transaction, TransactionTableModel> {
-    private final MnemonicAction deleteAction =
-        new MnemonicAction(BundleType.LABELS.get(), "action.deleteTransactionDetail") {
+    private final Action deleteAction =
+        new LocalizedAction(BundleType.LABELS.get(), "action.deleteTransactionDetail") {
             public void actionPerformed(ActionEvent e) {
                 int index = getSelectionModel().getLeadSelectionIndex();
                 if (getModel().queueDelete(convertRowIndexToModel(index))) {
@@ -61,8 +61,8 @@ public class TransactionTable extends MixedRowTable<Transaction, TransactionTabl
             }
         };
 
-    private MnemonicAction insertDetailAction =
-        new MnemonicAction(BundleType.LABELS.get(), "action.insertTransactionDetail") {
+    private Action insertDetailAction =
+        new LocalizedAction(BundleType.LABELS.get(), "action.insertTransactionDetail") {
             public void actionPerformed(ActionEvent e) {
                 insertDetail();
             }

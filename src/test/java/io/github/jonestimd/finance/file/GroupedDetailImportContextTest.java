@@ -3,6 +3,7 @@ package io.github.jonestimd.finance.file;
 import java.io.ByteArrayInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.collect.ImmutableListMultimap;
@@ -40,7 +41,7 @@ public class GroupedDetailImportContextTest {
     @Mock
     private DomainMapper<TransactionCategory> categoryMapper;
 
-    private final ImportField dateField = new ImportFieldBuilder().type(FieldType.DATE).dateFormat("MM/dd/yyyy").get();
+    private final ImportField dateField = new ImportFieldBuilder().type(FieldType.DATE).get();
     private final ImportField payeeField = new ImportFieldBuilder().type(FieldType.PAYEE).get();
     private final ImportField securityField = new ImportFieldBuilder().type(FieldType.SECURITY).get();
     private final ImportField amountField = new ImportFieldBuilder().type(FieldType.AMOUNT).amountFormat(AmountFormat.DECIMAL).get();
@@ -50,10 +51,12 @@ public class GroupedDetailImportContextTest {
 
     @Test
     public void populatesTransaction() throws Exception {
+        final Date date = new Date();
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final Payee payee = new Payee();
         final Account account = new Account();
         Security security = new Security();
+        when(importFile.parseDate(anyString())).thenReturn(date);
         when(importFile.getAccount()).thenReturn(account);
         when(importFile.parse(inputStream)).thenReturn(singletonList(
                 ImmutableListMultimap.of(dateField, "01/15/1990", payeeField, PAYEE_NAME, securityField, SECURITY_NAME)));
@@ -65,9 +68,10 @@ public class GroupedDetailImportContextTest {
 
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getAccount()).isSameAs(account);
-        assertThat(transactions.get(0).getDate()).isEqualTo(new SimpleDateFormat("yyyy/MM/dd").parse("1990/01/15"));
+        assertThat(transactions.get(0).getDate()).isSameAs(date);
         assertThat(transactions.get(0).getPayee()).isSameAs(payee);
         assertThat(transactions.get(0).getSecurity()).isSameAs(security);
+        verify(importFile).parseDate("01/15/1990");
     }
 
     @Test

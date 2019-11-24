@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
-import io.github.jonestimd.swing.validation.BeanPropertyValidator;
+import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 
@@ -51,8 +51,8 @@ public class SecurityLotColumnAdapter<V> extends FunctionColumnAdapter<SecurityL
     public static final SecurityLotColumnAdapter<BigDecimal> AVAILABLE_SHARES_ADAPTER =
             new SecurityLotColumnAdapter<>("availableShares", BigDecimal.class, SecurityLot::getRemainingPurchaseShares, null);
 
-    public static final SecurityLotColumnAdapter<BigDecimal> ALLOCATED_SHARES_ADAPTER =
-            new ValidatedColumnAdapter<BigDecimal>("allocatedShares", BigDecimal.class, SecurityLot::getSaleShares, SecurityLot::setSaleShares) {
+    public static final ValidatedColumnAdapter<SecurityLot, BigDecimal> ALLOCATED_SHARES_ADAPTER =
+            new ValidatedSecurityLotColumnAdapter<BigDecimal>("allocatedShares", BigDecimal.class, SecurityLot::getSaleShares, SecurityLot::setSaleShares) {
                 @Override
                 public String validate(int selectedIndex, BigDecimal value, List<? extends SecurityLot> beans) {
                     BigDecimal availableShares = beans.get(selectedIndex).getRemainingPurchaseShares();
@@ -60,8 +60,8 @@ public class SecurityLotColumnAdapter<V> extends FunctionColumnAdapter<SecurityL
                 }
             };
 
-    private static abstract class ValidatedColumnAdapter<V> extends SecurityLotColumnAdapter<V> implements BeanPropertyValidator<SecurityLot, V> {
-        public ValidatedColumnAdapter(String columnId, Class<V> valueType, Function<SecurityLot, V> getter, BiConsumer<SecurityLot, V> setter) {
+    private static abstract class ValidatedSecurityLotColumnAdapter<V> extends SecurityLotColumnAdapter<V> implements ValidatedColumnAdapter<SecurityLot, V> {
+        public ValidatedSecurityLotColumnAdapter(String columnId, Class<V> valueType, Function<SecurityLot, V> getter, BiConsumer<SecurityLot, V> setter) {
             super(columnId, valueType, getter, setter);
         }
     }

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 public class DriverUtils {
     public static Driver mockDriver(String url, Connection connection) throws SQLException {
         Driver driver = mock(Driver.class);
-        when(driver.acceptsURL(url)).thenReturn(true);
+        lenient().when(driver.acceptsURL(url)).thenReturn(true);
         when(driver.connect(any(String.class), any(Properties.class))).thenReturn(connection);
         setDriver(url, driver);
         return driver;

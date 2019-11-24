@@ -21,14 +21,13 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.service;
 
-import java.io.IOException;
-
 import io.github.jonestimd.finance.dao.DaoRepository;
-import io.github.jonestimd.finance.dao.ImportFileDao;
 import io.github.jonestimd.finance.operations.AccountOperations;
 import io.github.jonestimd.finance.operations.AccountOperationsImpl;
 import io.github.jonestimd.finance.operations.AssetOperations;
 import io.github.jonestimd.finance.operations.AssetOperationsImpl;
+import io.github.jonestimd.finance.operations.FileImportOperations;
+import io.github.jonestimd.finance.operations.FileImportOperationsImpl;
 import io.github.jonestimd.finance.operations.PayeeOperations;
 import io.github.jonestimd.finance.operations.PayeeOperationsImpl;
 import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
@@ -47,8 +46,9 @@ public class ServiceContext implements ServiceLocator {
     private final TransactionOperations transactionOperations;
     private final TransactionService transactionService;
     private final AssetOperations assetOperations;
+    private final FileImportOperations fileImportOperations;
 
-    public ServiceContext(DaoRepository daoContext) throws IOException {
+    public ServiceContext(DaoRepository daoContext) {
         this.daoContext = daoContext;
         accountOperations = transactional(new AccountOperationsImpl(daoContext.getCompanyDao(), daoContext.getAccountDao()), AccountOperations.class);
         payeeOperations = transactional(new PayeeOperationsImpl(daoContext.getPayeeDao(), daoContext.getTransactionDao()), PayeeOperations.class);
@@ -57,6 +57,7 @@ public class ServiceContext implements ServiceLocator {
         transactionOperations = transactional(new TransactionOperationsImpl(daoContext), TransactionOperations.class);
         transactionService = new TransactionServiceImpl(transactionOperations, daoContext.getDomainEventRecorder());
         assetOperations = transactional(new AssetOperationsImpl(daoContext), AssetOperations.class);
+        fileImportOperations = transactional(new FileImportOperationsImpl(daoContext.getImportFileDao(), this), FileImportOperations.class);
     }
 
     @Override
@@ -95,7 +96,7 @@ public class ServiceContext implements ServiceLocator {
     }
 
     @Override
-    public ImportFileDao getImportFileDao() {
-        return daoContext.getImportFileDao();
+    public FileImportOperations getFileImportOperations() {
+        return fileImportOperations;
     }
 }

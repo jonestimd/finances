@@ -21,6 +21,8 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.fileimport;
 
+import io.github.jonestimd.finance.swing.BundleType;
+
 /**
  * Import field type.  The value ordinal determines processing priority during the import of a record.
  */
@@ -41,5 +43,10 @@ public enum FieldType {
 
     public boolean isTransaction() {
         return isTransaction;
+    }
+
+    @Override
+    public String toString() {
+        return BundleType.REFERENCE.getString("importFieldType." + name());
     }
 }

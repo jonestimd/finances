@@ -25,6 +25,8 @@ import java.math.BigDecimal;
 
 import javax.xml.bind.annotation.XmlType;
 
+import io.github.jonestimd.finance.swing.BundleType;
+
 @XmlType
 public enum AmountFormat {
     DECIMAL,
@@ -35,5 +37,11 @@ public enum AmountFormat {
             return new BigDecimal(value);
         }
         return new BigDecimal(value).movePointLeft(2);
+    }
+
+
+    @Override
+    public String toString() {
+        return BundleType.REFERENCE.getString("amountFormat." + name());
     }
 }

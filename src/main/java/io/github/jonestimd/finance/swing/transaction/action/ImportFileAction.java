@@ -39,28 +39,24 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.Reconciler;
-import io.github.jonestimd.finance.operations.AssetOperations;
-import io.github.jonestimd.finance.operations.PayeeOperations;
-import io.github.jonestimd.finance.operations.TransactionCategoryOperations;
 import io.github.jonestimd.finance.service.ServiceLocator;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 
+/**
+ * Action for importing transactions from a file.
+ */
 public class ImportFileAction extends AbstractAction {
     private final ImportFile importFile;
-    private final PayeeOperations payeeOperations;
-    private final AssetOperations assetOperations;
-    private final TransactionCategoryOperations transactionCategoryOperations;
+    private final ServiceLocator serviceLocator;
     private final JFileChooser fileChooser = new JFileChooser();
 
     public ImportFileAction(ImportFile importFile, ServiceLocator serviceLocator) {
         super(importFile.getName());
         this.importFile = importFile;
-        this.payeeOperations = serviceLocator.getPayeeOperations();
-        this.assetOperations = serviceLocator.getAssetOperations();
-        this.transactionCategoryOperations = serviceLocator.getTransactionCategoryOperations();
-        FileFilter fileFilter = new FileNameExtensionFilter("*." + importFile.getFileExtension(), importFile.getFileExtension());
+        this.serviceLocator = serviceLocator;
+        FileFilter fileFilter = new FileNameExtensionFilter("*." + importFile.getFileType().extension, importFile.getFileType().extension);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.addChoosableFileFilter(fileFilter);
         fileChooser.setFileFilter(fileFilter);
@@ -76,8 +72,10 @@ public class ImportFileAction extends AbstractAction {
         if (result == JFileChooser.APPROVE_OPTION) {
             Window window = ComponentTreeUtils.findAncestor((JComponent) event.getSource(), Window.class);
             File selectedFile = fileChooser.getSelectedFile();
-            ImportContext importContext = importFile.newContext(payeeOperations.getAllPayees(),
-                    assetOperations.getAllSecurities(), transactionCategoryOperations.getAllTransactionCategories());
+            ImportContext importContext = importFile.newContext(
+                    serviceLocator.getPayeeOperations().getAllPayees(),
+                    serviceLocator.getAssetOperations().getAllSecurities(),
+                    serviceLocator.getTransactionCategoryOperations().getAllTransactionCategories());
             try (FileInputStream inputStream = new FileInputStream(selectedFile)) { // TODO do in background thread
                 List<Transaction> transactions = importContext.parseTransactions(inputStream);
                 TransactionTableModel tableModel = ComponentTreeUtils.findComponent(window, TransactionTable.class).getModel();

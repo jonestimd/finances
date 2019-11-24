@@ -28,6 +28,13 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 
 public interface FileImportOperations {
+    List<ImportFile> getAll();
+
+    <T extends Iterable<ImportFile>> T saveAll(T importFiles);
+
+    void deleteAll(Iterable<? extends ImportFile> importFiles);
+
     void importTransactions(String importName, InputStream source);
+
     List<Transaction> toTransactions(InputStream source, ImportFile importFile) throws Exception;
 }
