@@ -46,7 +46,6 @@ import io.github.jonestimd.finance.swing.transaction.AccountFormat;
 import io.github.jonestimd.finance.swing.transaction.PayeeFormat;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.component.BeanListComboBox;
-import io.github.jonestimd.swing.component.MultiSelectField;
 import io.github.jonestimd.swing.component.TextField;
 import io.github.jonestimd.swing.component.TextField.Validated;
 import io.github.jonestimd.swing.layout.FormElement;
@@ -83,9 +82,7 @@ public class ImportFilePanel extends ValidatedTabPanel {
         nameField = new ValidatedTextField(owner.getModel()::validateName);
         accountField.getModel().setElements(accounts, false);
         payeeField.getModel().setElements(payees, false);
-        GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX)
-                .useScrollPane(MultiSelectField.class)
-                .setConstraints(MultiSelectField.class, FormElement.TEXT_FIELD);
+        GridBagBuilder builder = new GridBagBuilder(this, LABELS.get(), RESOURCE_PREFIX);
         builder.append("name", nameField);
         builder.append("importType", importTypeField);
         builder.append("fileType", fileTypeField);
