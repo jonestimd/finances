@@ -32,6 +32,7 @@ import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.swing.BufferedBeanModel;
 import io.github.jonestimd.finance.swing.BufferedBeanModelHandler;
 import io.github.jonestimd.swing.table.model.BufferedBeanListTableModel;
+import io.github.jonestimd.swing.table.model.ChangeBufferTableModel;
 import io.github.jonestimd.util.Streams;
 import javassist.util.proxy.ProxyFactory;
 
@@ -121,14 +122,14 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     }
 
     private void commitTables() {
-        // TODO commitTable(importFieldTableModel, getBean().getFields());
+        commitTable(importFieldTableModel, getBean().getFields());
         commitTable(pageRegionTableModel, getBean().getPageRegions());
         commitTable(payeeTableModel, this::toMap, getBean()::setPayeeMap);
         commitTable(securityTableModel, this::toMap, getBean()::setSecurityMap);
         commitTransactionTypes();
     }
 
-    private <T, M extends BufferedBeanListTableModel<T>> void commitTable(M tableModel, Collection<T> beans) {
+    private <T, M extends ChangeBufferTableModel<T>> void commitTable(M tableModel, Collection<T> beans) {
         if (tableModel.isChanged()) {
             beans.removeAll(tableModel.getPendingDeletes());
             tableModel.commit();

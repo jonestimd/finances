@@ -46,7 +46,6 @@ import io.github.jonestimd.finance.domain.fileimport.FileType;
 import io.github.jonestimd.finance.domain.fileimport.ImportFile;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
-import io.github.jonestimd.finance.operations.FileImportOperations;
 import io.github.jonestimd.finance.swing.FormatFactory;
 import io.github.jonestimd.swing.ComponentFactory;
 import io.github.jonestimd.swing.ComponentTreeUtils;
@@ -56,6 +55,7 @@ import io.github.jonestimd.swing.action.BackgroundAction;
 import io.github.jonestimd.swing.action.CancelAction;
 import io.github.jonestimd.swing.action.LocalizedAction;
 import io.github.jonestimd.swing.component.BeanListComboBox;
+import io.github.jonestimd.swing.dialog.Dialogs;
 import io.github.jonestimd.swing.dialog.ValidatedDialog;
 import io.github.jonestimd.swing.table.TableFactory;
 
@@ -67,7 +67,6 @@ public class FileImportsDialog extends ValidatedDialog {
     protected static final String EMPTY_PLACEHOLDER = LABELS.getString("error.empty.placeholder");
     protected final LabelBuilder.Factory labelFactory = new LabelBuilder.Factory(LABELS.get(), RESOURCE_PREFIX);
     protected final LocalizedAction.Factory actionFactory = new LocalizedAction.Factory(LABELS.get(), RESOURCE_PREFIX + "action.");
-    private final FileImportOperations fileImportOperations;
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final ImportFilePanel filePanel;
     private final ImportFieldsPanel fieldsPanel;
@@ -82,12 +81,13 @@ public class FileImportsDialog extends ValidatedDialog {
     private final Action deleteAction = actionFactory.newAction("delete", this::deleteImport);
     private final Action duplicateAction = actionFactory.newAction("duplicate", this::duplicateImport);
     private final FileImportsModel importsModel;
+    private final Runnable saveImports;
 
     public FileImportsDialog(Window owner, List<Account> accounts, List<TransactionCategory> categories, List<Payee> payees,
-            List<ImportFile> importFiles, TableFactory tableFactory, FileImportOperations fileImportOperations) {
+            FileImportsModel importsModel, TableFactory tableFactory, Runnable saveImports) {
         super(owner, LABELS.getString(RESOURCE_PREFIX + "title"), LABELS.get());
-        this.fileImportOperations = fileImportOperations;
-        importsModel = new FileImportsModel(importFiles);
+        this.importsModel = importsModel;
+        this.saveImports = saveImports;
         buttonBar.add(new JButton(applyAction));
         buttonBar.add(new JButton(resetAction));
         importFileList = BeanListComboBox.builder(FormatFactory.format(ImportFileModel::getName), importsModel).get();
@@ -125,7 +125,11 @@ public class FileImportsDialog extends ValidatedDialog {
         importsModel.addPropertyChangeListener("name", event -> importFileList.repaint());
         addSaveCondition(importsModel::isChanged);
         addSaveCondition(importsModel::isValid);
-        // cancelAction.setConfirmClose(); // TODO check for unsaved changes
+        cancelAction.setConfirmClose(this::confirmClose);
+    }
+
+    private boolean confirmClose() {
+        return !importsModel.isChanged() || Dialogs.confirmDiscardChanges(this);
     }
 
     private void setImportFile(ImportFileModel newFile) {
@@ -148,7 +152,7 @@ public class FileImportsDialog extends ValidatedDialog {
 
     private <C extends JComponent> C addTab(String mnemonicAndName, C panel) {
         tabbedPane.add(mnemonicAndName.substring(1), panel);
-        tabbedPane.setMnemonicAt(tabbedPane.getComponentCount()-1, mnemonicAndName.charAt(0));
+        tabbedPane.setMnemonicAt(tabbedPane.getComponentCount() - 1, mnemonicAndName.charAt(0));
         return panel;
     }
 
@@ -159,8 +163,7 @@ public class FileImportsDialog extends ValidatedDialog {
     public boolean showDialog() {
         pack();
         setVisible(true);
-        // TODO check for cancelled/saved
-        return false; // TODO check for valid and changed
+        return !isCancelled();
     }
 
     private void newImport(ActionEvent event) {
@@ -224,10 +227,8 @@ public class FileImportsDialog extends ValidatedDialog {
 
         @Override
         protected Set<ImportFile> performTask() {
-            List<ImportFile> deletes = importsModel.getDeletes();
-            if (!deletes.isEmpty()) fileImportOperations.deleteAll(deletes);
-            Set<ImportFile> changedImports = importsModel.getChanges();
-            return fileImportOperations.saveAll(changedImports);
+            saveImports.run();
+            return null;
         }
 
         @Override
