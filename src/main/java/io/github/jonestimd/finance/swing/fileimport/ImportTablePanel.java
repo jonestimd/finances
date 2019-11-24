@@ -80,11 +80,13 @@ public class ImportTablePanel<T, M extends ChangeBufferTableModel<T> & Validated
 
     private void addItem(ActionEvent event) {
         table.getModel().queueAdd(itemFactory.get());
+        setTabForeground();
     }
 
     private void deleteItem(ActionEvent event) {
         if (table.isEditing()) table.editingStopped(null);
         table.getSelectedItems().forEach(row -> table.getModel().queueDelete(row));
+        setTabForeground();
     }
 
     protected boolean isNoErrors() {
