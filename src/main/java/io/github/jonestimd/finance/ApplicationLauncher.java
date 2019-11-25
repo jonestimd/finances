@@ -21,15 +21,17 @@
 // SOFTWARE.
 package io.github.jonestimd.finance;
 
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +40,8 @@ import java.util.function.Consumer;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.log4j.Logger;
 
 /**
  * Initializes the classpath and launches a main class based on the following settings in {@code launcher.properties}.
@@ -87,7 +91,7 @@ public class ApplicationLauncher {
         }
     }
 
-    public ApplicationLauncher() throws IOException {
+    public ApplicationLauncher() throws URISyntaxException, IOException {
         if (! System.getProperties().containsKey("install.dir")) System.setProperty("install.dir", getInstallDirectory());
         config.load(getClass().getResourceAsStream("/launcher.properties"));
         logger.debug("install dir: " + System.getProperty("install.dir"));
@@ -96,7 +100,7 @@ public class ApplicationLauncher {
         gatherFiles(config.getProperty("extension.classpath"), pluginUrls::add);
     }
 
-    private void gatherFiles(String paths, Consumer<URL> consumer) throws MalformedURLException {
+    private void gatherFiles(String paths, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
         if (paths != null) {
             for (String dir: paths.split("\n")) {
                 addDirectory(resolvePlaceholders(dir), consumer);
@@ -104,13 +108,13 @@ public class ApplicationLauncher {
         }
     }
 
-    private String getInstallDirectory() throws UnsupportedEncodingException {
+    private String getInstallDirectory() throws URISyntaxException, UnsupportedEncodingException {
         String path = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
         File source = new File(URLDecoder.decode(path, "UTF-8"));
         return source.isFile() ? source.getParent() : source.getPath();
     }
 
-    private void addDirectory(String path, Consumer<URL> consumer) throws MalformedURLException {
+    private void addDirectory(String path, Consumer<URL> consumer) throws URISyntaxException, MalformedURLException {
         logger.debug("adding file(s) " + path);
         if (path.endsWith("/*")) {
             addPaths(new File(path.substring(0, path.length() - 2)), consumer);
@@ -178,7 +182,7 @@ public class ApplicationLauncher {
         logger.debug("classpath files: " + classpathUrls);
         if (!classpathUrls.isEmpty()) {
             ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-            Method appendClassPath = systemClassLoader.getClass().getDeclaredMethod("addURL", URL.class);
+            Method appendClassPath = URLClassLoader.class.getDeclaredMethod("addURL", URL.class); // TODO doesn't work after Java 8
             appendClassPath.setAccessible(true);
             classpathUrls.forEach(url -> {
                 try {
@@ -192,6 +196,6 @@ public class ApplicationLauncher {
 
     private URLClassLoader createClassLoader() {
         logger.debug("plugin files: " + pluginUrls);
-        return new URLClassLoader(pluginUrls.toArray(new URL[0]), getClass().getClassLoader());
+        return new URLClassLoader(pluginUrls.toArray(new URL[pluginUrls.size()]), getClass().getClassLoader());
     }
 }
