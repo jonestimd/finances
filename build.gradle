@@ -88,7 +88,7 @@ jar {
         attributes 'Implementation-Title': 'tdj-finances',
                 'Implementation-Version': version,
                 'Main-Class': mainClass,
-                'Class-Path': configurations.runtime.files.findAll {
+                'Class-Path': configurations.runtimeClasspath.files.findAll {
                     !it.name.matches("(mysql-connector-java|postgresql|derby)-.*\\.jar")
                 }.collect { 'libs/' + it.name }.join(' ')
     }
