@@ -132,6 +132,7 @@ public abstract class ImportFileModel extends ImportFile implements BufferedBean
     private <T, M extends ChangeBufferTableModel<T>> void commitTable(M tableModel, Collection<T> beans) {
         if (tableModel.isChanged()) {
             beans.removeAll(tableModel.getPendingDeletes());
+            beans.addAll(tableModel.getPendingAdds());
             tableModel.commit();
         }
     }
