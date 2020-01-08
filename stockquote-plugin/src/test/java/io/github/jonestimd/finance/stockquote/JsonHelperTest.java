@@ -20,7 +20,7 @@ import javax.json.spi.JsonProvider;
 
 import org.junit.Test;
 
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class JsonHelperTest {
@@ -84,6 +84,26 @@ public class JsonHelperTest {
     }
 
     @Test
+    public void optionalStringReturnsArrayElement() throws Exception {
+        JsonArray jsonArray = provider.createArrayBuilder().add("value").build();
+
+        Optional<String> value = new JsonHelper(getStream(jsonArray)).optionalString("0");
+
+        assertThat(value.isPresent()).isTrue();
+        assertThat(value.get()).isEqualTo("value");
+    }
+
+    @Test
+    public void optionalStringReturnsEmptyForIndexOutOfBounds() throws Exception {
+        JsonArray jsonArray = provider.createArrayBuilder().add("value").build();
+
+        JsonHelper jsonHelper = new JsonHelper(getStream(jsonArray));
+
+        assertThat(jsonHelper.optionalString("1").isPresent()).isFalse();
+        assertThat(jsonHelper.optionalString("-1").isPresent()).isFalse();
+    }
+
+    @Test
     public void findValueReturnsValueForMatchingKey() throws Exception {
         JsonObject jsonObject = createBuilder("1. root", "value").add("2. other", "not it").build();
 
@@ -128,6 +148,19 @@ public class JsonHelperTest {
                 .add("p2", createBuilder("child", new BigDecimal("234.56"))).build();
 
         Map<String, BigDecimal> map = new JsonHelper(getStream(jsonObject)).mapEntries(singletonList("child"), JsonHelper::asBigDecimal);
+
+        assertThat(map).containsEntry("p1", new BigDecimal("123.45"));
+        assertThat(map).containsEntry("p2", new BigDecimal("234.56"));
+    }
+
+    @Test
+    public void toMap() throws Exception {
+        JsonArray jsonArray = provider.createArrayBuilder()
+                .add(provider.createObjectBuilder().add("name", "p1").add("value", new BigDecimal("123.45")))
+                .add(provider.createObjectBuilder().add("name", "p2").add("value", new BigDecimal("234.56"))).build();
+
+        Map<String, BigDecimal> map = new JsonHelper(getStream(jsonArray))
+                .toMap(singletonList("name"), singletonList("value"), JsonHelper::asBigDecimal);
 
         assertThat(map).containsEntry("p1", new BigDecimal("123.45"));
         assertThat(map).containsEntry("p2", new BigDecimal("234.56"));

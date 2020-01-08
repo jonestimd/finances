@@ -1,4 +1,4 @@
-{
-  "S1": {"delayed-quote": {"delayedPrice": 45.89}},
-  "S2": {"delayed-quote": {"delayedPrice": 55.67}}
-}
+[
+  {"symbol":  "S1", "price": 45.89},
+  {"symbol":  "S2", "price": 55.67}
+]

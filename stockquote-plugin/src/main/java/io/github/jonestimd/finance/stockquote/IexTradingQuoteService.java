@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2017-2020 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -70,12 +70,14 @@ public class IexTradingQuoteService implements StockQuoteService {
     private final String attributionUrl = StockQuotePlugin.BUNDLE.getString("quote.service.iex.attribution.url");
     private final String urlFormat;
     private final int batchSize;
+    private final List<String> symbolPath;
     private final List<String> pricePath;
     private final Icon icon;
 
     public IexTradingQuoteService(Config config) {
         this.urlFormat = config.getString("urlFormat");
         this.batchSize = config.getInt("batchSize");
+        this.symbolPath = config.getStringList("symbolPath");
         this.pricePath = config.getStringList("pricePath");
         this.icon = new IconLoader(config).getIcon();
     }
@@ -94,7 +96,7 @@ public class IexTradingQuoteService implements StockQuoteService {
 
     private Map<String, BigDecimal> getPrices(InputStream stream) {
         JsonHelper helper = new JsonHelper(stream);
-        return helper.mapEntries(pricePath, JsonHelper::asBigDecimal);
+        return helper.toMap(symbolPath, pricePath, JsonHelper::asBigDecimal);
     }
 
     private String encode(String symbol) {

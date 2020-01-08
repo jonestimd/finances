@@ -3,8 +3,6 @@ package io.github.jonestimd.finance.stockquote;
 import java.math.BigDecimal;
 import java.util.Collections;
 
-import javax.swing.Icon;
-
 import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -13,13 +11,12 @@ import io.github.jonestimd.collection.MapBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.typesafe.config.ConfigValueFactory.*;
 import static io.github.jonestimd.finance.stockquote.StockQuotePlugin.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,11 +53,11 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
 
         verify(callback).accept(eq(new MapBuilder<String, BigDecimal>()
                 .put("S1", new BigDecimal("45.89"))
-                .put("S2", new BigDecimal("55.67")).get()), eq(url), notNull(Icon.class), eq(message));
+                .put("S2", new BigDecimal("55.67")).get()), eq(url), notNull(), eq(message));
     }
 
     @Test
-    public void getPricesDivedsRequestsByBatchSize() throws Exception {
+    public void getPricesDividesRequestsByBatchSize() throws Exception {
         String url = BUNDLE.getString("quote.service.iex.attribution.url");
         String message = BUNDLE.getString("quote.service.iex.attribution.tooltip");
         StockQuoteService service = IexTradingQuoteService.FACTORY.create(getConfig(2)).get();
@@ -69,9 +66,9 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
 
         verify(callback).accept(eq(new MapBuilder<String, BigDecimal>()
                 .put("S1", new BigDecimal("45.89"))
-                .put("S2", new BigDecimal("55.67")).get()), eq(url), notNull(Icon.class), eq(message));
+                .put("S2", new BigDecimal("55.67")).get()), eq(url), notNull(), eq(message));
         verify(callback).accept(eq(new MapBuilder<String, BigDecimal>()
-                .put("S3", new BigDecimal("65.78")).get()), eq(url), notNull(Icon.class), eq(message));
+                .put("S3", new BigDecimal("65.78")).get()), eq(url), notNull(), eq(message));
     }
 
     @Test
@@ -80,7 +77,7 @@ public class IexTradingQuoteServiceTest extends HttpServerTest {
 
         service.getPrices(ImmutableList.of("S1", "S3"), callback);
 
-        verifyZeroInteractions(callback);
+        verifyNoInteractions(callback);
     }
 
     private Config getConfig() {

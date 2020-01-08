@@ -9,7 +9,7 @@ import io.github.jonestimd.finance.stockquote.StockQuoteService.Callback;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import static org.mockito.Mockito.*;
@@ -25,8 +25,8 @@ public class HierarchicalQuoteServiceTest {
 
     @Test
     public void callsServicesInOrder() throws Exception {
-        doAnswer(getAnswer("S1", BigDecimal.ONE)).when(service1).getPrices(anyListOf(String.class), any(Callback.class));
-        doAnswer(getAnswer("S3", BigDecimal.TEN)).when(service2).getPrices(anyListOf(String.class), any(Callback.class));
+        doAnswer(getAnswer("S1", BigDecimal.ONE)).when(service1).getPrices(anyCollection(), any(Callback.class));
+        doAnswer(getAnswer("S3", BigDecimal.TEN)).when(service2).getPrices(anyCollection(), any(Callback.class));
         HierarchicalQuoteService service = new HierarchicalQuoteService(Arrays.asList(service1, service2));
 
         service.getPrices(Arrays.asList("S1", "S2", "S3"), callback);
@@ -39,13 +39,13 @@ public class HierarchicalQuoteServiceTest {
 
     @Test
     public void quitsWhenAllPricesFound() throws Exception {
-        doAnswer(getAnswer("S1", BigDecimal.ONE)).when(service1).getPrices(anyListOf(String.class), any(Callback.class));
+        doAnswer(getAnswer("S1", BigDecimal.ONE)).when(service1).getPrices(anyCollection(), any(Callback.class));
         HierarchicalQuoteService service = new HierarchicalQuoteService(Arrays.asList(service1, service2));
 
         service.getPrices(Arrays.asList("S1"), callback);
 
         verify(service1).getPrices(eq(Sets.newHashSet("S1")), any(Callback.class));
-        verifyZeroInteractions(service2);
+        verifyNoInteractions(service2);
         verify(callback).accept(Collections.singletonMap("S1", BigDecimal.ONE), null, null, null);
     }
 
