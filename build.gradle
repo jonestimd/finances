@@ -167,7 +167,6 @@ task distMsi(type: Exec, dependsOn: [prepareMsi, pluginDependencies]) {
             '-outdir', 'build\\distributions', '-outfile', 'finances',
             '-srcdir', 'build\\tmp', '-srcfiles', 'LICENSE.txt;libs;drivers',
             '-srcdir', 'build\\libs', '-srcfiles', "finances-${project.version}.jar;plugins",
-            '-srcdir', 'build', '-srcfiles', "plugins",
             '-appclass', mainClass, '-Bidentifier=0ab6d075-c33e-45de-9218-b73b14cb0605',
             '-BinstalldirChooser=true', '-BlicenseFile=LICENSE.txt',
             '-Bvendor=jonestimd', "-BappVersion=${project.version.replace("-SNAPSHOT", "")}",
