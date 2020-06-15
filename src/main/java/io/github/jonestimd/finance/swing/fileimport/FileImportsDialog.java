@@ -75,7 +75,7 @@ public class FileImportsDialog extends ValidatedDialog {
     private final ImportTablePanel<ImportMapping<Payee>, ImportPayeeTableModel> payeesPanel;
     private final ImportTablePanel<ImportMapping<Security>, ImportSecurityTableModel> securitiesPanel;
     private final BeanListComboBox<ImportFileModel> importFileList;
-    private final Action applyAction = new ApplyAction();
+    private final ApplyAction applyAction = new ApplyAction();
     private final Action resetAction = actionFactory.newAction("reset", this::resetChanges);
     private final Action newAction = actionFactory.newAction("new", this::newImport);
     private final Action deleteAction = actionFactory.newAction("delete", this::deleteImport);
@@ -163,7 +163,7 @@ public class FileImportsDialog extends ValidatedDialog {
     public boolean showDialog() {
         pack();
         setVisible(true);
-        return !isCancelled();
+        return !isCancelled() || applyAction.applied;
     }
 
     private void newImport(ActionEvent event) {
@@ -216,6 +216,8 @@ public class FileImportsDialog extends ValidatedDialog {
     }
 
     protected class ApplyAction extends BackgroundAction<Set<ImportFile>> {
+        protected boolean applied = false;
+
         protected ApplyAction() {
             super(FileImportsDialog.this, LABELS.get(), RESOURCE_PREFIX + "action.apply");
         }
@@ -228,6 +230,7 @@ public class FileImportsDialog extends ValidatedDialog {
         @Override
         protected Set<ImportFile> performTask() {
             saveImports.run();
+            applied = true;
             return null;
         }
 
