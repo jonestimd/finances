@@ -2,7 +2,6 @@ package io.github.jonestimd.finance.file;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -82,7 +81,7 @@ public class SingleDetailImportContextTest {
         assertThat(transactions.get(0).getDetails()).hasSize(1);
         assertThat(transactions.get(0).getDetails().get(0).getCategory()).isSameAs(category);
         assertThat(transactions.get(0).getDetails().get(0).getAmount().toString()).isEqualTo("10");
-        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("-5");
+        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("5");
     }
 
     @Test
@@ -101,7 +100,7 @@ public class SingleDetailImportContextTest {
         assertThat(transactions.get(0).getDetails()).hasSize(1);
         assertThat(transactions.get(0).getDetails().get(0).getCategory()).isSameAs(category);
         assertThat(transactions.get(0).getDetails().get(0).getAmount().toString()).isEqualTo("-10");
-        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("5");
+        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("-5");
     }
 
     @Test
@@ -124,7 +123,6 @@ public class SingleDetailImportContextTest {
     @Test
     public void populatesTransfer() throws Exception {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
-        final TransactionCategory category = new TransactionCategory();
         final Account transferAccount = new Account();
         when(importFile.parse(inputStream)).thenReturn(singletonList(ImmutableListMultimap.of(amountField, "10", categoryField, TRANSFER_ACCOUNT)));
         when(importFile.getTransferAccount(TRANSFER_ACCOUNT)).thenReturn(transferAccount);

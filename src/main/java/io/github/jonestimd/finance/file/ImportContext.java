@@ -134,7 +134,7 @@ public abstract class ImportContext {
 
     protected BigDecimal getAssetQuantity(TransactionDetail detail, ImportField field, String amount) {
         BigDecimal quantity = field.parseAmount(amount);
-        return importFile.isNegate(detail.getCategory()) ? quantity : quantity.negate();
+        return importFile.isNegate(detail.getCategory()) ? quantity.negate() : quantity;
     }
 
     protected interface DetailValueConsumer {
