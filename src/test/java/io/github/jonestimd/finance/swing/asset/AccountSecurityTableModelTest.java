@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.mockito.MockitoHelper.matches;
 import static java.util.Collections.*;
@@ -41,12 +41,12 @@ public class AccountSecurityTableModelTest {
     private TableDataProvider<SecuritySummary> dataProvider;
     @Mock
     private TableModelListener modelListener;
-    private DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
+    private final DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
     private AccountSecurityTableModel model;
-    private Security security1 = new SecurityBuilder().nextId().name("security1").get();
-    private Security security2 = new SecurityBuilder().nextId().name("security2").get();
-    private Company company = new CompanyBuilder().nextId().name("company").get();
-    private Account account1 = new AccountBuilder().nextId().company(company).name("account1").get();
+    private final Security security1 = new SecurityBuilder().nextId().name("security1").get();
+    private final Security security2 = new SecurityBuilder().nextId().name("security2").get();
+    private final Company company = new CompanyBuilder().nextId().name("company").get();
+    private final Account account1 = new AccountBuilder().nextId().company(company).name("account1").get();
 
     @BeforeClass
     public static void resetTestIds() {

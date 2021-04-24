@@ -39,7 +39,7 @@ import io.github.jonestimd.swing.window.StatusFrame;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static io.github.jonestimd.finance.swing.WindowType.*;
@@ -80,7 +80,7 @@ public class ReloadEventHandlerTest extends SwingRobotTest {
 
         handler.onDomainEvent(new DomainEvent<>(this));
 
-        verifyZeroInteractions(supplier, tableModel);
+        verifyNoInteractions(supplier, tableModel);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class ReloadEventHandlerTest extends SwingRobotTest {
         JTextArea textArea = robot.finder().findByType(dialog.getContentPane(), JTextArea.class);
         assertThat(textArea.getText()).contains(message);
         SwingUtilities.invokeAndWait(dialog::dispose);
-        verifyZeroInteractions(tableModel);
+        verifyNoInteractions(tableModel);
     }
 
     @Test

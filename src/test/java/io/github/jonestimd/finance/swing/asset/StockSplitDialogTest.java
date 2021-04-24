@@ -1,9 +1,7 @@
 package io.github.jonestimd.finance.swing.asset;
 
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
-import java.util.Collections;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -27,21 +25,21 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StockSplitDialogTest extends SwingRobotTest {
     @Mock
     private DomainEventPublisher eventPublisher;
-    private ServiceLocator serviceLocator = new MockServiceContext();
-    private AssetOperations assetOperations = serviceLocator.getAssetOperations();
-    private SwingContext swingContext = new SwingContext(serviceLocator);
-    private Security security = new SecurityBuilder().nextId().splits().get();
+    private final ServiceLocator serviceLocator = new MockServiceContext();
+    private final AssetOperations assetOperations = serviceLocator.getAssetOperations();
+    private final SwingContext swingContext = new SwingContext(serviceLocator);
+    private final Security security = new SecurityBuilder().nextId().splits().get();
     private StockSplitDialog dialog;
     @Captor
     private ArgumentCaptor<DomainEvent<Long, SecuritySummary>> eventCaptor;

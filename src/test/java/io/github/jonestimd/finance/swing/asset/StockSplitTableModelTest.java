@@ -13,7 +13,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.mockito.MockitoHelper.matches;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 public class StockSplitTableModelTest {
     @Mock
     private TableModelListener listener;
-    private Date date = new Date();
+    private final Date date = new Date();
 
     @Test
     public void updatingDateValidatesAllDates() throws Exception {

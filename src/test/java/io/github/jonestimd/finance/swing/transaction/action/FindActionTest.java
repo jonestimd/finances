@@ -27,15 +27,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FindActionTest extends SwingRobotTest {
-    private StatusFrame frame = new StatusFrame(BundleType.LABELS.get(), "window.transactions");
-    private JPanel frameContent = new JPanel();
+    private final StatusFrame frame = new StatusFrame(BundleType.LABELS.get(), "window.transactions");
+    private final JPanel frameContent = new JPanel();
     @Mock
     private TransactionService transactionService;
     @Mock
@@ -64,7 +64,7 @@ public class FindActionTest extends SwingRobotTest {
         optionPane.buttonWithText("Cancel").click();
 
         robot.waitForIdle();
-        verifyZeroInteractions(transactionService, tableFactory);
+        verifyNoInteractions(transactionService, tableFactory);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class FindActionTest extends SwingRobotTest {
         JOptionPaneFixture messagePane = JOptionPaneFinder.findOptionPane().using(robot);
         messagePane.requireMessage("No matches found");
         verify(transactionService).findAllDetails("search");
-        verifyZeroInteractions(tableFactory);
+        verifyNoInteractions(tableFactory);
     }
 
     @Test
