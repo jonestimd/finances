@@ -10,7 +10,7 @@ import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,7 +21,7 @@ public class StockQuotePluginTest {
     private ServiceLocator serviceLocator;
     @Mock
     private DomainEventPublisher domainEventPublisher;
-    private StockQuotePlugin plugin = new StockQuotePlugin();
+    private final StockQuotePlugin plugin = new StockQuotePlugin();
 
     @Test
     public void getSecurityTableExtensionsNoneEnabled() throws Exception {
@@ -30,7 +30,7 @@ public class StockQuotePluginTest {
         plugin.initialize(config, serviceLocator, domainEventPublisher);
 
         assertThat(plugin.getSecurityTableExtensions()).isEmpty();
-        verifyZeroInteractions(serviceLocator, domainEventPublisher);
+        verifyNoInteractions(serviceLocator, domainEventPublisher);
     }
 
     @Test
@@ -44,6 +44,6 @@ public class StockQuotePluginTest {
         verify(domainEventPublisher).register(same(SecuritySummary.class), isA(DomainEventListener.class));
         verify(domainEventPublisher).register(same(Security.class), isA(DomainEventListener.class));
         verifyNoMoreInteractions(domainEventPublisher);
-        verifyZeroInteractions(serviceLocator);
+        verifyNoInteractions(serviceLocator);
     }
 }

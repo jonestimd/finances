@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.swing.table.model.FunctionColumnAdapter;
 import io.github.jonestimd.swing.table.model.ValidatedColumnAdapter;
@@ -42,14 +44,16 @@ public class TransactionTypeColumnAdapter<V> extends FunctionColumnAdapter<Impor
         super(LABELS.get(), RESOURCE_PREFIX, columnId, valueType, getter, setter);
     }
 
-    public static final ValidatedTypeColumnAdapter<String> VALUE_ADAPTER =
-        new ValidatedTypeColumnAdapter<String>("alias", String.class,
-                ImportTransactionTypeModel::getAlias, ImportTransactionTypeModel::setAlias) {
+    public static final ValidatedTypeColumnAdapter<List<String>> VALUE_ADAPTER =
+        new ValidatedTypeColumnAdapter<List<String>>("alias", List.class,
+                (m) -> Splitter.on('\n').splitToList(m.getAlias()),
+                (m, v) -> m.setAlias(Joiner.on('\n').join(v))) {
             @Override
-            public String validate(int selectedIndex, String value, List<? extends ImportTransactionTypeModel> beans) {
-                if (value == null || value.trim().isEmpty()) return VALUE_REQUIRED;
+            public String validate(int selectedIndex, List<String> value, List<? extends ImportTransactionTypeModel> beans) {
+                if (value == null || value.isEmpty()) return VALUE_REQUIRED;
+                String v = Joiner.on('\n').join(value);
                 ImportTransactionTypeModel row = beans.get(selectedIndex);
-                if (beans.stream().filter(mapping -> mapping != row).anyMatch(mapping -> mapping.getAlias().equals(value))) {
+                if (beans.stream().filter(mapping -> mapping != row).anyMatch(mapping -> mapping.getAlias().equals(v))) {
                     return VALUE_UNIQUE;
                 }
                 return null;

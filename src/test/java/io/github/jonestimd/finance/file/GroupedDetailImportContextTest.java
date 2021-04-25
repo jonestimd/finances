@@ -1,7 +1,6 @@
 package io.github.jonestimd.finance.file;
 
 import java.io.ByteArrayInputStream;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -20,7 +19,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
@@ -89,7 +88,7 @@ public class GroupedDetailImportContextTest {
         assertThat(transactions.get(0).getDetails()).hasSize(1);
         assertThat(transactions.get(0).getDetails().get(0).getCategory()).isSameAs(category);
         assertThat(transactions.get(0).getDetails().get(0).getAmount().toString()).isEqualTo("10");
-        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("-1");
+        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("1");
     }
 
     @Test
@@ -114,12 +113,12 @@ public class GroupedDetailImportContextTest {
         assertThat(transactions.get(0).getDetails()).hasSize(3);
         assertThat(transactions.get(0).getDetails().get(0).getCategory()).isSameAs(category1);
         assertThat(transactions.get(0).getDetails().get(0).getAmount().toString()).isEqualTo("10");
-        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("-2");
+        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("2");
         assertThat(transactions.get(0).getDetails().get(1).getTransferAccount()).isSameAs(transferAccount);
         assertThat(transactions.get(0).getDetails().get(1).getAmount().toString()).isEqualTo("5");
         assertThat(transactions.get(0).getDetails().get(2).getCategory()).isSameAs(category2);
         assertThat(transactions.get(0).getDetails().get(2).getAmount().toString()).isEqualTo("1");
-        assertThat(transactions.get(0).getDetails().get(2).getAssetQuantity().toString()).isEqualTo("-20");
+        assertThat(transactions.get(0).getDetails().get(2).getAssetQuantity().toString()).isEqualTo("20");
     }
 
     @Test
@@ -138,7 +137,7 @@ public class GroupedDetailImportContextTest {
         assertThat(transactions.get(0).getDetails()).hasSize(1);
         assertThat(transactions.get(0).getDetails().get(0).getCategory()).isSameAs(category);
         assertThat(transactions.get(0).getDetails().get(0).getAmount().toString()).isEqualTo("11");
-        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("-22");
+        assertThat(transactions.get(0).getDetails().get(0).getAssetQuantity().toString()).isEqualTo("22");
     }
 
     @Test

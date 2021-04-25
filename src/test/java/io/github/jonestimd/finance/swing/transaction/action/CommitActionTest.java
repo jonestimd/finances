@@ -22,20 +22,17 @@ import io.github.jonestimd.finance.service.TransactionService;
 import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
-import io.github.jonestimd.swing.window.StatusFrame;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommitActionTest {
-    @Mock
-    private StatusFrame frame;
     @Mock
     private TransactionTable transactionTable;
     @Mock
@@ -46,8 +43,8 @@ public class CommitActionTest {
     private DomainEventPublisher domainEventPublisher;
     @InjectMocks
     private CommitAction commitAction;
-    private Random random = new Random();
-    private List<DomainEvent<?, ?>> domainEvents = Arrays.asList(new TransactionEvent(this, null, Collections.emptyList()));
+    private final Random random = new Random();
+    private final List<DomainEvent<?, ?>> domainEvents = Arrays.asList(new TransactionEvent(this, null, Collections.emptyList()));
 
     @Before
     public void trainMocks() throws Exception {
@@ -67,7 +64,7 @@ public class CommitActionTest {
 
         verify(transactionTable).getSelectedTransaction();
         verifyNoMoreInteractions(transactionTable);
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test
@@ -78,7 +75,7 @@ public class CommitActionTest {
 
         verify(transactionTable).getSelectedTransaction();
         verifyNoMoreInteractions(transactionTable);
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test
@@ -98,7 +95,7 @@ public class CommitActionTest {
         verify(transactionTable).convertRowIndexToView(rowIndex);
         verify(transactionTable).nextTransaction(viewIndex);
         verifyNoMoreInteractions(transactionTable);
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test

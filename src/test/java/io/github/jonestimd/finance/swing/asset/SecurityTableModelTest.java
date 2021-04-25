@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,11 +28,11 @@ import static org.mockito.Mockito.*;
 public class SecurityTableModelTest {
     @Mock
     private SecurityTableExtension dataProvider;
-    private DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
+    private final DomainEventPublisher domainEventPublisher = new DomainEventPublisher();
     private SecurityTableModel model;
 
-    private Security security1 = new SecurityBuilder().nextId().name("security1").get();
-    private Account account1 = new AccountBuilder().nextId().company(new Company("comany")).name("account1").get();
+    private final Security security1 = new SecurityBuilder().nextId().name("security1").get();
+    private final Account account1 = new AccountBuilder().nextId().company(new Company("comany")).name("account1").get();
 
     @Before
     public void createModel() {

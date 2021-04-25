@@ -12,7 +12,6 @@ import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.operations.TransactionBulkUpdate;
 import io.github.jonestimd.finance.service.TransactionService;
-import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
 import io.github.jonestimd.finance.swing.transaction.TransactionTable;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
 import org.junit.Before;
@@ -22,7 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,14 +34,12 @@ public class SaveAllActionTest {
     private TransactionTableModel tableModel;
     @Mock
     private TransactionService transactionService;
-    @Mock
-    private DomainEventPublisher domainEventPublisher;
     @InjectMocks
     private SaveAllAction saveAllAction;
     @Captor
     private ArgumentCaptor<TransactionBulkUpdate> updateCaptor;
 
-    private List<DomainEvent<?, ?>> domainEvents = new ArrayList<>();
+    private final List<DomainEvent<?, ?>> domainEvents = new ArrayList<>();
 
     @Before
     public void trainMocks() throws Exception {
@@ -56,7 +53,7 @@ public class SaveAllActionTest {
 
         saveAllAction.actionPerformed(null);
 
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test
@@ -65,7 +62,7 @@ public class SaveAllActionTest {
 
         saveAllAction.actionPerformed(null);
 
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test
@@ -74,7 +71,7 @@ public class SaveAllActionTest {
 
         saveAllAction.actionPerformed(null);
 
-        verifyZeroInteractions(transactionService);
+        verifyNoInteractions(transactionService);
     }
 
     @Test

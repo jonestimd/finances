@@ -3,14 +3,12 @@ package io.github.jonestimd.finance.stockquote;
 import java.math.BigDecimal;
 import java.util.Collections;
 
-import javax.swing.Icon;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.typesafe.config.ConfigValueFactory.*;
 import static org.assertj.core.api.Assertions.*;
@@ -51,7 +49,7 @@ public class QuandlQuoteServiceTest extends HttpServerTest {
 
         service.getPrices(Collections.singletonList("S1"), callback);
 
-        verify(callback).accept(eq(Collections.singletonMap("S1", new BigDecimal("35.00"))), eq(url), notNull(Icon.class), eq(url));
+        verify(callback).accept(eq(Collections.singletonMap("S1", new BigDecimal("35.00"))), eq(url), notNull(), eq(url));
     }
 
     @Test
@@ -60,7 +58,7 @@ public class QuandlQuoteServiceTest extends HttpServerTest {
 
         service.getPrices(Collections.singletonList("S2"), callback);
 
-        verifyZeroInteractions(callback);
+        verifyNoInteractions(callback);
     }
 
     private Config getConfig() {

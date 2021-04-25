@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
@@ -57,7 +57,7 @@ public class StockQuoteTableProviderTest {
 
         provider.setBeans(Arrays.asList(newRow("Security 1", "S1", 1L, null), newRow("Security 2", "S2", 1L, null)));
 
-        verify(quoteService).getPrices(eq(Arrays.asList("S1", "S2")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(Arrays.asList("S1", "S2")), notNull());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class StockQuoteTableProviderTest {
 
         provider.addBean(newRow("Security 3", "S3", 1L, null));
 
-        verify(quoteService).getPrices(eq(singleton("S3")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(singleton("S3")), notNull());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class StockQuoteTableProviderTest {
 
         summaryListenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.ADDED, newRow("Security 4", "S4", 1L, null)));
 
-        verify(quoteService).getPrices(eq(singletonList("S4")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(singletonList("S4")), notNull());
     }
 
     @Test
@@ -87,7 +87,7 @@ public class StockQuoteTableProviderTest {
 
         summaryListenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.CHANGED, newRow("Security 1", "S1", 2L, null)));
 
-        verify(quoteService).getPrices(eq(singletonList("S1")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(singletonList("S1")), notNull());
         assertThat(provider.getTotalValue()).isEqualTo(new BigDecimal(30));
     }
 
@@ -99,7 +99,7 @@ public class StockQuoteTableProviderTest {
 
         summaryListenerCaptor.getValue().onDomainEvent(new SecuritySummaryEvent("test", EventType.REPLACED, newRow("Security 1", "S1", 2L, null)));
 
-        verify(quoteService).getPrices(eq(singletonList("S1")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(singletonList("S1")), notNull());
         assertThat(provider.getTotalValue()).isEqualTo(new BigDecimal(20));
     }
 
@@ -110,7 +110,7 @@ public class StockQuoteTableProviderTest {
 
         securityListenerCaptor.getValue().onDomainEvent(new SecurityEvent("test", EventType.ADDED, newSecurity("Security 4", "S4")));
 
-        verify(quoteService).getPrices(eq(singletonList("S4")), notNull(Consumer.class));
+        verify(quoteService).getPrices(eq(singletonList("S4")), notNull());
     }
 
     @Test
@@ -241,7 +241,7 @@ public class StockQuoteTableProviderTest {
                 new StockQuote("S1", BigDecimal.TEN, null, null, null)));
         provider.setBeans(beans);
 
-        ColumnAdapter<SecuritySummary, StockQuote> marketValueAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(1);
+        ColumnAdapter<SecuritySummary, BigDecimal> marketValueAdapter = (ColumnAdapter<SecuritySummary, BigDecimal>) provider.getColumnAdapters().get(1);
 
         assertThat(marketValueAdapter.getValue(beans.get(0))).isEqualTo(new BigDecimal("100"));
     }
@@ -289,7 +289,7 @@ public class StockQuoteTableProviderTest {
                 new StockQuote("S1", BigDecimal.TEN, null, null, null)));
         provider.setBeans(beans);
 
-        ColumnAdapter<SecuritySummary, StockQuote> roiAdapter = (ColumnAdapter<SecuritySummary, StockQuote>) provider.getColumnAdapters().get(2);
+        ColumnAdapter<SecuritySummary, BigDecimal> roiAdapter = (ColumnAdapter<SecuritySummary, BigDecimal>) provider.getColumnAdapters().get(2);
 
         assertThat(roiAdapter.getValue(beans.get(0))).isEqualTo(new BigDecimal(99));
     }

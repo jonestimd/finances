@@ -21,14 +21,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -69,9 +66,9 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testSaveTransactions() throws Exception {
-        List<Transaction> transactions = new ArrayList<Transaction>();
-        List<Transaction> result = new ArrayList<Transaction>();
-        when(transactionOperations.saveTransactions(anyCollectionOf(Transaction.class)))
+        List<Transaction> transactions = new ArrayList<>();
+        List<Transaction> result = new ArrayList<>();
+        when(transactionOperations.saveTransactions(anyCollection()))
             .thenReturn(result);
 
         assertThat(transactionService.saveTransactions(transactions)).isSameAs(result);
@@ -119,7 +116,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testGetTransactionsByAccount() throws Exception {
-        List<Transaction> transactions = new ArrayList<Transaction>();
+        List<Transaction> transactions = new ArrayList<>();
         when(transactionOperations.getTransactions(anyLong()))
             .thenReturn(transactions);
 
@@ -140,7 +137,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testFindSecuritySalesWithoutLots() throws Exception {
-        List<TransactionDetail> sales = new ArrayList<TransactionDetail>();
+        List<TransactionDetail> sales = new ArrayList<>();
         Date saleDate = new Date();
         when(transactionOperations.findSecuritySalesWithoutLots(anyString(), any(Date.class)))
             .thenReturn(sales);
@@ -152,7 +149,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testFindPurchasesWithRemainingLots() throws Exception {
-        List<TransactionDetail> purchases = new ArrayList<TransactionDetail>();
+        List<TransactionDetail> purchases = new ArrayList<>();
         Account account = new Account();
         Security security = new Security();
         Date saleDate = new Date();
@@ -166,7 +163,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testGetPurchaseLots() throws Exception {
-        List<SecurityLot> lots = new ArrayList<SecurityLot>();
+        List<SecurityLot> lots = new ArrayList<>();
         when(transactionOperations.findAvailableLots(any(TransactionDetail.class)))
             .thenReturn(lots);
 
@@ -178,7 +175,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testSaveSecurityLots() throws Exception {
-        List<SecurityLot> lots = new ArrayList<SecurityLot>();
+        List<SecurityLot> lots = new ArrayList<>();
 
         transactionService.saveSecurityLots(lots);
 

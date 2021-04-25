@@ -22,7 +22,6 @@ import io.github.jonestimd.finance.swing.WindowType;
 import io.github.jonestimd.swing.ComponentTreeUtils;
 import io.github.jonestimd.swing.table.DecoratedTable;
 import io.github.jonestimd.swing.table.TableInitializer;
-import io.github.jonestimd.swing.window.FrameAction;
 import io.github.jonestimd.swing.window.FrameManager;
 import io.github.jonestimd.swing.window.StatusFrame;
 import org.junit.After;
@@ -33,7 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.github.jonestimd.finance.swing.BundleType.*;
 import static org.assertj.core.api.Assertions.*;
@@ -57,7 +56,7 @@ public class TransactionDetailPanelTest {
     @Captor
     private ArgumentCaptor<TableModelListener> listenerCaptor;
 
-    private JFrame frame = new JFrame();
+    private final JFrame frame = new JFrame();
 
     @Before
     public void setupMocks() throws Exception {

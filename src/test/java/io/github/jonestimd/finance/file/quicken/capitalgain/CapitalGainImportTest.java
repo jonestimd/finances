@@ -34,29 +34,21 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CapitalGainImportTest {
     private static final String COLUMN_NAMES = "Acct\tSecurity\tShares\tBought\tSold\tSales Price\tCost Basis\tGain/Loss\n";
-    private TransactionService transactionService = mock(TransactionService.class);
-    private LotAllocationDialog lotAllocationDialog = mock(LotAllocationDialog.class);
-    private Account account = new Account();
-    private ListMultimap<Date, TransactionDetail> purchaseMap = ArrayListMultimap.create();
-    private Answer<List<TransactionDetail>> purchasesAnswer = new Answer<List<TransactionDetail>>() {
-        public List<TransactionDetail> answer(InvocationOnMock invocation) throws Throwable {
-            return purchaseMap.get((Date) invocation.getArguments()[2]);
-        }
-    };
+    private final TransactionService transactionService = mock(TransactionService.class);
+    private final LotAllocationDialog lotAllocationDialog = mock(LotAllocationDialog.class);
+    private final Account account = new Account();
+    private final ListMultimap<Date, TransactionDetail> purchaseMap = ArrayListMultimap.create();
+    private final Answer<List<TransactionDetail>> purchasesAnswer = invocation -> purchaseMap.get((Date) invocation.getArguments()[2]);
     @Mock
     private MessageConsumer messageConsumer;
     @Captor
@@ -322,7 +314,7 @@ public class CapitalGainImportTest {
     public void noMatchingSale() throws Exception {
         CapitalGainImport txfImport = new CapitalGainImport(transactionService, lotAllocationDialog);
         when(transactionService.findSecuritySalesWithoutLots("Security 1", createDate("02/28/2005")))
-            .thenReturn(new ArrayList<TransactionDetail>());
+            .thenReturn(new ArrayList<>());
 
         txfImport.importFile(createReader(COLUMN_NAMES +
                 "X\tSecurity 1\t16.000\t01/20/00\t02/28/05\t160.00\t80.00\t0.00\n" +
@@ -338,7 +330,7 @@ public class CapitalGainImportTest {
         when(transactionService.findSecuritySalesWithoutLots("Security 1", createDate("02/28/2005")))
             .thenReturn(Lists.newArrayList(sale));
         when(transactionService.findPurchasesWithRemainingLots(account, security, createDate("01/20/1991")))
-            .thenReturn(new ArrayList<TransactionDetail>());
+            .thenReturn(new ArrayList<>());
         when(transactionService.findPurchasesWithRemainingLots(account, security, createDate("01/20/2000")))
             .thenReturn(Lists.newArrayList(purchase1));
 

@@ -24,6 +24,8 @@ package io.github.jonestimd.finance.swing.fileimport;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.swing.Action;
@@ -36,6 +38,8 @@ import io.github.jonestimd.finance.swing.BorderFactory;
 import io.github.jonestimd.swing.ButtonBarFactory;
 import io.github.jonestimd.swing.SettingsPersister;
 import io.github.jonestimd.swing.table.DecoratedTable;
+import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
+import io.github.jonestimd.swing.table.PopupListTableCellEditor;
 import io.github.jonestimd.swing.table.model.ChangeBufferTableModel;
 import io.github.jonestimd.swing.table.model.ValidatedTableModel;
 
@@ -51,6 +55,9 @@ public class ImportTablePanel<T, M extends ChangeBufferTableModel<T> & Validated
         super(new BorderLayout(BorderFactory.GAP, BorderFactory.GAP));
         this.itemFactory = itemFactory;
         this.table = table;
+        table.setDefaultRenderer(List.class, new MultiSelectTableCellRenderer<>(true));
+        table.setDefaultEditor(List.class, PopupListTableCellEditor.builder(Function.identity(), Function.identity())
+                .validator((items, i) -> true).build());
         setBorder(BorderFactory.panelBorder());
         setPreferredSize(new Dimension(800, 300));
         Action addAction = owner.actionFactory.newAction(actionPrefix + ".add", this::addItem);
