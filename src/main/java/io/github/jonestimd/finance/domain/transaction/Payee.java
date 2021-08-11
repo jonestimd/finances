@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import javax.persistence.UniqueConstraint;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.UniqueName;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "payee", uniqueConstraints = @UniqueConstraint(name = "payee_ak", columnNames = "name"))
@@ -45,6 +46,7 @@ public class Payee extends BaseDomain<Long> implements UniqueName, Comparable<Pa
     public static final String NAME = "name";
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @Column(name = "name", length = 200, nullable = false)
     private String name;

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -70,6 +70,7 @@ import io.github.jonestimd.finance.file.GroupedDetailImportContext;
 import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.MultiDetailImportContext;
 import io.github.jonestimd.finance.file.SingleDetailImportContext;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
@@ -83,6 +84,7 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
     public static final String FIND_ONE_BY_NAME = "ImportFile.findOneByName";
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     @Column(name = "id", nullable = false)
     private Long id;
     @Column(name = "name", nullable = false, length = 250)

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -122,6 +123,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String ASSET_QUANTITY = "assetQuantity";
 
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false)
     @ForeignKey(name = "tx_detail_tx_fk") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})

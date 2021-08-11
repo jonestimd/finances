@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,7 @@ import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.util.Streams;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.ForeignKey;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
@@ -63,6 +64,7 @@ public class Account extends BaseDomain<Long> implements TransactionType {
     public static final String CLOSED = "closed";
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @ManyToOne(fetch=FetchType.EAGER, optional = false) @ForeignKey(name = "account_currency_fk")
     private Currency currency;
