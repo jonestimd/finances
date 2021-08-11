@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javafx.util.Pair;
 import org.apache.pdfbox.util.Vector;
 import org.junit.Test;
 
