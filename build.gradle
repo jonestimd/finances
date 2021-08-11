@@ -37,7 +37,7 @@ allprojects { // TODO add plugin-api module and test-common module
 }
 
 def mainClass = 'io.github.jonestimd.finance.ApplicationLauncher'
-def hibernateVersion = "4.3.7.Final"
+def hibernateVersion = "5.5.6.Final"
 
 evaluationDependsOnChildren()
 
@@ -59,6 +59,7 @@ dependencies {
     api(group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
     api(group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.4.0')
     api(group: 'com.typesafe', name: 'config', version: '1.3.0')
+    api(group: 'com.mchange', name: 'mchange-commons-java', version: '0.2.19')
 
     runtimeOnly(group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernateVersion) {
         exclude group: 'org.hibernate', module: 'hibernate-core'
@@ -68,7 +69,7 @@ dependencies {
     runtimeOnly(group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.6.1') { transitive = false }
     runtimeOnly(group: 'org.objenesis', name: 'objenesis', version: '1.2')
     runtimeOnly(group: 'org.javassist', name: 'javassist', version: '3.18.1-GA')
-    runtimeOnly(group: 'mysql', name: 'mysql-connector-java', version: '5.1.6')
+    runtimeOnly(group: 'mysql', name: 'mysql-connector-java', version: '8.0.26')
     runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-looks', version: '2.7.0')
     runtimeOnly(group: 'com.jgoodies', name: 'jgoodies-common', version: '1.7.0')
     runtimeOnly(group: 'org.postgresql', name: 'postgresql', version: '9.4.1208')
