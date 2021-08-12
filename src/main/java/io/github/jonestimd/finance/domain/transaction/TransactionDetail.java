@@ -78,7 +78,7 @@ import org.hibernate.annotations.GenericGenerator;
         " and t." + Transaction.SECURITY + " = :security" +
         " and c." + TransactionCategory.CODE + " in (:actions) " +
         " and td." + TransactionDetail.ASSET_QUANTITY +
-        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
+        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
     @NamedQuery(name = TransactionDetail.UNSOLD_SECURITY_SHARES, query =
         "select distinct td " +
         "from TransactionDetail td join td." + TransactionDetail.TRANSACTION + " t join td." + TransactionDetail.CATEGORY + " c left join fetch td.saleLots " +
@@ -87,7 +87,7 @@ import org.hibernate.annotations.GenericGenerator;
         " and t." + Transaction.SECURITY + " = :security" +
         " and c." + TransactionCategory.CODE + " in (:actions) " +
         " and td." + TransactionDetail.ASSET_QUANTITY +
-        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
+        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
     @NamedQuery(name = TransactionDetail.REPLACE_CATEGORY_QUERY, query =
         "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)"),
     @NamedQuery(name = TransactionDetail.FIND_BY_STRING, query =
