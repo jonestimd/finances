@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,14 @@ import static io.github.jonestimd.finance.plugin.DriverConfigurationService.Fiel
 
 public class MySqlDriverConnectionService extends RemoteDriverConnectionService {
     public MySqlDriverConnectionService() {
-        super("MySql", "org.hibernate.dialect.MySQL5InnoDBDialect", "com.mysql.jdbc.Driver", "mysql://");
+        super("MySql", "org.hibernate.dialect.MySQL8Dialect", "com.mysql.cj.jdbc.Driver", "mysql://");
+    }
+
+    @Override
+    public Properties getHibernateProperties(Config config) {
+        Properties props = super.getHibernateProperties(config);
+        props.setProperty("hibernate.dialect.storage_engine", "innodb");
+        return props;
     }
 
     @Override
@@ -53,8 +60,12 @@ public class MySqlDriverConnectionService extends RemoteDriverConnectionService 
     @Override
     protected boolean needSuperUser(String message) {
         String lowerMessage = message.toLowerCase();
-        return lowerMessage.startsWith("access denied") || lowerMessage.endsWith(".company' doesn't exist")
-                || lowerMessage.startsWith("unknown database");
+        return lowerMessage.startsWith("access denied") || lowerMessage.startsWith("unknown database");
+    }
+
+    @Override
+    protected boolean ignoreError(String message) {
+        return message.toLowerCase().endsWith(".company' doesn't exist") || super.ignoreError(message);
     }
 
     @Override

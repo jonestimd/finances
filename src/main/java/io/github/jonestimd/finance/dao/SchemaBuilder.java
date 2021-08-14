@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.dao;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -31,20 +30,18 @@ import java.util.Locale;
 import io.github.jonestimd.finance.domain.asset.Currency;
 import io.github.jonestimd.finance.domain.transaction.SecurityAction;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
-import org.apache.log4j.Logger;
 
 // drop table stock_split, tx_detail, security_lot, tx, payee, tx_group,
 //      account, tx_category, security, company, asset
 public class SchemaBuilder {
     private static final String CHANGE_USER = "REF_DATA";
-    private Logger logger = Logger.getLogger(SchemaBuilder.class);
     private DaoRepository daoRepository;
 
     public SchemaBuilder(DaoRepository daoContext) {
         this.daoRepository = daoContext;
     }
 
-    public SchemaBuilder createSchemaTables(List<String> postCreateScript) throws SQLException {
+    public SchemaBuilder createSchemaTables(List<String> postCreateScript) throws Exception {
         daoRepository.generateSchema(postCreateScript);
         return this;
     }

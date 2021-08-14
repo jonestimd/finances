@@ -7,7 +7,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -27,8 +26,6 @@ public class TransactionInterceptorTest {
     private void beginTransaction(Session session, Transaction transaction) {
         when(session.getTransaction()).thenReturn(transaction);
         when(transaction.isActive()).thenReturn(false);
-        when(transaction.wasCommitted()).thenReturn(false);
-        when(transaction.wasRolledBack()).thenReturn(false);
     }
 
     @Test
@@ -133,7 +130,7 @@ public class TransactionInterceptorTest {
         verify(session1).close();
     }
 
-    public static interface TestTarget {
+    public interface TestTarget {
         String doSomething();
     }
 

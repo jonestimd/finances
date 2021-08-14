@@ -167,8 +167,6 @@ public class MockDaoContext implements DaoRepository {
         when(sessionFactory.getCurrentSession()).thenReturn(session);
         when(session.getTransaction()).thenReturn(transaction);
         when(transaction.isActive()).thenReturn(false);
-        when(transaction.wasCommitted()).thenReturn(false);
-        when(transaction.wasRolledBack()).thenReturn(false);
         transaction.begin();
     }
 

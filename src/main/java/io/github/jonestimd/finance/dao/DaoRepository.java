@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,12 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import io.github.jonestimd.finance.dao.hibernate.DomainEventRecorder;
 
 public interface DaoRepository {
-    void generateSchema(List<String> postCreateScript) throws SQLException;
+    void generateSchema(List<String> postCreateScript) throws Exception;
 
     <I,T extends I> I transactional(T target, Class<I> iface);
 
