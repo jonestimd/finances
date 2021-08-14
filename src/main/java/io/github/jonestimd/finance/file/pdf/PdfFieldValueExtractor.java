@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.util.Streams;
-import javafx.util.Pair;
 import org.apache.pdfbox.util.Vector;
 
 import static com.google.common.collect.Multimaps.*;

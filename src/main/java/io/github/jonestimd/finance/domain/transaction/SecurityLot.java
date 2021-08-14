@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,7 @@ import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import io.github.jonestimd.lang.Comparables;
 import org.hibernate.annotations.ForeignKey;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "security_lot")
@@ -61,6 +62,7 @@ public class SecurityLot extends BaseDomain<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @ManyToOne
     @JoinColumn(name = "purchase_tx_detail_id")

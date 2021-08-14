@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import org.hibernate.Transaction;
 public class TransactionInterceptor implements InvocationHandler {
     private final Object target;
     private final SessionFactory sessionFactory;
-    private static ThreadLocal<Transaction> transactionHolder = new ThreadLocal<Transaction>();
+    private static final ThreadLocal<Transaction> transactionHolder = new ThreadLocal<>();
 
     public TransactionInterceptor(Object target, SessionFactory sessionFactory) {
         this.target = target;
@@ -43,7 +43,7 @@ public class TransactionInterceptor implements InvocationHandler {
         if (transactionHolder.get() == null) {
             Session session = sessionFactory.getCurrentSession();
             Transaction transaction = session.getTransaction();
-            if (! (transaction.isActive() || transaction.wasCommitted() || transaction.wasRolledBack())) {
+            if (! (transaction.isActive())) {
                 try {
                     transaction.begin();
                     transactionHolder.set(transaction);

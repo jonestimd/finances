@@ -8,7 +8,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import io.github.jonestimd.finance.domain.fileimport.ImportField;
 import io.github.jonestimd.finance.domain.fileimport.ImportFieldBuilder;
-import javafx.util.Pair;
 import org.apache.pdfbox.util.Vector;
 import org.junit.Test;
 

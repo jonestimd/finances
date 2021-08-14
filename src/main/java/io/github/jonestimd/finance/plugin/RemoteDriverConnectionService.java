@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.plugin;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -31,6 +32,7 @@ import java.util.Properties;
 import java.util.function.Consumer;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.typesafe.config.Config;
 import io.github.jonestimd.finance.swing.BundleType;
@@ -75,7 +77,7 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
     protected abstract String getSetupJdbcUrl(String jdbcUrl);
 
     @Override
-    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws Exception {
         Properties connectionProperties = getConnectionProperties(config);
         String message = ex.getMessage();
         String jdbcUrl = getJdbcUrl(config);
@@ -93,15 +95,20 @@ public abstract class RemoteDriverConnectionService extends DriverConfigurationS
     protected abstract boolean needToCreateDatabase(String message);
     protected abstract boolean needSuperUser(String message);
 
-    protected boolean getSuperUser(String message, String jdbcUrl, Properties connectionProperties) {
+    protected boolean getSuperUser(String message, String jdbcUrl, Properties connectionProperties) throws InterruptedException, InvocationTargetException {
         SuperUserDialog dialog = new SuperUserDialog(JOptionPane.getRootFrame());
-        do {
-            dialog.setMessage(message);
-            dialog.pack();
-            dialog.setVisible(true);
-            connectionProperties.setProperty(USER.toString(), dialog.getUser());
-            connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
-        } while (! dialog.isCancelled() && (message = testConnection(getSetupJdbcUrl(jdbcUrl), connectionProperties)) != null);
+        Runnable task = () -> {
+            String m = message;
+            do {
+                dialog.setMessage(m);
+                dialog.pack();
+                dialog.setVisible(true);
+                connectionProperties.setProperty(USER.toString(), dialog.getUser());
+                connectionProperties.setProperty(PASSWORD.toString(), dialog.getPassword());
+            } while (! dialog.isCancelled() && (m = testConnection(getSetupJdbcUrl(jdbcUrl), connectionProperties)) != null);
+        };
+        if (SwingUtilities.isEventDispatchThread()) task.run();
+        else SwingUtilities.invokeAndWait(task);
         return !dialog.isCancelled();
     }
 

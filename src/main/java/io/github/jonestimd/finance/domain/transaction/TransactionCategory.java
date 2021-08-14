@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain.transaction;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +45,7 @@ import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.lang.Comparables;
 import io.github.jonestimd.util.Streams;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
@@ -78,6 +78,7 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
 
     private CategoryKey key = new CategoryKey();
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @Column(name = "income", nullable = false, length=1) @Type(type = "yes_no")
     private boolean income;

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -172,9 +172,10 @@ public class MysqlDriverConnectionServiceTest {
 
         Properties properties = service.getHibernateProperties(config);
 
-        assertThat(properties).hasSize(5);
-        assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.MySQL5InnoDBDialect");
-        assertThat(properties.getProperty("hibernate.connection.driver_class")).isEqualTo("com.mysql.jdbc.Driver");
+        assertThat(properties).hasSize(6);
+        assertThat(properties.getProperty("hibernate.dialect")).isEqualTo("org.hibernate.dialect.MySQL8Dialect");
+        assertThat(properties.getProperty("hibernate.dialect.storage_engine")).isEqualTo("innodb");
+        assertThat(properties.getProperty("hibernate.connection.driver_class")).isEqualTo("com.mysql.cj.jdbc.Driver");
         assertThat(properties.getProperty("hibernate.connection.url")).isEqualTo("jdbc:mysql://myhost.com:1234/myschema");
         assertThat(properties.getProperty("hibernate.connection.username")).isEqualTo("myuser");
         assertThat(properties.getProperty("hibernate.connection.password")).isEqualTo("mypassword");
@@ -269,8 +270,17 @@ public class MysqlDriverConnectionServiceTest {
     }
 
     @Test
-    public void tableDoesntExistCreatesUserWithoutPassword() throws Exception {
-        testCreateUserWithoutPassword("Table finances.company' doesn't exist");
+    public void prepareDatabaseIgnoresMissingTables() throws Exception {
+        Config config = defaultConfig();
+        when(dbTestStatement.getMetaData()).thenThrow(new SQLException("Table finances.company' doesn't exist"));
+
+        assertThat(service.prepareDatabase(config, updateProgress)).isTrue();
+
+        assertThat(preparedStatements).isEmpty();
+        assertThat(statements).isEmpty();
+        verifyTestDatabaseQuery();
+        assertThat(superConnections).isEmpty();
+        verify(userConnection).close();
     }
 
     private void testCreateUserWithoutPassword(String errorMessage) throws Exception {

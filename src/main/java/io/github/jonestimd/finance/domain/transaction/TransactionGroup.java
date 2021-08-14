@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import javax.persistence.UniqueConstraint;
 
 import com.google.common.base.Function;
 import io.github.jonestimd.finance.domain.BaseDomain;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity @Table(name="tx_group", uniqueConstraints={@UniqueConstraint(name = "tx_group_ak", columnNames={"name"})})
 @SequenceGenerator(name="id_generator", sequenceName="tx_group_id_seq")
@@ -50,6 +51,7 @@ public class TransactionGroup extends BaseDomain<Long> implements Comparable<Tra
     };
 
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @Column(name="name", nullable=false, length=50)
     private String name;

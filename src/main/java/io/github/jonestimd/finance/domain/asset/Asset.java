@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@ import javax.persistence.UniqueConstraint;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "asset", uniqueConstraints = { @UniqueConstraint(name = "asset_ak", columnNames = {"name", "type"}) })
@@ -45,6 +46,7 @@ public abstract class Asset extends BaseDomain<Long> implements Comparable<Asset
     public static final String SYMBOL = "symbol";
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @Column(name = "name", length = 100, nullable = false)
     private String name;

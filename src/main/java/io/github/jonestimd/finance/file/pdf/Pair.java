@@ -19,42 +19,22 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package io.github.jonestimd.finance.dao;
+package io.github.jonestimd.finance.file.pdf;
 
-import java.util.List;
+public class Pair<K, V> {
+    private final K key;
+    private final V value;
 
-import io.github.jonestimd.finance.dao.hibernate.DomainEventRecorder;
+    public Pair(K key, V value) {
+        this.key = key;
+        this.value = value;
+    }
 
-public interface DaoRepository {
-    void generateSchema(List<String> postCreateScript) throws Exception;
+    public K getKey() {
+        return key;
+    }
 
-    <I,T extends I> I transactional(T target, Class<I> iface);
-
-    void doInTransaction(Runnable work);
-
-    CompanyDao getCompanyDao();
-
-    AccountDao getAccountDao();
-
-    PayeeDao getPayeeDao();
-
-    TransactionCategoryDao getTransactionCategoryDao();
-
-    TransactionGroupDao getTransactionGroupDao();
-
-    TransactionDao getTransactionDao();
-
-    TransactionDetailDao getTransactionDetailDao();
-
-    CurrencyDao getCurrencyDao();
-
-    SecurityDao getSecurityDao();
-
-    StockSplitDao getStockSplitDao();
-
-    SecurityLotDao getSecurityLotDao();
-
-    ImportFileDao getImportFileDao();
-
-    DomainEventRecorder getDomainEventRecorder();
+    public V getValue() {
+        return value;
+    }
 }

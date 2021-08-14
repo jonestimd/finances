@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -77,7 +78,7 @@ import org.hibernate.annotations.Formula;
         " and t." + Transaction.SECURITY + " = :security" +
         " and c." + TransactionCategory.CODE + " in (:actions) " +
         " and td." + TransactionDetail.ASSET_QUANTITY +
-        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
+        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
     @NamedQuery(name = TransactionDetail.UNSOLD_SECURITY_SHARES, query =
         "select distinct td " +
         "from TransactionDetail td join td." + TransactionDetail.TRANSACTION + " t join td." + TransactionDetail.CATEGORY + " c left join fetch td.saleLots " +
@@ -86,7 +87,7 @@ import org.hibernate.annotations.Formula;
         " and t." + Transaction.SECURITY + " = :security" +
         " and c." + TransactionCategory.CODE + " in (:actions) " +
         " and td." + TransactionDetail.ASSET_QUANTITY +
-        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id))"),
+        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
     @NamedQuery(name = TransactionDetail.REPLACE_CATEGORY_QUERY, query =
         "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)"),
     @NamedQuery(name = TransactionDetail.FIND_BY_STRING, query =
@@ -122,6 +123,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String ASSET_QUANTITY = "assetQuantity";
 
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
+    @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
     @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false)
     @ForeignKey(name = "tx_detail_tx_fk") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,21 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.dao;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.function.Consumer;
 
 import com.google.common.base.Supplier;
+import com.mchange.io.FileUtils;
 import com.typesafe.config.Config;
 import io.github.jonestimd.finance.config.ApplicationConfig;
 import io.github.jonestimd.finance.dao.hibernate.AccountDaoImpl;
@@ -64,16 +68,21 @@ import org.apache.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
+import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.dialect.Dialect;
-import org.hibernate.tool.hbm2ddl.SchemaUpdate;
-import org.hibernate.tool.hbm2ddl.Target;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
+import org.hibernate.service.ServiceRegistry;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
+import org.hibernate.tool.schema.TargetType;
 
 import static io.github.jonestimd.finance.swing.FinanceApplication.*;
 
 public class HibernateDaoContext implements DaoRepository {
     private static final String EVENT_SOURCE = "Services";
     private final Logger logger = Logger.getLogger(HibernateDaoContext.class);
+    private final List<String> hibernateResources;
     private Configuration configuration;
     protected SessionFactory sessionFactory;
     private CompanyDao companyDao;
@@ -95,7 +104,7 @@ public class HibernateDaoContext implements DaoRepository {
     private DomainEventInterceptor eventInterceptor = new DomainEventInterceptor(eventHandlerSupplier);
 
     public static HibernateDaoContext connect(boolean createSchema, DriverService driverService, Config config, Consumer<String> updateProgress)
-            throws SQLException {
+            throws Exception {
         HibernateDaoContext daoContext = new HibernateDaoContext(driverService, config);
         if (createSchema) {
             updateProgress.accept(BundleType.LABELS.getString("database.status.creatingTables"));
@@ -105,23 +114,32 @@ public class HibernateDaoContext implements DaoRepository {
     }
 
     public HibernateDaoContext(DriverService driverService, Config config) {
-        buildSessionFactory(driverService, config);
+        this.hibernateResources = driverService.getHibernateResources();
+        buildSessionFactory(config, driverService.getHibernateProperties());
         buildDaos();
     }
 
-    private void buildSessionFactory(DriverService driverService, Config config) {
-        configuration = new Configuration();
-        new PackageScanner(new MappedClassFilter(), configuration::addAnnotatedClass, "io.github.jonestimd.finance.domain").visitClasses();
-//        configuration.addResource("io/github/jonestimd/finance/domain/mapping.hbm.xml");
-        configuration.addResource("io/github/jonestimd/finance/domain/queries.hbm.xml");
-        driverService.getHibernateResources().forEach(configuration::addResource);
+    private void buildSessionFactory(Config config, Properties hibernateProperties) {
+        configuration = new Configuration(getMetadataSources());
         config.getConfig("finances.connection.properties").entrySet()
                 .forEach(entry -> configuration.setProperty(entry.getKey(), entry.getValue().unwrapped().toString()));
-        for (Entry<Object, Object> entry : driverService.getHibernateProperties().entrySet()) {
+        for (Entry<Object, Object> entry : hibernateProperties.entrySet()) {
             configuration.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
         configuration.setInterceptor(new InterceptorChain(eventInterceptor, new AuditInterceptor()));
         sessionFactory = configuration.buildSessionFactory();
+    }
+
+    private MetadataSources getMetadataSources() {
+        return getMetadataSources(new BootstrapServiceRegistryBuilder().build());
+    }
+
+    private MetadataSources getMetadataSources(ServiceRegistry serviceRegistry) {
+        MetadataSources metadataSources = new MetadataSources(serviceRegistry);
+        new PackageScanner(new MappedClassFilter(), metadataSources::addAnnotatedClass, "io.github.jonestimd.finance.domain").visitClasses();
+        metadataSources.addResource("io/github/jonestimd/finance/domain/queries.hbm.xml");
+        hibernateResources.forEach(metadataSources::addResource);
+        return metadataSources;
     }
 
     private void buildDaos() {
@@ -140,22 +158,37 @@ public class HibernateDaoContext implements DaoRepository {
     }
 
     @Override
-    public void generateSchema(List<String> postCreateScript) throws SQLException {
-        String[] script = schemaCreationScript();
-        Session session = sessionFactory.openSession();
-        try {
+    public void generateSchema(List<String> postCreateScript) throws IOException {
+        List<String> script = schemaCreationScript();
+        try (Session session = sessionFactory.openSession()) {
             session.doWork(connection -> {
-                executeSchemaScript(connection, Arrays.asList(script));
-                if (! postCreateScript.isEmpty()) executeSchemaScript(connection, postCreateScript);
+                executeSchemaScript(connection, script);
+                if (!postCreateScript.isEmpty()) executeSchemaScript(connection, postCreateScript);
                 connection.commit();
             });
-        } finally {
-            session.close();
         }
     }
 
-    private String[] schemaCreationScript() {
-        return configuration.generateSchemaCreationScript(Dialect.getDialect(configuration.getProperties()));
+    private List<String> schemaCreationScript() throws IOException {
+        File tempFile = File.createTempFile("finances", ".ddl");
+        tempFile.deleteOnExit();
+        StandardServiceRegistry registry = configuration.getStandardServiceRegistryBuilder().build();
+        MetadataSources metadataSources = getMetadataSources(registry);
+        new SchemaExport()
+                .setOutputFile(tempFile.getAbsolutePath())
+                .createOnly(EnumSet.of(TargetType.SCRIPT), metadataSources.buildMetadata());
+        String script = FileUtils.getContentsAsString(tempFile);
+        List<String> lines = new ArrayList<>();
+        String last = "";
+        for (String line : script.split("\\n")) {
+            if (line.startsWith("create table") || line.startsWith("alter table")) lines.add(line);
+            else if (line.trim().startsWith("create function")) last = line;
+            else {
+                last += "\n" + line;
+                if (line.trim().equals(";")) lines.add(last);
+            }
+        }
+        return lines;
     }
 
     private void executeSchemaScript(Connection connection, List<String> sqlScript) throws SQLException {
@@ -166,7 +199,7 @@ public class HibernateDaoContext implements DaoRepository {
         }
     }
 
-    private void executeSchemaStatement(Statement stmt, String sql) throws SQLException {
+    private void executeSchemaStatement(Statement stmt, String sql) {
         logger.debug("Executing schema statement: " + sql);
         try {
             stmt.executeUpdate(sql);
@@ -183,21 +216,16 @@ public class HibernateDaoContext implements DaoRepository {
 
     @Override
     public void doInTransaction(Runnable work) {
-        Session session = sessionFactory.openSession();
-        try {
+        try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
             try {
                 work.run();
                 transaction.commit();
-            }
-            finally {
-                if (! transaction.wasCommitted()) {
+            } finally {
+                if (transaction.getStatus() != TransactionStatus.COMMITTED) {
                     transaction.rollback();
                 }
             }
-        }
-        finally {
-            session.close();
         }
     }
 
@@ -259,8 +287,9 @@ public class HibernateDaoContext implements DaoRepository {
         try {
             DriverService driverService = CONNECTION_CONFIG.loadDriver();
             HibernateDaoContext context = new HibernateDaoContext(driverService, ApplicationConfig.CONFIG);
-//            Stream.of(context.schemaCreationScript()).forEach(System.out::println);
-            new SchemaUpdate(context.configuration).execute(Target.SCRIPT);
+            StandardServiceRegistry registry = context.configuration.getStandardServiceRegistryBuilder().build();
+            MetadataSources metadataSources = context.getMetadataSources(registry);
+            new SchemaExport().createOnly(EnumSet.of(TargetType.STDOUT), metadataSources.buildMetadata());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

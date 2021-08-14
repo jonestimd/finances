@@ -94,14 +94,10 @@ public class TestHibernateDaoContext extends HibernateDaoContext implements Test
 
     @Override
     public long countAll(Class<?> entityClass) {
-        Session session = sessionFactory.openSession();
-        try {
+        try (Session session = sessionFactory.openSession()) {
             Criteria criteria = session.createCriteria(entityClass);
             criteria.setProjection(Projections.rowCount());
             return (Long) criteria.uniqueResult();
-        }
-        finally {
-            session.close();
         }
     }
 }

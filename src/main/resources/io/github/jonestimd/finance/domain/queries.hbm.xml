@@ -1,4 +1,28 @@
 <?xml version="1.0"?>
+<!--
+  ~ The MIT License (MIT)
+  ~
+  ~ Copyright (c) 2021 Tim Jones
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in all
+  ~ copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  ~ SOFTWARE.
+  -->
+
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd" [
     <!ENTITY joinSecurity "join security security_1_ on security.id = security_1_.asset_id">
     <!ENTITY adjustedShares "adjust_shares(t.security_id, t.date, td.asset_quantity)">
@@ -160,7 +184,7 @@
           and t.account = :account
           and t.security = :security
           and c.key.code in (:actions)
-          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id))
+          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id)
     </query>
     <query name="transaction.unsoldSecurityShares">
         select distinct td
@@ -169,7 +193,7 @@
           and t.account = :account
           and t.security = :security
           and c.key.code in (:actions)
-          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id))
+          and td.assetQuantity > (select coalesce(sum(l.purchaseShares),0) from SecurityLot l where l.purchase.id = td.id)
     </query>
     <query name="transaction.replaceCategory">
         update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)
@@ -237,7 +261,7 @@
             end
         </create>
         <drop>drop function if exists adjust_shares</drop>
-        <dialect-scope name="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+        <dialect-scope name="org.hibernate.dialect.MySQL8Dialect"/>
     </database-object>
     <database-object>
         <create>

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -89,7 +89,7 @@ public class SecurityDaoImpl extends HibernateDao<Security, Long> implements Sec
     @SuppressWarnings("unchecked")
     public List<SecuritySummary> getSecuritySummaryByAccount(Long securityId) {
         return (List<SecuritySummary>) getSession().getNamedQuery(Security.SECURITY_SUMMARY)
-                .setParameter(0, securityId)
+                .setParameter(1, securityId)
                 .setResultTransformer(ACCOUNT_SUMMARIES_TRANSFORMER)
                 .list();
     }
