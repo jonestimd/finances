@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -149,7 +149,7 @@ public abstract class DriverConfigurationService {
      * @param ex the exception from the query to test for the database existance
      * @return true if the database is ready for tables to be created
      */
-    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws Exception {
         throw ex;
     }
 

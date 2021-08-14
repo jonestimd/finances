@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.plugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -46,7 +45,7 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
             "alter table tx_detail add constraint related_detail_uk unique (related_detail_id)"));
     public static final OutputStream LOG_STREAM = new OutputStream() {
         @Override
-        public void write(int b) throws IOException {}
+        public void write(int b) {}
     };
 
     public DerbyDriverConnectionService() {
@@ -102,8 +101,8 @@ public class DerbyDriverConnectionService extends EmbeddedDriverConnectionServic
     }
 
     @Override
-    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws SQLException {
-        return ex.getMessage().toLowerCase().equals("table/view 'company' does not exist.") || super.handleException(config, updateProgress, ex);
+    protected boolean handleException(Config config, Consumer<String> updateProgress, SQLException ex) throws Exception {
+        return ex.getMessage().equalsIgnoreCase("table/view 'company' does not exist.") || super.handleException(config, updateProgress, ex);
     }
 
     @Override
