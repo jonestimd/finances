@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,6 @@ import io.github.jonestimd.swing.table.DateCellEditor;
 import io.github.jonestimd.swing.table.DateTableCellRenderer;
 import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.HighlightTableCellRenderer;
-import io.github.jonestimd.swing.table.Highlighter;
 import io.github.jonestimd.swing.table.TableFactory;
 import io.github.jonestimd.swing.table.TableInitializer;
 import io.github.jonestimd.swing.window.ApplicationWindowAction;
