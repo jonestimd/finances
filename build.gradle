@@ -18,7 +18,7 @@ plugins {
 compileJava.sourceCompatibility = 1.8
 
 group = 'io.github.jonestimd'
-version = '1.6.1'
+version = '1.6.2'
 
 allprojects { // TODO add plugin-api module and test-common module
     apply plugin: 'java'
@@ -57,7 +57,7 @@ dependencies {
     api(group: 'org.jsoup', name: 'jsoup', version: '1.8.1')
     api(group: 'org.glassfish', name: 'javax.json', version: '1.0.4')
     api(group: 'io.github.jonestimd', name: 'subsets', version: '1.0')
-    api(group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.4.2')
+    api(group: 'io.github.jonestimd', name: 'swing-extensions', version: '1.4.3-SNAPSHOT')
     api(group: 'com.typesafe', name: 'config', version: '1.3.0')
     api(group: 'com.mchange', name: 'mchange-commons-java', version: '0.2.19')
 
