@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2019 Tim Jones
+// Copyright (c) 2021 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@ import io.github.jonestimd.swing.table.model.SingleTypeDetailAdapter;
 
 // TODO publish DomainEvents (for accounts/payees/securities windows)
 public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transaction> implements ObservableBean {
-    private static final List<Class> BOLD_COLUMNS = ImmutableList.of(Payee.class, Security.class);
+    private static final List<Class<?>> BOLD_COLUMNS = ImmutableList.of(Payee.class, Security.class);
     private static final ReadWriteAccessor<TransactionDetail, Account> ACCOUNT_ADAPTER = new ReadWriteAccessor<TransactionDetail, Account>() {
         public Account getValue(TransactionDetail bean) {
             return bean.isTransfer() ? bean.getRelatedDetail().getTransaction().getAccount() : null;
@@ -196,6 +196,12 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     private void onTransactionUpdate(Transaction transaction) {
         if (!transaction.getAccount().getId().equals(account.getId())) {
             removeBean(transaction);
+            transaction.getDetails().forEach((d) -> {
+                if (d.isTransfer() && d.getTransferAccount().getId().equals(account.getId())) {
+                    Transaction relatedTx = d.getRelatedDetail().getTransaction();
+                    if (indexOf(relatedTx) < 0) addBean(getInsertionIndex(relatedTx), relatedTx);
+                }
+            });
         } else if (indexOf(transaction) < 0) {
             addBean(getInsertionIndex(transaction), transaction);
         }

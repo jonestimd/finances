@@ -10,10 +10,13 @@ import javax.swing.event.TableModelListener;
 
 import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.domain.account.Account;
+import io.github.jonestimd.finance.domain.event.TransactionEvent;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.Transaction;
 import io.github.jonestimd.finance.domain.transaction.TransactionBuilder;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetailBuilder;
+import io.github.jonestimd.finance.swing.event.DomainEventPublisher;
+import io.github.jonestimd.finance.swing.event.EventType;
 import org.fest.util.Objects;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +26,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class TransactionTableModelTest {
+
+    public static final long ACCOUNT_ID = -1L;
+
     @Test
     public void appendDetail() throws Exception {
         TableModelListener listener = mock(TableModelListener.class);
@@ -219,11 +225,66 @@ public class TransactionTableModelTest {
         assertThat(model.isUnsavedChanges()).isTrue();
     }
 
+    @Test
+    public void onTransactionEvent_addsNewTransactionForSameAccount() throws Exception {
+        DomainEventPublisher publisher = new DomainEventPublisher();
+        TransactionTableModel model = new TransactionTableModel(new Account(ACCOUNT_ID));
+        model.setDomainEventPublisher(publisher);
+        Transaction transaction = newTransaction(false, BigDecimal.TEN);
+
+        publisher.publishEvent(new TransactionEvent(this, EventType.CHANGED, transaction));
+
+        assertThat(model.getBeans()).containsExactly(transaction);
+    }
+
+    @Test
+    public void onTransactionEvent_ignoresExistingTransactionForSameAccount() throws Exception {
+        DomainEventPublisher publisher = new DomainEventPublisher();
+        TransactionTableModel model = new TransactionTableModel(new Account(ACCOUNT_ID));
+        model.setDomainEventPublisher(publisher);
+        Transaction transaction = newTransaction(false, BigDecimal.TEN);
+        model.addBean(transaction);
+
+        publisher.publishEvent(new TransactionEvent(this, EventType.CHANGED, transaction));
+
+        assertThat(model.getBeans()).containsExactly(transaction);
+    }
+
+    @Test
+    public void onTransactionEvent_addsTransferToSameAccount() throws Exception {
+        DomainEventPublisher publisher = new DomainEventPublisher();
+        TransactionTableModel model = new TransactionTableModel(new Account(ACCOUNT_ID));
+        model.setDomainEventPublisher(publisher);
+        Transaction transfer = newTransfer(ACCOUNT_ID);
+
+        publisher.publishEvent(new TransactionEvent(this, EventType.CHANGED, transfer));
+
+        assertThat(model.getBeans()).containsExactly(transfer.getDetails().get(0).getRelatedDetail().getTransaction());
+    }
+
+    @Test
+    public void onTransactionEvent_ignoresTransferToDifferentAccount() throws Exception {
+        DomainEventPublisher publisher = new DomainEventPublisher();
+        TransactionTableModel model = new TransactionTableModel(new Account(ACCOUNT_ID));
+        model.setDomainEventPublisher(publisher);
+        Transaction transfer = newTransfer(ACCOUNT_ID - 2);
+
+        publisher.publishEvent(new TransactionEvent(this, EventType.CHANGED, transfer));
+
+        assertThat(model.getBeans()).doesNotContain(transfer.getDetails().get(0).getRelatedDetail().getTransaction());
+    }
+
+    private Transaction newTransfer(long accountId) {
+        return new TransactionBuilder().nextId()
+                .account(new Account(ACCOUNT_ID - 1))
+                .details(new TransactionDetailBuilder().newTransfer(accountId)).get();
+    }
+
     private Transaction newTransaction(boolean cleared, BigDecimal amount) throws Exception {
-        return new TransactionBuilder()
-            .nextId()
-            .cleared(cleared)
-            .details(new TransactionDetailBuilder().amount(amount).get()).get();
+        return new TransactionBuilder().nextId()
+                .account(new Account(ACCOUNT_ID))
+                .cleared(cleared)
+                .details(new TransactionDetailBuilder().amount(amount).get()).get();
     }
 
     private PropertyChangeEvent event(Object oldValue, Object newValue) {

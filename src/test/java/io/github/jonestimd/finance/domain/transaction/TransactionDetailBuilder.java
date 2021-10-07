@@ -2,9 +2,11 @@ package io.github.jonestimd.finance.domain.transaction;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Random;
 
 import io.github.jonestimd.finance.domain.TestDomainUtils;
 import io.github.jonestimd.finance.domain.TestSequence;
+import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 
 public class TransactionDetailBuilder {
@@ -16,6 +18,7 @@ public class TransactionDetailBuilder {
     private Security security;
     private BigDecimal shares;
     private Transaction transaction;
+    private static Random RANDOM = new Random();
 
     public TransactionDetailBuilder reset() {
         id = null;
@@ -89,9 +92,17 @@ public class TransactionDetailBuilder {
     }
 
     public TransactionDetail newTransfer() {
+        return newTransfer(RANDOM.nextLong());
+    }
+
+    public TransactionDetail newTransfer(long accountId) {
+        return newTransfer(new Account(accountId));
+    }
+
+    public TransactionDetail newTransfer(Account account) {
         TransactionDetail transactionDetail = get();
         transactionDetail.setRelatedDetail(build(null, amount.negate(), null, null));
-        transactionDetail.getRelatedDetail().setTransaction(new TransactionBuilder().get());
+        transactionDetail.getRelatedDetail().setTransaction(new TransactionBuilder().account(account).get());
         return transactionDetail;
     }
 }
