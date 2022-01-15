@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2019 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,6 @@ import io.github.jonestimd.swing.table.FormatTableCellRenderer;
 import io.github.jonestimd.swing.table.MultiSelectTableCellRenderer;
 import io.github.jonestimd.swing.table.PopupListTableCellEditor;
 import io.github.jonestimd.swing.table.TableFactory;
-import io.github.jonestimd.swing.table.model.BeanListTableModel;
 import io.github.jonestimd.swing.validation.ValidatedComponent;
 
 public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportFieldTableModel> {
@@ -165,7 +164,7 @@ public class ImportFieldsPanel extends ImportTablePanel<ImportField, ImportField
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             int index = table.convertRowIndexToModel(row);
-            ImportField field = (ImportField) ((BeanListTableModel)table.getModel()).getRow(index);
+            ImportField field = ((ImportFieldTable) table).getModel().getBeanAtRow(index);
             if (field.getType() == FieldType.CATEGORY) getComboBox().getModel().setElements(categories, false);
             else getComboBox().getModel().setElements(accounts, false);
             return super.getTableCellEditorComponent(table, value, isSelected, row, column);

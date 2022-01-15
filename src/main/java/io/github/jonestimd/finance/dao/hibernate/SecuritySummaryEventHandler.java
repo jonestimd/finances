@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -85,7 +85,7 @@ public class SecuritySummaryEventHandler implements EventHandlerEventHolder {
         }
         else if (entity instanceof TransactionDetail) {
             TransactionDetail detail = (TransactionDetail) entity;
-            Transaction transaction = detail.getTransaction();
+            Transaction transaction = MoreObjects.firstNonNull(detail.getTransaction(), this.getTransaction(propertyNames, previousState));
             BigDecimal deltaShares = getAssetQuantity(detail).subtract(getShares(propertyNames, previousState));
             updateSummary(transaction.getAccount(), transaction.getSecurity(), deltaShares, 0);
         }

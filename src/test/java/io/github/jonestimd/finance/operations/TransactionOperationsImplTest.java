@@ -125,11 +125,10 @@ public class TransactionOperationsImplTest {
         TransactionDetail transferDetail = new TransactionDetailBuilder().persistedTransfer();
         transaction.addDetails(transferDetail, new TransactionDetail());
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(new TransactionUpdate(transaction));
+        transactionOperations.saveTransaction(new TransactionUpdate(transaction));
 
         verify(transactionDao).save(transaction);
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, payeeDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
         assertThat(transaction.getDetails()).hasSize(1);
         assertThat(transaction.getDetails().get(0)).isSameAs(transferDetail);
     }
@@ -137,19 +136,21 @@ public class TransactionOperationsImplTest {
     @Test
     public void saveExistingTransactionRemovesEmptyDetails() throws Exception {
         daoRepository.expectCommit();
+        Transaction persisted = new Transaction(-1L);
+        persisted.addDetails(new TransactionDetailBuilder().persistedTransfer());
+        when(transactionDao.merge(any(Transaction.class))).thenReturn(persisted);
         Transaction transaction = new Transaction(-1L);
         TransactionDetail transferDetail = new TransactionDetailBuilder().persistedTransfer();
         transaction.addDetails(transferDetail, new TransactionDetail());
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(new TransactionUpdate(transaction));
+        transactionOperations.saveTransaction(new TransactionUpdate(transaction));
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao);
         inOrder.verify(transactionDao).merge(transaction);
         inOrder.verify(transactionDetailDao).findOrphanTransfers();
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
         assertThat(transaction.getDetails()).hasSize(1);
-        assertThat(transaction.getDetails().get(0)).isSameAs(transferDetail);
+        assertThat(transaction.getDetails().get(0)).isSameAs(persisted.getDetails().get(0));
     }
 
     @Test
@@ -161,7 +162,7 @@ public class TransactionOperationsImplTest {
         when(transactionDetailDao.findOrphanTransfers())
             .thenReturn(Collections.singletonList(orphanDetail));
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(new TransactionUpdate(transaction));
+        transactionOperations.saveTransaction(new TransactionUpdate(transaction));
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao, securityLotDao);
         inOrder.verify(transactionDao).merge(transaction);
@@ -169,7 +170,6 @@ public class TransactionOperationsImplTest {
         inOrder.verify(securityLotDao).deleteSaleLots(orphanDetail);
         inOrder.verify(transactionDetailDao).delete(orphanDetail);
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
         assertThat(orphanDetail.getTransaction()).isNull();
         assertThat(orphanTransfer.getDetails().contains(orphanDetail)).isFalse();
     }
@@ -183,7 +183,7 @@ public class TransactionOperationsImplTest {
         when(transactionDetailDao.findOrphanTransfers())
             .thenReturn(Collections.singletonList(orphanDetail));
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(new TransactionUpdate(transaction));
+        transactionOperations.saveTransaction(new TransactionUpdate(transaction));
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao, securityLotDao);
         inOrder.verify(transactionDao).merge(transaction);
@@ -191,7 +191,6 @@ public class TransactionOperationsImplTest {
         inOrder.verify(securityLotDao).deleteSaleLots(orphanDetail);
         inOrder.verify(transactionDao).delete(orphanTransfer);
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
     }
 
     @Test
@@ -202,7 +201,7 @@ public class TransactionOperationsImplTest {
             .details(new TransactionDetailBuilder().nextId().get()).get();
         TransactionUpdate update = new TransactionUpdate(transaction, transaction.getDetails().subList(0, 1));
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(update);
+        transactionOperations.saveTransaction(update);
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao, securityLotDao);
         inOrder.verify(transactionDao).merge(transaction);
@@ -210,9 +209,6 @@ public class TransactionOperationsImplTest {
         inOrder.verify(transactionDetailDao).delete(update.getDeletes().get(0));
         inOrder.verify(transactionDetailDao).findOrphanTransfers();
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
-        assertThat(updatedTransaction.getDetails()).hasSize(1);
-        assertThat(updatedTransaction.getDetails().contains(update.getDeletes().get(0))).isFalse();
     }
 
     @Test
@@ -225,7 +221,7 @@ public class TransactionOperationsImplTest {
         TransactionDetail relatedDetail = update.getDeletes().get(0).getRelatedDetail();
         Transaction relatedTransaction = relatedDetail.getTransaction();
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(update);
+        transactionOperations.saveTransaction(update);
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao, securityLotDao);
         inOrder.verify(transactionDao).merge(transaction);
@@ -235,9 +231,6 @@ public class TransactionOperationsImplTest {
         inOrder.verify(transactionDetailDao).delete(update.getDeletes().get(0));
         inOrder.verify(transactionDetailDao).findOrphanTransfers();
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
-        assertThat(updatedTransaction.getDetails()).hasSize(1);
-        assertThat(updatedTransaction.getDetails().contains(update.getDeletes().get(0))).isFalse();
     }
 
     @Test
@@ -250,7 +243,7 @@ public class TransactionOperationsImplTest {
         TransactionDetail relatedDetail = update.getDeletes().get(0).getRelatedDetail();
         relatedDetail.getTransaction().addDetails(new TransactionDetailBuilder().nextId().get());
 
-        Transaction updatedTransaction = transactionOperations.saveTransaction(update);
+        transactionOperations.saveTransaction(update);
 
         InOrder inOrder = inOrder(transactionDao, transactionDetailDao, securityLotDao);
         inOrder.verify(transactionDao).merge(transaction);
@@ -260,9 +253,6 @@ public class TransactionOperationsImplTest {
         inOrder.verify(transactionDetailDao).delete(update.getDeletes().get(0));
         inOrder.verify(transactionDetailDao).findOrphanTransfers();
         verifyNoMoreInteractions(transactionDao, transactionDetailDao, securityLotDao);
-        assertThat(updatedTransaction).isSameAs(transaction);
-        assertThat(updatedTransaction.getDetails()).hasSize(1);
-        assertThat(updatedTransaction.getDetails().contains(update.getDeletes().get(0))).isFalse();
         assertThat(relatedDetail.getTransaction()).isNull();
     }
 

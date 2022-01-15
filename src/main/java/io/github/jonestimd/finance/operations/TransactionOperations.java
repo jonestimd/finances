@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ public interface TransactionOperations {
 
     void updateTransactions(TransactionBulkUpdate transactionUpdate);
 
-    Transaction saveTransaction(TransactionUpdate transactionUpdate);
+    void saveTransaction(TransactionUpdate transactionUpdate);
 
     <T extends Iterable<Transaction>> T saveTransactions(T transactions);
 

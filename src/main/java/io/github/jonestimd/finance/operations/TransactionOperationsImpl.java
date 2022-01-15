@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.operations;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -30,9 +29,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import io.github.jonestimd.finance.dao.DaoRepository;
 import io.github.jonestimd.finance.dao.PayeeDao;
 import io.github.jonestimd.finance.dao.SecurityDao;
@@ -115,7 +112,7 @@ public class TransactionOperationsImpl implements TransactionOperations {
         transactionUpdate.getUpdates().forEach(this::saveTransaction);
     }
 
-    public Transaction saveTransaction(TransactionUpdate transactionUpdate) {
+    public void saveTransaction(TransactionUpdate transactionUpdate) {
         Transaction transaction = transactionUpdate.getTransaction();
         persistPayee(transaction.getPayee());
         persistSecurity(transaction.getSecurity());
@@ -130,9 +127,10 @@ public class TransactionOperationsImpl implements TransactionOperations {
                 detail.setRelatedDetail(null);
                 deleteDetail(detail);
             }
-            return persisted;
+            transaction.getDetails().clear();
+            transaction.getDetails().addAll(persisted.getDetails());
         }
-        return transactionDao.save(transaction);
+        else transactionDao.save(transaction);
     }
 
     private void persistPayee(Payee payee) {
@@ -152,12 +150,12 @@ public class TransactionOperationsImpl implements TransactionOperations {
         if (detail.getTransaction().getDetails().size() == 1) {
             transactionDao.delete(detail.getTransaction());
         } else {
-            detail.setTransaction(null);
             if (detail.isTransfer()) {
                 detail.getRelatedDetail().setRelatedDetail(null);
                 deleteDetail(detail.getRelatedDetail());
                 detail.setRelatedDetail(null);
             }
+            detail.setTransaction(null);
             transactionDetailDao.delete(detail);
         }
     }
