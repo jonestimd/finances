@@ -150,12 +150,12 @@ public class TransactionOperationsImpl implements TransactionOperations {
         if (detail.getTransaction().getDetails().size() == 1) {
             transactionDao.delete(detail.getTransaction());
         } else {
-            detail.setTransaction(null);
             if (detail.isTransfer()) {
                 detail.getRelatedDetail().setRelatedDetail(null);
                 deleteDetail(detail.getRelatedDetail());
                 detail.setRelatedDetail(null);
             }
+            detail.setTransaction(null);
             transactionDetailDao.delete(detail);
         }
     }
