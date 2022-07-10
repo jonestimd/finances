@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2019 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@ package io.github.jonestimd.finance.file.pdf;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import io.github.jonestimd.function.FailableConsumer;
@@ -78,7 +77,7 @@ public class TextExtractorEngine extends PDFStreamEngine {
     }
 
     public List<PdfTextInfo> getDocumentText() {
-        return Collections.unmodifiableList(documentText);
+        return new ArrayList<>(documentText);
     }
 
     @Override
