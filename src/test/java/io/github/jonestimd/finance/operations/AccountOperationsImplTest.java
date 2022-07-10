@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.dao.AccountDao;
 import io.github.jonestimd.finance.dao.CompanyDao;
 import io.github.jonestimd.finance.domain.TestDomainUtils;
@@ -30,12 +31,15 @@ public class AccountOperationsImplTest {
 
     @Test
     public void getAllAccountsWithCompany() throws Exception {
-        List<Account> expectedAccounts = Collections.singletonList(new Account());
+        List<Account> expectedAccounts = Lists.newArrayList(
+                new AccountBuilder().name("xyz").get(),
+                new AccountBuilder().name("abc").get());
         when(accountDao.getAll()).thenReturn(expectedAccounts);
 
         List<Account> accounts = accountOperations.getAllAccounts();
 
         assertThat(accounts).isSameAs(expectedAccounts);
+        assertThat(accounts.get(0).getName()).isEqualTo("abc");
     }
 
     @Test
