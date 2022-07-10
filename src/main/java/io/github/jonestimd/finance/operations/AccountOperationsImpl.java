@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ package io.github.jonestimd.finance.operations;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -54,7 +55,9 @@ public class AccountOperationsImpl implements AccountOperations {
     }
 
     public List<Account> getAllAccounts() {
-        return accountDao.getAll();
+        List<Account> accounts = accountDao.getAll();
+        Collections.sort(accounts);
+        return accounts;
     }
 
     public List<AccountSummary> getAccountSummaries() {

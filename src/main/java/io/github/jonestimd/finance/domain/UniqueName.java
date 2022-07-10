@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,13 @@
 // SOFTWARE.
 package io.github.jonestimd.finance.domain;
 
+import java.util.Comparator;
+
 import com.google.common.base.Function;
 
 public interface UniqueName {
-    static final Function<UniqueName, String> GET_NAME = UniqueName::getName;
+    Function<UniqueName, String> GET_NAME = UniqueName::getName;
+    Comparator<UniqueName> BY_NAME = Comparator.comparing(GET_NAME);
 
     String getName();
 }

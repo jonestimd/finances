@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2022 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@ import java.util.List;
 
 import io.github.jonestimd.finance.dao.PayeeDao;
 import io.github.jonestimd.finance.dao.TransactionDao;
+import io.github.jonestimd.finance.domain.UniqueName;
 import io.github.jonestimd.finance.domain.transaction.Payee;
 import io.github.jonestimd.finance.domain.transaction.PayeeSummary;
 
@@ -42,7 +43,9 @@ public class PayeeOperationsImpl implements PayeeOperations {
     }
 
     public List<Payee> getAllPayees() {
-        return payeeDao.getAll();
+        List<Payee> payees = payeeDao.getAll();
+        payees.sort(UniqueName.BY_NAME);
+        return payees;
     }
 
     public List<PayeeSummary> getPayeeSummaries() {
