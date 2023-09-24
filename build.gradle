@@ -1,18 +1,8 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.5.1'
-    }
-}
-
 plugins {
     id 'java-library'
-    id 'nebula.deb' version '3.1.0'
+    id 'com.netflix.nebula.ospackage' version '11.4.0'
 }
 
 compileJava.sourceCompatibility = 1.8
@@ -76,6 +66,10 @@ dependencies {
     runtimeOnly(group: 'org.apache.derby', name: 'derby', version: '10.13.1.1')
 
     testRuntimeOnly(group: 'org.hsqldb', name: 'hsqldb', version: '2.3.3', classifier: 'jdk6debug')
+}
+
+configurations {
+    runtime.extendsFrom(runtimeOnly)
 }
 
 processResources {
