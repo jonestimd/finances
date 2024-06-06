@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@ public class SaleLotsTableModel extends ValidatedBeanListTableModel<SecurityLot>
     public static final int AVAILABLE_SHARES = 3;
     public static final int ALLOCATED_SHARES = 4;
 
-    @SuppressWarnings("unchecked")
     public SaleLotsTableModel() {
         super(ImmutableList.of(
             SecurityLotColumnAdapter.PURCHASE_DATE_ADAPTER,

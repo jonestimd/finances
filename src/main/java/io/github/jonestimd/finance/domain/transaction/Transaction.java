@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -195,6 +195,11 @@ public class Transaction extends BaseDomain<Long> {
 
     public void setSecurity(Security security) {
         this.security = security;
+        for (TransactionDetail detail : details) {
+            if (detail.isTransfer() && detail.getAssetQuantity() != null && detail.relatedDetail.getTransaction().getSecurity() != security) {
+                detail.relatedDetail.getTransaction().setSecurity(security);
+            }
+        }
     }
 
     public boolean isSecurity() {
@@ -202,7 +207,8 @@ public class Transaction extends BaseDomain<Long> {
     }
 
     public boolean isSecurityRequired() {
-        return details.stream().map(TransactionDetail::getCategory).anyMatch(SecurityAction::isSecurityRequired);
+        return details.stream().anyMatch(d -> SecurityAction.isSecurityRequired(d.getCategory())
+                || d.isTransfer() && d.getAssetQuantity() != null);
     }
 
     public TransactionDetail getDetail(long detailId) {
@@ -237,7 +243,7 @@ public class Transaction extends BaseDomain<Long> {
     public BigDecimal getExpenseAmount() {
         BigDecimal amount = BigDecimal.ZERO;
         for (TransactionDetail detail : details) {
-            if (detail.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            if (detail.getAmount() != null && detail.getAmount().signum() < 0) {
                 amount = amount.add(detail.getAmount());
             }
         }

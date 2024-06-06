@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -128,10 +128,10 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
         setDetailColumnAdapters(Collections.singletonList(Arrays.asList(
                 new EmptyColumnAdapter<>("dummyColumn0", String.class),
                 TransactionDetailColumnAdapter.GROUP_ADAPTER,
-                TransactionDetailColumnAdapter.TYPE_ADAPTER,
+                ValidatedDetailColumnAdapter.TYPE_ADAPTER,
                 TransactionDetailColumnAdapter.MEMO_ADAPTER,
                 new EmptyColumnAdapter<>("dummyColumn1", String.class),
-                TransactionDetailColumnAdapter.AMOUNT_ADAPTER,
+                ValidatedDetailColumnAdapter.AMOUNT_ADAPTER,
                 new EmptyColumnAdapter<>("dummyColumn2", String.class))));
         clearedColumn = getColumnIndex(TransactionColumnAdapter.CLEARED_ADAPTER);
         amountColumn = getColumnIndex(TransactionColumnAdapter.AMOUNT_ADAPTER);
@@ -153,14 +153,14 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
                 TransactionColumnAdapter.AMOUNT_ADAPTER,
                 new BalanceColumnAdapter()));
         setDetailColumnAdapters(Collections.singletonList(Arrays.asList(
-                TransactionDetailColumnAdapter.NOTIFICATION_ADAPTER,
+                ValidatedDetailColumnAdapter.DATE_ACQUIRED_ADAPTER,
                 TransactionDetailColumnAdapter.GROUP_ADAPTER,
-                TransactionDetailColumnAdapter.TYPE_ADAPTER,
+                ValidatedDetailColumnAdapter.TYPE_ADAPTER,
                 TransactionDetailColumnAdapter.MEMO_ADAPTER,
                 assetQuantityAdapter,
                 new EmptyColumnAdapter<>("dummyColumn0", String.class),
-                TransactionDetailColumnAdapter.AMOUNT_ADAPTER,
-                new EmptyColumnAdapter<>("dummyColumn1", String.class))));
+                ValidatedDetailColumnAdapter.AMOUNT_ADAPTER,
+                TransactionDetailColumnAdapter.NOTIFICATION_ADAPTER)));
         clearedColumn = getColumnIndex(TransactionColumnAdapter.CLEARED_ADAPTER);
         amountColumn = getColumnIndex(TransactionColumnAdapter.AMOUNT_ADAPTER);
         balanceColumn = getColumnCount() - 1;
@@ -212,7 +212,7 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     }
 
     public void setTransactionType(TransactionType type, int rowIndex) {
-        setValueAt(type, rowIndex, getDetailColumnIndex(0, TransactionDetailColumnAdapter.TYPE_ADAPTER));
+        setValueAt(type, rowIndex, getDetailColumnIndex(0, ValidatedDetailColumnAdapter.TYPE_ADAPTER));
     }
 
     public void setTransactionGroup(TransactionGroup group, int rowIndex) {
@@ -224,7 +224,7 @@ public class TransactionTableModel extends BufferedHeaderDetailTableModel<Transa
     }
 
     public void setAmount(BigDecimal amount, int rowIndex) {
-        setValueAt(amount, rowIndex, getDetailColumnIndex(0, TransactionDetailColumnAdapter.AMOUNT_ADAPTER));
+        setValueAt(amount, rowIndex, getDetailColumnIndex(0, ValidatedDetailColumnAdapter.AMOUNT_ADAPTER));
     }
 
     public boolean isPayeeColumn(int columnIndex) {

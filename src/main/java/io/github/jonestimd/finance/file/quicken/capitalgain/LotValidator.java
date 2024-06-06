@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -82,7 +82,7 @@ public class LotValidator {
 
     private boolean validateSaleLots(Collection<SaleAccumulator> accumulators, Collection<SecurityLot> saleLots) throws QuickenException {
         for (SaleAccumulator accumulator : accumulators) {
-            if (accumulator.getUnallocatedShares().compareTo(BigDecimal.ZERO) != 0
+            if (accumulator.getUnallocatedShares().signum() != 0
                     && ! showLotAllocationDialog(accumulator, Collections2.filter(saleLots, Predicates.in(accumulator.getLots())))) {
                 // TODO chicken test?
                 saleLots.clear();
@@ -156,7 +156,7 @@ public class LotValidator {
         }
 
         private BigDecimal getShares(SecurityLot lot) {
-            return lot.getSaleShares() == null ? BigDecimal.ZERO : lot.getSaleShares();
+            return lot.getAdjustedShares() == null ? BigDecimal.ZERO : lot.getAdjustedShares();
         }
 
         public void addLot(SecurityLot lot) {

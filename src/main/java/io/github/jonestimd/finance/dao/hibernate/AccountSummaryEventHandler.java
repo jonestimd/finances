@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ public class AccountSummaryEventHandler implements EventHandlerEventHolder {
         if (entity instanceof TransactionDetail) {
             TransactionDetail detail = (TransactionDetail) entity;
             AccountSummary summary = getSummary(detail.getTransaction(), detail.getTransaction().getAccount());
-            summary.setBalance(summary.getBalance().add(detail.getAmount()));
+            summary.addToBalance(detail.getAmount());
         }
         else if (entity instanceof Transaction) {
             Transaction transaction = (Transaction) entity;
@@ -68,7 +68,9 @@ public class AccountSummaryEventHandler implements EventHandlerEventHolder {
     public void deleted(UniqueId<?> entity, String[] propertyNames, Object[] previousState) {
         if (entity instanceof TransactionDetail) {
             TransactionDetail detail = (TransactionDetail) entity;
-            updateAccount(getTransaction(propertyNames, previousState), detail.getAmount().negate());
+            if (detail.getAmount() != null) {
+                updateAccount(getTransaction(propertyNames, previousState), detail.getAmount().negate());
+            }
         } else if (entity instanceof Transaction) {
             Transaction transaction = (Transaction) entity;
             AccountSummary summary = getSummary(transaction, transaction.getAccount());
@@ -80,10 +82,8 @@ public class AccountSummaryEventHandler implements EventHandlerEventHolder {
     public void changed(UniqueId<?> entity, String[] propertyNames, Object[] previousState) {
         if (entity instanceof TransactionDetail) {
             TransactionDetail detail = (TransactionDetail) entity;
-            BigDecimal oldAmount = getAmount(propertyNames, previousState);
-            if (detail.getAmount().compareTo(oldAmount) != 0) {
-                updateAccount(detail.getTransaction(), detail.getAmount().subtract(oldAmount));
-            }
+            BigDecimal delta = detail.amountDifference(getAmount(propertyNames, previousState));
+            if (delta.signum() != 0) updateAccount(detail.getTransaction(), delta);
         }
         else if (entity instanceof Transaction) {
             Transaction transaction = (Transaction) entity;
@@ -96,17 +96,17 @@ public class AccountSummaryEventHandler implements EventHandlerEventHolder {
 
     private void updateAccount(Transaction transaction, BigDecimal deltaAmount) {
         AccountSummary summary = getSummary(transaction, transaction.getAccount());
-        summary.setBalance(summary.getBalance().add(deltaAmount));
+        summary.addToBalance(deltaAmount);
     }
 
     private void updateAccounts(Transaction transaction, Account oldAccount) {
         AccountSummary oldSummary = getSummary(transaction, oldAccount);
         if (oldSummary.getTransactionCount() == 0L) {
             AccountSummary newSummary = getSummary(transaction, transaction.getAccount());
-            oldSummary.setBalance(transaction.getAmount().subtract(newSummary.getBalance()).negate());
-            oldSummary.setTransactionCount(-1L);
-            newSummary.setBalance(transaction.getAmount());
-            newSummary.setTransactionCount(1L);
+            oldSummary.addToBalance(transaction.getAmount().negate());
+            oldSummary.addToTransactionCount(-1);
+            newSummary.addToBalance(transaction.getAmount());
+            newSummary.addToTransactionCount(1);
         }
     }
 
@@ -149,8 +149,8 @@ public class AccountSummaryEventHandler implements EventHandlerEventHolder {
     private AccountSummary getTotal(Account account, Collection<AccountSummary> summaries) {
         AccountSummary total = new AccountSummary(account, 0L, BigDecimal.ZERO);
         for (AccountSummary summary : summaries) {
-            total.setBalance(total.getBalance().add(summary.getBalance()));
-            total.setTransactionCount(total.getTransactionCount() + summary.getTransactionCount());
+            total.addToBalance(summary.getBalance());
+            total.addToTransactionCount(summary.getTransactionCount());
         }
         return total;
     }

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,12 @@ public class TransactionDetailTableModel extends BeanListTableModel<TransactionD
             TransactionDetailColumnAdapter.TRANSACTION_ACCOUNT_ADAPTER,
             TransactionDetailColumnAdapter.TRANSACTION_PAYEE_ADAPTER,
             TransactionDetailColumnAdapter.GROUP_ADAPTER,
-            TransactionDetailColumnAdapter.TYPE_ADAPTER,
+            ValidatedDetailColumnAdapter.TYPE_ADAPTER,
             TransactionDetailColumnAdapter.TRANSACTION_MEMO_ADAPTER,
             TransactionDetailColumnAdapter.MEMO_ADAPTER,
             TransactionDetailColumnAdapter.TRANSACTION_SECURITY_ADAPTER,
-            TransactionDetailColumnAdapter.SHARES_ADAPTER,
-            TransactionDetailColumnAdapter.AMOUNT_ADAPTER
+            ValidatedDetailColumnAdapter.SHARES_ADAPTER,
+            ValidatedDetailColumnAdapter.AMOUNT_ADAPTER
     );
 
     public TransactionDetailTableModel() {

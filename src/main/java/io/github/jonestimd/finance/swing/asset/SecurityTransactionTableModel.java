@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,12 @@ import java.math.BigDecimal;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.swing.transaction.TransactionColumnAdapter;
-import io.github.jonestimd.finance.swing.transaction.TransactionDetailColumnAdapter;
 import io.github.jonestimd.finance.swing.transaction.TransactionTableModel;
+import io.github.jonestimd.finance.swing.transaction.ValidatedDetailColumnAdapter;
 
 public class SecurityTransactionTableModel extends TransactionTableModel {
     public SecurityTransactionTableModel(Account account) {
-        super(account, TransactionColumnAdapter.SECURITY_ADAPTER, TransactionDetailColumnAdapter.SHARES_ADAPTER);
+        super(account, TransactionColumnAdapter.SECURITY_ADAPTER, ValidatedDetailColumnAdapter.SHARES_ADAPTER);
     }
 
     public void setSecurity(Security security, int rowIndex) {
@@ -39,6 +39,6 @@ public class SecurityTransactionTableModel extends TransactionTableModel {
     }
 
     public void setShares(BigDecimal shares, int rowIndex) {
-        setValueAt(shares, rowIndex, getDetailColumnIndex(0, TransactionDetailColumnAdapter.SHARES_ADAPTER));
+        setValueAt(shares, rowIndex, getDetailColumnIndex(0, ValidatedDetailColumnAdapter.SHARES_ADAPTER));
     }
 }

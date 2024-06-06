@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +99,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
     }
 
     private BigDecimal getMarketValue(SecuritySummary summary) {
-        if (summary.getShares().compareTo(BigDecimal.ZERO) > 0) {
+        if (summary.getShares().signum() > 0) {
             BigDecimal lastPrice = getLastPrice(summary.getSymbol());
             return lastPrice == null ? null : lastPrice.multiply(summary.getShares());
         }
@@ -107,7 +107,7 @@ public class StockQuoteTableProvider implements SecurityTableExtension, TableSum
     }
 
     private BigDecimal getReturnOnInvestment(SecuritySummary summary) {
-        if (summary.getShares().compareTo(BigDecimal.ZERO) > 0) {
+        if (summary.getShares().signum() > 0) {
             BigDecimal marketValue = getMarketValue(summary);
             BigDecimal costBasis = summary.getCostBasis();
             return marketValue == null || costBasis == null ? null : marketValue.subtract(costBasis);

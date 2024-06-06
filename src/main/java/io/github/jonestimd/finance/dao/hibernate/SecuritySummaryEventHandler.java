@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2022 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,7 @@ public class SecuritySummaryEventHandler implements EventHandlerEventHolder {
     }
 
     private void updateSummary(Account account, Security security, BigDecimal assetQuantity, long transactionCount) {
-        if (security != null && (transactionCount != 0L || assetQuantity.compareTo(BigDecimal.ZERO) != 0)) {
+        if (security != null && (transactionCount != 0L || assetQuantity.signum() != 0)) {
             SecuritySummary summary = getSummary(account, security);
             summary.setShares(summary.getShares().add(assetQuantity));
             summary.setTransactionCount(summary.getTransactionCount() + transactionCount);

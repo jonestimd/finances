@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +34,10 @@ public interface TransactionDetailDao extends BaseDao<TransactionDetail, Long> {
 
     List<TransactionDetail> findSecuritySalesWithoutLots(String namePrefix, Date saleDate);
 
+    /** @deprecated does not handle security transfers */
     List<TransactionDetail> findPurchasesWithRemainingShares(Account account, Asset security, Date purchaseDate);
 
-    List<TransactionDetail> findAvailablePurchaseShares(TransactionDetail sale);
+    List<TransactionDetail> findPreviousPurchases(TransactionDetail sale);
 
     List<TransactionDetail> findByString(String search);
 

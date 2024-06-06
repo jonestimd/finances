@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,5 +49,9 @@ public class AccountSummary extends TransactionSummary<Account> {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public void addToBalance(BigDecimal value) {
+        if (value != null) balance = balance.add(value);
     }
 }

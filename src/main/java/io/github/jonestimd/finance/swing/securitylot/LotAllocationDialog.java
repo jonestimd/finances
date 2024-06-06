@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -107,7 +107,7 @@ public class LotAllocationDialog extends FormDialog {
     private BigDecimal getAllocatedShares() {
         BigDecimal allocatedShares = BigDecimal.ZERO;
         for (SecurityLot row : saleLotsTableModel.getBeans()) {
-            allocatedShares = allocatedShares.add(row.getSaleShares());
+            allocatedShares = allocatedShares.add(row.getAdjustedShares());
         }
         return allocatedShares;
     }
@@ -134,14 +134,14 @@ public class LotAllocationDialog extends FormDialog {
                 setId(lot.getId());
                 setPurchase(lot.getPurchase());
                 setSale(lot.getSale());
-                setSaleShares(lot.getSaleShares());
+                setAdjustedShares(lot.getAdjustedShares());
             }
 
             @Override
             public BigDecimal allocateShares(BigDecimal maxShares) {
                 BigDecimal remainingShares = super.allocateShares(maxShares);
                 int row = saleLotsTableModel.indexOf(lot);
-                saleLotsTableModel.setValueAt(getSaleShares(), row, SaleLotsTableModel.ALLOCATED_SHARES);
+                saleLotsTableModel.setValueAt(getAdjustedShares(), row, SaleLotsTableModel.ALLOCATED_SHARES);
                 return remainingShares;
             }
         }

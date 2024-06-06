@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -141,12 +141,12 @@ public class PurchaseMatcher {
     private void setPurchase(SecurityLot lot, CapitalGain record, TransactionDetail purchase) throws QuickenException {
         saleLots.add(lot);
         lot.setPurchase(purchase);
-        if (lot.getSaleShares() == null) {
+        if (lot.getAdjustedShares() == null) {
             BigDecimal purchaseShares = getPurchaseShares(lot, record);
             if (isWithinPurchaseSharesError(purchaseShares, purchase.getRemainingShares())) {
                 purchaseShares = purchase.getRemainingShares();
             }
-            lot.setSaleShares(lot.getSecurity().applySplits(purchaseShares, record.getPurchaseDate(), record.getSellDate()));
+            lot.setAdjustedShares(lot.getSecurity().applySplits(purchaseShares, record.getPurchaseDate(), record.getSellDate()));
         }
     }
 
@@ -156,7 +156,7 @@ public class PurchaseMatcher {
 
     private static BigDecimal getPurchaseShares(SecurityLot lot, CapitalGain record) throws QuickenException {
         Security security = lot.getSecurity();
-        BigDecimal saleShares = lot.getSaleShares() == null ? record.getShares() : lot.getSaleShares();
+        BigDecimal saleShares = lot.getAdjustedShares() == null ? record.getShares() : lot.getAdjustedShares();
         return security.revertSplits(saleShares, record.getPurchaseDate(), record.getSellDate());
     }
 
@@ -192,7 +192,7 @@ public class PurchaseMatcher {
         }
 
         public boolean apply(TransactionDetail input) {
-            return input.getAmount().compareTo(BigDecimal.ZERO) == 0 || isSamePrice(input);
+            return input.getAmount() != null && input.getAmount().signum() == 0 || isSamePrice(input);
         }
 
         private boolean isSamePrice(TransactionDetail purchase) {

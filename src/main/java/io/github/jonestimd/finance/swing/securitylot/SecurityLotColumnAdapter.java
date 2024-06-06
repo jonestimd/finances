@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ public class SecurityLotColumnAdapter<V> extends FunctionColumnAdapter<SecurityL
             new SecurityLotColumnAdapter<>("availableShares", BigDecimal.class, SecurityLot::getRemainingPurchaseShares, null);
 
     public static final ValidatedColumnAdapter<SecurityLot, BigDecimal> ALLOCATED_SHARES_ADAPTER =
-            new ValidatedSecurityLotColumnAdapter<BigDecimal>("allocatedShares", BigDecimal.class, SecurityLot::getSaleShares, SecurityLot::setSaleShares) {
+            new ValidatedSecurityLotColumnAdapter<BigDecimal>("allocatedShares", BigDecimal.class, SecurityLot::getAdjustedShares, SecurityLot::setAdjustedShares) {
                 @Override
                 public String validate(int selectedIndex, BigDecimal value, List<? extends SecurityLot> beans) {
                     BigDecimal availableShares = beans.get(selectedIndex).getRemainingPurchaseShares();

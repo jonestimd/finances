@@ -110,7 +110,7 @@ public class CapitalGainImportTest {
 
     private void checkLot(TransactionDetail sale, String saleShares, TransactionDetail purchase, String purchasShares, Iterable<SecurityLot> lots) {
         for (SecurityLot lot: lots) {
-            if (lot.getSale() == sale && lot.getSaleShares().compareTo(new BigDecimal(saleShares)) == 0 &&
+            if (lot.getSale() == sale && lot.getAdjustedShares().compareTo(new BigDecimal(saleShares)) == 0 &&
                     lot.getPurchase() == purchase && lot.getPurchaseShares().compareTo(new BigDecimal(purchasShares)) == 0) {
                 return;
             }

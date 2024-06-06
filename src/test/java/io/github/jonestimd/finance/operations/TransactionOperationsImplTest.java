@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 public class TransactionOperationsImplTest {
@@ -378,6 +378,7 @@ public class TransactionOperationsImplTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void saveAllSecurityLotsIgnoresEmptyUnsavedLots() throws Exception {
         daoRepository.expectCommit();
         List<SecurityLot> lots = Lists.newArrayList(
@@ -395,6 +396,7 @@ public class TransactionOperationsImplTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void saveAllSecurityLotsDeletesEmptyExistingLots() throws Exception {
         daoRepository.expectCommit();
         List<SecurityLot> lots = Lists.newArrayList(
@@ -416,42 +418,78 @@ public class TransactionOperationsImplTest {
 
     @Test
     public void findAvailableLotsReturnsExistingLots() throws Exception {
-        List<SecurityLot> lots = new ArrayList<>();
-        when(securityLotDao.findBySale(any(TransactionDetail.class)))
-            .thenReturn(lots);
+        List<SecurityLot> lots = Lists.newArrayList(new SecurityLotBuilder().nextId().purchase(null, BigDecimal.ZERO).get());
+        when(securityLotDao.findBySale(any(TransactionDetail.class))).thenReturn(lots);
+        when(transactionDetailDao.findPreviousPurchases(any(TransactionDetail.class))).thenReturn(new ArrayList<>());
 
-        TransactionDetail sale = new TransactionDetail();
+        TransactionDetail sale = createTransaction(new Security(), BigDecimal.TEN.negate());
         assertThat(transactionOperations.findAvailableLots(sale)).isSameAs(lots);
 
         verify(securityLotDao).findBySale(same(sale));
+        assertThat(lots).hasSize(1);
     }
 
     @Test
     public void findAvailableLotsReturnsLotsForUnallocatedShares() throws Exception {
+        TransactionDetail sale = createTransaction(new Security(), BigDecimal.TEN.negate());
         Security security = new Security();
-        TransactionDetail sale = new TransactionDetailBuilder().nextId().onTransaction().get();
-        TransactionDetail allocatedPurchase = new TransactionDetailBuilder().nextId().onTransaction().get();
-        allocatedPurchase.getTransaction().setSecurity(security);
-        TransactionDetail unallocatedPurchase = new TransactionDetailBuilder().nextId().onTransaction().get();
-        unallocatedPurchase.getTransaction().setSecurity(security);
-        List<SecurityLot> lots = Lists.newArrayList(
-                new SecurityLotBuilder().purchase(allocatedPurchase, null).get());
-        when(securityLotDao.findBySale(any(TransactionDetail.class)))
-            .thenReturn(lots);
-        when(transactionDetailDao.findAvailablePurchaseShares(any(TransactionDetail.class)))
-            .thenReturn(Arrays.asList(allocatedPurchase, unallocatedPurchase));
+        SecurityLot existingLot = new SecurityLotBuilder().nextId().purchase(null, BigDecimal.ZERO).get();
+        List<SecurityLot> lots = Lists.newArrayList(existingLot);
+        when(securityLotDao.findBySale(any(TransactionDetail.class))).thenReturn(lots);
+        TransactionDetail partialLot = createTransaction(security, BigDecimal.ONE);
+        TransactionDetail allocatedLot = createTransaction(security, BigDecimal.TEN);
+        ArrayList<TransactionDetail> previousPurchases = Lists.newArrayList(existingLot.getPurchase(), partialLot, allocatedLot);
+        when(transactionDetailDao.findPreviousPurchases(any(TransactionDetail.class))).thenReturn(previousPurchases);
 
         assertThat(transactionOperations.findAvailableLots(sale)).isSameAs(lots);
 
         verify(securityLotDao).findBySale(same(sale));
-        verify(transactionDetailDao).findAvailablePurchaseShares(same(sale));
         assertThat(lots).hasSize(2);
-        assertThat(lots.get(0).getPurchase()).isSameAs(allocatedPurchase);
-        assertThat(lots.get(1).getId()).isNull();
-        assertThat(lots.get(1).getPurchase()).isSameAs(unallocatedPurchase);
-        assertThat(lots.get(1).getPurchaseShares().compareTo(BigDecimal.ZERO)).isEqualTo(0);
-        assertThat(lots.get(1).getSale()).isSameAs(sale);
-        assertThat(lots.get(1).getSaleShares()).isEqualTo(BigDecimal.ZERO);
+        assertThat(lots).contains(existingLot);
+        assertThat(lots.stream().filter(lot -> lot.getPurchase() == partialLot)).isNotEmpty();
+        assertThat(lots.stream().filter(lot -> lot.getPurchase() == allocatedLot)).isEmpty();
+    }
+
+    @Test
+    public void findAvailableLotsReturnsLotsForTransfer() throws Exception {
+        Account account2 = new Account(-2L, "account 2");
+        TransactionDetail sale = createTransaction(new Security(), BigDecimal.TEN.negate());
+        Security security = new Security();
+        SecurityLot existingLot = new SecurityLotBuilder().nextId().get();
+        List<SecurityLot> lots = Lists.newArrayList(existingLot);
+        when(securityLotDao.findBySale(any(TransactionDetail.class))).thenReturn(lots);
+        TransactionDetail soldPurchase = new TransactionBuilder().nextId().account(account2).security(security)
+                .details(new TransactionDetailBuilder().nextId().memo("sold").shares(BigDecimal.TEN).get()).get().getDetails().get(0);
+        TransactionDetail soldXfer = TransactionDetail.newTransfer(account2, "0", "1");
+        soldXfer.setMemo("sold xfer");
+        new TransactionBuilder().nextId().account(sale.getAccount()).security(security).details(soldXfer).get();
+        new SecurityLotBuilder().purchase(soldPurchase, BigDecimal.ONE)
+                .sale(soldXfer.getRelatedDetail(), soldXfer.getAssetQuantity()).get();
+        new SecurityLotBuilder().purchase(soldPurchase, BigDecimal.ONE)
+                .sale(new TransactionBuilder().nextId().account(sale.getAccount()).security(security)
+                        .details(new TransactionDetailBuilder().nextId().get()).get().getDetails().get(0), BigDecimal.ONE).get();
+        TransactionDetail xferDetail = TransactionDetail.newTransfer(account2, "0", "2");
+        new TransactionBuilder().nextId().account(sale.getAccount()).security(security).details(xferDetail).get();
+        new SecurityLotBuilder()
+                .purchase(new TransactionBuilder().nextId().security(security)
+                        .details(new TransactionDetailBuilder().nextId().get()).get().getDetails().get(0), BigDecimal.ONE)
+                .sale(xferDetail.getRelatedDetail(), BigDecimal.ONE).get();
+        new SecurityLotBuilder()
+                .purchase(new TransactionBuilder().nextId().security(security)
+                        .details(new TransactionDetailBuilder().nextId().get()).get().getDetails().get(0), BigDecimal.ONE)
+                .sale(xferDetail.getRelatedDetail(), BigDecimal.ONE).get();
+        ArrayList<TransactionDetail> previousPurchases = Lists.newArrayList(existingLot.getPurchase(), xferDetail, soldXfer);
+        when(transactionDetailDao.findPreviousPurchases(any(TransactionDetail.class))).thenReturn(previousPurchases);
+
+        assertThat(transactionOperations.findAvailableLots(sale)).isSameAs(lots);
+
+        verify(securityLotDao).findBySale(same(sale));
+        assertThat(lots).hasSize(3);
+        assertThat(lots).contains(existingLot);
+        assertThat(lots.stream().filter(lot -> lot.getPurchase() == xferDetail)).isEmpty();
+        xferDetail.getRelatedDetail().getPurchaseLots().forEach(purchaseLot -> {
+            assertThat(lots.stream().filter(lot -> lot.getPurchase() == purchaseLot.getPurchase())).isNotEmpty();
+        });
     }
 
     @Test
@@ -468,22 +506,22 @@ public class TransactionOperationsImplTest {
 
         List<TransactionDetail> purchases = transactionOperations.findPurchasesWithRemainingLots(account, security, purchaseDate);
 
-        assertThat(purchases.size()).isEqualTo(3);
-        assertThat(purchases.get(0)).isSameAs(details.get(0));
-        assertThat(purchases.get(0).getRemainingShares().compareTo(BigDecimal.valueOf(6L))).isEqualTo(0);
-        assertThat(purchases.get(1)).isSameAs(details.get(1));
-        assertThat(purchases.get(1).getRemainingShares()).isEqualByComparingTo(BigDecimal.TEN);
-        assertThat(purchases.get(2)).isSameAs(details.get(2));
-        assertThat(purchases.get(2).getRemainingShares()).isEqualByComparingTo(BigDecimal.valueOf(8L));
+        assertThat(purchases).isSameAs(details);
+        verify(transactionDetailDao).findPurchasesWithRemainingShares(account, security, purchaseDate);
     }
 
-    private TransactionDetail createTransaction(Security security, BigDecimal... lotShares) throws Exception {
-        TransactionDetail detail = new TransactionDetailBuilder().shares(BigDecimal.TEN).amount(BigDecimal.ZERO).onTransaction().get();
-        detail.getTransaction().setSecurity(security);
-        for (BigDecimal lotShare : lotShares) {
-            new SecurityLot(detail, new TransactionDetailBuilder().onTransaction().get(), lotShare);
+    private TransactionDetail createTransaction(Security security, BigDecimal... saleShares) throws Exception {
+        Account account = new Account(-1L, "account 1");
+        TransactionDetail purchase = new TransactionBuilder().nextId().account(account).security(security)
+                .details(new TransactionDetailBuilder().shares(BigDecimal.TEN).amount(BigDecimal.ZERO).get())
+                .get().getDetails().get(0);
+        for (BigDecimal lotShare : saleShares) {
+            TransactionDetail sale = new TransactionBuilder().nextId().account(account).security(security)
+                    .details(new TransactionDetailBuilder().shares(lotShare.negate()).amount(BigDecimal.ZERO).get())
+                    .get().getDetails().get(0);
+            new SecurityLot(purchase, sale, lotShare);
         }
-        return detail;
+        return purchase;
     }
 
     @Test

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ public class SecurityColumnAdapter<V> extends FunctionColumnAdapter<SecuritySumm
 
     public static final ColumnAdapter<SecuritySummary, BigDecimal> COST_BASIS_ADAPTER =
             new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "costBasis", BigDecimal.class,
-                    summary -> summary.getShares().compareTo(BigDecimal.ZERO) > 0 ? summary.getCostBasis() : null, null);
+                    summary -> summary.getShares().signum() > 0 ? summary.getCostBasis() : null, null);
 
     public static final ColumnAdapter<SecuritySummary, BigDecimal> DIVIDENDS_ADAPTER =
             new FunctionColumnAdapter<>(LABELS.get(), RESOURCE_PREFIX, "dividends", BigDecimal.class, SecuritySummary::getDividends, null);

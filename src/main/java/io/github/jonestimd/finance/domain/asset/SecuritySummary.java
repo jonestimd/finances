@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -130,7 +130,7 @@ public class SecuritySummary extends TransactionSummary<Security> {
     }
 
     public static boolean isNotEmpty(SecuritySummary summary) {
-        return summary != null && summary.getShares().compareTo(BigDecimal.ZERO) != 0;
+        return summary != null && summary.getShares().signum() != 0;
     }
 
     public boolean isSameIds(SecuritySummary that) {

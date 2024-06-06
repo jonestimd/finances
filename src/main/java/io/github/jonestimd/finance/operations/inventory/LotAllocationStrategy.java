@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,12 @@ package io.github.jonestimd.finance.operations.inventory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.Ordering;
+import io.github.jonestimd.collection.BigDecimals;
 import io.github.jonestimd.finance.domain.transaction.SecurityLot;
 
 public class LotAllocationStrategy {
@@ -50,25 +50,19 @@ public class LotAllocationStrategy {
     public void allocateLots(Collection<SecurityLot> availableLots, BigDecimal shares) {
         BigDecimal remaining = shares.subtract(getAllocatedShares(availableLots));
         Iterator<SecurityLot> iterator = lotIterator(availableLots);
-        while (iterator.hasNext() && remaining.compareTo(BigDecimal.ZERO) > 0) {
+        while (iterator.hasNext() && remaining.signum() > 0) {
             SecurityLot lot = iterator.next();
-            if (lot.getPurchase().getRemainingShares().compareTo(BigDecimal.ZERO) > 0) {
-                remaining = lot.allocateShares(remaining);
-            }
+            if (lot.getRemainingPurchaseShares().signum() > 0) remaining = lot.allocateShares(remaining);
         }
     }
 
     private Iterator<SecurityLot> lotIterator(Collection<SecurityLot> availableLots) {
         List<SecurityLot> sortedLots = new ArrayList<>(availableLots);
-        Collections.sort(sortedLots, comparator);
+        sortedLots.sort(comparator);
         return sortedLots.iterator();
     }
 
     private BigDecimal getAllocatedShares(Collection<SecurityLot> availableLots) {
-        BigDecimal total = BigDecimal.ZERO;
-        for (SecurityLot lot : availableLots) {
-            total = total.add(lot.getSaleShares());
-        }
-        return total;
+        return BigDecimals.sum(availableLots, SecurityLot::getAdjustedShares);
     }
 }

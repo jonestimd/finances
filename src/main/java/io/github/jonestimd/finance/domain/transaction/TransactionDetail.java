@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -40,19 +42,23 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.google.common.base.MoreObjects;
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Asset;
 import io.github.jonestimd.finance.domain.asset.Security;
+import io.github.jonestimd.util.Streams;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
+
+import static io.github.jonestimd.collection.BigDecimals.sum;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -79,15 +85,13 @@ import org.hibernate.annotations.GenericGenerator;
         " and c." + TransactionCategory.CODE + " in (:actions) " +
         " and td." + TransactionDetail.ASSET_QUANTITY +
         " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
-    @NamedQuery(name = TransactionDetail.UNSOLD_SECURITY_SHARES, query =
+    @NamedQuery(name = TransactionDetail.SECURITY_ACQUISITIONS_BY_ACCOUNT, query =
         "select distinct td " +
-        "from TransactionDetail td join td." + TransactionDetail.TRANSACTION + " t join td." + TransactionDetail.CATEGORY + " c left join fetch td.saleLots " +
+        "from TransactionDetail td join td." + TransactionDetail.TRANSACTION + " t " +
         "where t." + Transaction.DATE + " <= :saleDate" +
         " and t." + Transaction.ACCOUNT + " = :account" +
         " and t." + Transaction.SECURITY + " = :security" +
-        " and c." + TransactionCategory.CODE + " in (:actions) " +
-        " and td." + TransactionDetail.ASSET_QUANTITY +
-        " > (select coalesce(sum(l." + SecurityLot.PURCHASE_SHARES + "),0) from SecurityLot l where l." + SecurityLot.PURCHASE + ".id = td.id)"),
+        " and td." + TransactionDetail.ASSET_QUANTITY + " > 0"),
     @NamedQuery(name = TransactionDetail.REPLACE_CATEGORY_QUERY, query =
         "update TransactionDetail set category.id = :newCategoryId where category.id in (:oldCategoryIds)"),
     @NamedQuery(name = TransactionDetail.FIND_BY_STRING, query =
@@ -108,7 +112,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String FIND_ORPHAN_TRANSFERS = "transactionDetail.findOrphanTransfers";
     public static final String SECURITY_SALES_WITHOUT_LOTS = "transaction.securitySalesWithoutLots";
     public static final String UNSOLD_SECURITY_SHARES_BY_DATE = "transaction.unsoldSecuritySharesByDate";
-    public static final String UNSOLD_SECURITY_SHARES = "transaction.unsoldSecurityShares";
+    public static final String SECURITY_ACQUISITIONS_BY_ACCOUNT = "transaction.securityAcquisitionsByAccount";
     public static final String REPLACE_CATEGORY_QUERY = "transaction.replaceCategory";
     public static final String FIND_BY_CATEGORY_IDS = "transactionDetail.findByCategoryIds";
     public static final String FIND_BY_STRING = "transactionDetail.findByString";
@@ -121,41 +125,50 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String RELATED_DETAIL = "relatedDetail";
     public static final String EXCHANGE_ASSET = "exchangeAsset";
     public static final String ASSET_QUANTITY = "assetQuantity";
+    public static final String DATE_ACQUIRED = "dateAcquired";
 
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
     @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
-    @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false)
-    @ForeignKey(name = "tx_detail_tx_fk") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})
+    @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false, foreignKey = @ForeignKey(name = "tx_detail_tx_fk"))
+    @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})
     private Transaction transaction;
-    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    @Column(name = "amount", precision = 19, scale = 2)
     private BigDecimal amount;
-    @ManyToOne @Cascade(CascadeType.SAVE_UPDATE) @ForeignKey(name="tx_detail_group_fk")
-    @JoinColumn(name = "tx_group_id")
+    @ManyToOne @Cascade(CascadeType.SAVE_UPDATE)
+    @JoinColumn(name = "tx_group_id", foreignKey = @ForeignKey(name="tx_detail_group_fk"))
     private TransactionGroup group;
     @Column(name = "memo", length = 2000)
     private String memo;
-    @ManyToOne @ForeignKey(name="tx_detail_tx_type_fk") @JoinColumn(name = "tx_category_id")
+    @ManyToOne @JoinColumn(name = "tx_category_id", foreignKey = @ForeignKey(name="tx_detail_tx_type_fk"))
     protected TransactionCategory category;
-    @ManyToOne @ForeignKey(name="tx_detail_transfer_fk")
-    @JoinColumn(name = "related_detail_id") @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE, CascadeType.DELETE})
+    @ManyToOne @JoinColumn(name = "related_detail_id", foreignKey = @ForeignKey(name="tx_detail_transfer_fk"))
+    @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE, CascadeType.DELETE})
     protected TransactionDetail relatedDetail;
-    @ManyToOne @JoinColumn(name="exchange_asset_id") @ForeignKey(name="tx_asset_fk")
+    @ManyToOne @JoinColumn(name="exchange_asset_id", foreignKey = @ForeignKey(name="tx_asset_fk"))
     private Asset exchangeAsset;
     @Column(name = "asset_quantity", precision = 19, scale = 6)
     private BigDecimal assetQuantity;
-    @OneToMany(mappedBy="purchase")
+    @Column(name="date_acquired") @Temporal(value= TemporalType.DATE)
+    private Date dateAcquired;
+    @OneToMany(mappedBy="purchase", fetch = FetchType.EAGER) @Fetch(FetchMode.SUBSELECT)
     // TODO cascade delete
     private List<SecurityLot> saleLots = new ArrayList<>();
+    @OneToMany(mappedBy = "sale", fetch = FetchType.EAGER) @Fetch(FetchMode.SUBSELECT)
+    private List<SecurityLot> purchaseLots = new ArrayList<>();
     // not adjusted for splits
     @Transient
     private transient BigDecimal remainingShares;
-    @Formula("(select sum(security_lot.sale_shares) from security_lot where id = security_lot.sale_tx_detail_id)")
-    private BigDecimal saleLotShares;
 
     public static TransactionDetail newTransfer(Account account, BigDecimal amount) {
         TransactionDetail detail = new TransactionDetail(amount, null, null);
         detail.getRelatedDetail().setTransaction(new Transaction(account, new Date(), false, null));
+        return detail;
+    }
+
+    public static TransactionDetail newTransfer(Account account, String amount, String shares) {
+        TransactionDetail detail = newTransfer(account, new BigDecimal(amount));
+        detail.setAssetQuantity(new BigDecimal(shares));
         return detail;
     }
 
@@ -182,6 +195,9 @@ public class TransactionDetail extends BaseDomain<Long> {
     public TransactionDetail(Account account, TransactionDetail relatedDetail) {
         this(relatedDetail);
         new Transaction(account, relatedDetail.getTransaction(), this);
+        if (assetQuantity != null && assetQuantity.signum() != 0) {
+            this.transaction.setSecurity(relatedDetail.transaction.getSecurity());
+        }
     }
 
     /**
@@ -189,6 +205,7 @@ public class TransactionDetail extends BaseDomain<Long> {
      */
     private TransactionDetail(TransactionDetail relatedDetail) {
         this(null, nullSafeNegate(relatedDetail.amount), relatedDetail.memo, relatedDetail.group);
+        this.assetQuantity = nullSafeNegate(relatedDetail.assetQuantity);
         this.relatedDetail = relatedDetail;
     }
 
@@ -216,6 +233,14 @@ public class TransactionDetail extends BaseDomain<Long> {
 
     public BigDecimal getAmount() {
         return amount;
+    }
+
+    /**
+     * @return <code>this.amount</code> - <code>oldAmount</code> (using 0 for nulls)
+     */
+    public BigDecimal amountDifference(BigDecimal oldAmount) {
+        BigDecimal current = amount == null ? BigDecimal.ZERO : amount;
+        return current.subtract(oldAmount == null ? BigDecimal.ZERO : oldAmount);
     }
 
     public void setAmount(BigDecimal amount) {
@@ -279,6 +304,14 @@ public class TransactionDetail extends BaseDomain<Long> {
         }
     }
 
+    public Account getAccount() {
+        return transaction.getAccount();
+    }
+
+    public boolean isAccount(Account account) {
+        return getAccount().equals(account);
+    }
+
     public TransactionDetail getRelatedDetail() {
         return relatedDetail;
     }
@@ -305,6 +338,23 @@ public class TransactionDetail extends BaseDomain<Long> {
 
     public void setAssetQuantity(BigDecimal assetQuantity) {
         this.assetQuantity = assetQuantity;
+        if (relatedDetail != null) {
+            relatedDetail.assetQuantity = nullSafeNegate(assetQuantity);
+            Security security = transaction != null ? transaction.getSecurity() : null;
+            if (assetQuantity != null && security != null) relatedDetail.getTransaction().setSecurity(security);
+        }
+    }
+
+    public List<SecurityLot> getPurchaseLots() {
+        return purchaseLots;
+    }
+
+    public Date getDateAcquired() {
+        return this.dateAcquired;
+    }
+
+    public void setDateAcquired(Date dateAcquired) {
+        this.dateAcquired = dateAcquired;
     }
 
     public List<SecurityLot> getSaleLots() {
@@ -312,34 +362,41 @@ public class TransactionDetail extends BaseDomain<Long> {
     }
 
     public BigDecimal getRemainingShares() {
-        if (remainingShares == null) {
-            remainingShares = getAssetQuantity();
-            for (SecurityLot lot : saleLots) {
-                remainingShares = remainingShares.subtract(lot.getPurchaseShares());
-            }
-        }
+        Account account = this.getTransaction().getAccount();
+        if (remainingShares == null) remainingShares = getAssetQuantity().subtract(getSaleShares(account));
         return remainingShares;
+    }
+
+    public BigDecimal getRemainingShares(Account account) {
+        BigDecimal xferShares = sum(saleLots.stream()
+                .filter(lot -> lot.isTransfer(account))
+                .map(SecurityLot::getPurchaseShares));
+        return xferShares.subtract(getSaleShares(account));
+    }
+
+    private BigDecimal getSaleShares(Account account) {
+        return sum(saleLots.stream().filter(lot -> lot.getSale().isAccount(account)).map(SecurityLot::getPurchaseShares));
     }
 
     public void resetRemainingShares() {
         remainingShares = null;
     }
 
-    public BigDecimal getSaleLotShares() {
-        return MoreObjects.firstNonNull(saleLotShares, BigDecimal.ZERO);
-    }
-
-    public void setSaleLotShares(BigDecimal saleLotShares) {
-        this.saleLotShares = saleLotShares;
+    protected BigDecimal getAllocatedLotShares() {
+        return Streams.sum(this.purchaseLots.stream().map(SecurityLot::getAdjustedShares));
     }
 
     public boolean isMissingLots() {
-        return category != null && category.getParent() == null && SecurityAction.REQUIRES_LOTS.contains(category.getCode())
-                && getAssetQuantity().add(getSaleLotShares()).compareTo(BigDecimal.ZERO) != 0;
+        if (assetQuantity != null) {
+            if (assetQuantity.signum() < 0) return assetQuantity.add(getAllocatedLotShares()).signum() != 0;
+            if (isTransfer() && assetQuantity.signum() > 0) return relatedDetail.isMissingLots();
+        }
+        return false;
     }
 
     public void addLot(SecurityLot lot) {
-        if (saleLots.add(lot) && remainingShares != null) {
+        saleLots.add(lot);
+        if (remainingShares != null) {
             remainingShares = remainingShares.subtract(lot.getPurchaseShares());
         }
     }
@@ -355,7 +412,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     }
 
     public boolean isZeroAmount() {
-        return amount == null || amount.compareTo(BigDecimal.ZERO) == 0;
+        return amount == null || amount.signum() == 0;
     }
 
     public boolean isUnsavedAndEmpty() {
@@ -363,7 +420,7 @@ public class TransactionDetail extends BaseDomain<Long> {
     }
 
     public boolean isInvalid() {
-        return !isEmpty() && amount == null;
+        return !isEmpty() && amount == null && !(isTransfer() && transaction.isSecurity());
     }
 
     private static BigDecimal nullSafeNegate(BigDecimal amount) {

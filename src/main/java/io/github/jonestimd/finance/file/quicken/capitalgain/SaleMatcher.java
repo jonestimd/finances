@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -98,7 +98,8 @@ public class SaleMatcher {
 
     private void moveZeroAmountsToEnd(List<TransactionDetail> sales) {
         for (int i = 0,end = sales.size() - 1; i < end;) {
-            if (BigDecimal.ZERO.compareTo(sales.get(i).getAmount()) == 0) {
+            BigDecimal amount = sales.get(i).getAmount();
+            if (amount == null || amount.signum() == 0) {
                 sales.add(sales.remove(i));
                 end--;
             }
@@ -118,7 +119,7 @@ public class SaleMatcher {
             SecurityLot lot = new SecurityLot();
             lot.setSale(sale);
             if (saleLots.size() == 1) {
-                lot.setSaleShares(sale.getAssetQuantity().negate());
+                lot.setAdjustedShares(sale.getAssetQuantity().negate());
             }
             recordLotMap.put(record, lot);
         }
