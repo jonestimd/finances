@@ -94,11 +94,9 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
     private FileType fileType;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_field_import_file_fk"))
-//    @org.hibernate.annotations.ForeignKey(name = "import_field_import_file_fk")
     private Set<ImportField> fields;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "import_file_id", nullable = false, foreignKey = @ForeignKey(name = "import_page_region_import_file_fk"))
-//    @org.hibernate.annotations.ForeignKey(name = "import_page_region_import_file_fk")
     private Set<PageRegion> pageRegions;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_category",
@@ -119,7 +117,6 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
             inverseJoinColumns = @JoinColumn(name = "payee_id", nullable = false, unique = false),
             inverseForeignKey = @ForeignKey(name = "import_payee_payee_fk"))
     @MapKeyColumn(name = "payee_alias")
-//    @org.hibernate.annotations.ForeignKey(name = "import_payee_file_fk", inverseName = "import_payee_payee_fk")
     private Map<String, Payee> payeeMap;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "import_security",
@@ -128,7 +125,6 @@ public class ImportFile implements UniqueId<Long>, Cloneable {
             inverseJoinColumns = @JoinColumn(name = "security_id", nullable = false, unique = false),
             inverseForeignKey = @ForeignKey(name = "import_security_security_fk"))
     @MapKeyColumn(name = "security_alias")
-//    @org.hibernate.annotations.ForeignKey(name = "import_security_file_fk", inverseName = "import_security_security_fk")
     private Map<String, Security> securityMap;
     @ManyToOne
     @JoinColumn(name = "account_id", foreignKey = @ForeignKey(name = "import_file_account_fk"))

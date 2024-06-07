@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,17 +28,16 @@ import java.util.Optional;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.persistence.ForeignKey;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
-
-import org.hibernate.annotations.ForeignKey;
 
 @Embeddable
 public class CategoryKey implements Cloneable, Comparable<CategoryKey> {
     @Column(name = "code", length = 50, nullable = false)
     private String code = "";
-    @ManyToOne @JoinColumn(name = "parent_id") @ForeignKey(name = "tx_type_parent_fk")
+    @ManyToOne @JoinColumn(name = "parent_id", foreignKey = @ForeignKey(name = "tx_type_parent_fk"))
     private TransactionCategory parent;
     @Transient
     private List<String> codeList;

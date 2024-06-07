@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 package io.github.jonestimd.finance.domain.asset;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +31,7 @@ import java.util.function.Predicate;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.SecondaryTable;
@@ -39,15 +39,14 @@ import javax.persistence.SecondaryTable;
 import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.transaction.StockSplit;
 import io.github.jonestimd.util.Streams;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.Table;
 
 @Entity
-@Table(appliesTo = "security", foreignKey = @ForeignKey(name = "security_asset_fk"))
-@SecondaryTable(name = "security", pkJoinColumns = {
-    @PrimaryKeyJoinColumn(name = "asset_id", referencedColumnName = "id")})
+@Table(appliesTo = "security")
+@SecondaryTable(name = "security", foreignKey = @ForeignKey(name = "security_asset_fk"),
+        pkJoinColumns = {@PrimaryKeyJoinColumn(name = "asset_id", referencedColumnName = "id")})
 public class Security extends Asset {
     public static final String SECURITY_SUMMARIES = "security.getSummaries";
     public static final String SECURITY_SUMMARY = "security.getSummary";

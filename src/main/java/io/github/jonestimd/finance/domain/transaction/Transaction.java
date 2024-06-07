@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -55,7 +56,6 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.asset.Security;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
@@ -83,19 +83,19 @@ public class Transaction extends BaseDomain<Long> {
     @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
     @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
-    @ManyToOne(optional=false) @JoinColumn(name="account_id") @ForeignKey(name="tx_account_fk")
+    @ManyToOne(optional=false) @JoinColumn(name="account_id", foreignKey = @ForeignKey(name="tx_account_fk"))
     private Account account;
     @Column(name="date", nullable=false) @Temporal(value=TemporalType.DATE)
     private Date date;
     @Column(name="reference_number", length=30)
     private String number;
-    @ManyToOne @JoinColumn(name="payee_id") @ForeignKey(name="tx_payee_fk")
+    @ManyToOne @JoinColumn(name="payee_id", foreignKey = @ForeignKey(name="tx_payee_fk"))
     private Payee payee;
     @Column(name="cleared", nullable=false, length=1) @Type(type="yes_no")
     private boolean cleared;
     @Column(name = "memo", length = 2000)
     private String memo;
-    @ManyToOne @JoinColumn(name = "security_id") @ForeignKey(name = "tx_security_fk")
+    @ManyToOne @JoinColumn(name = "security_id", foreignKey = @ForeignKey(name = "tx_security_fk"))
     private Security security;
     @OneToMany(fetch=FetchType.EAGER, mappedBy="transaction")
     @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE, CascadeType.DELETE})

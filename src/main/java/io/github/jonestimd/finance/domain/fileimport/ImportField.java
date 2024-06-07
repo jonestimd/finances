@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -49,7 +50,6 @@ import io.github.jonestimd.finance.domain.UniqueId;
 import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
@@ -64,9 +64,8 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     private Long id;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "import_field_label",
-            joinColumns = @JoinColumn(name = "import_field_id", nullable = false),
+            joinColumns = @JoinColumn(name = "import_field_id", nullable = false, foreignKey = @ForeignKey(name = "import_field_label_fk")),
             foreignKey = @javax.persistence.ForeignKey(name = "import_field_label_fk"))
-    @ForeignKey(name = "import_field_label_fk")
     @Column(name = "label", nullable = false)
     @OrderColumn(name = "list_index", nullable = false)
     private List<String> labels;
@@ -74,7 +73,7 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     @Column(name = "type", nullable = false)
     private FieldType type;
     @ManyToOne
-    @JoinColumn(name = "import_page_region_id") @ForeignKey(name = "import_field_page_region_fk")
+    @JoinColumn(name = "import_page_region_id", foreignKey = @ForeignKey(name = "import_field_page_region_fk"))
     private PageRegion region;
     @Column(name = "number_format", length = 15)
     @Enumerated(EnumType.STRING)
@@ -89,10 +88,10 @@ public class ImportField implements UniqueId<Long>, Cloneable {
     @Column(name = "accept_regex", length = 2000)
     private String acceptRegex;
     @ManyToOne
-    @JoinColumn(name = "tx_category_id") @ForeignKey(name = "import_field_tx_category_fk")
+    @JoinColumn(name = "tx_category_id", foreignKey = @ForeignKey(name = "import_field_tx_category_fk"))
     private TransactionCategory category;
     @ManyToOne
-    @JoinColumn(name = "transfer_account_id") @ForeignKey(name = "import_field_transfer_account_fk")
+    @JoinColumn(name = "transfer_account_id", foreignKey = @ForeignKey(name = "import_field_transfer_account_fk"))
     private Account transferAccount;
 
     public ImportField() {

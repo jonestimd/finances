@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,11 @@ import java.util.stream.Stream;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
@@ -43,7 +45,6 @@ import io.github.jonestimd.finance.domain.asset.Currency;
 import io.github.jonestimd.finance.domain.transaction.TransactionType;
 import io.github.jonestimd.util.Streams;
 import org.apache.commons.lang.StringUtils;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
@@ -66,9 +67,11 @@ public class Account extends BaseDomain<Long> implements TransactionType {
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
-    @ManyToOne(fetch=FetchType.EAGER, optional = false) @ForeignKey(name = "account_currency_fk")
+    @ManyToOne(fetch=FetchType.EAGER, optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "account_currency_fk"))
     private Currency currency;
-    @ManyToOne(fetch=FetchType.EAGER) @ForeignKey(name = "account_company_fk")
+    @ManyToOne(fetch=FetchType.EAGER)
+    @JoinColumn(foreignKey = @ForeignKey(name = "account_company_fk"))
     private Company company;
     @Column(nullable = false, length = 100)
     private String name;
