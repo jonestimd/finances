@@ -17,7 +17,7 @@ public class HttpServerTest {
     @BeforeClass
     public static void startServer() {
         try {
-            server = HttpServer.create(new InetSocketAddress("localhost", 8888), 5);
+            server = HttpServer.create(new InetSocketAddress("localhost", 9999), 5);
             server.createContext("/", HttpServerTest::handleRequest);
             server.start();
         } catch (IOException e) {
