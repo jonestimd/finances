@@ -2,7 +2,7 @@
 <!--
   ~ The MIT License (MIT)
   ~
-  ~ Copyright (c) 2021 Tim Jones
+  ~ Copyright (c) 2024 Tim Jones
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -128,6 +128,37 @@
               and t.security_id is not null
             group by t.security_id
         ) summary on security.id = summary.security_id
+    </sql-query>
+    <!-- unused: calculated in TransactionOperationsImpl -->
+    <sql-query name="transaction.unsoldSecurityShares">
+        <return alias="td" class="io.github.jonestimd.finance.domain.transaction.TransactionDetail"/>
+        select {td.*}
+        from tx
+        join tx_detail td on td.tx_id = tx.id and td.related_detail_id is null
+        where tx.date &lt;= :saleDate
+          and tx.account_id = :accountId
+          and tx.security_id = :securityId
+          and td.asset_quantity is not null
+          and (select sum(l.purchase_shares)
+               from security_lot l
+               join tx_detail sd on l.sale_tx_detail_id = sd.id
+               join tx sx on sd.tx_id = sx.id and sx.account_id = tx.account_id
+               where l.purchase_tx_detail_id = td.id) &lt; td.asset_quantity
+        union
+        select {td.*}
+        from tx
+        join tx_detail td on td.tx_id = tx.id and td.related_detail_id is null
+        where tx.date &lt;= :saleDate
+          and tx.account_id != :accountId
+          and tx.security_id = :securityId
+          and td.asset_quantity is not null
+          and (select sum(case sd.related_detail_id when null then -l.purchase_shares else l.purchase_shares end)
+               from security_lot l
+               join tx_detail sd on l.sale_tx_detail_id = sd.id
+               left join tx_detail rd on sd.related_detail_id = rd.id
+               join tx sx on sx.id = coalesce(rd.tx_id, sd.tx_id)
+               where l.purchase_tx_detail_id = tx.id
+                 and sx.account_id = :accountId) > 0
     </sql-query>
 <!--
     <query name="account.removeFromCompany">

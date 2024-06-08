@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -117,7 +117,7 @@ public class SecuritiesPanel extends AccountAccessPanel<Security, SecuritySummar
     }
 
     private boolean includeRow(SecuritySummary summary) {
-        return ! Boolean.TRUE.equals(hideZeroSharesAction.getValue(Action.SELECTED_KEY)) || summary.getShares().compareTo(BigDecimal.ZERO) != 0;
+        return ! Boolean.TRUE.equals(hideZeroSharesAction.getValue(Action.SELECTED_KEY)) || summary.getShares().signum() != 0;
     }
 
     @Override

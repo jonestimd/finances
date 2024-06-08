@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,8 +44,10 @@ public class SecurityLotDaoImpl extends HibernateDao<SecurityLot, Long> implemen
     @Override
     @SuppressWarnings("unchecked")
     public List<SecurityLot> findBySale(TransactionDetail sale) {
+        Long saleId = sale.isTransfer() && sale.getAssetQuantity().signum() > 0
+                ? sale.getRelatedDetail().getId() : sale.getId();
         return getSession().getNamedQuery(SecurityLot.FIND_BY_SALE_ID)
-                .setParameter("saleId", sale.getId())
+                .setParameter("saleId", saleId)
                 .list();
     }
 

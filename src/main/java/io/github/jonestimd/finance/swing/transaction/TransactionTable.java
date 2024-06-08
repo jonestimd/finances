@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ public class TransactionTable extends MixedRowTable<Transaction, TransactionTabl
             }
         };
 
-    private Action insertDetailAction =
+    private final Action insertDetailAction =
         new LocalizedAction(BundleType.LABELS.get(), "action.insertTransactionDetail") {
             public void actionPerformed(ActionEvent e) {
                 insertDetail();
@@ -154,7 +154,7 @@ public class TransactionTable extends MixedRowTable<Transaction, TransactionTabl
     }
 
     public void selectAmountColumn() {
-        int column = convertColumnIndexToModel(getModel().getDetailColumnIndex(0, TransactionDetailColumnAdapter.AMOUNT_ADAPTER));
+        int column = convertColumnIndexToModel(getModel().getDetailColumnIndex(0, ValidatedDetailColumnAdapter.AMOUNT_ADAPTER));
         setColumnSelectionInterval(column, column);
     }
 
@@ -216,7 +216,7 @@ public class TransactionTable extends MixedRowTable<Transaction, TransactionTabl
             if (row >= getRowCount()) {
                 insertDetail();
             }
-            TransactionType transactionType = TransactionDetailColumnAdapter.TYPE_ADAPTER.getValue(sourceDetail);
+            TransactionType transactionType = ValidatedDetailColumnAdapter.TYPE_ADAPTER.getValue(sourceDetail);
             getModel().setTransactionType(transactionType, row);
             getModel().setTransactionGroup(sourceDetail.getGroup(), row);
             getModel().setDetailMemo(sourceDetail.getMemo(), row);

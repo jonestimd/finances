@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,11 @@ import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -44,7 +46,6 @@ import javax.persistence.UniqueConstraint;
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SplitRatio;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.GenericGenerator;
 
 @NamedQueries({
@@ -58,7 +59,7 @@ public class StockSplit extends BaseDomain<Long> {
     @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
     @GenericGenerator(name = "id_generator", strategy = "native")
     private Long id;
-    @ManyToOne(optional = false) @ForeignKey(name = "stock_split_security_fk")
+    @ManyToOne(optional = false) @JoinColumn(foreignKey = @ForeignKey(name = "stock_split_security_fk"))
     private Security security;
     @Column(name = "date", nullable = false) @Temporal(TemporalType.DATE)
     private Date date;

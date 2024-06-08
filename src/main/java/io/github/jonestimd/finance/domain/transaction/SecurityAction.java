@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ public enum SecurityAction {
     }
 
     public boolean isSecurityRequired() {
-        return  this != COMMISSION_AND_FEES && this != INTEREST;
+        return this != COMMISSION_AND_FEES && this != INTEREST;
     }
 
     public boolean isSharesRequired() {
@@ -87,6 +87,16 @@ public enum SecurityAction {
     public static boolean isSecurityRequired(TransactionCategory category) {
         SecurityAction action = forCategory(category);
         return action != null && action.isSecurityRequired();
+    }
+
+    public static boolean isDateAcquiredAllowed(TransactionCategory category) {
+        SecurityAction action = forCategory(category);
+        return action == SHARES_IN;
+    }
+
+    public static boolean isDateAcquiredAllowed(TransactionDetail detail) {
+        SecurityAction action = forCategory(detail.getCategory());
+        return detail.getPurchaseLots().isEmpty() && action == SHARES_IN;
     }
 
     public static SecurityAction forCategory(TransactionCategory category) {

@@ -177,57 +177,48 @@ public class TransactionDetailDaoImplTest extends TransactionalTestFixture {
     }
 
     @Test
-    public void testFindAvailablePurchaseShares() throws Exception {
+    public void testFindPreviousPurchases() throws Exception {
         Date sellDate = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
         Account account2 = accountDao.get((Long) ACCOUNT_BATCH.getValue(1, "id"));
         Security security = securityDao.get((Long) SECURITY_BATCH.getValue(0, "asset_id"));
-        Transaction buyWithoutLot1 = createTransaction(security, sellDate,
+        Transaction buyOnSaleDate = createTransaction(security, sellDate,
                 createTransactionDetail(BUY.code(), "-100.00", "5.0"),
                 createTransactionDetail(BUY.code(), "-200.00", "5.0"),
                 createTransactionDetail("Dividend", "300.90"),
                 createTransactionDetail("Commission", "-0.90"));
-        Transaction sharesInWithoutLot = createTransaction(security, sellDate,
+        Transaction sharesInOnSaleDate = createTransaction(security, sellDate,
                 createTransactionDetail(SHARES_IN.code(), "-300.90", "10.0"),
                 createTransactionDetail(SHARES_IN.code(), "-150.45", "5.0"));
-        Transaction buyWithWrongAccount = createTransaction(account2, security, sellDate,
+        Transaction buyFromAccount2 = createTransaction(account2, security, sellDate,
                 createTransactionDetail(BUY.code(), "-300.90", "10.0"),
                 createTransactionDetail(BUY.code(), "-300.90", "10.0"));
-        Transaction sharesInWithZeroAmount = createTransaction(account, security, sellDate,
-                createTransactionDetail(SHARES_IN.code(), "0.00", "10.0"));
-        Transaction buyWithNoShares = createTransaction(security, sellDate,
-                createTransactionDetail(BUY.code(), "-300.90", "10.0"),
-                createTransactionDetail(BUY.code(), "-300.90", "10.0"));
-        Transaction sharesOutWithoutLot = createTransaction(security, sellDate,
+        Transaction buyAfterSaleDate = createTransaction(account, security, DateUtils.addDays(sellDate, 1),
+                createTransactionDetail(SHARES_IN.code(), "300.00", "10.0"));
+        Transaction xferInOnSaleDate = createTransaction(security, sellDate,
+                TransactionDetail.newTransfer(account2, "0", "10.0"));
+        Transaction xferOut = createTransaction(security, sellDate,
+                TransactionDetail.newTransfer(account2, "0", "-10.0"));
+        Transaction sharesOut = createTransaction(security, sellDate,
                 createTransactionDetail(SHARES_OUT.code(), "300.90", "-10.0"),
                 createTransactionDetail(SHARES_OUT.code(), "300.90", "-10.0"));
-        Transaction sellWithLot = createTransaction(security, sellDate,
+        Transaction sell = createTransaction(security, sellDate,
                 createTransactionDetail(SELL.code(), "300.90", "-10.0"),
                 createTransactionDetail(SELL.code(), "300.90", "-10.0"));
-        securityLotDao.save(new SecurityLot(buyWithNoShares.getDetails().get(0), sellWithLot.getDetails().get(1), BigDecimal.TEN));
-        securityLotDao.save(new SecurityLot(buyWithNoShares.getDetails().get(1), sellWithLot.getDetails().get(0), BigDecimal.TEN));
-        Transaction buyWithLot2 = createTransaction(security, DateUtils.addDays(sellDate, 1),
-                createTransactionDetail(BUY.code(), "-400.90", "10.0"),
-                createTransactionDetail(BUY.code(), "-200.90", "10.0"));
-        Transaction sellWithLot2 = createTransaction(security, sellDate,
-                createTransactionDetail(SELL.code(), "300.90", "-10.0"),
-                createTransactionDetail(SELL.code(), "300.90", "-10.0"));
-        securityLotDao.save(new SecurityLot(buyWithLot2.getDetails().get(0), sellWithLot2.getDetails().get(1), new BigDecimal("9")));
 
         TransactionDetail sale = createTransaction(security, sellDate, createTransactionDetail("Sell", "9")).getDetails().get(0);
-        List<TransactionDetail> withoutLots = transactionDetailDao.findAvailablePurchaseShares(sale);
+        List<TransactionDetail> purchases = transactionDetailDao.findPreviousPurchases(sale);
 
-        assertThat(withoutLots).isNotEmpty();
-        assertThat(withoutLots.size()).isEqualTo(new HashSet<>(withoutLots).size()).as("no duplicates");
-        List<Object> withoutLotIds = Lists.transform(withoutLots, UniqueId::getId);
-        assertThat(withoutLotIds).contains(getIds(buyWithoutLot1.getDetails().subList(0, 2)));
-        assertThat(withoutLotIds).doesNotContain(getIds(buyWithoutLot1.getDetails().subList(2, 4)));
-        assertThat(withoutLotIds).contains(getIds(sharesInWithoutLot.getDetails()));
-        assertThat(withoutLotIds).doesNotContain(getIds(buyWithWrongAccount.getDetails())).as("purchase from wrong account");
-        assertThat(withoutLotIds).contains(getIds(sharesInWithZeroAmount.getDetails())).as("purchase with wrong price");
-        assertThat(withoutLotIds).doesNotContain(getIds(buyWithNoShares.getDetails())).as("purchase with no available shares");
-        assertThat(withoutLotIds).doesNotContain(getIds(sellWithLot.getDetails())).as("sale");
-        assertThat(withoutLotIds).doesNotContain(getIds(sharesOutWithoutLot.getDetails())).as("shares out");
-        assertThat(withoutLotIds).doesNotContain(getIds(buyWithLot2.getDetails())).as("after sell date");
+        assertThat(purchases).isNotEmpty();
+        assertThat(purchases.size()).isEqualTo(new HashSet<>(purchases).size()).as("no duplicates");
+        List<Object> withoutLotIds = Lists.transform(purchases, UniqueId::getId);
+        assertThat(withoutLotIds).contains(getIds(buyOnSaleDate.getDetails().subList(0, 2)));
+        assertThat(withoutLotIds).contains(getIds(sharesInOnSaleDate.getDetails()));
+        assertThat(withoutLotIds).contains(getIds(xferInOnSaleDate.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(getIds(buyAfterSaleDate.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(getIds(buyFromAccount2.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(getIds(xferOut.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(getIds(sharesOut.getDetails()));
+        assertThat(withoutLotIds).doesNotContain(getIds(sell.getDetails()));
     }
 
     @Test

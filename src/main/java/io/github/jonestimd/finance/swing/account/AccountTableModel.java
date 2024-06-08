@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,7 @@ import io.github.jonestimd.swing.table.model.ValidatedBeanListTableModel;
 import io.github.jonestimd.util.Streams;
 
 public class AccountTableModel extends ValidatedBeanListTableModel<AccountSummary> implements TableSummary {
-    private static final List<ColumnAdapter<? super AccountSummary, ?>> ADAPTERS = Arrays.<ColumnAdapter<? super AccountSummary, ?>>asList(
+    private static final List<ColumnAdapter<? super AccountSummary, ?>> ADAPTERS = Arrays.asList(
         AccountColumnAdapter.CLOSED_ADAPTER,
         AccountColumnAdapter.COMPANY_ADAPTER,
         AccountColumnAdapter.NAME_ADAPTER,
@@ -122,8 +122,8 @@ public class AccountTableModel extends ValidatedBeanListTableModel<AccountSummar
 
     private void updateAccount(AccountSummary accountSummary, BigDecimal balance, long transactionCount) {
         total = total.add(balance);
-        accountSummary.setBalance(accountSummary.getBalance().add(balance));
-        accountSummary.setTransactionCount(accountSummary.getTransactionCount()+transactionCount);
+        accountSummary.addToBalance(balance);
+        accountSummary.addToTransactionCount(transactionCount);
     }
 
     private void onCompanyEvent(DomainEvent<Long, Company> event) {

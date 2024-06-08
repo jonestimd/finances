@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2022 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import io.github.jonestimd.finance.dao.DaoRepository;
@@ -179,9 +180,21 @@ public class TransactionOperationsImpl implements TransactionOperations {
 
     @Override
     public List<SecurityLot> findAvailableLots(TransactionDetail sale) {
-        List<SecurityLot> lots = securityLotDao.findBySale(sale);
+        Account account = sale.getTransaction().getAccount();
+        List<SecurityLot> lots = securityLotDao.findBySale(sale); // get existing lots
         List<TransactionDetail> purchases = Streams.map(lots, SecurityLot::getPurchase);
-        transactionDetailDao.findAvailablePurchaseShares(sale).stream().filter(not(purchases::contains))
+        transactionDetailDao.findPreviousPurchases(sale).stream()
+                .filter(not(purchases::contains))
+                .flatMap(purchase -> {
+                    if (purchase.getRelatedDetail() == null) {
+                        return purchase.getRemainingShares().signum() > 0 ? Stream.of(purchase) : Stream.empty();
+                    }
+                    else {
+                        return purchase.getRelatedDetail().getPurchaseLots().stream()
+                                .map(SecurityLot::getPurchase)
+                                .filter(p -> !purchases.contains(p) && p.getRemainingShares(account).signum() > 0);
+                    }
+                })
                 .forEach(purchase -> lots.add(new SecurityLot(purchase, sale, BigDecimal.ZERO)));
         return lots;
     }

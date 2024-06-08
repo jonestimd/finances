@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.*;
 public class AccountSummaryEventHandlerTest {
     private static final String[] TRANSACTION_PROPERTIES = {"id", Transaction.ACCOUNT};
     private static final String[] DETAIL_PROPERTIES = {"id", TransactionDetail.TRANSACTION, TransactionDetail.AMOUNT, TransactionDetail.MEMO};
-    private AccountSummaryEventHandler eventHandler = new AccountSummaryEventHandler(this);
+    private final AccountSummaryEventHandler eventHandler = new AccountSummaryEventHandler(this);
 
     @Test
     public void noChanges() throws Exception {
@@ -76,7 +76,6 @@ public class AccountSummaryEventHandlerTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void changeTransactionDetailMemo() throws Exception {
         final Account account = new Account(TestSequence.nextId());
         final Transaction transaction = newTransaction(account, BigDecimal.ONE);

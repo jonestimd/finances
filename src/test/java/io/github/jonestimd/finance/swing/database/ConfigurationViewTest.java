@@ -38,6 +38,7 @@ import io.github.jonestimd.swing.component.BeanListComboBox;
 import io.github.jonestimd.swing.component.FileSuggestField;
 import io.github.jonestimd.swing.validation.ValidatedPasswordField;
 import io.github.jonestimd.swing.validation.ValidatedTextField;
+import org.apache.commons.lang.SystemUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -187,7 +188,7 @@ public class ConfigurationViewTest {
     public void setsDefaultsBasedOnDriver() throws Exception {
         JPanel panel = new JPanel();
         Map<Field, String> values = new MapBuilder<Field, String>()
-                .put(DIRECTORY, "/home/user")
+                .put(DIRECTORY, SystemUtils.USER_DIR)
                 .put(HOST, "host name")
                 .put(PORT, "1234")
                 .put(SCHEMA, "schama name")
@@ -215,7 +216,7 @@ public class ConfigurationViewTest {
         when(service1.isEnabled(DIRECTORY)).thenReturn(true);
         List<DriverConfigurationService> services = Arrays.asList(service1, service2);
         ConfigurationView view = new ConfigurationView(panel, services);
-        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem(new File("/user/home"));
+        ((FileSuggestField) find(panel, DIRECTORY)).setSelectedItem(SystemUtils.getUserDir());
         ((ValidatedTextField) find(panel, HOST)).setText("host name");
         ((ValidatedTextField) find(panel, PORT)).setText("1234");
         ((ValidatedTextField) find(panel, SCHEMA)).setText("schema name");
@@ -225,7 +226,7 @@ public class ConfigurationViewTest {
         Config config = view.getConfig();
 
         assertThat(config.getString(DRIVER.toString())).isEqualTo("driver name");
-        assertThat(config.getString(DIRECTORY.toString())).isEqualTo("/user/home");
+        assertThat(config.getString(DIRECTORY.toString())).isEqualTo(SystemUtils.USER_DIR);
         assertThat(config.hasPath(HOST.toString())).isFalse();
         assertThat(config.hasPath(PORT.toString())).isFalse();
         assertThat(config.hasPath(SCHEMA.toString())).isFalse();

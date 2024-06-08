@@ -142,42 +142,6 @@ public class SecurityTransactionTableModelTest {
         assertThat(model.getValueAt(3, BALANCE_COLUMN)).isEqualTo(new BigDecimal(90d));
     }
 
-    @Test
-    public void testSetValueAt() throws Exception {
-        model.setBeans(Arrays.asList(
-                createTransaction(createDetail(10d), createDetail(25d)),
-                createTransaction(createDetail(11d), createDetail(32d)),
-                createTransaction(createDetail(-5d))));
-        model.addTableModelListener(listener);
-
-        model.setValueAt(new BigDecimal(15d), 1, AMOUNT_COLUMN);
-
-        ArgumentCaptor<TableModelEvent> capture = ArgumentCaptor.forClass(TableModelEvent.class);
-        verify(listener, times(19)).tableChanged(capture.capture());
-        verifyEvent(capture.getAllValues().get(0), TableModelEvent.UPDATE, 1, 1, AMOUNT_COLUMN);
-        // should validate other detail columns
-        verifyEvent(capture.getAllValues().get(1), TableModelEvent.UPDATE, 1, 1, 0);
-        verifyEvent(capture.getAllValues().get(2), TableModelEvent.UPDATE, 1, 1, 1);
-        verifyEvent(capture.getAllValues().get(3), TableModelEvent.UPDATE, 1, 1, 2);
-        verifyEvent(capture.getAllValues().get(4), TableModelEvent.UPDATE, 1, 1, 3);
-        verifyEvent(capture.getAllValues().get(5), TableModelEvent.UPDATE, 1, 1, 4);
-        verifyEvent(capture.getAllValues().get(6), TableModelEvent.UPDATE, 1, 1, 5);
-        verifyEvent(capture.getAllValues().get(7), TableModelEvent.UPDATE, 1, 1, BALANCE_COLUMN);
-        // should validate header row
-        verifyEvent(capture.getAllValues().get(8), TableModelEvent.UPDATE, 0, 0, 0);
-        verifyEvent(capture.getAllValues().get(9), TableModelEvent.UPDATE, 0, 0, 1);
-        verifyEvent(capture.getAllValues().get(10), TableModelEvent.UPDATE, 0, 0, 2);
-        verifyEvent(capture.getAllValues().get(11), TableModelEvent.UPDATE, 0, 0, 3);
-        verifyEvent(capture.getAllValues().get(12), TableModelEvent.UPDATE, 0, 0, 4);
-        verifyEvent(capture.getAllValues().get(13), TableModelEvent.UPDATE, 0, 0, 5);
-        verifyEvent(capture.getAllValues().get(14), TableModelEvent.UPDATE, 0, 0, AMOUNT_COLUMN);
-        verifyEvent(capture.getAllValues().get(15), TableModelEvent.UPDATE, 0, 0, BALANCE_COLUMN);
-        // update balances
-        verifyEvent(capture.getAllValues().get(16), TableModelEvent.UPDATE, 0, 0, BALANCE_COLUMN);
-        verifyEvent(capture.getAllValues().get(17), TableModelEvent.UPDATE, 3, 3, BALANCE_COLUMN);
-        verifyEvent(capture.getAllValues().get(18), TableModelEvent.UPDATE, 6, 6, BALANCE_COLUMN);
-    }
-
     private void verifyEvent(TableModelEvent event, int type, int firstRow, int lastRow, int column) {
         assertThat(event.getType()).isEqualTo(type);
         assertThat(event.getFirstRow()).isEqualTo(firstRow);

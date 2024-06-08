@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,8 @@ public class EditLotsAction extends DialogAction {
             TransactionTableModel model = table.getModel();
             if (model.isSubRow(row)) {
                 TransactionDetail detail = model.getBeanAtRow(row).getDetails().get(model.getSubRowIndex(row)-1);
-                return detail.getCategory() != null && SECURITY_ACTIONS.contains(detail.getCategory().getKey().getCode());
+                return detail.getCategory() != null && SECURITY_ACTIONS.contains(detail.getCategory().getKey().getCode())
+                        || detail.isTransfer() && detail.getAssetQuantity() != null && detail.getTransaction().isSecurity();
             }
         }
         return false;
@@ -69,7 +70,9 @@ public class EditLotsAction extends DialogAction {
     private TransactionDetail getSelectedDetail() {
         TransactionTableModel model = table.getModel();
         int row = table.getLeadSelectionModelIndex();
-        return model.getBeanAtRow(row).getDetails().get(model.getSubRowIndex(row)-1);
+        TransactionDetail detail = model.getBeanAtRow(row).getDetails().get(model.getSubRowIndex(row) - 1);
+        if (detail.isTransfer() && detail.getAssetQuantity().signum() > 0) return detail.getRelatedDetail();
+        return detail;
     }
 
     @Override
@@ -90,7 +93,9 @@ public class EditLotsAction extends DialogAction {
 
     @Override
     public void setSaveResultOnUI() {
-        getSelectedDetail().setSaleLotShares(Streams.sum(availableLots.stream().map(SecurityLot::getSaleShares)));
+        TransactionDetail detail = getSelectedDetail();
+        detail.getPurchaseLots().clear();
+        detail.getPurchaseLots().addAll(Streams.filter(availableLots, lot -> !lot.isEmpty()));
         int row = table.getLeadSelectionModelIndex();
         table.getModel().fireTableRowsUpdated(row, row);
     }

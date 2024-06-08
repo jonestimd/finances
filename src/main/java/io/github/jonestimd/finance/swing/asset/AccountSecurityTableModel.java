@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -145,7 +145,7 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
         SecuritySummary summary = getBean(index);
         BigDecimal oldShares = summary.getShares();
         summary.setShares(update.apply(summary.getShares()));
-        if (summary.getShares().compareTo(BigDecimal.ZERO) == 0L) remove(index);
+        if (summary.getShares().signum() == 0) remove(index);
         else {
             notifyDataProviders(summary, SecurityColumnAdapter.SHARES_ADAPTER.getColumnId(), oldShares);
             fireTableRowsUpdated(index, index);

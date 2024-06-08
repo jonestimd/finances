@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -79,6 +79,10 @@ public class TransactionSummary<T extends Comparable<? super T> & UniqueId<Long>
 
     public void setTransactionCount(long transactionCount) {
         this.transactionCount = transactionCount;
+    }
+
+    public void addToTransactionCount(long count) {
+        this.transactionCount += count;
     }
 
     public int compareTo(TransactionSummary<T> that) {

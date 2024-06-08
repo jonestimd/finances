@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -81,7 +81,7 @@ public class QifExport {
         if (detail.getMemo() != null) {
             writer.append(QifField.SPLIT_MEMO.code()).println(detail.getMemo());
         }
-        writer.append(QifField.SPLIT_AMOUNT.code()).println(detail.getAmount().toString());
+        writer.append(QifField.SPLIT_AMOUNT.code()).println(detail.getAmount() == null ? "0" : detail.getAmount().toString());
     }
 
     private String formatCategory(TransactionDetail detail) {

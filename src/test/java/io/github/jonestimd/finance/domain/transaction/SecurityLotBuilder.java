@@ -14,13 +14,15 @@ public class SecurityLotBuilder {
 
     public SecurityLotBuilder purchase(TransactionDetail purchase, BigDecimal shares) {
         lot.setPurchase(purchase);
-        lot.setSaleShares(shares);
+        lot.setAdjustedShares(shares);
+        if (purchase != null) purchase.getSaleLots().add(lot);
         return this;
     }
     
     public SecurityLotBuilder sale(TransactionDetail sale, BigDecimal shares) {
         lot.setSale(sale);
-        lot.setSaleShares(shares);
+        lot.setAdjustedShares(shares);
+        if (sale != null) sale.getPurchaseLots().add(lot);
         return this;
     }
 

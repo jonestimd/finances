@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -70,12 +70,11 @@ public class TransactionDetailDaoImpl extends HibernateDao<TransactionDetail, Lo
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<TransactionDetail> findAvailablePurchaseShares(TransactionDetail sale) {
-        return getSession().getNamedQuery(TransactionDetail.UNSOLD_SECURITY_SHARES)
+    public List<TransactionDetail> findPreviousPurchases(TransactionDetail sale) {
+        return getSession().getNamedQuery(TransactionDetail.SECURITY_ACQUISITIONS_BY_ACCOUNT)
             .setParameter("account", sale.getTransaction().getAccount())
             .setParameter("security", sale.getTransaction().getSecurity())
             .setParameter("saleDate", sale.getTransaction().getDate())
-            .setParameterList("actions", Arrays.asList(BUY.code(), SHARES_IN.code(), REINVEST.code()))
             .list();
     }
 

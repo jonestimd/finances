@@ -12,8 +12,12 @@ repositories {
 }
 
 dependencies {
-    implementation apiElements(rootProject)
+    implementation rootProject
     implementation group: 'org.jclarion', name: 'image4j', version: '0.7'
+}
+
+configurations {
+    runtime.extendsFrom(runtimeOnly)
 }
 
 jar {

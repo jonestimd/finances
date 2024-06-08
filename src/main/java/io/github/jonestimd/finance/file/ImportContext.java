@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -129,7 +129,7 @@ public abstract class ImportContext {
 
     private void setAssetQuantity(TransactionDetail detail, ImportField field, List<String> values) {
         BigDecimal quantity = getAssetQuantity(detail, field, values.get(0));
-        if (quantity.compareTo(BigDecimal.ZERO) != 0) detail.setAssetQuantity(quantity);
+        if (quantity.signum() != 0) detail.setAssetQuantity(quantity);
     }
 
     protected BigDecimal getAssetQuantity(TransactionDetail detail, ImportField field, String amount) {

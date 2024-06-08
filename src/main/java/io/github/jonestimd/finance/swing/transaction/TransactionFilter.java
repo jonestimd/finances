@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Tim Jones
+// Copyright (c) 2024 Tim Jones
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,6 +56,6 @@ public class TransactionFilter implements Predicate<Transaction> {
     private boolean matchesDetail(Transaction transaction, String filterText) {
         return transaction.getDetails().stream().anyMatch(detail -> detail.getMemo() != null && detail.getMemo().toLowerCase().contains(filterText)
                 || detail.getTransactionType() != null && detail.getTransactionType().qualifiedName(" ").toLowerCase().contains(filterText)
-                || detail.getAmount().toString().contains(filterText));
+                || detail.getAmount() != null && detail.getAmount().toString().contains(filterText));
     }
 }
