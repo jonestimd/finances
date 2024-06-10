@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>finances-48.png</file>
+        <file>finances.svg</file>
+    </qresource>
+</RCC>
