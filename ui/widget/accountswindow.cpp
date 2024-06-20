@@ -1,5 +1,4 @@
 #include "accountswindow.h"
-#include "./ui_accountswindow.h"
 #include "../model/accounttablemodel.h"
 #include "filterinput.h"
 #include "styleproxy.h"
@@ -8,8 +7,11 @@
 #include <QtWidgets>
 
 AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
-    : QMainWindow(), ui(new Ui::AccountsWindow), app{app} {
-    ui->setupUi(this);
+    : QMainWindow(), app{app}, table{new QTableView(this)}, statusBar{new QStatusBar(this)} {
+    setCentralWidget(table);
+    setStatusBar(statusBar);
+    setWindowTitle(tr("Finances (Accounts)"));
+    // QMetaObject::connectSlotsByName(this);
 
     auto toolbar = new QToolBar(this);
     toolbar->setMovable(false);
@@ -25,12 +27,14 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
     sortModel->setFilterKeyColumn(-1);
     filterInput = new FilterInput("Account filter", toolbar, sortModel);
 
-    table = ui->table;
     table->setModel(sortModel);
     table->setStyle(new StyleProxy(table));
     table->setItemDelegate(new TableItemDelegate(table));
 
-    restoreGeometry(app->settings->value("accounts/geometry").toByteArray());
+    if (app->settings->contains("accounts/geometry")) {
+        restoreGeometry(app->settings->value("accounts/geometry").toByteArray());
+    }
+    else resize(800, 600);
 
     table->resizeColumnsToContents();
     table->setAlternatingRowColors(true);
@@ -57,9 +61,7 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
     QTimer::singleShot(0, this, [this] { filterInput->setFocus(); });
 }
 
-AccountsWindow::~AccountsWindow() {
-    delete ui;
-}
+AccountsWindow::~AccountsWindow() {}
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {
     auto model = table->model();

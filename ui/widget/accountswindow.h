@@ -17,13 +17,13 @@ class AccountsWindow : public QMainWindow {
     Finances::App *app;
     QTableView *table;
     QLineEdit *filterInput;
+    QStatusBar *statusBar;
 
 public:
     AccountsWindow(Finances::App *app, DbContext *dbContext);
     ~AccountsWindow();
 
 private:
-    Ui::AccountsWindow *ui;
     QList<Company*> companies;
     QList<Account*> accounts;
 
