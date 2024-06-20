@@ -1,0 +1,8 @@
+QTableView {
+    accent-color: rgb(255, 120, 120);
+    background: #ffffffff;
+    alternate-background-color: #fff7f7f7;
+    selection-color: #ffffffff;
+    selection-background-color: #ff308cc6;
+    color: #ff000000;
+}

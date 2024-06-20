@@ -23,6 +23,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         ui/resources/finances.qrc
+        ui/resources/finances.svg
+        ui/resources/dark.qss
+        ui/resources/light.qss
     )
     add_subdirectory(database/)
     add_subdirectory(ui/)

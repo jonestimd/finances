@@ -1,6 +1,7 @@
 #include "accountswindow.h"
 #include "./ui_accountswindow.h"
 #include "../model/accounttablemodel.h"
+#include "filterinput.h"
 #include "styleproxy.h"
 #include "tableitemdelegate.h"
 #include <QtSql>
@@ -10,6 +11,10 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
     : QMainWindow(), ui(new Ui::AccountsWindow), app{app} {
     ui->setupUi(this);
 
+    auto toolbar = new QToolBar(this);
+    toolbar->setMovable(false);
+    addToolBar(toolbar);
+
     companies = dbContext->companyDao->getAll();
     accounts = dbContext->accountDao->getAll();
 
@@ -17,6 +22,8 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
     QSortFilterProxyModel *sortModel = new QSortFilterProxyModel(this);
     sortModel->setSourceModel(model);
     sortModel->setSortRole(Finances::SortRole);
+    sortModel->setFilterKeyColumn(-1);
+    filterInput = new FilterInput("Account filter", toolbar, sortModel);
 
     table = ui->table;
     table->setModel(sortModel);
@@ -46,6 +53,8 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
         auto pos = app->settings->value("accounts.columns/" + name + ".pos").toInt(&ok);
         if (ok) header->moveSection(header->visualIndex(section), pos);
     }
+
+    QTimer::singleShot(0, this, [this] { filterInput->setFocus(); });
 }
 
 AccountsWindow::~AccountsWindow() {
@@ -70,4 +79,12 @@ void AccountsWindow::closeEvent(QCloseEvent *event) {
     }
     settings->endGroup();
     QMainWindow::closeEvent(event);
+}
+
+void AccountsWindow::keyPressEvent(QKeyEvent *event) {
+    if (event->matches(QKeySequence::Find) && !filterInput->hasFocus()) {
+        filterInput->setFocus();
+        return;
+    }
+    QMainWindow::keyPressEvent(event);
 }

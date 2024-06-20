@@ -1,0 +1,9 @@
+QTableView {
+    accent-color: rgb(255, 160, 160);
+}
+
+QLineEdit[invalid="true"] {
+    border: 1px solid rgb(128, 0, 0);
+    border-radius: 2px;
+    padding: 2px 0px;
+}

@@ -1,6 +1,12 @@
 <RCC>
     <qresource prefix="/images">
-        <file>finances-48.png</file>
         <file>finances.svg</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>MaterialIcons-Regular.ttf</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file>dark.qss</file>
+        <file>light.qss</file>
     </qresource>
 </RCC>

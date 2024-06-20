@@ -16,6 +16,7 @@ class AccountsWindow : public QMainWindow {
     Q_OBJECT
     Finances::App *app;
     QTableView *table;
+    QLineEdit *filterInput;
 
 public:
     AccountsWindow(Finances::App *app, DbContext *dbContext);
@@ -29,5 +30,6 @@ private:
     // QWidget interface
 protected:
     void closeEvent(QCloseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 };
 #endif // ACCOUNTSWINDOW_H
