@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ExternalProject)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Test)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -27,7 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ui/resources/dark.qss
         ui/resources/light.qss
     )
-    add_subdirectory(database/)
+    add_subdirectory(service/)
     add_subdirectory(ui/)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET finances APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -65,6 +65,7 @@ target_include_directories(finances PRIVATE
 target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql
+    Qt${QT_VERSION_MAJOR}::Concurrent
     ${BINARY_DIR}/src/libqdecimal.a
     ${BINARY_DIR}/decnumber/libdecnumber.a
 )

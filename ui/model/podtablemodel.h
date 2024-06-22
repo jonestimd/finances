@@ -10,15 +10,19 @@ template<class Row>
 class PodTableModel : public QAbstractTableModel
 {
 protected:
-    QList<ColumnAdapter<Row>*> columns;
+    const QList<ColumnAdapter<Row>*> columns;
     QList<Row*> rows;
 
-    void setRows(QList<Row*> rows) {
-        this->rows = rows;
-    }
 public:
-    explicit PodTableModel(QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
-        : QAbstractTableModel(parent), columns{columns} {}
+    explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
+        : QAbstractTableModel(parent), rows(QList<Row*>()), columns{columns} {}
+
+    void setRows(QList<Row*> rows) {
+        beginResetModel();
+        this->rows.clear();
+        this->rows.append(rows);
+        endResetModel();
+    }
 
     int columnIndex(QString name) const {
         for (int col = 0; col < columns.length(); ++col) {

@@ -1,14 +1,17 @@
 #ifndef ACCOUNTTABLEMODEL_H
 #define ACCOUNTTABLEMODEL_H
 
-#include "../../database/model/account.h"
-#include "../../database/model/company.h"
+#include "../../service/model/account.h"
+#include "../../service/model/company.h"
 #include "podtablemodel.h"
 #include <QAbstractTableModel>
 
 class AccountTableModel : public PodTableModel<Account> {
+    QList<Company*> companies;
 public:
-    explicit AccountTableModel(QList<Company*> companies, QList<Account*> accounts, QObject *parent = nullptr);
+    explicit AccountTableModel(QObject *parent = nullptr);
+
+    void setCompanies(QList<Company*> companies);
 };
 
 #endif // ACCOUNTTABLEMODEL_H

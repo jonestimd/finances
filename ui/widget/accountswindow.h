@@ -2,7 +2,8 @@
 #define ACCOUNTSWINDOW_H
 
 #include "../finances.h"
-#include "../../database/dbcontext.h"
+#include "../../service/servicecontext.h"
+#include "../model/accounttablemodel.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -20,12 +21,13 @@ class AccountsWindow : public QMainWindow {
     QStatusBar *statusBar;
 
 public:
-    AccountsWindow(Finances::App *app, DbContext *dbContext);
+    AccountsWindow(Finances::App *app, ServiceContext *serviceContext);
     ~AccountsWindow();
 
 private:
     QList<Company*> companies;
     QList<Account*> accounts;
+    AccountTableModel *model;
 
     // QWidget interface
 protected:

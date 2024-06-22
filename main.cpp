@@ -1,4 +1,4 @@
-#include "database/dbcontext.h"
+#include "service/servicecontext.h"
 #include "ui/widget/accountswindow.h"
 
 #include <QApplication>
@@ -18,9 +18,10 @@ int main(int argc, char *argv[])
         [](const QDecNumber &value) -> QString { return QString(value.toString()); }
     );
 
-    DbContext *dbContext = new DbContext("QMYSQL", "hydra", DB_NAME, DB_USER, DB_USER);
+    ConnectionPool connectionPool = ConnectionPool("QMYSQL", "hydra", DB_NAME, DB_USER, DB_USER);
+    ServiceContext serviceContext = ServiceContext(&connectionPool);
 
-    AccountsWindow accountsWindow(&app, dbContext);
+    AccountsWindow accountsWindow(&app, &serviceContext);
     accountsWindow.show();
     return app.exec();
 }

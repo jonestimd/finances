@@ -2,8 +2,6 @@
 
 #include <QtSql>
 
-AccountDao::AccountDao(QSqlDatabase db) : db{db} {}
-
 static const auto getAccountsSql = R"(
 with balance as (
   select tx.account_id, sum(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions
@@ -18,14 +16,14 @@ join asset cur on a.currency_id = cur.id
 left join balance b on a.id = b.account_id
 order by a.name)";
 
-QList<Account*> AccountDao::getAll() {
-    QSqlQuery query(db);
-    if (!query.exec(getAccountsSql)) {
-        // TODO show error
+namespace accountDao {
+    QList<Account*> getAll(QSqlDatabase db) {
+        QSqlQuery query(db);
+        QList<Account*> accounts;
+        if (!query.exec(getAccountsSql)) {} // TODO show error
+        while (query.next()) {
+            accounts.append(new Account(query.record()));
+        }
+        return accounts;
     }
-    QList<Account*> accounts{};
-    while (query.next()) {
-        accounts.append(new Account(query.record()));
-    }
-    return accounts;
 }

@@ -7,13 +7,13 @@
 #include "numbercolumnadapter.h"
 #include "formats.h"
 #include "relationcolumnadapter.h"
-#include "../../database/model/accounttype.h"
+#include "../../service/model/accounttype.h"
 
-AccountTableModel::AccountTableModel(QList<Company*> companies, QList<Account*> accounts, QObject *parent)
-    : PodTableModel<Account>{
+AccountTableModel::AccountTableModel(QObject *parent) : companies(QList<Company*>()),
+    PodTableModel<Account>{
         QList<ColumnAdapter<Account>*>{
             new BoolColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, companies),
+            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, &this->companies),
             new ColumnAdapter<Account>(tr("Name"), &Account::name),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, accountTypes),
             new ColumnAdapter<Account>(tr("Description"), &Account::description),
@@ -22,6 +22,11 @@ AccountTableModel::AccountTableModel(QList<Company*> companies, QList<Account*> 
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance),
         }
     }
-{
-    setRows(accounts);
+{}
+
+void AccountTableModel::setCompanies(QList<Company*> companies) {
+    this->beginResetModel();
+    this->companies.clear();
+    this->companies.append(companies);
+    this->endResetModel();
 }

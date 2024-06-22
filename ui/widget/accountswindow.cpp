@@ -1,13 +1,18 @@
 #include "accountswindow.h"
-#include "../model/accounttablemodel.h"
 #include "filterinput.h"
 #include "styleproxy.h"
 #include "tableitemdelegate.h"
 #include <QtSql>
 #include <QtWidgets>
+#include <QtConcurrent>
 
-AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
-    : QMainWindow(), app{app}, table{new QTableView(this)}, statusBar{new QStatusBar(this)} {
+AccountsWindow::AccountsWindow(Finances::App *app, ServiceContext *serviceContext)
+    : QMainWindow()
+    , app{app}
+    , model{new AccountTableModel(this)}
+    , table{new QTableView(this)}
+    , statusBar{new QStatusBar(this)}
+{
     setCentralWidget(table);
     setStatusBar(statusBar);
     setWindowTitle(tr("Finances (Accounts)"));
@@ -17,10 +22,15 @@ AccountsWindow::AccountsWindow(Finances::App *app, DbContext *dbContext)
     toolbar->setMovable(false);
     addToolBar(toolbar);
 
-    companies = dbContext->companyDao->getAll();
-    accounts = dbContext->accountDao->getAll();
+    QtConcurrent::run([serviceContext]() {
+        auto companies = serviceContext->companyService.getAll();
+        auto accounts = serviceContext->accountService.getAll();
+        return std::tuple<QList<Company*>, QList<Account*>>(companies, accounts);
+    }).then(this, [this](std::tuple<QList<Company*>, QList<Account*>> result) {
+        this->model->setCompanies(std::get<0>(result));
+        this->model->setRows(std::get<1>(result));
+    });
 
-    AccountTableModel *model = new AccountTableModel(companies, accounts, this);
     QSortFilterProxyModel *sortModel = new QSortFilterProxyModel(this);
     sortModel->setSourceModel(model);
     sortModel->setSortRole(Finances::SortRole);
