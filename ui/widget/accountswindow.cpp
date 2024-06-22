@@ -6,12 +6,12 @@
 #include <QtWidgets>
 #include <QtConcurrent>
 
-AccountsWindow::AccountsWindow(Finances::App *app, ServiceContext *serviceContext)
+AccountsWindow::AccountsWindow(Finances::App *app, DataStore *dataStore)
     : QMainWindow()
     , app{app}
     , model{new AccountTableModel(this)}
     , table{new QTableView(this)}
-    , statusBar{new QStatusBar(this)}
+    , statusBar{new StatusBar(this)}
 {
     setCentralWidget(table);
     setStatusBar(statusBar);
@@ -22,14 +22,12 @@ AccountsWindow::AccountsWindow(Finances::App *app, ServiceContext *serviceContex
     toolbar->setMovable(false);
     addToolBar(toolbar);
 
-    QtConcurrent::run([serviceContext]() {
-        auto companies = serviceContext->companyService.getAll();
-        auto accounts = serviceContext->accountService.getAll();
-        return std::tuple<QList<Company*>, QList<Account*>>(companies, accounts);
-    }).then(this, [this](std::tuple<QList<Company*>, QList<Account*>> result) {
-        this->model->setCompanies(std::get<0>(result));
-        this->model->setRows(std::get<1>(result));
-    });
+    connect(dataStore, SIGNAL(companiesLoaded(QList<Company*>)), this, SLOT(setCompanies(QList<Company*>)));
+    connect(dataStore, SIGNAL(accountsLoaded(QList<Account*>)), this, SLOT(setAccounts(QList<Account*>)));
+    if (dataStore->loadAccounts()) model->setRows(dataStore->accounts());
+    else statusBar->addMessage(tr("Loading accounts..."));
+    if (dataStore->loadCompanies()) model->setCompanies(dataStore->companies());
+    else statusBar->addMessage(tr("Loading companies..."));
 
     QSortFilterProxyModel *sortModel = new QSortFilterProxyModel(this);
     sortModel->setSourceModel(model);
@@ -72,6 +70,16 @@ AccountsWindow::AccountsWindow(Finances::App *app, ServiceContext *serviceContex
 }
 
 AccountsWindow::~AccountsWindow() {}
+
+void AccountsWindow::setCompanies(QList<Company*> companies) {
+    model->setCompanies(companies);
+    statusBar->removeMessage(tr("Loading companies..."));
+}
+
+void AccountsWindow::setAccounts(QList<Account *> accounts) {
+    model->setRows(accounts);
+    statusBar->removeMessage(tr("Loading accounts..."));
+}
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {
     auto model = table->model();

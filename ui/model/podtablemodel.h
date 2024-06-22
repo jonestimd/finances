@@ -24,6 +24,7 @@ public:
         endResetModel();
     }
 
+public:
     int columnIndex(QString name) const {
         for (int col = 0; col < columns.length(); ++col) {
             if (columns[col]->title == name) return col;

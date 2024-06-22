@@ -11,7 +11,7 @@ class AccountTableModel : public PodTableModel<Account> {
 public:
     explicit AccountTableModel(QObject *parent = nullptr);
 
-    void setCompanies(QList<Company*> companies);
+    void setCompanies(QList<Company*>);
 };
 
 #endif // ACCOUNTTABLEMODEL_H

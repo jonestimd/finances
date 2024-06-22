@@ -2,8 +2,9 @@
 #define ACCOUNTSWINDOW_H
 
 #include "../finances.h"
-#include "../../service/servicecontext.h"
+#include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
+#include "../widget/statusbar.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -18,16 +19,16 @@ class AccountsWindow : public QMainWindow {
     Finances::App *app;
     QTableView *table;
     QLineEdit *filterInput;
-    QStatusBar *statusBar;
+    StatusBar *statusBar;
+    AccountTableModel *model;
 
 public:
-    AccountsWindow(Finances::App *app, ServiceContext *serviceContext);
+    AccountsWindow(Finances::App *app, DataStore *dataStore);
     ~AccountsWindow();
 
-private:
-    QList<Company*> companies;
-    QList<Account*> accounts;
-    AccountTableModel *model;
+public Q_SLOTS:
+    void setCompanies(QList<Company*> companies);
+    void setAccounts(QList<Account*> accounts);
 
     // QWidget interface
 protected:
