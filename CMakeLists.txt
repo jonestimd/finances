@@ -1,3 +1,8 @@
+# cmds:
+# $ cmake -S . -B build
+# $ cmake --build build -v
+# env:
+# CMAKE_PREFIX_PATH=/opt/Qt/6.7.2/gcc_64/lib/cmake
 cmake_minimum_required(VERSION 3.27)
 
 project(finances VERSION 0.1 LANGUAGES CXX)
@@ -10,6 +15,27 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ExternalProject)
+
+ExternalProject_Add(qdecimal
+    GIT_REPOSITORY git@github.com:semihc/qdecimal.git
+    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+    INSTALL_COMMAND ""
+    BUILD_BYPRODUCTS
+        <BINARY_DIR>/decnumber/libdecnumber.a
+        <BINARY_DIR>/src/libqdecimal.a
+)
+ExternalProject_Get_Property(qdecimal SOURCE_DIR BINARY_DIR)
+add_library(libdecnumber STATIC IMPORTED)
+add_dependencies(libdecnumber qdecimal)
+set_target_properties(libdecnumber
+    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/decnumber/libdecnumber.a
+)
+add_library(libqdecimal STATIC IMPORTED)
+add_dependencies(libqdecimal qdecimal)
+set_target_properties(libqdecimal
+    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/src/libqdecimal.a
+)
+
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test)
 
@@ -26,7 +52,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ui/resources/finances.svg
         ui/resources/dark.qss
         ui/resources/light.qss
+        ui/widget/companydialog.h ui/widget/companydialog.cpp ui/widget/companydialog.ui
     )
+    add_dependencies(finances libdecnumber libqdecimal)
     add_subdirectory(service/)
     add_subdirectory(ui/)
 # Define target properties for Android with Qt 6 as:
@@ -46,15 +74,6 @@ else()
         )
     endif()
 endif()
-
-ExternalProject_Add(qdecimal
-    GIT_REPOSITORY git@github.com:semihc/qdecimal.git
-    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-    INSTALL_COMMAND ""
-    BUILD_BYPRODUCTS <BINARY_DIR>/src/libqdecimal.a
-)
-ExternalProject_Get_Property(qdecimal SOURCE_DIR BINARY_DIR)
-add_dependencies(finances qdecimal)
 # add_subdirectory(tests/)
 
 target_include_directories(finances PRIVATE
@@ -66,8 +85,9 @@ target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Concurrent
-    ${BINARY_DIR}/src/libqdecimal.a
-    ${BINARY_DIR}/decnumber/libdecnumber.a
+    # comment out next 2 lines for initial build with Ninja
+    libqdecimal
+    libdecnumber
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
