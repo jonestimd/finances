@@ -33,7 +33,8 @@ AccountsWindow::AccountsWindow(Finances::App *app, DataStore *dataStore)
     sortModel->setSourceModel(model);
     sortModel->setSortRole(Finances::SortRole);
     sortModel->setFilterKeyColumn(-1);
-    filterInput = new FilterInput("Account filter", toolbar, sortModel);
+    filterInput = new FilterInput("Account filter", sortModel, toolbar);
+    toolbar->addWidget(filterInput);
 
     table->setModel(sortModel);
     table->setStyle(new StyleProxy(table));

@@ -17,10 +17,28 @@ namespace Finances {
     };
 
     enum FontIcon {
+        AccountBalance = 0xe84f, // company
         Filter = 0xe152,
     };
 
+    class FontResource {
+        int fontId;
+        QString family;
+        const char *style;
+    public:
+        FontResource(const char *fileName, const char *style);
+        ~FontResource();
+
+        QFont font();
+
+        QFont font(int pointSize);
+    };
+
+    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialIcons-Regular.ttf", "Regular");
+
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QWidget *parent = nullptr);
+    QAction* iconAction(const char *iconFile, QString text, QWidget *parent = nullptr);
 
     class App : public QApplication {
         Q_OBJECT

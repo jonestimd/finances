@@ -2,6 +2,8 @@
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
+#include <QIconEngine>
+#include <QPainter>
 #include <QPalette>
 #include <QStyleHints>
 
@@ -11,34 +13,80 @@ QString readStyles(const QString &fileName) {
     return QString(file.readAll());
 }
 
-class FontResource {
-    int fontId;
-    QString family;
-    const char *style;
-public:
-    FontResource(const char *fileName, const char *style) : style{style} {
+namespace Finances {
+    FontResource::FontResource(const char *fileName, const char *style) : style{style} {
         fontId = QFontDatabase::addApplicationFont(fileName);
         auto fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
         family = fontFamilies.first();
+        // qDebug() << "Finances:" << QFontDatabase::styles(family);
     }
 
-    ~FontResource() {
+    FontResource::~FontResource() {
         QFontDatabase::removeApplicationFont(fontId);
     }
 
-    QFont font(int pointSize) {
+    QFont FontResource::font() {
+        return QFont(family);
+    }
+
+    QFont FontResource::font(int pointSize) {
         return QFontDatabase::font(family, style, pointSize);
     }
-};
 
-Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialIcons-Regular.ttf", "Light");
+    class MaterialIconEngine : public QIconEngine {
+        const FontIcon icon;
+    public:
+        MaterialIconEngine(FontIcon icon) : icon{icon} {}
 
-namespace Finances {
+    public:
+        void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override {
+            QFont font = iconFont->font();
+            font.setPixelSize(qRound(rect.height() * 0.8));
+            auto colorGroup = mode == QIcon::Mode::Disabled ? QPalette::Disabled : QPalette::Normal;
+            QColor textColor = QApplication::palette("QWidget").color(colorGroup, QPalette::ButtonText);;
+
+            painter->save();
+            painter->setPen(textColor);
+            painter->setFont(font);
+            painter->drawText(rect, Qt::AlignCenter, QChar{icon});
+            painter->restore();
+        }
+
+        QIconEngine *clone() const override {
+            return new MaterialIconEngine(icon);
+        }
+
+        QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override {
+            QImage image(size, QImage::Format_ARGB32);
+            image.fill(qRgba(0, 0, 0, 0));
+            QPixmap pix = QPixmap::fromImage(image, Qt::NoFormatConversion);
+            QPainter painter(&pix);
+            paint(&painter, QRect(QPoint(), size), mode, state);
+            return pix;
+        }
+    };
+
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
         auto label = new QLabel(parent);
         label->setFont(iconFont->font(label->font().pointSize() * 2));
         label->setText(QChar{icon});
         return label;
+    }
+
+    QAction *iconAction(FontIcon icon, QString text, QWidget *parent) {
+        auto action = new QAction(parent);
+        action->setText(text);
+        action->setToolTip(text);
+        action->setIcon(QIcon(new MaterialIconEngine(icon)));
+        return action;
+    }
+
+    QAction *iconAction(const char *iconFile, QString text, QWidget *parent) {
+        auto action = new QAction(parent);
+        action->setText(text);
+        action->setToolTip(text);
+        action->setIcon(QIcon(iconFile));
+        return action;
     }
 
     App::App(int &argc, char **argv)

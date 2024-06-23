@@ -1,24 +1,46 @@
 #include "filterinput.h"
 
 #include "../finances.h"
+#include <QPainter>
 #include <QRegularExpressionValidator>
 #include <QStyle>
+#include <QStyleOptionFrame>
 
 FilterInput::FilterInput(
     const char *placeholderText,
-    QToolBar *toolbar,
-    QSortFilterProxyModel *model) : QLineEdit(toolbar)
+    QSortFilterProxyModel *model,
+    QWidget *parent) : QLineEdit(parent)
 {
     setPlaceholderText(tr(placeholderText));
     setClearButtonEnabled(true);
-
-    toolbar->addWidget(iconWidget(Finances::FontIcon::Filter, toolbar));
-    toolbar->addWidget(this);
+    auto margins = textMargins();
+    QFont font = Finances::iconFont->font();
+    font.setPixelSize(height() * 0.8);
+    QFontMetrics fm(font);
+    fm.boundingRect(icon).width();
+    margins.setLeft(margins.left() + fm.boundingRect(icon).width() * 1.2);
+    setTextMargins(margins);
 
     connect(this, SIGNAL(textChanged(QString)), this, SLOT(onTextChanged(QString)));
     connect(this, SIGNAL(filterChanged(QRegularExpression)),
             model, SLOT(setFilterRegularExpression(QRegularExpression)));
     setProperty("invalid", false);
+}
+
+void FilterInput::paintEvent(QPaintEvent *event) {
+    QLineEdit::paintEvent(event);
+    QPainter p(this);
+    QPalette pal = palette();
+    QFont font = Finances::iconFont->font();
+    font.setPixelSize(height() * 0.8);
+
+    QStyleOptionFrame panel;
+    initStyleOption(&panel);
+    QRect r = style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
+
+    p.setBrush(pal.text());
+    p.setFont(font);
+    p.drawText(r, Qt::AlignVCenter, icon);
 }
 
 void FilterInput::onTextChanged(const QString &text) {
