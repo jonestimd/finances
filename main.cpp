@@ -11,7 +11,6 @@
 #define DB_USER DB_NAME
 
 // to load styles use --stylesheet finances.qss
-// TODO load dark/light deficit colors from config (stylesheet?)
 int main(int argc, char *argv[])
 {
     Finances::App app(argc, argv);
