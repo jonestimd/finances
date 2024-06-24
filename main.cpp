@@ -13,7 +13,7 @@
 // to load styles use --stylesheet finances.qss
 int main(int argc, char *argv[])
 {
-    Finances::App app(argc, argv);
+    finances::App app(argc, argv);
     QMetaType::registerConverter<QDecNumber, QString>(
         [](const QDecNumber &value) -> QString { return QString(value.toString()); }
     );
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     ServiceContext serviceContext(&connectionPool);
     DataStore dataStore(&serviceContext);
 
-    AccountsWindow accountsWindow(&app, &dataStore);
+    AccountsWindow accountsWindow(&dataStore);
     accountsWindow.show();
     return app.exec();
 }

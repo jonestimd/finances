@@ -1,13 +1,13 @@
 #ifndef PODTABLEMODEL_H
 #define PODTABLEMODEL_H
 
-#include <QAbstractTableModel>
 #include <QBrush>
 #include <QDecNumber.hh>
+#include "adaptertablemodel.h"
 #include "columnadapter.h"
 
 template<class Row>
-class PodTableModel : public QAbstractTableModel
+class PodTableModel : public AdapterTableModel
 {
 protected:
     const QList<ColumnAdapter<Row>*> columns;
@@ -15,7 +15,7 @@ protected:
 
 public:
     explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
-        : QAbstractTableModel(parent), rows(QList<Row*>()), columns{columns} {}
+        : AdapterTableModel(parent), rows(QList<Row*>()), columns{columns} {}
 
     void setRows(QList<Row*> rows) {
         beginResetModel();
@@ -25,7 +25,7 @@ public:
     }
 
 public:
-    int columnIndex(QString name) const {
+    int columnIndex(const QString name) const override {
         for (int col = 0; col < columns.length(); ++col) {
             if (columns[col]->title == name) return col;
         }

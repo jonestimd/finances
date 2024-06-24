@@ -9,7 +9,7 @@
 class FilterInput : public QLineEdit
 {
     Q_OBJECT
-    static constexpr QChar icon = QChar{Finances::FontIcon::Filter};
+    static constexpr QChar icon = QChar{finances::FontIcon::Filter};
 protected Q_SLOTS:
     void onTextChanged(const QString &text);
 public:

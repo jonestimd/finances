@@ -7,11 +7,13 @@
 #include <QAbstractTableModel>
 
 class AccountTableModel : public PodTableModel<Account> {
-    QList<Company*> companies;
+    QList<Company*> companies_;
 public:
     explicit AccountTableModel(QObject *parent = nullptr);
 
-    void setCompanies(QList<Company*>);
+    const QList<Company*> companies() const;
+
+    void setCompanies(QList<Company*> companies);
 };
 
 #endif // ACCOUNTTABLEMODEL_H

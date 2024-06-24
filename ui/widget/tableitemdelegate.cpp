@@ -7,7 +7,7 @@ TableItemDelegate::TableItemDelegate(QObject *parent)
 
 void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     QStyledItemDelegate::initStyleOption(option, index);
-    QVariant highlight = index.data(Finances::TextHighlight);
+    QVariant highlight = index.data(finances::TextHighlight);
     if (highlight.isValid() && highlight.toBool()) {
         auto brush = option->palette.accent();
         option->palette.setBrush(QPalette::Text, brush);

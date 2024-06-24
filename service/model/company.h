@@ -8,6 +8,7 @@
 class Company : public BaseDomain {
 public:
     QVariant name;
+    QVariant accounts;
 
     Company();
     Company(QSqlRecord record);

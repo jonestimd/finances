@@ -10,7 +10,7 @@
 #include <QToolBar>
 #include <Qt>
 
-namespace Finances {
+namespace finances {
     enum ItemDataRole {
         TextHighlight = Qt::UserRole,
         SortRole,
@@ -38,7 +38,9 @@ namespace Finances {
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QWidget *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent = nullptr);
     QAction* iconAction(const char *iconFile, QString text, QWidget *parent = nullptr);
+    QAction* iconAction(const char *iconFile, QString text, QString shortcut, QWidget *parent = nullptr);
 
     class App : public QApplication {
         Q_OBJECT

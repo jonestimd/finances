@@ -19,8 +19,8 @@ public:
     QVariant value(const T *row, int role) const override {
         QVariant value = NumberColumnAdapter<T>::value(row, role);
         if (role == Qt::DisplayRole) return formatter(row, value);
-        if (role == Finances::SortRole) return value.value<QDecNumber>().toDouble();
-        if (role == Finances::TextHighlight) {
+        if (role == finances::SortRole) return value.value<QDecNumber>().toDouble();
+        if (role == finances::TextHighlight) {
             QVariant amount = NumberColumnAdapter<T>::value(row, Qt::DisplayRole);
             if (amount.value<QDecNumber>().isNegative()) return true;
         }

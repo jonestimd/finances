@@ -9,24 +9,29 @@
 #include "relationcolumnadapter.h"
 #include "../../service/model/accounttype.h"
 
-AccountTableModel::AccountTableModel(QObject *parent) : companies(QList<Company*>()),
+AccountTableModel::AccountTableModel(QObject *parent) : companies_(QList<Company*>()),
     PodTableModel<Account>{
         QList<ColumnAdapter<Account>*>{
             new BoolColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, &this->companies),
+            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, &this->companies_),
             new ColumnAdapter<Account>(tr("Name"), &Account::name),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, accountTypes),
             new ColumnAdapter<Account>(tr("Description"), &Account::description),
             new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber),
             new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance),
-        }
+        },
+        parent,
     }
 {}
 
+const QList<Company*> AccountTableModel::companies() const {
+    return companies_;
+}
+
 void AccountTableModel::setCompanies(QList<Company*> companies) {
     this->beginResetModel();
-    this->companies.clear();
-    this->companies.append(companies);
+    this->companies_.clear();
+    this->companies_.append(companies);
     this->endResetModel();
 }

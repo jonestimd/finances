@@ -14,7 +14,7 @@ public:
     ColumnAdapter(QString title, QVariant T::* field) : title{title}, field{field} {}
 
     virtual QVariant value(const T *row, int role) const {
-        if (role == Qt::DisplayRole || role == Finances::SortRole) return row->*(this->field);
+        if (role == Qt::DisplayRole || role == finances::SortRole) return row->*(this->field);
         return QVariant{};
     };
 };

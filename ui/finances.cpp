@@ -13,7 +13,7 @@ QString readStyles(const QString &fileName) {
     return QString(file.readAll());
 }
 
-namespace Finances {
+namespace finances {
     FontResource::FontResource(const char *fileName, const char *style) : style{style} {
         fontId = QFontDatabase::addApplicationFont(fileName);
         auto fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
@@ -81,11 +81,23 @@ namespace Finances {
         return action;
     }
 
+    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent) {
+        auto action = iconAction(icon, text, parent);
+        action->setShortcut(QKeySequence(shortcut));
+        return action;
+    }
+
     QAction *iconAction(const char *iconFile, QString text, QWidget *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
         action->setIcon(QIcon(iconFile));
+        return action;
+    }
+
+    QAction *iconAction(const char *iconFile, QString text, QString shortcut, QWidget *parent) {
+        auto action = iconAction(iconFile, text, parent);
+        action->setShortcut(QKeySequence(shortcut));
         return action;
     }
 

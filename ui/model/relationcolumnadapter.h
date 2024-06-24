@@ -20,8 +20,8 @@ public:
 
     QVariant value(const T *row, int role) const override {
         QVariant value = ColumnAdapter<T>::value(row, role);
-        if (role == Finances::SortRole && value.isNull()) return "";
-        if (role == Qt::DisplayRole || role == Finances::SortRole) {
+        if (role == finances::SortRole && value.isNull()) return "";
+        if (role == Qt::DisplayRole || role == finances::SortRole) {
             foreach (V* item, *values) {
                 if (item->id == value) return item->name;
             }

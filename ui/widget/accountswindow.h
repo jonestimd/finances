@@ -1,10 +1,11 @@
 #ifndef ACCOUNTSWINDOW_H
 #define ACCOUNTSWINDOW_H
 
-#include "../finances.h"
 #include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
 #include "../widget/statusbar.h"
+#include "companieswindow.h"
+#include "tablesort.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -16,19 +17,20 @@ QT_END_NAMESPACE
 
 class AccountsWindow : public QMainWindow {
     Q_OBJECT
-    Finances::App *app;
-    QTableView *table;
-    QLineEdit *filterInput;
-    StatusBar *statusBar;
-    AccountTableModel *model;
+    StatusBar statusBar;
+    AccountTableModel model;
+    TableSort tableSort;
+    CompaniesWindow *companiesDialog;
 
 public:
-    AccountsWindow(Finances::App *app, DataStore *dataStore);
+    AccountsWindow(DataStore *dataStore);
     ~AccountsWindow();
 
 public Q_SLOTS:
     void setCompanies(QList<Company*> companies);
     void setAccounts(QList<Account*> accounts);
+    void showCompanies();
+    // void hideCompanies();
 
     // QWidget interface
 protected:

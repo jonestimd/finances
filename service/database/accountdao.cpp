@@ -20,7 +20,9 @@ namespace accountDao {
     QList<Account*> getAll(QSqlDatabase db) {
         QSqlQuery query(db);
         QList<Account*> accounts;
-        if (!query.exec(getAccountsSql)) {} // TODO show error
+        if (!query.exec(getAccountsSql)) {
+            qCritical() << "accountDao:" << query.lastError().text();
+        }
         while (query.next()) {
             accounts.append(new Account(query.record()));
         }

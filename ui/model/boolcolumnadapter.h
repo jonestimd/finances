@@ -16,7 +16,7 @@ public:
             QVariant value = ColumnAdapter<T>::value(row, Qt::DisplayRole);
             return value.toBool() ? Qt::Checked : Qt::Unchecked;
         }
-        if (role == Finances::SortRole) return ColumnAdapter<T>::value(row, Qt::DisplayRole);
+        if (role == finances::SortRole) return ColumnAdapter<T>::value(row, Qt::DisplayRole);
         return QVariant{};
     }
 };

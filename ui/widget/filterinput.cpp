@@ -14,7 +14,7 @@ FilterInput::FilterInput(
     setPlaceholderText(tr(placeholderText));
     setClearButtonEnabled(true);
     auto margins = textMargins();
-    QFont font = Finances::iconFont->font();
+    QFont font = finances::iconFont->font();
     font.setPixelSize(height() * 0.8);
     QFontMetrics fm(font);
     fm.boundingRect(icon).width();
@@ -31,7 +31,7 @@ void FilterInput::paintEvent(QPaintEvent *event) {
     QLineEdit::paintEvent(event);
     QPainter p(this);
     QPalette pal = palette();
-    QFont font = Finances::iconFont->font();
+    QFont font = finances::iconFont->font();
     font.setPixelSize(height() * 0.8);
 
     QStyleOptionFrame panel;

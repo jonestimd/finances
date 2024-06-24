@@ -52,7 +52,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ui/resources/finances.svg
         ui/resources/dark.qss
         ui/resources/light.qss
-        ui/widget/companydialog.h ui/widget/companydialog.cpp ui/widget/companydialog.ui
     )
     add_dependencies(finances libdecnumber libqdecimal)
     add_subdirectory(service/)

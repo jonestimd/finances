@@ -5,4 +5,5 @@ Company::Company() : BaseDomain() {}
 
 Company::Company(QSqlRecord record) : BaseDomain::BaseDomain(record) {
     name = record.field("name").value();
+    accounts = record.field("accounts").value();
 }
