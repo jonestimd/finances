@@ -39,23 +39,20 @@ set_target_properties(libqdecimal
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test)
 
-set(PROJECT_SOURCES
-    main.cpp
-    # showstyles.cpp
+set(PROJECT_RESOURCES
+    cxx/ui/resources/finances.qrc
+    cxx/ui/resources/finances.svg
+    cxx/ui/resources/dark.qss
+    cxx/ui/resources/light.qss
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(finances
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        ui/resources/finances.qrc
-        ui/resources/finances.svg
-        ui/resources/dark.qss
-        ui/resources/light.qss
+        ${PROJECT_RESOURCES}
     )
     add_dependencies(finances libdecnumber libqdecimal)
-    add_subdirectory(service/)
-    add_subdirectory(ui/)
+    add_subdirectory(cxx/)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET finances APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -63,13 +60,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 else()
     if(ANDROID)
         add_library(finances SHARED
-            ${PROJECT_SOURCES}
+            # ${PROJECT_SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(finances
-            ${PROJECT_SOURCES}
+            # ${PROJECT_SOURCES}
         )
     endif()
 endif()
