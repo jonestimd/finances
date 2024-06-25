@@ -12,17 +12,17 @@ concept NameAndId = requires(T *t) {
 
 template<class T, NameAndId V>
 class RelationColumnAdapter : public ColumnAdapter<T> {
-    QList<V*> *values;
+    std::function<QList<V*>()> values;
 
 public:
-    RelationColumnAdapter(QString title, QVariant T::*field, QList<V*> *values)
+    RelationColumnAdapter(QString title, QVariant T::*field, std::function<QList<V*>()> values)
         : ColumnAdapter<T>(title, field), values{values} {}
 
     QVariant value(const T *row, int role) const override {
         QVariant value = ColumnAdapter<T>::value(row, role);
         if (role == finances::SortRole && value.isNull()) return "";
         if (role == Qt::DisplayRole || role == finances::SortRole) {
-            foreach (V* item, *values) {
+            foreach (V* item, this->values()) {
                 if (item->id == value) return item->name;
             }
         }

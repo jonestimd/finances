@@ -6,7 +6,8 @@
 
 AccountsWindow::AccountsWindow(DataStore *dataStore)
     : QMainWindow()
-    , model{this}
+    , dataStore{dataStore}
+    , model{dataStore, this}
     , tableSort{this, &model, "Account filter", "Name"}
     , statusBar{this}
 {
@@ -26,8 +27,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     connect(dataStore, SIGNAL(accountsLoaded(QList<Account*>)), this, SLOT(setAccounts(QList<Account*>)));
     if (dataStore->loadAccounts()) model.setRows(dataStore->accounts());
     else statusBar.addMessage(tr("Loading accounts..."));
-    if (dataStore->loadCompanies()) model.setCompanies(dataStore->companies());
-    else statusBar.addMessage(tr("Loading companies..."));
+    if (!dataStore->loadCompanies()) statusBar.addMessage(tr("Loading companies..."));
 
     toolbar->addWidget(&tableSort.filterInput);
 
@@ -43,7 +43,6 @@ AccountsWindow::~AccountsWindow() {
 }
 
 void AccountsWindow::setCompanies(QList<Company*> companies) {
-    model.setCompanies(companies);
     statusBar.removeMessage(tr("Loading companies..."));
 }
 
@@ -53,7 +52,7 @@ void AccountsWindow::setAccounts(QList<Account *> accounts) {
 }
 
 void AccountsWindow::showCompanies() {
-    if (!companiesDialog) companiesDialog = new CompaniesWindow(this, this->model.companies());
+    if (!companiesDialog) companiesDialog = new CompaniesWindow(this, dataStore->companies());
     companiesDialog->show();
 }
 

@@ -33,23 +33,23 @@ public:
     }
 
     // QAbstractItemModel interface
-    int rowCount(const QModelIndex &parent) const {
+    int rowCount(const QModelIndex &parent) const override {
         if (parent.isValid()) return 0;
         return rows.count();
     };
 
-    int columnCount(const QModelIndex &parent) const {
+    int columnCount(const QModelIndex &parent) const override {
         if (parent.isValid()) return 0;
         return columns.count();
     }
 
-    QVariant data(const QModelIndex &index, int role) const {
+    QVariant data(const QModelIndex &index, int role) const override {
         return columns[index.column()]->value(rows[index.row()], role);
     }
 
-    // bool setData(const QModelIndex &index, const QVariant &value, int role);
+    // bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const {
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
         if (role == Qt::DisplayRole && orientation == Qt::Horizontal && section < columns.count()) {
             return columns[section]->title;
         }

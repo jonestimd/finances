@@ -2,18 +2,14 @@
 #define ACCOUNTTABLEMODEL_H
 
 #include "../../service/model/account.h"
-#include "../../service/model/company.h"
+#include "datastore.h"
 #include "podtablemodel.h"
 #include <QAbstractTableModel>
 
 class AccountTableModel : public PodTableModel<Account> {
-    QList<Company*> companies_;
+    DataStore *dataStore;
 public:
-    explicit AccountTableModel(QObject *parent = nullptr);
-
-    const QList<Company*> companies() const;
-
-    void setCompanies(QList<Company*> companies);
+    explicit AccountTableModel(DataStore *datastore, QObject *parent = nullptr);
 };
 
 #endif // ACCOUNTTABLEMODEL_H

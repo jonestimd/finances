@@ -9,11 +9,12 @@
 #include "relationcolumnadapter.h"
 #include "../../service/model/accounttype.h"
 
-AccountTableModel::AccountTableModel(QObject *parent) : companies_(QList<Company*>()),
+AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent)
+    : dataStore{ds},
     PodTableModel<Account>{
         QList<ColumnAdapter<Account>*>{
             new BoolColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, &this->companies_),
+            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, std::bind(&DataStore::companies, ds)),
             new ColumnAdapter<Account>(tr("Name"), &Account::name),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, accountTypes),
             new ColumnAdapter<Account>(tr("Description"), &Account::description),
@@ -24,14 +25,3 @@ AccountTableModel::AccountTableModel(QObject *parent) : companies_(QList<Company
         parent,
     }
 {}
-
-const QList<Company*> AccountTableModel::companies() const {
-    return companies_;
-}
-
-void AccountTableModel::setCompanies(QList<Company*> companies) {
-    this->beginResetModel();
-    this->companies_.clear();
-    this->companies_.append(companies);
-    this->endResetModel();
-}

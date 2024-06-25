@@ -17,6 +17,7 @@ QT_END_NAMESPACE
 
 class AccountsWindow : public QMainWindow {
     Q_OBJECT
+    DataStore *dataStore;
     StatusBar statusBar;
     AccountTableModel model;
     TableSort tableSort;
