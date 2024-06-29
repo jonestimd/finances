@@ -2,22 +2,34 @@
 #define COMPANIESWINDOW_H
 
 #include "../model/companytablemodel.h"
+#include "../model/datastore.h"
 #include "tablesort.h"
 #include <QBoxLayout>
 #include <QDialog>
 #include <QMainWindow>
+#include <QMessageBox>
+#include <QStatusBar>
 #include <QTableView>
 
 class CompaniesWindow : public QDialog
 {
+    Q_OBJECT
     QVBoxLayout layout;
-    QWidget toolbar;
-    QHBoxLayout toolbarLayout;
+    QToolBar toolbar;
+    DataStore *dataStore;
     CompanyTableModel model;
     QSortFilterProxyModel sortModel;
     TableSort tableSort;
+    QAction *saveAction;
+    QStatusBar statusBar;
+
 public:
-    CompaniesWindow(QMainWindow *parent, QList<Company*> companies);
+    CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
+
+protected Q_SLOTS:
+    void dataChanged();
+    void saveCompanies();
+    void setCompanies(QList<Company*> companies);
 
     // QWidget interface
 protected:

@@ -1,4 +1,5 @@
 #include "finances.h"
+#include "widget/styleproxy.h"
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
@@ -6,6 +7,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QStyleHints>
+#include <QTranslator>
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -81,10 +83,18 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent) {
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence shortcut, QWidget *parent) {
         auto action = iconAction(icon, text, parent);
-        action->setShortcut(QKeySequence(shortcut));
+        action->setShortcut(shortcut);
         return action;
+    }
+
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QWidget *parent) {
+        return iconAction(icon, text, QKeySequence(shortcut), parent);
+    }
+
+    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent) {
+        return iconAction(icon, text, QKeySequence(shortcut), parent);
     }
 
     QAction *iconAction(const char *iconFile, QString text, QWidget *parent) {
@@ -106,20 +116,23 @@ namespace finances {
         userStyleSheet{""},
         settings{new QSettings(QSettings::IniFormat, QSettings::UserScope, "finances", "finances", this)}
     {
+        QApplication::setStyle(new StyleProxy());
         setWindowIcon(QIcon(":/images/finances.svg"));
         auto styleFile = styleSheet();
         if (!styleFile.isEmpty()) userStyleSheet = readStyles(styleFile.replace(0, 8, ""));
         updateStyleSheet(styleHints()->colorScheme());
         connect(styleHints(), SIGNAL(colorSchemeChanged(Qt::ColorScheme)), this, SLOT(updateStyleSheet(Qt::ColorScheme)));
+        QTranslator translator;
+        if (translator.load(QLocale::system(), "finances", "_", ":/i18n")) installTranslator(&translator);
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {
         if (scheme == Qt::ColorScheme::Dark) {
-            auto styles = readStyles(":/styles/dark.qss");
+            auto styles = readStyles(":/styles/finances.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
         else if (scheme == Qt::ColorScheme::Light) {
-            auto styles = readStyles(":/styles/light.qss");
+            auto styles = readStyles(":/styles/minimal-light.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
     }

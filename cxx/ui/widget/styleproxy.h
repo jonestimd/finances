@@ -6,11 +6,11 @@
 class StyleProxy : public QProxyStyle
 {
 public:
-    StyleProxy(QObject *parent = nullptr);
+    StyleProxy();
 
     // QStyle interface
 public:
-    QRect subElementRect(SubElement subElement, const QStyleOption *option, const QWidget *widget) const;
+    QRect subElementRect(SubElement subElement, const QStyleOption *option, const QWidget *widget) const override;
 };
 
 #endif // STYLEPROXY_H

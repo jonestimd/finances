@@ -1,26 +1,41 @@
 #include "companieswindow.h"
 
 #include "settings.h"
+#include "dialog.h"
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QPushButton>
 #include <QTimer>
 
-CompaniesWindow::CompaniesWindow(QMainWindow *parent, QList<Company*> companies)
+CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
-    , model{companies, this}
+    , dataStore{dataStore}
+    , model{dataStore->companies(), this}
     , toolbar{this}
-    , toolbarLayout{&toolbar}
+    , statusBar{this}
     , sortModel{this}
-    , tableSort{this, &model, "Company filter"}
+    , tableSort{this, &model, "Company filter", "Name", &statusBar}
 {
-    setWindowTitle(tr("Companies"));
+    setWindowTitle(tr("Companies[*]"));
     // todo add buttons to toolbar
-    toolbarLayout.addWidget(&tableSort.filterInput);
-    toolbarLayout.setContentsMargins(0, 6, 0, 6);
+    // - add
+    // - remove
+    // - reload?
+    // - undo?
+    saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this);
+    saveAction->setEnabled(false);
+    connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+    connect(saveAction, SIGNAL(triggered(bool)), this, SLOT(saveCompanies()));
+    connect(dataStore, SIGNAL(companiesLoaded(QList<Company*>)), this, SLOT(setCompanies(QList<Company*>)));
+    toolbar.setMovable(false);
+    toolbar.addAction(saveAction);
+    toolbar.addWidget(&tableSort.filterInput);
 
     layout.addWidget(&toolbar);
+    layout.addWidget(&toolbar);
     layout.addWidget(&tableSort.table);
+    layout.addWidget(&statusBar);
     layout.setSpacing(0);
     layout.setContentsMargins(0, 0, 0, 0);
 
@@ -29,10 +44,29 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, QList<Company*> companies)
     settings::restoreWindowState("companies", this, QSize{400, 500});
 }
 
+void CompaniesWindow::dataChanged() {
+    saveAction->setEnabled(model.hasUnsavedChanges());
+    setWindowModified(model.hasUnsavedChanges());
+}
+
+void CompaniesWindow::saveCompanies() {
+    statusBar.showMessage(tr("Saving companies..."));
+    tableSort.table.setEnabled(false);
+    dataStore->updateCompanies(this, model.unsavedChanges());
+}
+
+void CompaniesWindow::setCompanies(QList<Company *> companies) {
+    model.setRows(companies);
+    statusBar.clearMessage();
+    tableSort.table.setEnabled(true);
+}
+
 void CompaniesWindow::closeEvent(QCloseEvent *event) {
-    settings::saveWindowState("companies", this);
+    if (!confirmClose(this, &model)) event->ignore();
+    else settings::saveWindowState("companies", this);
 }
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape && !confirmClose(this, &model)) return;
     if (!tableSort.focusFilter(event)) QDialog::keyPressEvent(event);
 }

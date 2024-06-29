@@ -11,15 +11,17 @@ class DataStore : public QObject
     Q_OBJECT
     DataStorePrivate *p;
     ServiceContext *services;
+    const QString user;
 public:
     DataStore(ServiceContext *services);
     ~DataStore();
 
-    bool loadAccounts();
+    bool loadAccounts(QWidget *source);
     QList<Account*> accounts() const;
 
-    bool loadCompanies();
+    bool loadCompanies(QWidget *source);
     QList<Company*> companies() const;
+    void updateCompanies(QWidget *source, QList<Company*> updates);
 
 Q_SIGNALS:
     void accountsLoaded(QList<Account*>);

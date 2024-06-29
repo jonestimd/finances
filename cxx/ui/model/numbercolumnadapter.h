@@ -11,7 +11,8 @@ static int numberAlignment = Qt::AlignVCenter | Qt::AlignTrailing;
 template<class T>
 class NumberColumnAdapter : public ColumnAdapter<T> {
 public:
-    NumberColumnAdapter(QString title, QVariant T::* field) : ColumnAdapter<T>(title, field) {}
+    NumberColumnAdapter(QString title, QVariant T::* field, bool editable = false)
+        : ColumnAdapter<T>(title, field, editable) {}
 
     QVariant value(const T *row, int role) const override {
         if (role == Qt::TextAlignmentRole) return numberAlignment;

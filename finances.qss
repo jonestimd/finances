@@ -1,0 +1,21 @@
+QTableView {
+    accent-color: rgb(255, 41, 4);
+    background: #ffffffff;
+    alternate-background-color: rgb(230, 242, 255);
+    gridline-color: rgb(225, 225, 225);
+    border: 1px solid gridline-color;
+    selection-color: #ff000000;
+/*    selection-background-color: rgb(0, 212, 232); */
+    selection-background-color: rgb(0, 61, 66);
+    color: #ff000000;
+}
+
+/* QTableView::item {
+    background: accent;
+} */
+
+QLineEdit[invalid="true"] {
+    border: 1px solid rgb(128, 0, 0);
+    border-radius: 2px;
+    padding: 2px 0px;
+}

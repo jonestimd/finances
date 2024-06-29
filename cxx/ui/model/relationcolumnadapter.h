@@ -16,7 +16,7 @@ class RelationColumnAdapter : public ColumnAdapter<T> {
 
 public:
     RelationColumnAdapter(QString title, QVariant T::*field, std::function<QList<V*>()> values)
-        : ColumnAdapter<T>(title, field), values{values} {}
+        : ColumnAdapter<T>(title, field, false), values{values} {} // TODO editable
 
     QVariant value(const T *row, int role) const override {
         QVariant value = ColumnAdapter<T>::value(row, role);

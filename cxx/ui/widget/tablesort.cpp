@@ -1,11 +1,10 @@
 #include "tablesort.h"
-#include "styleproxy.h"
 #include "tableitemdelegate.h"
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QTimer>
 
-TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * filterLabel, const char *defaultSort)
+TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * filterLabel, const char *defaultSort, QStatusBar *statusBar)
     : model{model}
     , sortModel{parent}
     , table{parent}
@@ -17,8 +16,7 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     sortModel.setFilterKeyColumn(-1);
 
     table.setModel(&sortModel);
-    table.setStyle(new StyleProxy(&table));
-    table.setItemDelegate(new TableItemDelegate(&table));
+    table.setItemDelegate(new TableItemDelegate(&table, statusBar));
 
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);

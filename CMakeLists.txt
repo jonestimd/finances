@@ -42,8 +42,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Te
 set(PROJECT_RESOURCES
     cxx/ui/resources/finances.qrc
     cxx/ui/resources/finances.svg
-    cxx/ui/resources/dark.qss
-    cxx/ui/resources/light.qss
+    cxx/ui/resources/finances.qss
+    cxx/ui/resources/minimal-dark.qss
+    cxx/ui/resources/minimal-light.qss
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

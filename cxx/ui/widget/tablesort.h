@@ -3,6 +3,7 @@
 
 #include "filterinput.h"
 #include "../model/adaptertablemodel.h"
+#include <QStatusBar>
 #include <QTableView>
 
 struct TableSort {
@@ -12,7 +13,8 @@ struct TableSort {
     FilterInput filterInput;
     QString defaultSort;
 
-    TableSort(QWidget *parent, AdapterTableModel *model, const char *filterLabel, const char *defaultSort = nullptr);
+    TableSort(QWidget *parent, AdapterTableModel *model, const char *filterLabel,
+              const char *defaultSort = nullptr, QStatusBar *statusBar = nullptr);
 
     int columnIndex(const QString name) const;
 

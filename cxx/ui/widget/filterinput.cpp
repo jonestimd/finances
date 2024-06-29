@@ -6,10 +6,18 @@
 #include <QStyle>
 #include <QStyleOptionFrame>
 
-FilterInput::FilterInput(
-    const char *placeholderText,
-    QSortFilterProxyModel *model,
-    QWidget *parent) : QLineEdit(parent)
+class RegExValidator : public QValidator {
+public:
+    RegExValidator(QObject *parent) : QValidator(parent) {};
+
+    State validate(QString &text, int &pos) const override {
+        auto re = QRegularExpression(text, QRegularExpression::CaseInsensitiveOption);
+        return re.isValid() ? State::Acceptable : State::Intermediate;
+    };
+};
+
+FilterInput::FilterInput(const char *placeholderText, QSortFilterProxyModel *model, QWidget *parent)
+    : QLineEdit(parent)
 {
     setPlaceholderText(tr(placeholderText));
     setClearButtonEnabled(true);
@@ -20,11 +28,12 @@ FilterInput::FilterInput(
     fm.boundingRect(icon).width();
     margins.setLeft(margins.left() + fm.boundingRect(icon).width() * 1.2);
     setTextMargins(margins);
+    setValidator(new RegExValidator(this));
+    setProperty("tableFilter", "true");
 
     connect(this, SIGNAL(textChanged(QString)), this, SLOT(onTextChanged(QString)));
     connect(this, SIGNAL(filterChanged(QRegularExpression)),
             model, SLOT(setFilterRegularExpression(QRegularExpression)));
-    setProperty("invalid", false);
 }
 
 void FilterInput::paintEvent(QPaintEvent *event) {
@@ -44,12 +53,8 @@ void FilterInput::paintEvent(QPaintEvent *event) {
 }
 
 void FilterInput::onTextChanged(const QString &text) {
-    auto re = QRegularExpression(text, QRegularExpression::CaseInsensitiveOption);
-    auto wasInvalid = property("invalid");
-    auto invalid = !re.isValid();
-    if (wasInvalid != invalid) {
-        setProperty("invalid", invalid);
-        style()->unpolish(this);
+    if (hasAcceptableInput()) {
+        emit filterChanged(QRegularExpression(text, QRegularExpression::CaseInsensitiveOption));
     }
-    if (re.isValid()) emit filterChanged(re);
+    style()->unpolish(this);
 }

@@ -14,11 +14,14 @@ namespace finances {
     enum ItemDataRole {
         TextHighlight = Qt::UserRole,
         SortRole,
+        Unsaved,
+        ValidatorFactory,
     };
 
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         Filter = 0xe152,
+        Save = 0xe161,
     };
 
     class FontResource {
@@ -39,6 +42,7 @@ namespace finances {
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QWidget *parent = nullptr);
     QAction* iconAction(const char *iconFile, QString text, QWidget *parent = nullptr);
     QAction* iconAction(const char *iconFile, QString text, QString shortcut, QWidget *parent = nullptr);
 

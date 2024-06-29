@@ -11,6 +11,8 @@ public:
     CompanyService(ConnectionPool *connectionPool);
 
     QList<Company*> getAll();
+
+    QList<Company*> update(QList<Company*> companies, const QString &user);
 };
 
 #endif // COMPANYSERVICE_H

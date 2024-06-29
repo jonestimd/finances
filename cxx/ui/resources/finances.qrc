@@ -1,12 +1,14 @@
 <RCC>
     <qresource prefix="/images">
         <file>finances.svg</file>
+        <file>invalid.svg</file>
     </qresource>
     <qresource prefix="/fonts">
         <file>MaterialIcons-Regular.ttf</file>
     </qresource>
     <qresource prefix="/styles">
-        <file>dark.qss</file>
-        <file>light.qss</file>
+        <file>minimal-dark.qss</file>
+        <file>minimal-light.qss</file>
+        <file>finances.qss</file>
     </qresource>
 </RCC>

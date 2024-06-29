@@ -11,10 +11,10 @@ Account::Account() : BaseDomain() {}
 
 Account::Account(QSqlRecord record) : BaseDomain::BaseDomain(record) {
     companyId = getValue(record, "company_id");
-    name = record.field("name").value();
-    description = getValue(record, "description");
-    type = record.field("type").value();
-    accountNumber = getValue(record, "account_no");
+    name = record.field("name").value().toString();
+    description = getValue(record, "description").toString();
+    type = record.field("type").value().toString();
+    accountNumber = getValue(record, "account_no").toString();
     closed = record.field("closed").value().toString() == "Y";
     transactions = record.field("transactions").value();
     balance = decimalValue(record, "balance");

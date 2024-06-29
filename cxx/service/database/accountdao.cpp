@@ -22,6 +22,7 @@ namespace accountDao {
         QList<Account*> accounts;
         if (!query.exec(getAccountsSql)) {
             qCritical() << "accountDao:" << query.lastError().text();
+            throw query.lastError().text();
         }
         while (query.next()) {
             accounts.append(new Account(query.record()));

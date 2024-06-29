@@ -13,8 +13,8 @@ class AmountColumnAdapter : public NumberColumnAdapter<T> {
 public:
     const formatterType formatter;
 
-    AmountColumnAdapter(QString title, QVariant T::* field, formatterType formatter)
-        : NumberColumnAdapter<T>(title, field), formatter{formatter} {}
+    AmountColumnAdapter(QString title, QVariant T::* field, formatterType formatter, bool editable)
+        : NumberColumnAdapter<T>(title, field, editable), formatter{formatter} {}
 
     QVariant value(const T *row, int role) const override {
         QVariant value = NumberColumnAdapter<T>::value(row, role);

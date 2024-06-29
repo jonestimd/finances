@@ -2,21 +2,41 @@
 #define COLUMNADAPTER_H
 
 #include "../finances.h"
+#include "../validation/factory.h"
 #include <QVariant>
 
 template<class T>
 class ColumnAdapter {
 protected:
     QVariant T::* field;
+    const bool editable;
+    const ValidatorFactory *validatorFactory;
 public:
     const QString title;
 
-    ColumnAdapter(QString title, QVariant T::* field) : title{title}, field{field} {}
+    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
+        : title{title}, field{field}, editable{editable}, validatorFactory{factory} {}
 
     virtual QVariant value(const T *row, int role) const {
-        if (role == Qt::DisplayRole || role == finances::SortRole) return row->*(this->field);
+        switch (role) {
+        case Qt::DisplayRole:
+        case Qt::EditRole:
+        case finances::SortRole:
+            return row->*(this->field);
+        case finances::ValidatorFactory:
+            if (validatorFactory) return QVariant::fromValue(validatorFactory);
+            break;
+        }
         return QVariant{};
     };
+
+    virtual void setValue(T *row, QVariant value) {
+        row->*(this->field) = value;
+    }
+
+    virtual Qt::ItemFlags flags(const T *row) const {
+        return editable ? Qt::ItemIsEditable : Qt::NoItemFlags;
+    }
 };
 
 #endif // COLUMNADAPTER_H

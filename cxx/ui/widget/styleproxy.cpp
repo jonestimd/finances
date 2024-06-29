@@ -1,10 +1,9 @@
 #include "styleproxy.h"
 
+#include <QLineEdit>
 #include <QStyleOptionViewItem>
 
-StyleProxy::StyleProxy(QObject *parent) : QProxyStyle() {
-    setParent(parent);
-}
+StyleProxy::StyleProxy() : QProxyStyle() {}
 
 QRect StyleProxy::subElementRect(QStyle::SubElement element, const QStyleOption *option, const QWidget *widget) const {
         const QRect baseRes = QProxyStyle::subElementRect(element, option, widget);

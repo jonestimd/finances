@@ -4,4 +4,5 @@ target_sources(finances
 )
 
 add_subdirectory(model/)
+add_subdirectory(validation/)
 add_subdirectory(widget/)
