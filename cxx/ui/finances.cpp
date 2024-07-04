@@ -1,5 +1,4 @@
 #include "finances.h"
-#include "widget/styleproxy.h"
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
@@ -69,6 +68,10 @@ namespace finances {
         }
     };
 
+    QIcon qIcon(FontIcon icon) {
+        return QIcon(new MaterialIconEngine(icon)); // TODO memory leak?
+    }
+
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
         auto label = new QLabel(parent);
         label->setFont(iconFont->font(label->font().pointSize() * 2));
@@ -80,7 +83,7 @@ namespace finances {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
-        action->setIcon(QIcon(new MaterialIconEngine(icon)));
+        action->setIcon(qIcon(icon));
         return action;
     }
 
@@ -124,7 +127,6 @@ namespace finances {
         userStyleSheet{""},
         settings{new QSettings(QSettings::IniFormat, QSettings::UserScope, "finances", "finances", this)}
     {
-        QApplication::setStyle(new StyleProxy());
         setWindowIcon(QIcon(":/images/finances.svg"));
         auto styleFile = styleSheet();
         if (!styleFile.isEmpty()) userStyleSheet = readStyles(styleFile.replace(0, 8, ""));

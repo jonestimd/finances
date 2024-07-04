@@ -23,6 +23,12 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
         h = (h + 180) % 360;
         option->backgroundBrush = QColor::fromHsv(h, s, v);
     }
+    QVariant value = index.data();
+    if (value.typeId() == QMetaType::Bool) {
+        option->font = finances::iconFont->font();
+        option->text = QChar(value.toBool() ? finances::Checked : finances::Unchecked);
+        option->displayAlignment = Qt::AlignCenter;
+    }
 }
 
 void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &index) const {

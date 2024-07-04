@@ -22,9 +22,11 @@ namespace finances {
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
+        Checked = 0xe834,
         Filter = 0xe152,
         Refresh = 0xe5d5,
         Save = 0xe161,
+        Unchecked = 0xe835,
     };
 
     class FontResource {
@@ -42,6 +44,7 @@ namespace finances {
 
     Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
 
+    QIcon qIcon(FontIcon icon);
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QObject *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *parent = nullptr);
