@@ -19,12 +19,14 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     setWindowTitle(tr("Companies[*]"));
     // todo add buttons to toolbar
     // - remove
-    // - reload?
     // - undo?
     toolbar.addAction(tableSort.addAction("Add company"));
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveCompanies()), false);
     toolbar.addAction(saveAction);
+
+    auto reloadAction = finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, this, SLOT(loadCompanies()));
+    toolbar.addAction(reloadAction);
 
     connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
     connect(dataStore, SIGNAL(companiesLoaded(QList<const Company*>)), this, SLOT(setCompanies(QList<const Company*>)));
@@ -48,6 +50,12 @@ void CompaniesWindow::dataChanged() {
     setWindowModified(model.hasUnsavedChanges());
 }
 
+void CompaniesWindow::loadCompanies() {
+    tableSort.table.setEnabled(false); // TODO save/restore selection
+    statusBar.showMessage(tr("Loading companies..."));
+    dataStore->loadCompanies(this, true);
+}
+
 void CompaniesWindow::saveCompanies() {
     statusBar.showMessage(tr("Saving companies..."));
     tableSort.table.setEnabled(false);
@@ -56,7 +64,7 @@ void CompaniesWindow::saveCompanies() {
 
 void CompaniesWindow::setCompanies(QList<const Company *> companies) {
     model.setRows(companies);
-    statusBar.clearMessage();
+    statusBar.showMessage(tr("Done loading"), 1500);
     tableSort.table.setEnabled(true);
 }
 

@@ -19,7 +19,7 @@ public:
     bool loadAccounts(QWidget *source);
     QList<const Account*> accounts() const;
 
-    bool loadCompanies(QWidget *source);
+    bool loadCompanies(QWidget *source, bool reload = false);
     QList<const Company*> companies() const;
     void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds);
 

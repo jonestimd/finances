@@ -80,8 +80,8 @@ QList<const Account *> DataStore::accounts() const {
     return p->accounts.values();
 }
 
-bool DataStore::loadCompanies(QWidget *source) {
-    if (p->companies.loaded) return true;
+bool DataStore::loadCompanies(QWidget *source, bool reload) {
+    if (!reload && p->companies.loaded) return true;
     doInBackground(source, [this]() {
         p->companies.setValues(services->companyService.getAll());
         emit companiesLoaded(p->companies.values());
