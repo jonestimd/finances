@@ -17,13 +17,14 @@ left join balance b on a.id = b.account_id
 order by a.name)";
 
 namespace accountDao {
-    QList<Account*> getAll(QSqlDatabase db) {
+    QList<const Account*> getAll(QSqlDatabase db) {
         QSqlQuery query(db);
-        QList<Account*> accounts;
         if (!query.exec(getAccountsSql)) {
             qCritical() << "accountDao:" << query.lastError().text();
             throw query.lastError().text();
         }
+        QList<const Account*> accounts;
+        if (query.size() > 0) accounts.reserve(query.size());
         while (query.next()) {
             accounts.append(new Account(query.record()));
         }

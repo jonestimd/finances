@@ -26,10 +26,9 @@ public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
 protected Q_SLOTS:
-    void triggerAdd();
     void dataChanged();
     void saveCompanies();
-    void setCompanies(QList<Company*> companies);
+    void setCompanies(QList<const Company*> companies);
 
     // QWidget interface
 protected:

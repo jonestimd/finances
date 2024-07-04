@@ -19,10 +19,10 @@ protected:
     const QList<ColumnAdapter<Row>*> columns;
     QHash<QModelIndex, QVariant> changes;
     QHash<QModelIndex, QString> errors;
-    QList<Row*> rows;
+    QList<const Row*> rows;
     QList<Row*> pendingAdds;
 
-    Row *row_(const QModelIndex index) const {
+    const Row *row_(const QModelIndex index) const {
         auto r = index.row(), i = rows.length();
         return r < i ? rows[r] : pendingAdds[r - i];
     }
@@ -32,7 +32,7 @@ protected:
     }
 
     void emitChange(int from, int to) {
-        emit dataChanged(index(from, 0), index(to, columns.length()-1), QList<int>(Qt::DisplayRole, finances::Unsaved));
+        emit dataChanged(index(from, 0), index(to, columns.length()-1), QList<int>{Qt::DisplayRole, finances::Unsaved});
     }
 
     void emitChange(int row) {
@@ -45,9 +45,9 @@ protected:
 
 public:
     explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
-        : AdapterTableModel(parent), rows(QList<Row*>()), columns{columns} {}
+        : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns} {}
 
-    void setRows(QList<Row*> rows) {
+    void setRows(QList<const Row*> rows) {
         beginResetModel();
         this->rows.clear();
         this->rows.append(rows);
@@ -66,8 +66,8 @@ public:
             auto message = columns[colIndex]->isValid(row, i, &deleter);
             if (!message.isNull()) errors[i] = message;
         }
-        emitChange(rowIndex);
         endInsertRows();
+        emitChange(rowIndex);
         return rowIndex;
     }
 

@@ -19,21 +19,24 @@ insert into company (name, version, change_user, change_date)
 values (:name, 0, :user, current_timestamp))";
 
 namespace companyDao {
-    QList<Company*> getAll(QSqlDatabase db) {
+    QList<const Company*> getAll(QSqlDatabase db) {
         QSqlQuery query(db);
         if (!query.exec(getCompaniesSql)) {
             qCritical() << "companyDao.getAll:" << query.lastError().text();
             throw query.lastError().text();
         }
-        QList<Company*> companies{};
+        QList<const Company*> companies;
+        if (query.size() > 0) companies.reserve(query.size());
         while (query.next()) {
             companies.append(new Company(query.record()));
         }
         return companies;
     }
 
-    QList<Company*> update(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
+    QList<const Company*> update(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
         QSqlQuery query(db);
+        QList<const Company*> result;
+        result.reserve(companies.length());
         query.prepare(updateCompanySql);
         query.bindValue(":user", user);
         for (auto company : companies) {
@@ -47,12 +50,16 @@ namespace companyDao {
             if (query.numRowsAffected() < 1) throw "stale data";
             company->version = company->version.toInt() + 1;
             company->changeUser = user;
+            result.append(company);
+
         }
-        return companies;
+        return result;
     }
 
-    QList<Company*> add(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
+    QList<const Company*> add(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
         QSqlQuery query(db);
+        QList<const Company*> result;
+        result.reserve(companies.length());
         query.prepare(insertCompanySql);
         query.bindValue(":user", user);
         for (auto company : companies) {
@@ -63,7 +70,8 @@ namespace companyDao {
             }
             company->id = query.lastInsertId();
             company->changeUser = user;
+            result.append(company);
         }
-        return companies;
+        return result;
     }
 }

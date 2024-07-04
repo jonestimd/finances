@@ -10,9 +10,9 @@ class CompanyService
 public:
     CompanyService(ConnectionPool *connectionPool);
 
-    QList<Company*> getAll();
+    QList<const Company*> getAll();
 
-    QList<Company*> update(QList<Company*> updates, QList<Company*> adds, const QString &user);
+    QList<const Company*> update(QList<Company*> updates, QList<Company*> adds, const QString &user);
 };
 
 #endif // COMPANYSERVICE_H

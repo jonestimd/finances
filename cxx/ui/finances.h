@@ -43,11 +43,12 @@ namespace finances {
     Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QWidget *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QWidget *parent = nullptr);
-    QAction* iconAction(const char *iconFile, QString text, QWidget *parent = nullptr);
-    QAction* iconAction(const char *iconFile, QString text, QString shortcut, QWidget *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QObject *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *member, bool enabled = true);
+    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *parent = nullptr);
+    QAction* iconAction(const char *iconFile, QString text, QObject *parent = nullptr);
+    QAction* iconAction(const char *iconFile, QString text, QString shortcut, QObject *parent = nullptr);
 
     class App : public QApplication {
         Q_OBJECT

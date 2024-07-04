@@ -23,8 +23,8 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     toolbar->addAction(companiesAction);
     connect(companiesAction, SIGNAL(triggered(bool)), this, SLOT(showCompanies()));
 
-    connect(dataStore, SIGNAL(companiesLoaded(QList<Company*>)), this, SLOT(setCompanies(QList<Company*>)));
-    connect(dataStore, SIGNAL(accountsLoaded(QList<Account*>)), this, SLOT(setAccounts(QList<Account*>)));
+    connect(dataStore, SIGNAL(companiesLoaded(QList<const Company*>)), this, SLOT(setCompanies(QList<const Company*>)));
+    connect(dataStore, SIGNAL(accountsLoaded(QList<const Account*>)), this, SLOT(setAccounts(QList<const Account*>)));
     if (dataStore->loadAccounts(this)) model.setRows(dataStore->accounts());
     else statusBar.addMessage(tr("Loading accounts..."));
     if (!dataStore->loadCompanies(this)) statusBar.addMessage(tr("Loading companies..."));
@@ -42,11 +42,11 @@ AccountsWindow::~AccountsWindow() {
     }
 }
 
-void AccountsWindow::setCompanies(QList<Company*> companies) {
+void AccountsWindow::setCompanies(QList<const Company*> companies) {
     statusBar.removeMessage(tr("Loading companies..."));
 }
 
-void AccountsWindow::setAccounts(QList<Account *> accounts) {
+void AccountsWindow::setAccounts(QList<const Account *> accounts) {
     model.setRows(accounts);
     statusBar.removeMessage(tr("Loading accounts..."));
 }

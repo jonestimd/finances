@@ -10,7 +10,7 @@ class AccountService
 public:
     AccountService(ConnectionPool *connectionPool);
 
-    QList<Account*> getAll();
+    QList<const Account*> getAll();
 };
 
 #endif // ACCOUNTSERVICE_H

@@ -2,12 +2,14 @@
 #define TABLES_H
 
 #include "filterinput.h"
+#include "tableitemdelegate.h"
 #include "../model/adaptertablemodel.h"
 #include <QStatusBar>
 #include <QTableView>
 
 class TableSort : public QObject {
     Q_OBJECT
+    TableItemDelegate itemDelegate;
 public:
     AdapterTableModel *model;
     QTableView table;
@@ -33,9 +35,13 @@ public:
 
     void restore(QString group, QSettings *settings);
 
-    void scrollTo(int rowIndex, int columnIndex);
+    void startEdit(int rowIndex, int columnIndex);
 
-    Q_SLOT void focusChanged(const QModelIndex &index);
+    QAction *addAction(const char *text);
+
+public Q_SLOTS:
+    void focusChanged(const QModelIndex &index);
+    void triggerAdd();
 };
 
 #endif // TABLES_H

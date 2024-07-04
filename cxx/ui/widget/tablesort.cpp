@@ -12,6 +12,7 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     , table{parent}
     , filterInput{filterLabel, &sortModel, parent}
     , statusBar{statusBar}
+    , itemDelegate{parent, statusBar}
 {
     if (defaultSort) this->defaultSort = parent->tr(defaultSort);
     sortModel.setSourceModel(model);
@@ -19,7 +20,7 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     sortModel.setFilterKeyColumn(-1);
 
     table.setModel(&sortModel);
-    table.setItemDelegate(new TableItemDelegate(&table, statusBar));
+    table.setItemDelegate(&itemDelegate);
 
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
@@ -96,10 +97,23 @@ void TableSort::restore(QString group, QSettings *settings) {
     }
 }
 
-void TableSort::scrollTo(int rowIndex, int columnIndex) {
+void TableSort::startEdit(int rowIndex, int columnIndex) {
     auto index = sortModel.mapFromSource(model->index(rowIndex, columnIndex));
     table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
     table.edit(index);
+}
+
+QAction *TableSort::addAction(const char *text) {
+    auto addAction = finances::iconAction(finances::AddCircle, tr(text), QKeySequence::New, this);
+    connect(addAction, SIGNAL(triggered(bool)), this, SLOT(triggerAdd()));
+    connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
+    connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
+    return addAction;
+}
+
+void TableSort::triggerAdd() {
+    int rowIndex = model->queueAdd();
+    startEdit(rowIndex, 0);
 }
 
 void TableSort::focusChanged(const QModelIndex &index) {

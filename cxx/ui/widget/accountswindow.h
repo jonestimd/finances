@@ -28,8 +28,8 @@ public:
     ~AccountsWindow();
 
 public Q_SLOTS:
-    void setCompanies(QList<Company*> companies);
-    void setAccounts(QList<Account*> accounts);
+    void setCompanies(QList<const Company*> companies);
+    void setAccounts(QList<const Account*> accounts);
     void showCompanies();
     // void hideCompanies();
 

@@ -17,15 +17,15 @@ public:
     ~DataStore();
 
     bool loadAccounts(QWidget *source);
-    QList<Account*> accounts() const;
+    QList<const Account*> accounts() const;
 
     bool loadCompanies(QWidget *source);
-    QList<Company*> companies() const;
+    QList<const Company*> companies() const;
     void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds);
 
 Q_SIGNALS:
-    void accountsLoaded(QList<Account*>);
-    void companiesLoaded(QList<Company*>);
+    void accountsLoaded(QList<const Account*>);
+    void companiesLoaded(QList<const Company*>);
 };
 
 #endif // DATASTORE_H

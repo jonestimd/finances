@@ -6,7 +6,7 @@
 
 class CompanyTableModel : public PodTableModel<Company> {
 public:
-    explicit CompanyTableModel(QList<Company*> companies, QObject *parent = nullptr);
+    explicit CompanyTableModel(QList<const Company*> companies, QObject *parent = nullptr);
 };
 
 #endif // COMPANYTABLEMODEL_H

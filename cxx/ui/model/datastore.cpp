@@ -31,8 +31,8 @@ public:
 };
 
 struct DataStorePrivate {
-    Holder<Account*> accounts;
-    Holder<Company*> companies;
+    Holder<const Account*> accounts;
+    Holder<const Company*> companies;
 };
 
 typedef std::function<void()> Runnable;
@@ -76,7 +76,7 @@ bool DataStore::loadAccounts(QWidget *source) {
     return false;
 }
 
-QList<Account *> DataStore::accounts() const {
+QList<const Account *> DataStore::accounts() const {
     return p->accounts.values();
 }
 
@@ -89,7 +89,7 @@ bool DataStore::loadCompanies(QWidget *source) {
     return false;
 }
 
-QList<Company*> DataStore::companies() const {
+QList<const Company*> DataStore::companies() const {
     return p->companies.values();
 }
 

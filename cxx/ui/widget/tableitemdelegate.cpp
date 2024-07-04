@@ -52,6 +52,7 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
             }
         }
     }
+    emit openEditor(editor);
     return editor;
 }
 

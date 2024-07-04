@@ -76,7 +76,7 @@ namespace finances {
         return label;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QWidget *parent) {
+    QAction *iconAction(FontIcon icon, QString text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
@@ -84,21 +84,28 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence shortcut, QWidget *parent) {
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence shortcut, QObject *parent) {
         auto action = iconAction(icon, text, parent);
         action->setShortcut(shortcut);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QWidget *parent) {
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *parent) {
         return iconAction(icon, text, QKeySequence(shortcut), parent);
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QWidget *parent) {
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *member, bool enabled) {
+        auto action = iconAction(icon, text, shortcut, receiver);
+        action->setEnabled(enabled);
+        QObject::connect(action, SIGNAL(triggered(bool)), receiver, member);
+        return action;
+    }
+
+    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QObject *parent) {
         return iconAction(icon, text, QKeySequence(shortcut), parent);
     }
 
-    QAction *iconAction(const char *iconFile, QString text, QWidget *parent) {
+    QAction *iconAction(const char *iconFile, QString text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
@@ -106,7 +113,7 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(const char *iconFile, QString text, QString shortcut, QWidget *parent) {
+    QAction *iconAction(const char *iconFile, QString text, QString shortcut, QObject *parent) {
         auto action = iconAction(iconFile, text, parent);
         action->setShortcut(QKeySequence(shortcut));
         return action;
