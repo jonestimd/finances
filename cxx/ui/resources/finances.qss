@@ -1,26 +1,22 @@
 QTableView {
     accent-color: rgb(255, 41, 4);
-    background: #00ffffff;
+    background: #ffffffff;
+    alternate-background-color: rgb(230, 242, 255);
     gridline-color: rgb(225, 225, 225);
+    border: 1px solid gridline-color;
     selection-color: #ff000000;
+    selection-background-color: rgb(0, 212, 232);
     color: #ff000000;
 }
 
-QTableView::item:selected {
-    background-color: rgb(0, 212, 232);
+QTableView:disabled {
+    background: #ffe6e6e6;
+    alternate-background-color: rgb(198, 214, 236);
+    color: #ff404040;
 }
-QTableView::item:alternate:selected {
-    background-color: rgb(0, 212, 232);
-}
+
 QTableView::item:focus {
     border: 1 solid rgb(100, 100, 255);
-}
-QTableView::item {
-    border-left: 1 solid #00000000;
-    background: #ffffffff;
-}
-QTableView::item:alternate {
-    background: rgb(230, 242, 255);;
 }
 
 QTableView QLineEdit {
