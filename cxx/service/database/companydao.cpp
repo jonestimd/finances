@@ -18,6 +18,8 @@ static const auto insertCompanySql = R"(
 insert into company (name, version, change_user, change_date)
 values (:name, 0, :user, current_timestamp))";
 
+static const auto deleteCompanySql = "delete from company where id = :id";
+
 namespace companyDao {
     QList<const Company*> getAll(QSqlDatabase db) {
         QSqlQuery query(db);
@@ -73,5 +75,17 @@ namespace companyDao {
             result.append(company);
         }
         return result;
+    }
+
+    void remove(QSqlDatabase &db, QList<const Company *> companies) {
+        QSqlQuery query(db);
+        query.prepare(deleteCompanySql);
+        for (auto company : companies) {
+            query.bindValue(":id", company->id.toInt());
+            if (!query.exec()) {
+                qCritical() << "companyDao.remove:" << query.lastError();
+                throw query.lastError().text();
+            }
+        }
     }
 }

@@ -15,13 +15,19 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
         option->palette.setBrush(QPalette::HighlightedText, brush);
     }
     QVariant unsaved = index.data(finances::Unsaved);
-    if (unsaved.isValid() && unsaved.toBool()) {
-        auto brush = option->palette.brush(QPalette::Base).color();
-        int h, s, v;
-        brush.getHsv(&h, &s, &v);
-        if (s < 64) s = 128;
-        h = (h + 180) % 360;
-        option->backgroundBrush = QColor::fromHsv(h, s, v);
+    if (unsaved.isValid()) {
+        if (unsaved.toInt() == finances::AddUpdate) {
+            auto brush = option->palette.brush(QPalette::Base).color();
+            int h, s, v;
+            brush.getHsv(&h, &s, &v);
+            if (s < 64) s = 128;
+            h = (h + 180) % 360;
+            option->backgroundBrush = QColor::fromHsv(h, s, v);
+        }
+        else {
+            option->font.setStrikeOut(true);
+            option->backgroundBrush = option->palette.accent().color().lighter();
+        }
     }
     QVariant value = index.data();
     if (value.typeId() == QMetaType::Bool) {

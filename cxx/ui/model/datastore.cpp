@@ -15,11 +15,12 @@ public:
         return this->byId.values();
     }
 
-    void update(QList<T> &updates) {
+    void update(QList<T> &updates, QList<T> deletes) {
         for (auto updated : updates) {
             delete byId.take(updated->id.toString());
             byId[updated->id.toString()] = updated;
         }
+        for (auto i : deletes) delete byId.take(i->id.toString());
     }
 
     void setValues(QList<T> values) {
@@ -43,9 +44,9 @@ bool handleError(QWidget *source, Runnable task) {
         task();
         return true;
     } catch(const QString error) {
-        showError(source, error);
+        dialog::showError(source, error);
     } catch (const char *error) {
-        showError(source, source->tr(error));
+        dialog::showError(source, source->tr(error));
     }
     return false;
 }
@@ -93,10 +94,10 @@ QList<const Company*> DataStore::companies() const {
     return p->companies.values();
 }
 
-void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds) {
-    doInBackground(source, [this, updates, adds] {
-        auto companies = services->companyService.update(updates, adds, user);
-        p->companies.update(companies);
+void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes) {
+    doInBackground(source, [this, updates, adds, deletes] {
+        auto companies = services->companyService.update(updates, adds, deletes, user);
+        p->companies.update(companies, deletes);
     }, [=, this](bool success) {
             if (!success) {
                 for (auto company : updates) delete company;

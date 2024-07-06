@@ -21,14 +21,10 @@ protected:
     QHash<QModelIndex, QString> errors;
     QList<const Row*> rows;
     QList<Row*> pendingAdds;
-
-    const Row *row_(const QModelIndex index) const {
-        auto r = index.row(), i = rows.length();
-        return r < i ? rows[r] : pendingAdds[r - i];
-    }
+    QList<int> pendingDeletes;
 
     QVariant value_(const QModelIndex index, int role = Qt::DisplayRole) const {
-        return columns[index.column()]->value(row_(index), role);
+        return columns[index.column()]->value(row(index.row()), role);
     }
 
     void emitChange(int from, int to) {
@@ -55,6 +51,11 @@ public:
         endResetModel();
     }
 
+    const Row *row(int rowIndex) const {
+        auto i = rows.length();
+        return rowIndex < i ? rows[rowIndex] : pendingAdds[rowIndex - i];
+    }
+
     int queueAdd() override {
         auto rowIndex = rowCount();
         beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
@@ -71,6 +72,25 @@ public:
         return rowIndex;
     }
 
+    void queueDelete(int rowIndex) override {
+        if (rowIndex >= rows.length()) {
+            beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
+            delete pendingAdds.takeAt(rowIndex - rows.length());
+            QHash<QModelIndex, QString> updateErrors;
+            for (auto [key, value] : errors.asKeyValueRange()) {
+                if (key.row() < rowIndex) updateErrors[key] = value;
+                else if (key.row() > rowIndex) updateErrors[key.siblingAtRow(key.row()-1)] = value;
+            }
+            errors.clear();
+            errors.insert(updateErrors);
+            endRemoveRows();
+        }
+        else if (!pendingDeletes.contains(rowIndex)) {
+            pendingDeletes.append(rowIndex);
+            emitChange(rowIndex);
+        }
+    }
+
     int columnIndex(const QString name) const override {
         for (int col = 0; col < columns.length(); ++col) {
             if (columns[col]->title == name) return col;
@@ -79,7 +99,7 @@ public:
     }
 
     bool hasUnsavedChanges() {
-        return !changes.isEmpty() || !pendingAdds.isEmpty();
+        return !changes.isEmpty() || !pendingAdds.isEmpty() || !pendingDeletes.isEmpty();
     }
 
     bool isValid() {
@@ -109,8 +129,15 @@ public:
         return rows;
     }
 
+    const QList<const Row*> unsavedDeletes() const {
+        QList<const Row*> deletes;
+        for (auto i : pendingDeletes) deletes.append(rows[i]);
+        return deletes;
+    }
+
     void clearChanges() {
         changes.clear();
+        pendingDeletes.clear();
         errors.clear();
         if (!pendingAdds.isEmpty()) {
             beginRemoveRows(QModelIndex{}, rows.length(), rowCount()-1);
@@ -135,19 +162,20 @@ public:
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
-            if (changes.contains(index)) return changes[index];
+            if (changes.contains(index)) return changes.value(index);
             break;
         case finances::ValidationMessage:
             if (errors.contains(index)) return errors[index];
             break;
         case finances::Unsaved:
-            return index.row() >= rows.length() || changes.contains(index);
+            if (index.row() >= rows.length() || changes.contains(index)) return finances::AddUpdate;
+            if (pendingDeletes.contains(index.row())) return finances::Delete;
         }
         return value_(index, role);
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return AdapterTableModel::flags(index) | columns[index.column()]->flags(row_(index));
+        return AdapterTableModel::flags(index) | columns[index.column()]->flags(row(index.row()));
     }
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {

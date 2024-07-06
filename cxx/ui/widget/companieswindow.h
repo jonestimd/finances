@@ -31,8 +31,10 @@ protected Q_SLOTS:
     void saveCompanies();
     void setCompanies(QList<const Company*> companies);
 
-    // QWidget interface
 protected:
+    bool confirmDelete(const QSet<int> rowIndex);
+
+    // QWidget interface
     void closeEvent(QCloseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 };

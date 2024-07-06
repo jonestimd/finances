@@ -19,6 +19,11 @@ namespace finances {
         ValidatorFactory,
     };
 
+    enum UnsavedState {
+        AddUpdate,
+        Delete,
+    };
+
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
@@ -26,7 +31,9 @@ namespace finances {
         Filter = 0xe152,
         Refresh = 0xe5d5,
         Save = 0xe161,
+        Trash = 0xe872,
         Unchecked = 0xe835,
+        Undo = 0xe166,
     };
 
     class FontResource {
@@ -51,7 +58,6 @@ namespace finances {
     QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *member, bool enabled = true);
     QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *parent = nullptr);
     QAction* iconAction(const char *iconFile, QString text, QObject *parent = nullptr);
-    QAction* iconAction(const char *iconFile, QString text, QString shortcut, QObject *parent = nullptr);
 
     class App : public QApplication {
         Q_OBJECT

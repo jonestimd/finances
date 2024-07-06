@@ -25,14 +25,15 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
     table.setSortingEnabled(true);
-    connect(table.selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(focusChanged(QModelIndex)));
+    // table.selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
+    connect(table.selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
 
     auto header = table.horizontalHeader();
     header->setSectionsMovable(true);
     header->setSortIndicatorShown(true);
     header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 
-    QTimer::singleShot(0, parent, [this] { filterInput.setFocus(); });
+    table.selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
 }
 
 int TableSort::columnIndex(const QString name) const {
@@ -111,12 +112,32 @@ QAction *TableSort::addAction(const char *text) {
     return addAction;
 }
 
+QAction *TableSort::deleteAction(const char *text, std::function<bool(int)> enableDelete) {
+    auto action = finances::iconAction(finances::Trash, tr(text), QKeySequence::Delete, this, SLOT(triggerDelete()));
+    auto setEnabled = [=, this]() {
+        auto indexes = sortModel.mapSelectionToSource(table.selectionModel()->selection()).indexes();
+        bool enabled = !indexes.empty();
+        for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= enableDelete(i->row());
+        action->setEnabled(enabled);
+    };
+    setEnabled();
+    connect(table.selectionModel(), &QItemSelectionModel::selectionChanged, this, setEnabled);
+    return action;
+}
+
 void TableSort::triggerAdd() {
     int rowIndex = model->queueAdd();
     startEdit(rowIndex, 0);
 }
 
-void TableSort::focusChanged(const QModelIndex &index) {
+void TableSort::triggerDelete() {
+    auto selection = sortModel.mapSelectionToSource(table.selectionModel()->selection());
+    if (!selection .empty()) {
+        for (auto i : selection.indexes()) model->queueDelete(i.row());
+    }
+}
+
+void TableSort::showValidation(const QModelIndex &index) {
     auto range = table.selectionModel()->selection().indexes();
     if (range.length() == 1 && range.contains(index)) {
         auto message = index.data(finances::ValidationMessage);

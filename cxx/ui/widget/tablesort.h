@@ -38,10 +38,14 @@ public:
     void startEdit(int rowIndex, int columnIndex);
 
     QAction *addAction(const char *text);
+    QAction *deleteAction(const char *text, std::function<bool(int)> enableDelete = nullptr);
+
+    void setEnabled(auto action, std::function<bool(int)> enableDelete);
 
 public Q_SLOTS:
-    void focusChanged(const QModelIndex &index);
+    void showValidation(const QModelIndex &index);
     void triggerAdd();
+    void triggerDelete();
 };
 
 #endif // TABLES_H

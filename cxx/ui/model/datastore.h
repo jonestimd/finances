@@ -21,7 +21,7 @@ public:
 
     bool loadCompanies(QWidget *source, bool reload = false);
     QList<const Company*> companies() const;
-    void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds);
+    void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes);
 
 Q_SIGNALS:
     void accountsLoaded(QList<const Account*>);

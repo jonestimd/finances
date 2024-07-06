@@ -12,7 +12,7 @@ public:
 
     QList<const Company*> getAll();
 
-    QList<const Company*> update(QList<Company*> updates, QList<Company*> adds, const QString &user);
+    QList<const Company*> update(QList<Company*> updates, QList<Company*> adds, QList<const Company*> deletes, const QString &user);
 };
 
 #endif // COMPANYSERVICE_H

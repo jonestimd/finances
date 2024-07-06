@@ -17,10 +17,10 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , tableSort{this, &model, "Company filter", "Name", &statusBar}
 {
     setWindowTitle(tr("Companies[*]"));
-    // todo add buttons to toolbar
-    // - remove
-    // - undo?
     toolbar.addAction(tableSort.addAction("Add company"));
+    toolbar.addAction(tableSort.deleteAction("Delete company", [&](int rowIndex) {
+        return model.row(rowIndex)->accounts.toInt() == 0;
+    }));
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveCompanies()), false);
     toolbar.addAction(saveAction);
@@ -59,7 +59,7 @@ void CompaniesWindow::loadCompanies() {
 void CompaniesWindow::saveCompanies() {
     statusBar.showMessage(tr("Saving companies..."));
     tableSort.table.setEnabled(false);
-    dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds());
+    dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void CompaniesWindow::setCompanies(QList<const Company *> companies) {
@@ -68,12 +68,23 @@ void CompaniesWindow::setCompanies(QList<const Company *> companies) {
     tableSort.table.setEnabled(true);
 }
 
+bool CompaniesWindow::confirmDelete(const QSet<int> rowIndex) {
+    QStringList nonEmpty;
+    for (auto r : rowIndex) {
+        if (model.row(r)->accounts.toInt() > 0) nonEmpty.append(model.row(r)->name.toString());
+    }
+    return dialog::confirmDelete(this, "Confirm delete companies",
+            "The following companies have accounts.  "
+            "The accounts will remain but will no longer be associated with a company.  "
+            "Do you want to delete these companies?" DIALOG_ITEM_SEPARATOR "%1", nonEmpty);
+}
+
 void CompaniesWindow::closeEvent(QCloseEvent *event) {
-    if (!confirmClose(this, &model)) event->ignore();
+    if (!dialog::confirmClose(this, &model)) event->ignore();
     else settings::saveWindowState("companies", this);
 }
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape && !confirmClose(this, &model)) return;
+    if (event->key() == Qt::Key_Escape && !dialog::confirmClose(this, &model)) return;
     if (!tableSort.focusFilter(event)) QDialog::keyPressEvent(event);
 }

@@ -116,12 +116,6 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(const char *iconFile, QString text, QString shortcut, QObject *parent) {
-        auto action = iconAction(iconFile, text, parent);
-        action->setShortcut(QKeySequence(shortcut));
-        return action;
-    }
-
     App::App(int &argc, char **argv)
         : QApplication(argc, argv),
         userStyleSheet{""},
