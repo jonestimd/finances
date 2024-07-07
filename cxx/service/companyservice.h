@@ -3,6 +3,7 @@
 
 #include "database/connectionpool.h"
 #include "model/company.h"
+#include "model/bulkupdate.h"
 
 class CompanyService
 {
@@ -12,7 +13,7 @@ public:
 
     QList<const Company*> getAll();
 
-    QList<const Company*> update(QList<Company*> updates, QList<Company*> adds, QList<const Company*> deletes, const QString &user);
+    QList<const Company*> update(BulkUpdate<Company> &changes, const QString &user);
 };
 
 #endif // COMPANYSERVICE_H

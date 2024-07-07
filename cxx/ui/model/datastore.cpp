@@ -37,24 +37,21 @@ struct DataStorePrivate {
 };
 
 typedef std::function<void()> Runnable;
-typedef std::function<void(bool)> Callback;
 
-bool handleError(QWidget *source, Runnable task) {
+void handleError(QWidget *source, Runnable task) {
     try {
         task();
-        return true;
     } catch(const QString error) {
         dialog::showError(source, error);
     } catch (const char *error) {
         dialog::showError(source, source->tr(error));
     }
-    return false;
 }
 
-void doInBackground(QWidget *source, Runnable task, Callback onComplete = nullptr) {
+void doInBackground(QWidget *source, Runnable task, Runnable onComplete = nullptr) {
     QThreadPool::globalInstance()->start([=]() {
-        bool success = handleError(source, task);
-        if (onComplete) onComplete(success);
+        handleError(source, task);
+        if (onComplete) onComplete();
     });
 }
 
@@ -96,14 +93,8 @@ QList<const Company*> DataStore::companies() const {
 
 void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
-        auto companies = services->companyService.update(updates, adds, deletes, user);
+        auto changes = BulkUpdate{updates, adds, deletes};
+        auto companies = services->companyService.update(changes, user);
         p->companies.update(companies, deletes);
-    }, [=, this](bool success) {
-            if (!success) {
-                for (auto company : updates) delete company;
-                for (auto company : adds) delete company;
-            }
-            emit companiesLoaded(p->companies.values());
-        }
-    );
+    }, [this]() { emit companiesLoaded(p->companies.values()); });
 }
