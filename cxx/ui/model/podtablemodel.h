@@ -44,10 +44,10 @@ public:
         : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns} {}
 
     void setRows(QList<const Row*> rows) {
+        this->clearChanges();
         beginResetModel();
         this->rows.clear();
         this->rows.append(rows);
-        this->clearChanges();
         endResetModel();
     }
 
@@ -91,6 +91,14 @@ public:
         }
     }
 
+    void undoChange(const QModelIndex &index) override {
+        if (pendingDeletes.removeAll(index.row()) > 0) emitChange(index.row());
+        else if (changes.contains(index)) {
+            changes.remove(index);
+            emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::Unsaved));
+        }
+    }
+
     int columnIndex(const QString name) const override {
         for (int col = 0; col < columns.length(); ++col) {
             if (columns[col]->title == name) return col;
@@ -110,6 +118,7 @@ public:
         QHash<int, Row*> changeRows;
         for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
             auto row = i.key().row();
+            if (pendingDeletes.contains(row)) continue;
             Row *updated;
             if (changeRows.contains(row)) updated = changeRows[row];
             else {
@@ -168,14 +177,15 @@ public:
             if (errors.contains(index)) return errors[index];
             break;
         case finances::Unsaved:
-            if (index.row() >= rows.length() || changes.contains(index)) return finances::AddUpdate;
             if (pendingDeletes.contains(index.row())) return finances::Delete;
+            if (index.row() >= rows.length() || changes.contains(index)) return finances::AddUpdate;
         }
         return value_(index, role);
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return AdapterTableModel::flags(index) | columns[index.column()]->flags(row(index.row()));
+        bool pendingDelete = pendingDeletes.contains(index.row());
+        return AdapterTableModel::flags(index) | columns[index.column()]->flags(row(index.row()), !pendingDelete);
     }
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {

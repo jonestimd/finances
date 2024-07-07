@@ -39,13 +39,15 @@ public:
 
     QAction *addAction(const char *text);
     QAction *deleteAction(const char *text, std::function<bool(int)> enableDelete = nullptr);
+    QAction *undoAction(const char *text);
 
     void setEnabled(auto action, std::function<bool(int)> enableDelete);
 
 public Q_SLOTS:
     void showValidation(const QModelIndex &index);
-    void triggerAdd();
-    void triggerDelete();
+    void addRow();
+    void queueDeletes();
+    void undoChanges();
 };
 
 #endif // TABLES_H

@@ -34,8 +34,8 @@ public:
         row->*(this->field) = value;
     }
 
-    virtual Qt::ItemFlags flags(const T *row) const {
-        return editable ? Qt::ItemIsEditable : Qt::NoItemFlags;
+    virtual Qt::ItemFlags flags(const T *row, bool allowEdit) const {
+        return allowEdit && editable ? Qt::ItemIsEditable : Qt::NoItemFlags;
     }
 
     const QString isValid(const T *row, const QModelIndex &index, QObject *parent) const {

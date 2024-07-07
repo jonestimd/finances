@@ -106,14 +106,14 @@ void TableSort::startEdit(int rowIndex, int columnIndex) {
 
 QAction *TableSort::addAction(const char *text) {
     auto addAction = finances::iconAction(finances::AddCircle, tr(text), QKeySequence::New, this);
-    connect(addAction, SIGNAL(triggered(bool)), this, SLOT(triggerAdd()));
+    connect(addAction, SIGNAL(triggered(bool)), this, SLOT(addRow()));
     connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
     connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
     return addAction;
 }
 
 QAction *TableSort::deleteAction(const char *text, std::function<bool(int)> enableDelete) {
-    auto action = finances::iconAction(finances::Trash, tr(text), QKeySequence::Delete, this, SLOT(triggerDelete()));
+    auto action = finances::iconAction(finances::Trash, tr(text), QKeySequence::Delete, this, SLOT(queueDeletes()));
     auto setEnabled = [=, this]() {
         auto indexes = sortModel.mapSelectionToSource(table.selectionModel()->selection()).indexes();
         bool enabled = !indexes.empty();
@@ -125,16 +125,24 @@ QAction *TableSort::deleteAction(const char *text, std::function<bool(int)> enab
     return action;
 }
 
-void TableSort::triggerAdd() {
+QAction *TableSort::undoAction(const char *text) {
+    auto undoAction = finances::iconAction(finances::Undo, tr(text), QKeySequence::Undo, this, SLOT(undoChanges()));
+    return undoAction;
+}
+
+void TableSort::addRow() {
     int rowIndex = model->queueAdd();
     startEdit(rowIndex, 0);
 }
 
-void TableSort::triggerDelete() {
+void TableSort::queueDeletes() {
     auto selection = sortModel.mapSelectionToSource(table.selectionModel()->selection());
-    if (!selection .empty()) {
-        for (auto i : selection.indexes()) model->queueDelete(i.row());
-    }
+    for (auto i : selection.indexes()) model->queueDelete(i.row());
+}
+
+void TableSort::undoChanges() {
+    auto selection = sortModel.mapSelectionToSource(table.selectionModel()->selection());
+    for (auto i : selection.indexes()) model->undoChange(i);
 }
 
 void TableSort::showValidation(const QModelIndex &index) {

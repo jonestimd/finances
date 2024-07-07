@@ -21,6 +21,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     toolbar.addAction(tableSort.deleteAction("Delete company", [&](int rowIndex) {
         return model.row(rowIndex)->accounts.toInt() == 0;
     }));
+    toolbar.addAction(tableSort.undoAction("Undo"));
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveCompanies()), false);
     toolbar.addAction(saveAction);

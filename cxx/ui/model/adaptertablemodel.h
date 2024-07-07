@@ -11,8 +11,10 @@ public:
 
     virtual int columnIndex(const QString name) const = 0;
 
-    Q_SLOT virtual int queueAdd() = 0;
-    Q_SLOT virtual void queueDelete(int rowIndex) = 0;
+public Q_SLOTS:
+    virtual int queueAdd() = 0;
+    virtual void queueDelete(int rowIndex) = 0;
+    virtual void undoChange(const QModelIndex &index) = 0;
 };
 
 #endif // ADAPTERTABLEMODEL_H
