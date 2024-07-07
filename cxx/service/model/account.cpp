@@ -7,7 +7,9 @@
 
 using sql::getValue;
 
-Account::Account() : BaseDomain() {}
+Account::Account() : BaseDomain()
+    , transactions{0}
+    , balance{QVariant::fromValue(QDEC_ZERO)} {}
 
 Account::Account(QSqlRecord record) : BaseDomain::BaseDomain(record) {
     companyId = getValue(record, "company_id");

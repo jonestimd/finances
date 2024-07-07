@@ -1,12 +1,13 @@
 #include "unique.h"
-#include "status.h"
 
 class UniqueValidator : public ValidationStatus
 {
+    const QString message;
     QList<QVariant> values;
 public:
     UniqueValidator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar)
-        : ValidationStatus{index, parent, statusBar, "%1 must be unique"}
+        : ValidationStatus{index, parent, statusBar}
+        , message{formatMessage("%1 must be unique", index)}
     {
         auto model = index.model();
         for (int r = 0; r < model->rowCount()-1; ++r) {
@@ -16,13 +17,13 @@ public:
         }
     }
 
-    State validate(QString &value, int &pos) const override {
-        return showStatus(values.contains(value.trimmed().toLower()));
+    const QString isValid(QString &value) const override {
+        return values.contains(value.trimmed().toLower()) ? message : nullptr;
     }
 };
 
 UniqueValidatorFactory::UniqueValidatorFactory() {}
 
-const QValidator *UniqueValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) {
+const ValidationStatus *UniqueValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) const {
     return new UniqueValidator(index, parent, statusBar);
 }

@@ -17,7 +17,7 @@ public:
     ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
         : title{title}, field{field}, editable{editable}, validatorFactory{factory} {}
 
-    virtual QVariant value(const T *row, int role) const {
+    virtual QVariant value(const T *row, int role = Qt::DisplayRole) const {
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
@@ -36,6 +36,14 @@ public:
 
     virtual Qt::ItemFlags flags(const T *row) const {
         return editable ? Qt::ItemIsEditable : Qt::NoItemFlags;
+    }
+
+    const QString isValid(const T *row, const QModelIndex &index, QObject *parent) const {
+        if (validatorFactory) {
+            QString val = value(row).toString();
+            return validatorFactory->validator(index, parent)->isValid(val);
+        }
+        return nullptr;
     }
 };
 

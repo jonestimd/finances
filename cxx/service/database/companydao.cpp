@@ -14,6 +14,10 @@ update company
 set name = :name, change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
+static const auto insertCompanySql = R"(
+insert into company (name, version, change_user, change_date)
+values (:name, 0, :user, current_timestamp))";
+
 namespace companyDao {
     QList<Company*> getAll(QSqlDatabase db) {
         QSqlQuery query(db);
@@ -42,6 +46,23 @@ namespace companyDao {
             }
             if (query.numRowsAffected() < 1) throw "stale data";
             company->version = company->version.toInt() + 1;
+            company->changeUser = user;
+        }
+        return companies;
+    }
+
+    QList<Company*> add(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
+        QSqlQuery query(db);
+        query.prepare(insertCompanySql);
+        query.bindValue(":user", user);
+        for (auto company : companies) {
+            query.bindValue(":name", company->name.toString().trimmed());
+            if (!query.exec()) {
+                qCritical() << "companyDao.insert:" << query.lastError();
+                throw query.lastError().text();
+            }
+            company->id = query.lastInsertId();
+            company->changeUser = user;
         }
         return companies;
     }

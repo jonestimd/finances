@@ -2,13 +2,16 @@
 #include "tableitemdelegate.h"
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QTableWidget>
 #include <QTimer>
 
 TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * filterLabel, const char *defaultSort, QStatusBar *statusBar)
-    : model{model}
+    : QObject(parent)
+    , model{model}
     , sortModel{parent}
     , table{parent}
     , filterInput{filterLabel, &sortModel, parent}
+    , statusBar{statusBar}
 {
     if (defaultSort) this->defaultSort = parent->tr(defaultSort);
     sortModel.setSourceModel(model);
@@ -21,6 +24,7 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
     table.setSortingEnabled(true);
+    connect(table.selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(focusChanged(QModelIndex)));
 
     auto header = table.horizontalHeader();
     header->setSectionsMovable(true);
@@ -90,4 +94,20 @@ void TableSort::restore(QString group, QSettings *settings) {
         auto pos = settings->value(column + ".pos").toInt(&ok);
         if (ok) header->moveSection(header->visualIndex(section), pos);
     }
+}
+
+void TableSort::scrollTo(int rowIndex, int columnIndex) {
+    auto index = sortModel.mapFromSource(model->index(rowIndex, columnIndex));
+    table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+    table.edit(index);
+}
+
+void TableSort::focusChanged(const QModelIndex &index) {
+    auto range = table.selectionModel()->selection().indexes();
+    if (range.length() == 1 && range.contains(index)) {
+        auto message = index.data(finances::ValidationMessage);
+        if (!message.isNull()) statusBar->showMessage(message.toString());
+        else statusBar->clearMessage();
+    }
+    else statusBar->clearMessage();
 }

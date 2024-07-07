@@ -10,7 +10,7 @@ class CompositeValidatorFactory : public ValidatorFactory {
 public:
     CompositeValidatorFactory(QList<ValidatorFactory*> factories);
 
-    const QValidator *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) override;
+    const ValidationStatus *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) const override;
 };
 
 Q_GLOBAL_STATIC(CompositeValidatorFactory, requiredUniqueFactory,

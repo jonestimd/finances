@@ -7,11 +7,16 @@
 class ValidationStatus : public QValidator
 {
     QStatusBar *statusBar;
-    QString message;
-public:
-    ValidationStatus(const QModelIndex &index, QObject *parent, QStatusBar *statusBar, const char *format);
 
-    QValidator::State showStatus(bool valid) const;
+    State showStatus(const QString message) const;
+public:
+    ValidationStatus(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr);
+
+    State validate(QString &value, int &pos) const override;
+
+    virtual const QString isValid(QString &value) const = 0;
+
+    static QString formatMessage(const char *format, const QModelIndex &index);
 };
 
 #endif // STATUS_H

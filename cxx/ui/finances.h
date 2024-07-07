@@ -15,12 +15,15 @@ namespace finances {
         TextHighlight = Qt::UserRole,
         SortRole,
         Unsaved,
+        ValidationMessage,
         ValidatorFactory,
     };
 
     enum FontIcon {
         AccountBalance = 0xe84f, // company
+        AddCircle = 0xe147,
         Filter = 0xe152,
+        Refresh = 0xe5d5,
         Save = 0xe161,
     };
 
@@ -37,7 +40,7 @@ namespace finances {
         QFont font(int pointSize);
     };
 
-    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialIcons-Regular.ttf", "Regular");
+    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QWidget *parent = nullptr);

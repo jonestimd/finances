@@ -1,6 +1,7 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
 #include "../validation/factory.h"
+#include <QPainter>
 
 TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
     : QStyledItemDelegate{parent}, statusBar{statusBar} {}
@@ -21,6 +22,19 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
         if (s < 64) s = 128;
         h = (h + 180) % 360;
         option->backgroundBrush = QColor::fromHsv(h, s, v);
+    }
+}
+
+void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &index) const {
+    QStyledItemDelegate::paint(p, opt, index);
+    auto validationMessage = index.data(finances::ValidationMessage);
+    if (!validationMessage.isNull()) {
+        const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
+        QRect rect = clipRegion.boundingRect();
+        auto image = QImage(":/images/invalid.svg");
+        auto y = rect.y() + (rect.height() - image.rect().height()) / 2;
+        auto x = rect.width() - image.width();
+        p->drawImage(x, y, image);
     }
 }
 

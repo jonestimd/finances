@@ -8,6 +8,7 @@
 
 template<class Row>
 concept Copyable = requires(Row &t){
+    { new Row() } -> std::convertible_to<Row*>;
     { new Row(t) } -> std::convertible_to<Row*>;
 };
 
@@ -17,10 +18,29 @@ class PodTableModel : public AdapterTableModel
 protected:
     const QList<ColumnAdapter<Row>*> columns;
     QHash<QModelIndex, QVariant> changes;
+    QHash<QModelIndex, QString> errors;
     QList<Row*> rows;
+    QList<Row*> pendingAdds;
+
+    Row *row_(const QModelIndex index) const {
+        auto r = index.row(), i = rows.length();
+        return r < i ? rows[r] : pendingAdds[r - i];
+    }
 
     QVariant value_(const QModelIndex index, int role = Qt::DisplayRole) const {
-        return columns[index.column()]->value(rows[index.row()], role);
+        return columns[index.column()]->value(row_(index), role);
+    }
+
+    void emitChange(int from, int to) {
+        emit dataChanged(index(from, 0), index(to, columns.length()-1), QList<int>(Qt::DisplayRole, finances::Unsaved));
+    }
+
+    void emitChange(int row) {
+        emitChange(row, row);
+    }
+
+    void setValue_(Row *row, int column, QVariant value) {
+        columns[column]->setValue(row, value);
     }
 
 public:
@@ -35,8 +55,20 @@ public:
         endResetModel();
     }
 
-    void setValue(Row *row, int column, QVariant value) {
-        columns[column]->setValue(row, value);
+    int queueAdd() override {
+        auto rowIndex = rowCount();
+        beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
+        Row *row = new Row;
+        pendingAdds.append(row);
+        QObject deleter;
+        for (int colIndex = 0; colIndex < columns.length(); ++colIndex) {
+            auto i = index(rowIndex, colIndex);
+            auto message = columns[colIndex]->isValid(row, i, &deleter);
+            if (!message.isNull()) errors[i] = message;
+        }
+        emitChange(rowIndex);
+        endInsertRows();
+        return rowIndex;
     }
 
     int columnIndex(const QString name) const override {
@@ -47,10 +79,14 @@ public:
     }
 
     bool hasUnsavedChanges() {
-        return !changes.isEmpty();
+        return !changes.isEmpty() || !pendingAdds.isEmpty();
     }
 
-    QList<Row*> unsavedChanges() {
+    bool isValid() {
+        return errors.isEmpty();
+    }
+
+    const QList<Row*> unsavedChanges() {
         QHash<int, Row*> changeRows;
         for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
             auto row = i.key().row();
@@ -60,20 +96,34 @@ public:
                 updated = new Row(*rows[row]);
                 changeRows[row] = updated;
             }
-            setValue(updated, i.key().column(), i.value());
+            setValue_(updated, i.key().column(), i.value());
         }
         return changeRows.values();
     }
 
+    const QList<Row*> unsavedAdds() const {
+        QList<Row*> rows;
+        for (auto row : pendingAdds) {
+            rows.append(new Row(*row));
+        }
+        return rows;
+    }
+
     void clearChanges() {
         changes.clear();
-        emit dataChanged(index(0, 0), index(rows.length()-1, columns.length()-1), QList<int>(Qt::DisplayRole, finances::Unsaved));
+        errors.clear();
+        if (!pendingAdds.isEmpty()) {
+            beginRemoveRows(QModelIndex{}, rows.length(), rowCount()-1);
+            while (!pendingAdds.isEmpty()) delete pendingAdds.takeFirst();
+            endRemoveRows();
+        }
+        emitChange(0, rowCount()-1);
     }
 
     // QAbstractItemModel interface
-    int rowCount(const QModelIndex &parent) const override {
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override {
         if (parent.isValid()) return 0;
-        return rows.count();
+        return rows.length() + pendingAdds.length();
     };
 
     int columnCount(const QModelIndex &parent) const override {
@@ -87,19 +137,29 @@ public:
         case Qt::EditRole:
             if (changes.contains(index)) return changes[index];
             break;
+        case finances::ValidationMessage:
+            if (errors.contains(index)) return errors[index];
+            break;
         case finances::Unsaved:
-            return changes.contains(index);
+            return index.row() >= rows.length() || changes.contains(index);
         }
         return value_(index, role);
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return AdapterTableModel::flags(index) | columns[index.column()]->flags(rows[index.row()]);
+        return AdapterTableModel::flags(index) | columns[index.column()]->flags(row_(index));
     }
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {
         if (role == Qt::EditRole) {
+            errors.remove(index); // editor must have accepted the value
             auto text = value.toString().trimmed();
+            auto savedRows = rows.length();
+            if (index.row() >= savedRows) {
+                setValue_(pendingAdds[index.row()-savedRows], index.column(), value);
+                emit dataChanged(index, index, QList<int>(Qt::DisplayRole));
+                return true;
+            }
             if (is_eq(QVariant::compare(value_(index), text))) {
                 if (changes.contains(index)) {
                     changes.remove(index);

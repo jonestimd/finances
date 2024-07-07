@@ -13,10 +13,9 @@ public:
 protected:
     void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
 
-    // Q_SLOT void setInvalid(QString &text);
-
     // QAbstractItemDelegate interface
 public:
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) override;
 };

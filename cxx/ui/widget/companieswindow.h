@@ -18,7 +18,6 @@ class CompaniesWindow : public QDialog
     QToolBar toolbar;
     DataStore *dataStore;
     CompanyTableModel model;
-    QSortFilterProxyModel sortModel;
     TableSort tableSort;
     QAction *saveAction;
     QStatusBar statusBar;
@@ -27,6 +26,7 @@ public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
 protected Q_SLOTS:
+    void triggerAdd();
     void dataChanged();
     void saveCompanies();
     void setCompanies(QList<Company*> companies);

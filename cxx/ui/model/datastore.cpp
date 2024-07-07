@@ -17,6 +17,7 @@ public:
 
     void update(QList<T> &updates) {
         for (auto updated : updates) {
+            delete byId.take(updated->id.toString());
             byId[updated->id.toString()] = updated;
         }
     }
@@ -35,21 +36,24 @@ struct DataStorePrivate {
 };
 
 typedef std::function<void()> Runnable;
+typedef std::function<void(bool)> Callback;
 
-void handleError(QWidget *source, Runnable callback) {
+bool handleError(QWidget *source, Runnable task) {
     try {
-        callback();
+        task();
+        return true;
     } catch(const QString error) {
         showError(source, error);
     } catch (const char *error) {
         showError(source, source->tr(error));
     }
+    return false;
 }
 
-void doInBackground(QWidget *source, Runnable callback, Runnable onComplete = nullptr) {
+void doInBackground(QWidget *source, Runnable task, Callback onComplete = nullptr) {
     QThreadPool::globalInstance()->start([=]() {
-        handleError(source, callback);
-        if (onComplete) onComplete();
+        bool success = handleError(source, task);
+        if (onComplete) onComplete(success);
     });
 }
 
@@ -89,9 +93,16 @@ QList<Company*> DataStore::companies() const {
     return p->companies.values();
 }
 
-void DataStore::updateCompanies(QWidget *source, QList<Company*> updates) {
-    doInBackground(source, [this, updates] {
-        auto companies = services->companyService.update(updates, user);
+void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds) {
+    doInBackground(source, [this, updates, adds] {
+        auto companies = services->companyService.update(updates, adds, user);
         p->companies.update(companies);
-    }, [this] { emit companiesLoaded(p->companies.values()); });
+    }, [=, this](bool success) {
+            if (!success) {
+                for (auto company : updates) delete company;
+                for (auto company : adds) delete company;
+            }
+            emit companiesLoaded(p->companies.values());
+        }
+    );
 }

@@ -1,20 +1,22 @@
 #include "required.h"
-#include "status.h"
 #include <QModelIndex>
 
 class RequiredValidator : public ValidationStatus
 {
+    const QString message;
 public:
     RequiredValidator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar)
-        : ValidationStatus(index, parent, statusBar, "%1 is required") {}
+        : ValidationStatus(index, parent, statusBar)
+        , message{formatMessage("%1 is required", index)}
+    {}
 
-    State validate(QString &value, int &pos) const override {
-        return showStatus(value.trimmed().isEmpty());
+    const QString isValid(QString &value) const override {
+        return value.trimmed().isEmpty() ? message : nullptr;
     }
 };
 
 RequiredValidatorFactory::RequiredValidatorFactory() {}
 
-const QValidator *RequiredValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) {
+const ValidationStatus *RequiredValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) const {
     return new RequiredValidator(index, parent, statusBar);
 }

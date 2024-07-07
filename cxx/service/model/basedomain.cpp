@@ -1,8 +1,9 @@
 #include "basedomain.h"
 
+#include <QDate>
 #include <QSqlField>
 
-BaseDomain::BaseDomain() {}
+BaseDomain::BaseDomain() : version{0} {}
 
 BaseDomain::BaseDomain(QSqlRecord record) {
     id = record.field("id").value();

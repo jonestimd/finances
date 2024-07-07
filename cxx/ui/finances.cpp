@@ -20,6 +20,7 @@ namespace finances {
         fontId = QFontDatabase::addApplicationFont(fileName);
         auto fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
         family = fontFamilies.first();
+        // qDebug() << "Finances:" << fontFamilies;
         // qDebug() << "Finances:" << QFontDatabase::styles(family);
     }
 

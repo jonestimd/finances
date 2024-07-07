@@ -6,11 +6,14 @@
 #include <QStatusBar>
 #include <QTableView>
 
-struct TableSort {
+class TableSort : public QObject {
+    Q_OBJECT
+public:
     AdapterTableModel *model;
     QTableView table;
     QSortFilterProxyModel sortModel;
     FilterInput filterInput;
+    QStatusBar *statusBar;
     QString defaultSort;
 
     TableSort(QWidget *parent, AdapterTableModel *model, const char *filterLabel,
@@ -29,6 +32,10 @@ struct TableSort {
     void saveSizes(QString group, QSettings *settings);
 
     void restore(QString group, QSettings *settings);
+
+    void scrollTo(int rowIndex, int columnIndex);
+
+    Q_SLOT void focusChanged(const QModelIndex &index);
 };
 
 #endif // TABLES_H

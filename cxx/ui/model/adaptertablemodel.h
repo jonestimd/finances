@@ -5,10 +5,13 @@
 
 class AdapterTableModel : public QAbstractTableModel
 {
+    Q_OBJECT
 public:
     explicit AdapterTableModel(QObject *parent = nullptr);
 
     virtual int columnIndex(const QString name) const = 0;
+
+    Q_SLOT virtual int queueAdd() = 0;
 };
 
 #endif // ADAPTERTABLEMODEL_H

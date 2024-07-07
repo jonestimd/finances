@@ -1,28 +1,28 @@
 #include "composite.h"
 
-class CompositeValidator : public QValidator
+class CompositeValidator : public ValidationStatus
 {
-    QList<const QValidator*> validators;
+    QList<const ValidationStatus*> validators;
 public:
-    CompositeValidator(QList<const QValidator*> validators, QObject *parent)
-        : QValidator{parent}, validators{validators} {}
+    CompositeValidator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar, QList<const ValidationStatus*> validators)
+        : ValidationStatus{index, parent, statusBar}, validators{validators} {}
 
-    State validate(QString &value, int &pos) const override {
+    const QString isValid(QString &value) const override {
         for (auto validator : validators) {
-            auto state = validator->validate(value, pos);
-            if (state != Acceptable) return state;
+            auto message = validator->isValid(value);
+            if (message != nullptr) return message;
         }
-        return Acceptable;
+        return nullptr;
     }
 };
 
 CompositeValidatorFactory::CompositeValidatorFactory(QList<ValidatorFactory*> factories)
     : factories{factories} {};
 
-const QValidator *CompositeValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) {
-    QList<const QValidator*> validators;
+const ValidationStatus *CompositeValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) const {
+    QList<const ValidationStatus*> validators;
     for (auto factory : factories) {
-        validators.append(factory->validator(index, parent, statusBar));
+        validators.append(factory->validator(index, parent));
     }
-    return new CompositeValidator(validators, parent);
+    return new CompositeValidator(index, parent, statusBar, validators);
 }

@@ -14,15 +14,19 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , model{dataStore->companies(), this}
     , toolbar{this}
     , statusBar{this}
-    , sortModel{this}
     , tableSort{this, &model, "Company filter", "Name", &statusBar}
 {
     setWindowTitle(tr("Companies[*]"));
     // todo add buttons to toolbar
-    // - add
     // - remove
     // - reload?
     // - undo?
+    auto addAction = finances::iconAction(finances::AddCircle, tr("Add company"), QKeySequence::New, this);
+    toolbar.addAction(addAction);
+    connect(addAction, SIGNAL(triggered(bool)), this, SLOT(triggerAdd()));
+    // todo
+    // - scroll to new row and edit name
+    // - save new rows
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this);
     saveAction->setEnabled(false);
     connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
@@ -44,15 +48,20 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     settings::restoreWindowState("companies", this, QSize{400, 500});
 }
 
+void CompaniesWindow::triggerAdd() {
+    int rowIndex = model.queueAdd();
+    tableSort.scrollTo(rowIndex, 0);
+}
+
 void CompaniesWindow::dataChanged() {
-    saveAction->setEnabled(model.hasUnsavedChanges());
+    saveAction->setEnabled(model.hasUnsavedChanges() && model.isValid());
     setWindowModified(model.hasUnsavedChanges());
 }
 
 void CompaniesWindow::saveCompanies() {
     statusBar.showMessage(tr("Saving companies..."));
     tableSort.table.setEnabled(false);
-    dataStore->updateCompanies(this, model.unsavedChanges());
+    dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds());
 }
 
 void CompaniesWindow::setCompanies(QList<Company *> companies) {

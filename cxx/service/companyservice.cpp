@@ -11,10 +11,13 @@ QList<Company*> CompanyService::getAll() {
     return companyDao::getAll(conn.db);
 }
 
-QList<Company*> CompanyService::update(QList<Company *> companies, const QString &user) {
+QList<Company*> CompanyService::update(QList<Company *> updates, QList<Company*> adds, const QString &user) {
     auto conn = Connection(connectionPool);
     try {
-        return companyDao::update(conn.db, companies, user);
+        QList<Company*> result;
+        if (!updates.isEmpty()) result += companyDao::update(conn.db, updates, user);
+        if (!adds.isEmpty()) result += companyDao::add(conn.db, adds, user);
+        return result;
     } catch(...) {
         conn.db.rollback();
         throw;

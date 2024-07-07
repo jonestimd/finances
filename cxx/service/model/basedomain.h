@@ -12,7 +12,6 @@ public:
     QVariant changeDate;
 
     BaseDomain();
-
     BaseDomain(QSqlRecord record);
 };
 
