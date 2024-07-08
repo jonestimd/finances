@@ -148,7 +148,7 @@ void TableSort::undoChanges() {
 void TableSort::showValidation(const QModelIndex &index) {
     auto range = table.selectionModel()->selection().indexes();
     if (range.length() == 1 && range.contains(index)) {
-        auto message = index.data(finances::ValidationMessage);
+        auto message = index.data(finances::ValidationMessageRole);
         if (!message.isNull()) statusBar->showMessage(message.toString());
         else statusBar->clearMessage();
     }

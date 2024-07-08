@@ -8,13 +8,13 @@ TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
 
 void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     QStyledItemDelegate::initStyleOption(option, index);
-    QVariant highlight = index.data(finances::TextHighlight);
+    QVariant highlight = index.data(finances::TextHighlightRole);
     if (highlight.isValid() && highlight.toBool()) {
         auto brush = option->palette.accent();
         option->palette.setBrush(QPalette::Text, brush);
         option->palette.setBrush(QPalette::HighlightedText, brush);
     }
-    QVariant unsaved = index.data(finances::Unsaved);
+    QVariant unsaved = index.data(finances::UnsavedRole);
     if (unsaved.isValid()) {
         if (unsaved.toInt() == finances::AddUpdate) {
             auto brush = option->palette.brush(QPalette::Base).color();
@@ -39,7 +39,7 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
 
 void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &index) const {
     QStyledItemDelegate::paint(p, opt, index);
-    auto validationMessage = index.data(finances::ValidationMessage);
+    auto validationMessage = index.data(finances::ValidationMessageRole);
     if (!validationMessage.isNull()) {
         const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
         QRect rect = clipRegion.boundingRect();
@@ -52,7 +52,7 @@ void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, cons
 
 QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
     auto editor = QStyledItemDelegate::createEditor(parent, option, index);
-    auto validatorFactory = index.data(finances::ValidatorFactory);
+    auto validatorFactory = index.data(finances::ValidatorFactoryRole);
     if (validatorFactory.isValid()) {
         auto lineEdit = qobject_cast<QLineEdit*>(editor);
         if (lineEdit) {

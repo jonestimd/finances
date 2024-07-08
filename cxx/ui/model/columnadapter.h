@@ -23,7 +23,7 @@ public:
         case Qt::EditRole:
         case finances::SortRole:
             return row->*(this->field);
-        case finances::ValidatorFactory:
+        case finances::ValidatorFactoryRole:
             if (validatorFactory) return QVariant::fromValue(validatorFactory);
             break;
         }

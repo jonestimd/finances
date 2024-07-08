@@ -20,7 +20,7 @@ public:
         QVariant value = NumberColumnAdapter<T>::value(row, role);
         if (role == Qt::DisplayRole) return formatter(row, value);
         if (role == finances::SortRole) return value.value<QDecNumber>().toDouble();
-        if (role == finances::TextHighlight) {
+        if (role == finances::TextHighlightRole) {
             QVariant amount = NumberColumnAdapter<T>::value(row, Qt::DisplayRole);
             if (amount.value<QDecNumber>().isNegative()) return true;
         }

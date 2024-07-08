@@ -28,7 +28,7 @@ protected:
     }
 
     void emitChange(int from, int to) {
-        emit dataChanged(index(from, 0), index(to, columns.length()-1), QList<int>{Qt::DisplayRole, finances::Unsaved});
+        emit dataChanged(index(from, 0), index(to, columns.length()-1), QList<int>{Qt::DisplayRole, finances::UnsavedRole});
     }
 
     void emitChange(int row) {
@@ -95,7 +95,7 @@ public:
         if (pendingDeletes.removeAll(index.row()) > 0) emitChange(index.row());
         else if (changes.contains(index)) {
             changes.remove(index);
-            emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::Unsaved));
+            emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
         }
     }
 
@@ -173,10 +173,10 @@ public:
         case Qt::EditRole:
             if (changes.contains(index)) return changes.value(index);
             break;
-        case finances::ValidationMessage:
+        case finances::ValidationMessageRole:
             if (errors.contains(index)) return errors[index];
             break;
-        case finances::Unsaved:
+        case finances::UnsavedRole:
             if (pendingDeletes.contains(index.row())) return finances::Delete;
             if (index.row() >= rows.length() || changes.contains(index)) return finances::AddUpdate;
         }
@@ -201,12 +201,12 @@ public:
             if (is_eq(QVariant::compare(value_(index), text))) {
                 if (changes.contains(index)) {
                     changes.remove(index);
-                    emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::Unsaved));
+                    emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
                     return true;
                 }
             } else if (!changes.contains(index) || is_neq(QVariant::compare(text, changes[index]))) {
                 changes[index] = text;
-                emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::Unsaved));
+                emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
                 return true;
             }
         }

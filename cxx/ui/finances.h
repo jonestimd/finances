@@ -12,11 +12,11 @@
 
 namespace finances {
     enum ItemDataRole {
-        TextHighlight = Qt::UserRole,
+        TextHighlightRole = Qt::UserRole,
         SortRole,
-        Unsaved,
-        ValidationMessage,
-        ValidatorFactory,
+        UnsavedRole,
+        ValidationMessageRole,
+        ValidatorFactoryRole,
     };
 
     enum UnsavedState {
