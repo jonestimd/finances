@@ -29,7 +29,7 @@ protected Q_SLOTS:
     void dataChanged();
     void loadCompanies();
     void saveCompanies();
-    void setCompanies(QList<const Company*> companies);
+    void setCompanies(const QHash<qlonglong, const Company*> companies);
 
 protected:
     bool confirmDelete(const QSet<int> rowIndex);

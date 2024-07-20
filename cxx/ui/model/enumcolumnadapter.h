@@ -17,8 +17,8 @@ public:
     EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, V> values)
         : ColumnAdapter<T>(title, field, false), values{values} {} // TODO editable
 
-    QVariant value(const T *row, int role) const override {
-        QVariant value = ColumnAdapter<T>::value(row, role);
+    QVariant value(const T *row, QVariant current, int role) const override {
+        QVariant value = ColumnAdapter<T>::value(row, current, role);
         if (role == Qt::DisplayRole) {
             if (value.isValid()) {
                 QString code = value.toString();

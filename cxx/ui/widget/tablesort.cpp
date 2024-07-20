@@ -25,8 +25,10 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
     table.setSortingEnabled(true);
-    // table.selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
+
     connect(table.selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
+    connect(table.itemDelegate(), &TableItemDelegate::closeEditor, this,
+            [this]() { showValidation(table.selectionModel()->currentIndex()); });
 
     auto header = table.horizontalHeader();
     header->setSectionsMovable(true);
@@ -38,6 +40,10 @@ TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * fil
 
 int TableSort::columnIndex(const QString name) const {
     return model->columnIndex(name);
+}
+
+QModelIndex TableSort::selectedIndex() {
+    return sortModel.mapToSource(table.selectionModel()->selectedIndexes().first());
 }
 
 void TableSort::enableColumnResize() {

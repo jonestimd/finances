@@ -6,3 +6,4 @@ target_sources(finances
 
 add_subdirectory(service/)
 add_subdirectory(ui/)
+add_subdirectory(tests/)

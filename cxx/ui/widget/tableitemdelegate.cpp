@@ -1,10 +1,16 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
 #include "../validation/factory.h"
+#include "qcombobox.h"
+#include "relationeditor.h"
+#include <QCompleter>
+#include <QItemEditorFactory>
 #include <QPainter>
+#include <ui/model/comboboxmodel.h>
 
 TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
-    : QStyledItemDelegate{parent}, statusBar{statusBar} {}
+    : QStyledItemDelegate{parent}, statusBar{statusBar}
+{}
 
 void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     QStyledItemDelegate::initStyleOption(option, index);
@@ -51,11 +57,17 @@ void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, cons
 }
 
 QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    auto editor = QStyledItemDelegate::createEditor(parent, option, index);
-    auto validatorFactory = index.data(finances::ValidatorFactoryRole);
-    if (validatorFactory.isValid()) {
+    auto data = index.data(Qt::EditRole);
+    QWidget *editor;
+    if (data.canConvert<const NamedEntity*>()) {
+        auto model = index.data(finances::OptionsRole).value<ComboBoxModel*>();
+        editor = new RelationEditor(model, parent);
+    }
+    else {
+        editor = QStyledItemDelegate::createEditor(parent, option, index);
         auto lineEdit = qobject_cast<QLineEdit*>(editor);
-        if (lineEdit) {
+        auto validatorFactory = index.data(finances::ValidatorFactoryRole);
+        if (validatorFactory.isValid() && lineEdit) {
             auto factory = validatorFactory.value<ValidatorFactory*>();
             if (factory) {
                 auto validator = factory->validator(index, lineEdit, statusBar);
@@ -71,4 +83,9 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
 bool TableItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {
     // TODO handle click on boolean cell?
     return QStyledItemDelegate::editorEvent(event, model, option, index);
+}
+
+// TODO not needed?
+void TableItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
+    QStyledItemDelegate::setModelData(editor, model, index);
 }

@@ -11,3 +11,5 @@ BaseDomain::BaseDomain(QSqlRecord record) {
     changeUser = record.field("change_user").value();
     changeDate = record.field("change_date").value();
 }
+
+NamedEntity::NamedEntity(QSqlRecord record) : BaseDomain{record} {}

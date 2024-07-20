@@ -11,7 +11,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
     , dataStore{dataStore}
-    , model{dataStore->companies(), this}
+    , model{dataStore->companies().values(), this}
     , toolbar{this}
     , statusBar{this}
     , tableSort{this, &model, "Company filter", "Name", &statusBar}
@@ -30,7 +30,8 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     toolbar.addAction(reloadAction);
 
     connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    connect(dataStore, SIGNAL(companiesLoaded(QList<const Company*>)), this, SLOT(setCompanies(QList<const Company*>)));
+    connect(dataStore, SIGNAL(companiesLoaded(QHash<qlonglong,const Company*>)),
+            this, SLOT(setCompanies(QHash<qlonglong,const Company*>)));
     toolbar.setMovable(false);
     toolbar.addWidget(&tableSort.filterInput);
 
@@ -63,8 +64,8 @@ void CompaniesWindow::saveCompanies() {
     dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
-void CompaniesWindow::setCompanies(QList<const Company *> companies) {
-    model.setRows(companies);
+void CompaniesWindow::setCompanies(const QHash<qlonglong, const Company *> companies) {
+    model.setRows(companies.values());
     statusBar.showMessage(tr("Done loading"), 1500);
     tableSort.table.setEnabled(true);
 }

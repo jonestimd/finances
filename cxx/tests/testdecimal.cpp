@@ -1,16 +1,14 @@
-#include <QtTest/QTest>
+#include <QTest>
 #include <QDecNumber.hh>
 
-class TestDecimal: public QObject
-{
+class TestDecimal: public QObject {
     Q_OBJECT
 private slots:
     void canConvert();
     void isValid();
 };
 
-void TestDecimal::canConvert()
-{
+void TestDecimal::canConvert() {
     QMetaType::registerConverter<QDecNumber, QString>(
         [](const QDecNumber &value) -> QString { return QString(value.toString()); }
     );
@@ -22,8 +20,7 @@ void TestDecimal::canConvert()
     QVERIFY(variant.canConvert<QString>());
 }
 
-void TestDecimal::isValid()
-{
+void TestDecimal::isValid() {
     QDecNumber num = QDecNumber("123.456");
     QVariant variant = QVariant{};
     variant.setValue(num);

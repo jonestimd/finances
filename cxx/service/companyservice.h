@@ -14,6 +14,8 @@ public:
     QList<const Company*> getAll();
 
     QList<const Company*> update(BulkUpdate<Company> &changes, const QString &user);
+
+    const Company *add(const QString &name, const QString &user);
 };
 
 #endif // COMPANYSERVICE_H

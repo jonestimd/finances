@@ -28,14 +28,16 @@ public:
     ~AccountsWindow();
 
 public Q_SLOTS:
-    void setCompanies(QList<const Company*> companies);
-    void setAccounts(QList<const Account*> accounts);
+    void setCompanies(const QHash<qlonglong, const Company*> companies);
+    void setAccounts(const QHash<qlonglong, const Account*> accounts);
     void showCompanies();
-    // void hideCompanies();
 
     // QWidget interface
 protected:
     void closeEvent(QCloseEvent *event);
     void keyPressEvent(QKeyEvent *event);
+
+private:
+    void addCompany(const QString &name);
 };
 #endif // ACCOUNTSWINDOW_H

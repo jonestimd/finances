@@ -1,16 +1,10 @@
-# cmake_minimum_required(VERSION 3.27)
-# project(testdecimal LANGUAGES CXX)
-
-# find_package(Qt6 REQUIRED COMPONENTS Core Gui Test Widgets)
-
-# qt_standard_project_setup()
-
 qt_add_executable(testdecimal
     testdecimal.cpp
 )
 add_dependencies(testdecimal qdecimal)
 
 set_target_properties(testdecimal PROPERTIES
+    AUTOMOC ON
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE
 )
@@ -37,7 +31,9 @@ install(TARGETS testdecimal
 
 qt_generate_deploy_app_script(
     TARGET testdecimal
-    OUTPUT_SCRIPT deploy_script
+    OUTPUT_SCRIPT deploy_testdecimal
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
-install(SCRIPT ${deploy_script})
+install(SCRIPT ${deploy_testdecimal})
+
+add_subdirectory(ui/)

@@ -17,6 +17,9 @@ public:
     virtual const QString isValid(QString &value) const = 0;
 
     static QString formatMessage(const char *format, const QModelIndex &index);
+
+    virtual void fixup(QString &) const override;
 };
+
 
 #endif // STATUS_H

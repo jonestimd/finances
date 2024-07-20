@@ -23,8 +23,8 @@ protected:
     QList<Row*> pendingAdds;
     QList<int> pendingDeletes;
 
-    QVariant value_(const QModelIndex index, int role = Qt::DisplayRole) const {
-        return columns[index.column()]->value(row(index.row()), role);
+    QVariant value_(const QModelIndex index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const {
+        return columns[index.column()]->value(row(index.row()), current, role);
     }
 
     void emitChange(int from, int to) {
@@ -42,6 +42,12 @@ protected:
 public:
     explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
         : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns} {}
+
+    ~PodTableModel() {
+        for (auto column : columns) {
+            delete column;
+        }
+    }
 
     void setRows(QList<const Row*> rows) {
         this->clearChanges();
@@ -171,7 +177,7 @@ public:
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
-            if (changes.contains(index)) return changes.value(index);
+            if (changes.contains(index)) return value_(index, role, changes.value(index));
             break;
         case finances::ValidationMessageRole:
             if (errors.contains(index)) return errors[index];
@@ -188,24 +194,26 @@ public:
         return AdapterTableModel::flags(index) | columns[index.column()]->flags(row(index.row()), !pendingDelete);
     }
 
+    // TODO value is >> *company <<, company ID or name? (what goes in changes)
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {
         if (role == Qt::EditRole) {
             errors.remove(index); // editor must have accepted the value
-            auto text = value.toString().trimmed();
             auto savedRows = rows.length();
             if (index.row() >= savedRows) {
                 setValue_(pendingAdds[index.row()-savedRows], index.column(), value);
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole));
                 return true;
             }
-            if (is_eq(QVariant::compare(value_(index), text))) {
+            auto column = columns[index.column()];
+            auto original = value_(index, Qt::EditRole);
+            if (column->isEqual(original, value)) {
                 if (changes.contains(index)) {
                     changes.remove(index);
                     emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
                     return true;
                 }
-            } else if (!changes.contains(index) || is_neq(QVariant::compare(text, changes[index]))) {
-                changes[index] = text;
+            } else if (!changes.contains(index) || !column->isEqual(value, changes[index])) {
+                changes[index] = value;
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
                 return true;
             }

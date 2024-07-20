@@ -5,13 +5,16 @@
 #include <QSqlRecord>
 #include <QVariant>
 
-class Company : public BaseDomain {
+class Company : public NamedEntity {
 public:
     QVariant name;
     QVariant accounts;
 
     Company();
     Company(QSqlRecord record);
+    Company(const QString &name);
+
+    QString displayName() const override;
 };
 
 #endif // COMPANY_H

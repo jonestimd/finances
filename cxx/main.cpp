@@ -17,6 +17,9 @@ int main(int argc, char *argv[])
     QMetaType::registerConverter<QDecNumber, QString>(
         [](const QDecNumber &value) -> QString { return QString(value.toString()); }
     );
+    QMetaType::registerConverter<const NamedEntity*, QString>(
+        [](const NamedEntity *value) -> QString { return value ? value->displayName() : ""; }
+    );
 
     QThreadPool::globalInstance()->setMaxThreadCount(5);
     ConnectionPool connectionPool("QMYSQL", "hydra", 3306, DB_NAME, DB_USER, DB_USER);

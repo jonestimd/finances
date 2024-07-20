@@ -7,18 +7,19 @@
 #include "formats.h"
 #include "relationcolumnadapter.h"
 #include "../validation/required.h"
-#include "../../service/model/accounttype.h"
+#include "../validation/trimmed.h"
+#include "service/model/accounttype.h"
 
-AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent)
-    : dataStore{ds},
-    PodTableModel<Account>{
+AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany addCompany)
+    : dataStore{ds}
+    , PodTableModel<Account>{
         QList<ColumnAdapter<Account>*>{
             new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, std::bind(&DataStore::companies, ds)),
+            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, std::bind(&DataStore::companies, ds), addCompany),
             new ColumnAdapter<Account>(tr("Name"), &Account::name, true, requiredValidatorFactory),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, accountTypes),
-            new ColumnAdapter<Account>(tr("Description"), &Account::description),
-            new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber),
+            new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
+            new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
             new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance, false),
         },

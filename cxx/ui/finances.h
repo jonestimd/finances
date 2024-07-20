@@ -15,6 +15,7 @@ namespace finances {
         TextHighlightRole = Qt::UserRole,
         SortRole,
         UnsavedRole,
+        OptionsRole,
         ValidationMessageRole,
         ValidatorFactoryRole,
     };

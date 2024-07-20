@@ -1,7 +1,7 @@
 #ifndef DATASTORE_H
 #define DATASTORE_H
 
-#include "../../service/servicecontext.h"
+#include "service/servicecontext.h"
 #include <QFuture>
 
 class DataStorePrivate;
@@ -17,15 +17,16 @@ public:
     ~DataStore();
 
     bool loadAccounts(QWidget *source);
-    QList<const Account*> accounts() const;
+    const QHash<qlonglong, const Account*> accounts() const;
 
     bool loadCompanies(QWidget *source, bool reload = false);
-    QList<const Company*> companies() const;
+    const QHash<qlonglong, const Company*> companies() const;
     void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes);
+    void addCompany(QWidget *source, const QString &name, std::function<void(const Company*)> callback);
 
 Q_SIGNALS:
-    void accountsLoaded(QList<const Account*>);
-    void companiesLoaded(QList<const Company*>);
+    void accountsLoaded(const QHash<qlonglong, const Account*>);
+    void companiesLoaded(const QHash<qlonglong, const Company*>);
 };
 
 #endif // DATASTORE_H

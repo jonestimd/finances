@@ -23,6 +23,8 @@ public:
 
     int columnIndex(const QString name) const;
 
+    QModelIndex selectedIndex();
+
     void enableColumnResize();
 
     void setColumnResize(const std::vector<int> stretchColumns);

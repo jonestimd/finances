@@ -1,9 +1,15 @@
 #include "company.h"
 #include <QSqlField>
 
-Company::Company() : BaseDomain(), accounts{0} {}
+Company::Company() : accounts{0} {}
 
-Company::Company(QSqlRecord record) : BaseDomain::BaseDomain(record) {
+Company::Company(QSqlRecord record) : NamedEntity{record} {
     name = record.field("name").value().toString();
     accounts = record.field("accounts").value();
+}
+
+Company::Company(const QString &name) : name{name} {}
+
+QString Company::displayName() const {
+    return name.toString();
 }

@@ -17,21 +17,25 @@ public:
     ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
         : title{title}, field{field}, editable{editable}, validatorFactory{factory} {}
 
-    virtual QVariant value(const T *row, int role = Qt::DisplayRole) const {
+    virtual QVariant value(const T *row, QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
         case finances::SortRole:
-            return row->*(this->field);
+            return current.isValid() ? current : row->*(this->field);
         case finances::ValidatorFactoryRole:
             if (validatorFactory) return QVariant::fromValue(validatorFactory);
             break;
         }
-        return QVariant{};
+        return current.isValid() ? current : QVariant{};
     };
 
     virtual void setValue(T *row, QVariant value) {
         row->*(this->field) = value;
+    }
+
+    virtual bool isEqual(const QVariant &value1, const QVariant &value2) {
+        return is_eq(QVariant::compare(value1, value2));
     }
 
     virtual Qt::ItemFlags flags(const T *row, bool allowEdit) const {

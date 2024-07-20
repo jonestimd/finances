@@ -3,6 +3,7 @@
 
 #include "factory.h"
 #include "required.h"
+#include "trimmed.h"
 #include "unique.h"
 
 class CompositeValidatorFactory : public ValidatorFactory {
@@ -14,6 +15,6 @@ public:
 };
 
 Q_GLOBAL_STATIC(CompositeValidatorFactory, requiredUniqueFactory,
-                QList<ValidatorFactory*>{requiredValidatorFactory, uniqueValidatorFactory})
+                QList<ValidatorFactory*>{trimmedValidatorFactory, requiredValidatorFactory, uniqueValidatorFactory})
 
 #endif // COMPOSITE_H

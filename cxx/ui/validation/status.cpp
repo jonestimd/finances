@@ -22,3 +22,5 @@ QValidator::State ValidationStatus::validate(QString &value, int &pos) const {
 QString ValidationStatus::formatMessage(const char *format, const QModelIndex &index) {
     return tr(format).arg(index.model()->headerData(index.column(), Qt::Horizontal).toString());
 }
+
+void ValidationStatus::fixup(QString &) const {}

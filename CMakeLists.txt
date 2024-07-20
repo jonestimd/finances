@@ -39,6 +39,8 @@ set_target_properties(libqdecimal
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test)
 
+qt_standard_project_setup()
+
 set(PROJECT_RESOURCES
     cxx/ui/resources/finances.qrc
     cxx/ui/resources/finances.svg
@@ -71,11 +73,11 @@ else()
         )
     endif()
 endif()
-# add_subdirectory(tests/)
 
 target_include_directories(finances PRIVATE
     ${SOURCE_DIR}/src
     ${SOURCE_DIR}/decnumber
+    ${CMAKE_HOME_DIRECTORY}/cxx
 )
 
 target_link_libraries(finances PRIVATE
