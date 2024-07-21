@@ -81,11 +81,13 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
 }
 
 bool TableItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {
-    // TODO handle click on boolean cell?
+    auto eventType = event->type();
+    if (eventType == QEvent::MouseButtonPress || eventType == QEvent::KeyPress && index.flags().testFlag(Qt::ItemIsEditable)) {
+        auto value = index.data(Qt::EditRole);
+        if (value.typeId() == QMetaType::Bool) {
+            model->setData(index, !value.toBool());
+            return true;
+        }
+    }
     return QStyledItemDelegate::editorEvent(event, model, option, index);
-}
-
-// TODO not needed?
-void TableItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
-    QStyledItemDelegate::setModelData(editor, model, index);
 }
