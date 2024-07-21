@@ -28,6 +28,8 @@ public:
     ~AccountsWindow();
 
 public Q_SLOTS:
+    void dataChanged();
+    void loadAccounts();
     void setCompanies(const QHash<qlonglong, const Company*> companies);
     void setAccounts(const QHash<qlonglong, const Account*> accounts);
     void showCompanies();

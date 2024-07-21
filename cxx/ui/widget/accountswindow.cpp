@@ -1,5 +1,6 @@
 #include "accountswindow.h"
 #include "settings.h"
+#include "ui/widget/dialog.h"
 #include <QtSql>
 #include <QtWidgets>
 #include <QtConcurrent>
@@ -15,18 +16,26 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 {
     setCentralWidget(&tableSort.table);
     setStatusBar(&statusBar);
-    setWindowTitle(tr("Finances (Accounts)"));
+    setWindowTitle(tr("Finances - Accounts[*]"));
     // QMetaObject::connectSlotsByName(this);
 
     auto toolbar = new QToolBar(this);
     toolbar->setMovable(false);
     addToolBar(toolbar);
+    toolbar->addAction(tableSort.undoAction("Undo"));
+
+    auto reloadAction = finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, this, SLOT(loadAccounts()));
+    toolbar->addAction(reloadAction);
+
+    toolbar->addSeparator();
     auto companiesAction = finances::iconAction(finances::FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this);
     toolbar->addAction(companiesAction);
     connect(companiesAction, SIGNAL(triggered(bool)), this, SLOT(showCompanies()));
 
     connect(dataStore, SIGNAL(companiesLoaded(QHash<qlonglong,const Company*>)), this, SLOT(setCompanies(QHash<qlonglong,const Company*>)));
     connect(dataStore, SIGNAL(accountsLoaded(QHash<qlonglong,const Account*>)), this, SLOT(setAccounts(QHash<qlonglong,const Account*>)));
+    connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+
     if (dataStore->loadAccounts(this)) model.setRows(dataStore->accounts().values());
     else statusBar.addMessage(tr("Loading accounts..."));
     if (!dataStore->loadCompanies(this)) statusBar.addMessage(tr("Loading companies..."));
@@ -44,6 +53,18 @@ AccountsWindow::~AccountsWindow() {
     }
 }
 
+void AccountsWindow::dataChanged() {
+    // saveAction->setEnabled(model.hasUnsavedChanges() && model.isValid());
+    setWindowModified(model.hasUnsavedChanges());
+}
+
+void AccountsWindow::loadAccounts() {
+    if (!dialog::confirmDiscardChanges(this, &model)) return;
+    tableSort.table.setEnabled(false); // TODO save/restore selection
+    statusBar.addMessage(tr("Loading accounts..."));
+    dataStore->loadAccounts(this, true);
+}
+
 void AccountsWindow::setCompanies(const QHash<qlonglong, const Company*> companies) {
     statusBar.removeMessage(tr("Loading companies..."));
 }
@@ -51,6 +72,7 @@ void AccountsWindow::setCompanies(const QHash<qlonglong, const Company*> compani
 void AccountsWindow::setAccounts(const QHash<qlonglong, const Account *> accounts) {
     model.setRows(accounts.values());
     statusBar.removeMessage(tr("Loading accounts..."));
+    tableSort.table.setEnabled(true);
 }
 
 void AccountsWindow::showCompanies() {
@@ -62,8 +84,8 @@ void AccountsWindow::showCompanies() {
 }
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {
-    settings::saveWindowState("accounts", this, &tableSort);
-    QMainWindow::closeEvent(event);
+    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
+    else settings::saveWindowState("accounts", this, &tableSort);
 }
 
 void AccountsWindow::keyPressEvent(QKeyEvent *event) {

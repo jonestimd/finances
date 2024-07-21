@@ -53,6 +53,7 @@ void CompaniesWindow::dataChanged() {
 }
 
 void CompaniesWindow::loadCompanies() {
+    if (!dialog::confirmDiscardChanges(this, &model)) return;
     tableSort.table.setEnabled(false); // TODO save/restore selection
     statusBar.showMessage(tr("Loading companies..."));
     dataStore->loadCompanies(this, true);
@@ -82,11 +83,11 @@ bool CompaniesWindow::confirmDelete(const QSet<int> rowIndex) {
 }
 
 void CompaniesWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmClose(this, &model)) event->ignore();
+    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
     else settings::saveWindowState("companies", this);
 }
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape && !dialog::confirmClose(this, &model)) return;
+    if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, &model)) return;
     if (!tableSort.focusFilter(event)) QDialog::keyPressEvent(event);
 }

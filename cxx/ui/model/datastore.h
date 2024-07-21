@@ -16,7 +16,7 @@ public:
     DataStore(ServiceContext *services);
     ~DataStore();
 
-    bool loadAccounts(QWidget *source);
+    bool loadAccounts(QWidget *source, bool reload = false);
     const QHash<qlonglong, const Account*> accounts() const;
 
     bool loadCompanies(QWidget *source, bool reload = false);

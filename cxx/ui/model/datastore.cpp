@@ -68,8 +68,8 @@ DataStore::~DataStore() {
     delete p;
 }
 
-bool DataStore::loadAccounts(QWidget *source) {
-    if (p->accounts.loaded) return true;
+bool DataStore::loadAccounts(QWidget *source, bool reload) {
+    if (!reload && p->accounts.loaded) return true;
     doInBackground(source, [this]() {
         p->accounts.setValues(services->accountService.getAll());
         emit accountsLoaded(p->accounts.values());
