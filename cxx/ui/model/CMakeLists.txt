@@ -10,3 +10,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/relationcolumnadapter.h
     ${CMAKE_CURRENT_LIST_DIR}/podtablemodel.h
 )
+
+add_subdirectory(tests/)

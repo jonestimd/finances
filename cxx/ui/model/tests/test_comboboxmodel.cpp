@@ -1,5 +1,5 @@
 #include <QTest>
-#include "ui/model/comboboxmodel.h"
+#include "../comboboxmodel.h"
 
 class TestComboBoxModel: public QObject {
     Q_OBJECT
