@@ -8,14 +8,19 @@
 template<class T>
 class ColumnAdapter {
 protected:
+    typedef std::function<bool(const T*)> IsEditable;
+
     QVariant T::* field;
-    const bool editable;
+    const IsEditable isEditable;
     const ValidatorFactory *validatorFactory;
 public:
     const QString title;
 
     ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
-        : title{title}, field{field}, editable{editable}, validatorFactory{factory} {}
+        : ColumnAdapter(title, field, [editable](const T *r) { return editable; }, factory) {}
+
+    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, ValidatorFactory *factory = nullptr)
+        : title{title}, field{field}, isEditable{isEditable}, validatorFactory{factory} {}
 
     virtual QVariant value(const T *row, QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
         switch (role) {
@@ -39,7 +44,7 @@ public:
     }
 
     virtual Qt::ItemFlags flags(const T *row, bool allowEdit) const {
-        return allowEdit && editable ? Qt::ItemIsEditable : Qt::NoItemFlags;
+        return allowEdit && (!isEditable || isEditable(row)) ? Qt::ItemIsEditable : Qt::NoItemFlags;
     }
 
     const QString isValid(const T *row, const QModelIndex &index, QObject *parent) const {

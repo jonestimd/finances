@@ -20,6 +20,9 @@ int main(int argc, char *argv[])
     QMetaType::registerConverter<const NamedEntity*, QString>(
         [](const NamedEntity *value) -> QString { return value ? value->displayName() : ""; }
     );
+    QMetaType::registerConverter<const EnumValue*, QString>(
+        [](const EnumValue *value) -> QString { return value ? value->name : ""; }
+    );
 
     QThreadPool::globalInstance()->setMaxThreadCount(5);
     ConnectionPool connectionPool("QMYSQL", "hydra", 3306, DB_NAME, DB_USER, DB_USER);

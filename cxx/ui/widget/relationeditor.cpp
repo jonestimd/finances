@@ -21,7 +21,13 @@ RelationEditor::RelationEditor(ComboBoxModel *model, QWidget *parent)
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     completer->setFilterMode(Qt::MatchContains);
     setValidator(&model->validator);
-    connect(this, SIGNAL(textChanged(QString)), this, SLOT(textChanged(QString)));
+    connect(this, &QLineEdit::textChanged, this, [this](const QString &text) {
+        auto value = this->model->valueOf(text);
+        if (value != entity_) {
+            entity_ = value;
+            emit entityChanged(entity_);
+        }
+    });
 }
 
 const NamedEntity *RelationEditor::entity() const {
@@ -32,12 +38,6 @@ void RelationEditor::setEntity(const NamedEntity *entity) {
     entity_ = entity;
     if (entity) setText(entity->displayName());
     else setText("");
-}
-
-void RelationEditor::textChanged(const QString &text) {
-    auto oldValue = entity_;
-    entity_ = model->valueOf(text);
-    if (oldValue != entity_) emit entityChanged(entity_);
 }
 
 void RelationEditor::keyReleaseEvent(QKeyEvent *event) {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 13.0.2, 2024-07-20T17:33:03. -->
+<!-- Written by QtCreator 13.0.2, 2024-07-23T17:04:01. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -223,7 +223,7 @@
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/tim/workspace/qt/finances/build/Desktop_Qt_6_7_2-Debug/cxx/tests/ui/model</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/tim/workspace/qt/finances/build/Desktop_Qt_6_7_2-Debug/cxx/ui/model/tests</value>
    </valuemap>
    <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">3</value>
   </valuemap>

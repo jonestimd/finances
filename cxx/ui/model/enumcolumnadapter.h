@@ -3,29 +3,56 @@
 
 #include <QVariant>
 #include "columnadapter.h"
+#include "service/model/basedomain.h"
 
 template<typename T>
-concept Name = requires(T t) {
-    { t.name } -> std::convertible_to<const char*>;
+concept Name = requires(T *t) {
+    { t->name } -> std::convertible_to<QString>;
 };
 
 template<class T, Name V>
 class EnumColumnAdapter : public ColumnAdapter<T> {
-    QHash<QString, V> values;
+public:
+    typedef std::function<bool(const T*, const V*)> IsCompatible;
+
+private:
+    QHash<QString, const V*> *values;
+    IsCompatible isCompatible;
 
 public:
-    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, V> values)
-        : ColumnAdapter<T>(title, field, false), values{values} {} // TODO editable
+    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, const V*> *values, bool editable = true, IsCompatible isCompatible = nullptr)
+        : ColumnAdapter<T>(title, field, editable), values{values}, isCompatible{isCompatible} {}
 
     QVariant value(const T *row, QVariant current, int role) const override {
-        QVariant value = ColumnAdapter<T>::value(row, current, role);
-        if (role == Qt::DisplayRole) {
-            if (value.isValid()) {
-                QString code = value.toString();
-                if (values.keys().contains(code)) return values[code].name;
+        auto value = ColumnAdapter<T>::value(row, current, role);
+        if (role == Qt::DisplayRole || role == finances::SortRole) {
+            if (current.isValid()) return current.value<const EnumValue*>()->name;
+            const EnumValue *enumValue = values->value(value.toString(), nullptr);
+            if (enumValue) return enumValue->name;
+        } else if (role == Qt::EditRole) {
+            if (current.isValid()) return current;
+            const EnumValue *enumValue = values->value(value .toString(), nullptr);
+            if (enumValue) return QVariant::fromValue(enumValue);
+        } else if (role == finances::OptionsRole) {
+            QHash<QString, const EnumValue*> options;
+            for (auto [code, option]: values->asKeyValueRange()) {
+                if (!isCompatible || isCompatible(row, option)) options[code] = option;
             }
+            return QVariant::fromValue(options);
         }
         return QVariant{};
+    }
+
+    bool isEqual(const QVariant &value1, const QVariant &value2) override {
+        auto e1 = value1.value<const EnumValue*>(), e2 = value2.value<const EnumValue*>();
+        if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->name, e2->name);
+        return !e2;
+    }
+
+    void setValue(T *row, QVariant value) override {
+        qDebug() << value;
+        auto entity = value.value<const V*>();
+        ColumnAdapter<T>::setValue(row, entity ? entity->code: QVariant{});
     }
 };
 

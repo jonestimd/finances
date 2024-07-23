@@ -2,17 +2,11 @@
 
 #include <QMessageBox>
 
-bool ComboBoxModel::compare(const NamedEntity *v1, const NamedEntity *v2) {
-    auto name1 = v1->displayName(), name2 = v2->displayName();
-    auto lname1 = name1.toLower(), lname2 = name2.toLower();
-    return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
-}
-
 ComboBoxModel::ComboBoxModel(const QList<const NamedEntity*> values, CreateValue newValue)
     : validator(this), createValue{newValue}
 {
     options.append(values);
-    std::sort(options.begin(), options.end(), ComboBoxModel::compare);
+    std::sort(options.begin(), options.end(), &NamedEntity::less);
 }
 
 const NamedEntity *ComboBoxModel::valueOf(const QString &name) const {

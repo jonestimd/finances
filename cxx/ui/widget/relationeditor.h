@@ -19,8 +19,6 @@ public:
     Q_PROPERTY(const NamedEntity *entity READ entity WRITE setEntity USER true STORED false NOTIFY entityChanged)
 
     Q_SIGNAL void entityChanged(const NamedEntity *);
-private Q_SLOTS:
-    void textChanged(const QString &text);
 
 protected:
     // QWidget interface

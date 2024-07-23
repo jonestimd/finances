@@ -1,6 +1,7 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
 #include "../validation/factory.h"
+#include "enumcombobox.h"
 #include "qcombobox.h"
 #include "relationeditor.h"
 #include <QCompleter>
@@ -29,8 +30,7 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
             if (s < 64) s = 128;
             h = (h + 180) % 360;
             option->backgroundBrush = QColor::fromHsv(h, s, v);
-        }
-        else {
+        } else {
             option->font.setStrikeOut(true);
             option->backgroundBrush = option->palette.accent().color().lighter();
         }
@@ -62,8 +62,10 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
     if (data.canConvert<const NamedEntity*>()) {
         auto model = index.data(finances::OptionsRole).value<ComboBoxModel*>();
         editor = new RelationEditor(model, parent);
-    }
-    else {
+    } else if (data.canConvert<const EnumValue*>()) {
+        auto options = index.data(finances::OptionsRole).value<QHash<QString, const EnumValue*>>();
+        editor = new EnumComboBox(options, parent);
+    } else {
         editor = QStyledItemDelegate::createEditor(parent, option, index);
         auto lineEdit = qobject_cast<QLineEdit*>(editor);
         auto validatorFactory = index.data(finances::ValidatorFactoryRole);

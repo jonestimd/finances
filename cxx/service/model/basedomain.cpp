@@ -13,3 +13,16 @@ BaseDomain::BaseDomain(QSqlRecord record) {
 }
 
 NamedEntity::NamedEntity(QSqlRecord record) : BaseDomain{record} {}
+
+bool NamedEntity::less(const NamedEntity *lhs, const NamedEntity *rhs) {
+    auto name1 = lhs->displayName(), name2 = rhs->displayName();
+    auto lname1 = name1.toLower(), lname2 = name2.toLower();
+    return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
+}
+
+EnumValue::EnumValue(const char *code, const char *name)
+    : code{code}, name{QObject::tr(name)} {}
+
+bool EnumValue::less(const EnumValue *lhs, const EnumValue *rhs) {
+    return lhs->name < rhs->name;
+}

@@ -6,8 +6,6 @@
 #include <QValidator>
 
 class ComboBoxModel : public QAbstractListModel {
-    static bool compare(const NamedEntity *v1, const NamedEntity *v2);
-
     QList<const NamedEntity*> options;
 public:
     typedef std::function<void(const QString &)> CreateValue;
@@ -35,7 +33,6 @@ public:
     int rowCount(const QModelIndex &parent) const override;
     int columnCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
-
 };
 
 #endif // COMBOBOXMODEL_H

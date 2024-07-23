@@ -3,7 +3,7 @@
 
 #include "columnadapter.h"
 #include "comboboxmodel.h"
-#include <service/model/basedomain.h>
+#include "service/model/basedomain.h"
 #include <QVariant>
 
 template<class T, NameAndId V>
@@ -28,6 +28,7 @@ public:
             }
         }
         if (role == Qt::EditRole) {
+            if (current.isValid()) return current;
             const NamedEntity *v = this->values().value(value.toLongLong());
             return QVariant::fromValue(v);
         }

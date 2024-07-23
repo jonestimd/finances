@@ -1,24 +1,22 @@
+#include "service/model/basedomain.h"
+#include "account.h"
 #include <QHash>
+#include <QObject>
 #include <QString>
 
-class AccountType {
+class AccountType : public EnumValue {
+    AccountType(const char *code, const char *name, bool security);
 public:
-    const char *name;
     const bool security;
 
-    AccountType();
-    AccountType(const char* name, bool security);
+    static const AccountType bank;
+    static const AccountType brokerage;
+    static const AccountType cash;
+    static const AccountType credit;
+    static const AccountType loan;
+    static const AccountType _401k;
 
-    AccountType& operator=(AccountType &type);
+    static QHash<QString, const AccountType*> values;
 
-    AccountType operator=(AccountType type);
-};
-
-static const QHash<QString, AccountType> accountTypes = QHash<QString, AccountType>{
-    {QString("BANK"), AccountType("Bank", false)},
-    {QString("BROKERAGE"), AccountType("Brokerage", true)},
-    {QString("CASH"), AccountType("Cash", false)},
-    {QString("CREDIT"), AccountType("Credit", false)},
-    {QString("LOAN"), AccountType("Loan", false)},
-    {QString("401K"), AccountType("401(K)", true)},
+    static bool isCompatible(const Account* account, const AccountType *type);
 };

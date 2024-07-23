@@ -21,10 +21,23 @@ public:
     NamedEntity(QSqlRecord);
 
     virtual QString displayName() const = 0;
+
+    static bool less(const NamedEntity *, const NamedEntity *);
 };
 
 Q_DECLARE_METATYPE(const NamedEntity*)
 // static const int namedEntityTypeId = qRegisterMetaType<NamedEntity>();
+
+struct EnumValue {
+    const char *code;
+    const QString name;
+
+    EnumValue(const char *code, const char *name);
+
+    static bool less(const EnumValue *, const EnumValue *);
+};
+
+Q_DECLARE_METATYPE(const EnumValue*)
 
 template<typename T>
 concept NameAndId = std::is_base_of<NamedEntity, T>::value;
