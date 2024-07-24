@@ -194,7 +194,6 @@ public:
         return AdapterTableModel::flags(index) | columns[index.column()]->flags(row(index.row()), !pendingDelete);
     }
 
-    // TODO value is >> *company <<, company ID or name? (what goes in changes)
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {
         if (role == Qt::EditRole) {
             errors.remove(index); // editor must have accepted the value

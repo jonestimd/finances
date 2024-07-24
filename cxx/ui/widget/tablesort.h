@@ -37,7 +37,7 @@ public:
 
     void restore(QString group, QSettings *settings);
 
-    void startEdit(int rowIndex, int columnIndex);
+    void startEdit(int rowIndex);
 
     QAction *addAction(const char *text);
     QAction *deleteAction(const char *text, std::function<bool(int)> enableDelete = nullptr);

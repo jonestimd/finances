@@ -51,7 +51,7 @@ void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, cons
         QRect rect = clipRegion.boundingRect();
         auto image = QImage(":/images/invalid.svg");
         auto y = rect.y() + (rect.height() - image.rect().height()) / 2;
-        auto x = rect.width() - image.width();
+        auto x = rect.right() - image.width();
         p->drawImage(x, y, image);
     }
 }

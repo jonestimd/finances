@@ -1,4 +1,5 @@
 #include "account.h"
+#include "accounttype.h"
 #include "decimal.h"
 
 #include "sql.h"
@@ -8,6 +9,8 @@
 using sql::getValue;
 
 Account::Account() : BaseDomain()
+    , closed{false}
+    , type{AccountType::bank.code}
     , transactions{0}
     , balance{QVariant::fromValue(QDEC_ZERO)} {}
 

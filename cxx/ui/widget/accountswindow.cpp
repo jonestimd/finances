@@ -27,6 +27,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     auto toolbar = new QToolBar(this);
     toolbar->setMovable(false);
     addToolBar(toolbar);
+    toolbar->addAction(tableSort.addAction("Add account"));
     toolbar->addAction(tableSort.undoAction("Undo"));
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveAccounts()), false);

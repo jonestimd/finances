@@ -20,8 +20,9 @@ private:
     IsCompatible isCompatible;
 
 public:
-    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, const V*> *values, bool editable = true, IsCompatible isCompatible = nullptr)
-        : ColumnAdapter<T>(title, field, editable), values{values}, isCompatible{isCompatible} {}
+    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, const V*> *values,
+                      ValidatorFactory *factory, bool editable = true, IsCompatible isCompatible = nullptr)
+        : ColumnAdapter<T>(title, field, editable, factory), values{values}, isCompatible{isCompatible} {}
 
     QVariant value(const T *row, QVariant current, int role) const override {
         auto value = ColumnAdapter<T>::value(row, current, role);

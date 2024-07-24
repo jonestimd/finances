@@ -104,10 +104,21 @@ void TableSort::restore(QString group, QSettings *settings) {
     }
 }
 
-void TableSort::startEdit(int rowIndex, int columnIndex) {
-    auto index = sortModel.mapFromSource(model->index(rowIndex, columnIndex));
-    table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-    table.edit(index);
+bool selectEditColumn(QModelIndex &index) {
+    auto columnCount = index.model()->columnCount();
+    while (index.column() < columnCount) {
+        if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
+        index = index.sibling(index.row(), index.column()+1);
+    }
+    return false;
+}
+
+void TableSort::startEdit(int rowIndex) {
+    auto index = sortModel.index(rowIndex, 0);
+    if (selectEditColumn(index)) {
+        table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+        table.edit(index);
+    }
 }
 
 QAction *TableSort::addAction(const char *text) {
@@ -137,8 +148,8 @@ QAction *TableSort::undoAction(const char *text) {
 }
 
 void TableSort::addRow() {
-    int rowIndex = model->queueAdd();
-    startEdit(rowIndex, 0);
+    int rowIndex = sortModel.mapFromSource(model->index(model->queueAdd(), 0)).row();
+    startEdit(rowIndex);
 }
 
 void TableSort::queueDeletes() {
