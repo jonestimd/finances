@@ -11,7 +11,7 @@ void StatusBar::removeMessage(QString message) {
     auto index = messages.indexOf(message);
     if (index >= 0) {
         messages.removeAt(index);
-        if (!messages.isEmpty()) showMessage(messages.first());
-        else clearMessage();
+        if (messages.isEmpty()) showMessage(tr("Ready"), 1500);
+        else showMessage(messages.first());
     }
 }

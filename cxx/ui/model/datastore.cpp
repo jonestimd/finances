@@ -81,6 +81,14 @@ const QHash<qlonglong, const Account *> DataStore::accounts() const {
     return p->accounts.values();
 }
 
+void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const QList<Account *> adds, const QList<const Account *> deletes) {
+    doInBackground(source, [this, updates, adds, deletes] {
+            auto changes = BulkUpdate{updates, adds, deletes};
+            auto accounts = services->accountService.update(changes, user);
+            p->accounts.update(accounts, deletes);
+        }, [this](bool success) { emit accountsLoaded(p->accounts.values()); });
+}
+
 bool DataStore::loadCompanies(QWidget *source, bool reload) {
     if (!reload && p->companies.loaded) return true;
     doInBackground(source, [this]() {

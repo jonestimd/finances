@@ -16,8 +16,15 @@ join asset cur on a.currency_id = cur.id
 left join balance b on a.id = b.account_id
 order by a.name)";
 
+static const auto updateAccountSql = R"(
+update account
+set company_id = :companyId, name = :name, description = :description,
+    type = :type, account_no = :accountNo, closed = :closed,
+    change_user = :user, change_date = current_timestamp, version = version + 1
+where id = :id and version = :version)";
+
 namespace accountDao {
-    QList<const Account*> getAll(QSqlDatabase db) {
+    QList<const Account*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         if (!query.exec(getAccountsSql)) {
             qCritical() << "accountDao:" << query.lastError().text();
@@ -29,5 +36,32 @@ namespace accountDao {
             accounts.append(new Account(query.record()));
         }
         return accounts;
+    }
+
+    QList<const Account *> update(QSqlDatabase &db, QList<Account *> accounts, const QString &user) {
+        QSqlQuery query(db);
+        QList<const Account*> result;
+        result.reserve(accounts.length());
+        query.prepare(updateAccountSql);
+        query.bindValue(":user", user);
+        for (auto account : accounts) {
+            query.bindValue(":id", account->id);
+            query.bindValue(":version", account->version);
+            query.bindValue(":companyId", account->companyId);
+            query.bindValue(":name", account->name);
+            query.bindValue(":description", account->description);
+            query.bindValue(":type", account->type);
+            query.bindValue(":accountNo", account->accountNumber);
+            query.bindValue(":closed", account->closed.toString() == "Y");
+            if (!query.exec()) {
+                qCritical() << "accountDao.update:" << query.lastError();
+                throw query.lastError().text();
+            }
+            if (query.numRowsAffected() < 1) throw "stale data";
+            account->version = account->version.toInt() + 1;
+            account->changeUser = user;
+            result.append(account);
+        }
+        return result;
     }
 }

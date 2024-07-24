@@ -18,6 +18,7 @@ QT_END_NAMESPACE
 class AccountsWindow : public QMainWindow {
     Q_OBJECT
     DataStore *dataStore;
+    QAction *saveAction;
     StatusBar statusBar;
     AccountTableModel model;
     TableSort tableSort;
@@ -30,6 +31,7 @@ public:
 public Q_SLOTS:
     void dataChanged();
     void loadAccounts();
+    void saveAccounts();
     void setCompanies(const QHash<qlonglong, const Company*> companies);
     void setAccounts(const QHash<qlonglong, const Account*> accounts);
     void showCompanies();

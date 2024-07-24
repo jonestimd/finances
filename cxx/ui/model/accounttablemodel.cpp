@@ -16,7 +16,7 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
         QList<ColumnAdapter<Account>*>{
             new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
             new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, std::bind(&DataStore::companies, ds), addCompany),
-            new ColumnAdapter<Account>(tr("Name"), &Account::name, true, requiredValidatorFactory),
+            new ColumnAdapter<Account>(tr("Name"), &Account::name, true, requiredValidatorFactory), // TODO unique company+name
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, true, &AccountType::isCompatible),
             new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
             new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),

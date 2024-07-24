@@ -5,7 +5,9 @@
 #include <QtSql/QSqlDatabase>
 
 namespace accountDao {
-    QList<const Account*> getAll(QSqlDatabase db);
+    QList<const Account*> getAll(QSqlDatabase &db);
+
+    QList<const Account*> update(QSqlDatabase &db, QList<Account*> accounts, const QString &user);
 }
 
 #endif // ACCOUNTDAO_H

@@ -5,7 +5,7 @@
 #include <QtSql/QSqlDatabase>
 
 namespace companyDao {
-    QList<const Company*> getAll(QSqlDatabase db);
+    QList<const Company*> getAll(QSqlDatabase &db);
 
     QList<const Company*> update(QSqlDatabase &db, QList<Company*> companies, const QString &user);
 

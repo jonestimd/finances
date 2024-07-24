@@ -18,6 +18,7 @@ public:
 
     bool loadAccounts(QWidget *source, bool reload = false);
     const QHash<qlonglong, const Account*> accounts() const;
+    void updateAccounts(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
 
     bool loadCompanies(QWidget *source, bool reload = false);
     const QHash<qlonglong, const Company*> companies() const;

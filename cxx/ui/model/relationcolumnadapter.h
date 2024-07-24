@@ -48,7 +48,7 @@ public:
     }
 
     void setValue(T *row, QVariant value) override {
-        auto entity = value.value<const V*>();
+        auto entity = value.value<const NamedEntity*>();
         ColumnAdapter<T>::setValue(row, entity ? entity->id : QVariant{});
     }
 };

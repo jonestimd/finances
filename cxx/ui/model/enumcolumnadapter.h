@@ -50,8 +50,7 @@ public:
     }
 
     void setValue(T *row, QVariant value) override {
-        qDebug() << value;
-        auto entity = value.value<const V*>();
+        auto entity = value.value<const EnumValue*>();
         ColumnAdapter<T>::setValue(row, entity ? entity->code: QVariant{});
     }
 };

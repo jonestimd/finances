@@ -21,7 +21,7 @@ values (:name, 0, :user, current_timestamp))";
 static const auto deleteCompanySql = "delete from company where id = :id";
 
 namespace companyDao {
-    QList<const Company*> getAll(QSqlDatabase db) {
+    QList<const Company*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         if (!query.exec(getCompaniesSql)) {
             qCritical() << "companyDao.getAll:" << query.lastError().text();
@@ -42,9 +42,9 @@ namespace companyDao {
         query.prepare(updateCompanySql);
         query.bindValue(":user", user);
         for (auto company : companies) {
-            query.bindValue(":id", company->id.toInt());
-            query.bindValue(":name", company->name.toString().trimmed());
-            query.bindValue(":version", company->version.toInt());
+            query.bindValue(":id", company->id);
+            query.bindValue(":name", company->name);
+            query.bindValue(":version", company->version);
             if (!query.exec()) {
                 qCritical() << "companyDao.update:" << query.lastError();
                 throw query.lastError().text();
@@ -53,7 +53,6 @@ namespace companyDao {
             company->version = company->version.toInt() + 1;
             company->changeUser = user;
             result.append(company);
-
         }
         return result;
     }
@@ -65,7 +64,7 @@ namespace companyDao {
         query.prepare(insertCompanySql);
         query.bindValue(":user", user);
         for (auto company : companies) {
-            query.bindValue(":name", company->name.toString().trimmed());
+            query.bindValue(":name", company->name);
             if (!query.exec()) {
                 qCritical() << "companyDao.insert:" << query.lastError();
                 throw query.lastError().text();
@@ -81,7 +80,7 @@ namespace companyDao {
         QSqlQuery query(db);
         query.prepare(deleteCompanySql);
         for (auto company : companies) {
-            query.bindValue(":id", company->id.toInt());
+            query.bindValue(":id", company->id);
             if (!query.exec()) {
                 qCritical() << "companyDao.remove:" << query.lastError();
                 throw query.lastError().text();
