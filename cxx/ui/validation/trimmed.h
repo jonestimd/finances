@@ -1,7 +1,7 @@
 #ifndef TRIMMED_H
 #define TRIMMED_H
 
-#include "factory.h"
+#include "validatorfactory.h"
 #include <QValidator>
 
 class TrimmedValidatorFactory : public ValidatorFactory {

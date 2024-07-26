@@ -1,7 +1,7 @@
 #ifndef UNIQUE_H
 #define UNIQUE_H
 
-#include "factory.h"
+#include "validatorfactory.h"
 #include <QModelIndex>
 #include <QValidator>
 

@@ -1,6 +1,6 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
-#include "../validation/factory.h"
+#include "../validation/validatorfactory.h"
 #include "enumcombobox.h"
 #include "qcombobox.h"
 #include "relationeditor.h"

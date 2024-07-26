@@ -1,7 +1,7 @@
 #ifndef REQUIRED_H
 #define REQUIRED_H
 
-#include "factory.h"
+#include "validatorfactory.h"
 #include <QValidator>
 
 class RequiredValidatorFactory : public ValidatorFactory {

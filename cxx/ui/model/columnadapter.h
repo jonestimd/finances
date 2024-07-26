@@ -2,7 +2,7 @@
 #define COLUMNADAPTER_H
 
 #include "../finances.h"
-#include "../validation/factory.h"
+#include "../validation/validatorfactory.h"
 #include <QVariant>
 
 template<class T>

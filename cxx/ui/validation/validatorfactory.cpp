@@ -1,4 +1,4 @@
-#include "factory.h"
+#include "validatorfactory.h"
 
 ValidationStatus::ValidationStatus(const ValidatorFactory *factory, const QModelIndex &index, QObject *parent, QStatusBar *statusBar)
     : QValidator{parent}

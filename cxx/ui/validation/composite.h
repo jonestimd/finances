@@ -1,7 +1,7 @@
 #ifndef COMPOSITE_H
 #define COMPOSITE_H
 
-#include "factory.h"
+#include "validatorfactory.h"
 #include "required.h"
 #include "trimmed.h"
 #include "unique.h"
