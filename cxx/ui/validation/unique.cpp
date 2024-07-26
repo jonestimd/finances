@@ -1,29 +1,15 @@
 #include "unique.h"
 
-class UniqueValidator : public ValidationStatus
-{
-    const QString message;
+UniqueValidatorFactory::UniqueValidatorFactory() : ValidatorFactory(true) {}
+
+const QString UniqueValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     QList<QVariant> values;
-public:
-    UniqueValidator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar)
-        : ValidationStatus{index, parent, statusBar}
-        , message{formatMessage("%1 must be unique", index)}
-    {
-        auto model = index.model();
-        for (int r = 0; r < model->rowCount()-1; ++r) {
-            if (r == index.row()) continue;
-            auto other = model->data(model->index(r, index.column()));
-            values.append(other.toString().toLower());
-        }
+    auto model = index.model();
+    for (int r = 0; r < model->rowCount(); r++) {
+        if (r == index.row()) continue;
+        auto other = model->data(model->index(r, index.column()));
+        values.append(other.toString().toLower());
     }
 
-    const QString isValid(QString &value) const override {
-        return values.contains(value.trimmed().toLower()) ? message : nullptr;
-    }
-};
-
-UniqueValidatorFactory::UniqueValidatorFactory() {}
-
-const ValidationStatus *UniqueValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) const {
-    return new UniqueValidator(index, parent, statusBar);
+    return values.contains(value.trimmed().toLower()) ? formatMessage("%1 must be unique", index) : nullptr;
 }

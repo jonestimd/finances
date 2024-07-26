@@ -1,10 +1,10 @@
 #ifndef ACCOUNTTABLEMODEL_H
 #define ACCOUNTTABLEMODEL_H
 
-#include "service/model/account.h"
 #include "datastore.h"
 #include "podtablemodel.h"
 #include "comboboxmodel.h"
+#include "service/model/account.h"
 #include <QAbstractTableModel>
 
 class AccountTableModel : public PodTableModel<Account> {

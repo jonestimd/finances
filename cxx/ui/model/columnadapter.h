@@ -16,13 +16,13 @@ protected:
 public:
     const QString title;
 
-    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
+    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, const ValidatorFactory *factory = nullptr)
         : ColumnAdapter(title, field, [editable](const T *r) { return editable; }, factory) {}
 
-    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, ValidatorFactory *factory = nullptr)
+    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, const ValidatorFactory *factory = nullptr)
         : title{title}, field{field}, isEditable{isEditable}, validatorFactory{factory} {}
 
-    virtual QVariant value(const T *row, QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
+    virtual QVariant value(const T *row, const QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
@@ -53,6 +53,11 @@ public:
             return validatorFactory->validator(index, parent)->isValid(val);
         }
         return nullptr;
+    }
+
+    QList<QModelIndex> revalidate(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const {
+        if (validatorFactory) return validatorFactory->revalidate(errors, index);
+        return QList<QModelIndex>{};
     }
 };
 

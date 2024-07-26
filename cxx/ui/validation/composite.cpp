@@ -1,28 +1,26 @@
 #include "composite.h"
 
-class CompositeValidator : public ValidationStatus
-{
-    QList<const ValidationStatus*> validators;
-public:
-    CompositeValidator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar, QList<const ValidationStatus*> validators)
-        : ValidationStatus{index, parent, statusBar}, validators{validators} {}
-
-    const QString isValid(QString &value) const override {
-        for (auto validator : validators) {
-            auto message = validator->isValid(value);
-            if (message != nullptr) return message;
-        }
-        return nullptr;
+bool CompositeValidatorFactory::anyMultiRow(QList<ValidatorFactory*> factories) {
+    for (auto factory : factories) {
+        if (factory->multiRow) return true;
     }
-};
+    return false;
+}
 
 CompositeValidatorFactory::CompositeValidatorFactory(QList<ValidatorFactory*> factories)
-    : factories{factories} {};
+    : ValidatorFactory(anyMultiRow(factories))
+    , factories{factories} {};
 
-const ValidationStatus *CompositeValidatorFactory::validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar) const {
-    QList<const ValidationStatus*> validators;
-    for (auto factory : factories) {
-        validators.append(factory->validator(index, parent));
+const QString CompositeValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
+    for (auto factory: factories) {
+        auto message = factory->isValid(index, value);
+        if (message != nullptr) return message;
     }
-    return new CompositeValidator(index, parent, statusBar, validators);
+    return nullptr;
+}
+
+void CompositeValidatorFactory::fixup(QString &text) const {
+    for (auto factory: factories) {
+        factory->fixup(text);
+    }
 }

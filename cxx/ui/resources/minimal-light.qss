@@ -2,7 +2,13 @@ QTableView {
     accent-color: rgb(255, 0, 0)
 }
 
-QLineEdit[invalid="true"] {
+QTableView QLineEdit[acceptableInput="false"] {
+    background-image: url(:/images/invalid.svg);
+    background-repeat: no-repeat;
+    background-position: center right;
+}
+
+QLineEdit[acceptableInput="false"][tableFilter="true"] {
     border: 1px solid rgb(255, 0, 0);
     border-radius: 2px;
     padding: 2px 0px;

@@ -39,6 +39,19 @@ protected:
         columns[column]->setValue(row, value);
     }
 
+    // void revalidate(const QModelIndex &index) {
+    //   * TODO validate other columns
+    //     - when an error is added/removed, revalidate column in other rows
+    //     - remove company validator in account table model
+    // }
+
+    void revalidateColumn(int column) {
+        auto changes = columns[column]->revalidate(errors, index(0, column));
+        for (auto index : changes) {
+            emit dataChanged(index, index, QList<int>{finances::ValidationMessageRole});
+        }
+    }
+
 public:
     explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
         : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns} {}
@@ -78,7 +91,7 @@ public:
         return rowIndex;
     }
 
-    void queueDelete(int rowIndex) override {
+    void queueDelete(int rowIndex) override { // TODO revalidate
         if (rowIndex >= rows.length()) {
             beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
             delete pendingAdds.takeAt(rowIndex - rows.length());
@@ -102,6 +115,7 @@ public:
         else if (changes.contains(index)) {
             changes.remove(index);
             emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
+            revalidateColumn(index.column());
         }
     }
 
@@ -201,6 +215,7 @@ public:
             if (index.row() >= savedRows) {
                 setValue_(pendingAdds[index.row()-savedRows], index.column(), value);
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole));
+                revalidateColumn(index.column());
                 return true;
             }
             auto column = columns[index.column()];
@@ -209,11 +224,13 @@ public:
                 if (changes.contains(index)) {
                     changes.remove(index);
                     emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
+                    revalidateColumn(index.column());
                     return true;
                 }
             } else if (!changes.contains(index) || !column->isEqual(value, changes[index])) {
                 changes[index] = value;
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
+                revalidateColumn(index.column());
                 return true;
             }
         }

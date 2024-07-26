@@ -14,11 +14,14 @@ class RelationColumnAdapter : public ColumnAdapter<T> {
     CreateValue createValue;
 
 public:
-    RelationColumnAdapter(QString title, QVariant T::*field, ValuesSupplier<V> values, CreateValue newValue = nullptr)
-        : ColumnAdapter<T>(title, field, true), values{values}, createValue{newValue} {}
+    RelationColumnAdapter(QString title, QVariant T::*field, ValuesSupplier<V> values, CreateValue newValue = nullptr,
+                          const ValidatorFactory *validatorFactory = nullptr)
+        : ColumnAdapter<T>(title, field, true, validatorFactory)
+        , values{values}
+        , createValue{newValue} {}
 
-    QVariant value(const T *row, QVariant current, int role) const override {
-        QVariant value = ColumnAdapter<T>::value(row, current, role);
+    QVariant value(const T *row, const QVariant current, int role) const override {
+        QVariant value = ColumnAdapter<T>::value(row, NamedEntity::getId(current), role);
         if (role == finances::SortRole && value.isNull()) return "";
         if (role == Qt::DisplayRole || role == finances::SortRole) {
             if (current.isValid() && current.isNull()) return "";

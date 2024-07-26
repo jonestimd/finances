@@ -24,7 +24,7 @@ public:
                       ValidatorFactory *factory, bool editable = true, IsCompatible isCompatible = nullptr)
         : ColumnAdapter<T>(title, field, editable, factory), values{values}, isCompatible{isCompatible} {}
 
-    QVariant value(const T *row, QVariant current, int role) const override {
+    QVariant value(const T *row, const QVariant current, int role) const override {
         auto value = ColumnAdapter<T>::value(row, current, role);
         if (role == Qt::DisplayRole || role == finances::SortRole) {
             if (current.isValid()) return current.value<const EnumValue*>()->name;

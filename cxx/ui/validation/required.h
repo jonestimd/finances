@@ -8,7 +8,7 @@ class RequiredValidatorFactory : public ValidatorFactory {
 public:
     RequiredValidatorFactory();
 
-    const ValidationStatus *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) const override;
+    const QString isValid(const QModelIndex &index, QString &value) const override;
 };
 
 Q_GLOBAL_STATIC(RequiredValidatorFactory, requiredValidatorFactory)

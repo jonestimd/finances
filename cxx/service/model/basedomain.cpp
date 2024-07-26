@@ -20,6 +20,11 @@ bool NamedEntity::less(const NamedEntity *lhs, const NamedEntity *rhs) {
     return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
 }
 
+QVariant NamedEntity::getId(const QVariant &value) {
+    auto entity = value.value<const NamedEntity*>();
+    return entity ? entity->id : QVariant{};
+}
+
 EnumValue::EnumValue(const char *code, const char *name)
     : code{code}, name{QObject::tr(name)} {}
 

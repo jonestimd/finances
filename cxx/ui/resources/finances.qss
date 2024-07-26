@@ -37,3 +37,8 @@ QLineEdit[acceptableInput="false"][tableFilter="true"] {
     border-radius: 2px;
     padding: 2px 0px;
 }
+
+QToolBar::separator {
+    background: #20ffffff;
+    width: 1px;
+}

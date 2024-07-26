@@ -7,11 +7,15 @@
 #include "unique.h"
 
 class CompositeValidatorFactory : public ValidatorFactory {
+    static bool anyMultiRow(QList<ValidatorFactory*> factories);
+
     QList<ValidatorFactory*> factories;
 public:
     CompositeValidatorFactory(QList<ValidatorFactory*> factories);
 
-    const ValidationStatus *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) const override;
+    const QString isValid(const QModelIndex &index, QString &value) const override;
+
+    void fixup(QString &text) const override;
 };
 
 Q_GLOBAL_STATIC(CompositeValidatorFactory, requiredUniqueFactory,

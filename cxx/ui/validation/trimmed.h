@@ -8,7 +8,9 @@ class TrimmedValidatorFactory : public ValidatorFactory {
 public:
     TrimmedValidatorFactory();
 
-    const ValidationStatus *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) const override;
+    const QString isValid(const QModelIndex &index, QString &value) const override;
+
+    void fixup(QString &) const override;
 };
 
 Q_GLOBAL_STATIC(TrimmedValidatorFactory, trimmedValidatorFactory)

@@ -16,7 +16,7 @@ public:
     AmountColumnAdapter(QString title, QVariant T::* field, formatterType formatter, bool editable)
         : NumberColumnAdapter<T>(title, field, editable), formatter{formatter} {}
 
-    QVariant value(const T *row, QVariant current, int role) const override {
+    QVariant value(const T *row, const QVariant current, int role) const override {
         QVariant value = NumberColumnAdapter<T>::value(row, current, role);
         if (role == Qt::DisplayRole) return formatter(row, value);
         if (role == finances::SortRole) return value.value<QDecNumber>().toDouble();

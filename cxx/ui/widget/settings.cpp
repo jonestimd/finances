@@ -11,6 +11,8 @@ void settings::saveWindowState(const char *group, QWidget *widget, TableSort *ta
 
     settings->beginGroup(group);
     settings->setValue("geometry", widget->saveGeometry());
+    settings->setValue("width", widget->width());
+    settings->setValue("height", widget->height());
     if (tableSort) tableSort->saveSort(settings);
     settings->endGroup();
 
@@ -30,8 +32,11 @@ void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultS
     auto settings = appSettings();
 
     auto geometry = settings->value(group + "/geometry", QVariant{});
-    if (geometry.isValid()) widget->restoreGeometry(geometry.toByteArray());
-    else widget->resize(defaultSize);
+    if (!geometry.isValid() || ! widget->restoreGeometry(geometry.toByteArray())) {
+        auto width = settings->value(group + "/width", QVariant{defaultSize.width()});
+        auto height = settings->value(group + "/height", QVariant{defaultSize.height()});
+        widget->resize(QSize{width.toInt(), height.toInt()});
+    }
 
     if (tableSort) tableSort->restore(group, settings);
 }

@@ -23,6 +23,11 @@ public:
     virtual QString displayName() const = 0;
 
     static bool less(const NamedEntity *, const NamedEntity *);
+    /*!
+     * \brief getId Get the id of a \c NamedEntity\c.
+     * \param value the \c NamedEntity\c
+     */
+    static QVariant getId(const QVariant &value);
 };
 
 Q_DECLARE_METATYPE(const NamedEntity*)
