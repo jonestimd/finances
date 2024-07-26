@@ -30,6 +30,8 @@ select :name, :companyId, :description, :type, :accountNo, :closed, c.id, 0, :us
 from asset c
 where c.type = 'Currency' and c.symbol = '$')";
 
+static const auto deleteAccountSql = "delete from account where id = :id";
+
 namespace accountDao {
     QList<const Account*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
@@ -94,5 +96,17 @@ namespace accountDao {
             result.append(account);
         }
         return result;
+    }
+
+    void remove(QSqlDatabase &db, QList<const Account *> companies) {
+        QSqlQuery query(db);
+        query.prepare(deleteAccountSql);
+        for (auto company : companies) {
+            query.bindValue(":id", company->id);
+            if (!query.exec()) {
+                qCritical() << "accountDao.remove:" << query.lastError();
+                throw query.lastError().text();
+            }
+        }
     }
 }

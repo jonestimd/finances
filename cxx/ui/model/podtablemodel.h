@@ -39,11 +39,24 @@ protected:
         columns[column]->setValue(row, value);
     }
 
-    // void revalidate(const QModelIndex &index) {
+    // void revalidateRow(int rowIndex) {
     //   * TODO validate other columns
     //     - when an error is added/removed, revalidate column in other rows
     //     - remove company validator in account table model
     // }
+
+    void revalidate() {
+        QObject deleter;
+        QList<QModelIndex> fixes;
+        for (auto [index, message] : errors.asKeyValueRange()) {
+            auto newMessage = columns[index.column()]->isValid(row(index.row()), index, &deleter);
+            if (newMessage.isNull()) fixes.append(index);
+        }
+        for (auto index : fixes) {
+            errors.remove(index);
+            emit dataChanged(index, index, QList<int>{finances::ValidationMessageRole});
+        }
+    }
 
     void revalidateColumn(int column) {
         auto changes = columns[column]->revalidate(errors, index(0, column));
@@ -91,7 +104,7 @@ public:
         return rowIndex;
     }
 
-    void queueDelete(int rowIndex) override { // TODO revalidate
+    void queueDelete(int rowIndex) override {
         if (rowIndex >= rows.length()) {
             beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
             delete pendingAdds.takeAt(rowIndex - rows.length());
@@ -103,6 +116,7 @@ public:
             errors.clear();
             errors.insert(updateErrors);
             endRemoveRows();
+            revalidate();
         }
         else if (!pendingDeletes.contains(rowIndex)) {
             pendingDeletes.append(rowIndex);

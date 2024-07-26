@@ -28,6 +28,9 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     toolbar->setMovable(false);
     addToolBar(toolbar);
     toolbar->addAction(tableSort.addAction("Add account"));
+    toolbar->addAction(tableSort.deleteAction("Delete account", [&](int rowIndex) {
+        return model.row(rowIndex)->transactions.toInt() == 0;
+    }));
     toolbar->addAction(tableSort.undoAction("Undo"));
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveAccounts()), false);
