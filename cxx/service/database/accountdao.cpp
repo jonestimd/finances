@@ -66,7 +66,7 @@ namespace accountDao {
                 qCritical() << "accountDao.update:" << query.lastError();
                 throw query.lastError().text();
             }
-            if (query.numRowsAffected() < 1) throw "stale data";
+            if (query.numRowsAffected() < 1) throw QObject::tr("Accounts have been modified.  Please reload and try again.");
             account->version = account->version.toInt() + 1;
             account->changeUser = user;
             result.append(account);

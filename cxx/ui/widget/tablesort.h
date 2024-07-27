@@ -16,10 +16,10 @@ public:
     QSortFilterProxyModel sortModel;
     FilterInput filterInput;
     QStatusBar *statusBar;
-    QString defaultSort;
+    const QString defaultSort;
 
-    TableSort(QWidget *parent, AdapterTableModel *model, const char *filterLabel,
-              const char *defaultSort = nullptr, QStatusBar *statusBar = nullptr);
+    TableSort(QWidget *parent, AdapterTableModel *model, const QString filterLabel,
+              const QString defaultSort, QStatusBar *statusBar = nullptr);
 
     int columnIndex(const QString name) const;
 
@@ -39,9 +39,9 @@ public:
 
     void startEdit(int rowIndex);
 
-    QAction *addAction(const char *text);
-    QAction *deleteAction(const char *text, std::function<bool(int)> enableDelete = nullptr);
-    QAction *undoAction(const char *text);
+    QAction *addAction(const QString text);
+    QAction *deleteAction(const QString text, std::function<bool(int)> enableDelete = nullptr);
+    QAction *undoAction();
 
     void setEnabled(auto action, std::function<bool(int)> enableDelete);
 

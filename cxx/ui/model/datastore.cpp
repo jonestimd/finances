@@ -45,8 +45,6 @@ bool handleError(QWidget *source, Runnable task) {
         return true;
     } catch(const QString error) {
         dialog::showError(source, error);
-    } catch (const char *error) {
-        dialog::showError(source, source->tr(error));
     }
     return false;
 }

@@ -5,6 +5,7 @@
 #include "podtablemodel.h"
 
 class CompanyTableModel : public PodTableModel<Company> {
+    Q_OBJECT
 public:
     explicit CompanyTableModel(QList<const Company*> companies, QObject *parent = nullptr);
 };

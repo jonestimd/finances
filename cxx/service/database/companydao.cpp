@@ -49,7 +49,7 @@ namespace companyDao {
                 qCritical() << "companyDao.update:" << query.lastError();
                 throw query.lastError().text();
             }
-            if (query.numRowsAffected() < 1) throw "stale data";
+            if (query.numRowsAffected() < 1) throw QObject::tr("Companies have been modified.  Please reload and try again.");
             company->version = company->version.toInt() + 1;
             company->changeUser = user;
             result.append(company);

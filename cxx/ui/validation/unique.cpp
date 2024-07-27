@@ -11,5 +11,7 @@ const QString UniqueValidatorFactory::isValid(const QModelIndex &index, QString 
         values.append(other.toString().toLower());
     }
 
-    return values.contains(value.trimmed().toLower()) ? formatMessage("%1 must be unique", index) : nullptr;
+    return values.contains(value.trimmed().toLower()) ? formatMessage(tr("%1 must be unique"), index) : nullptr;
 }
+
+#include "unique.moc"

@@ -17,7 +17,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     , dataStore{dataStore}
     , model(dataStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
     , statusBar{this}
-    , tableSort{this, &model, "Account filter", "Name", &statusBar}
+    , tableSort{this, &model, tr("Account filter"), tr("Name"), &statusBar}
 {
     setCentralWidget(&tableSort.table);
     setStatusBar(&statusBar);
@@ -27,11 +27,11 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     auto toolbar = new QToolBar(this);
     toolbar->setMovable(false);
     addToolBar(toolbar);
-    toolbar->addAction(tableSort.addAction("Add account"));
-    toolbar->addAction(tableSort.deleteAction("Delete account", [&](int rowIndex) {
+    toolbar->addAction(tableSort.addAction(tr("Add account")));
+    toolbar->addAction(tableSort.deleteAction(tr("Delete account"), [&](int rowIndex) {
         return model.row(rowIndex)->transactions.toInt() == 0;
     }));
-    toolbar->addAction(tableSort.undoAction("Undo"));
+    toolbar->addAction(tableSort.undoAction());
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveAccounts()), false);
     toolbar->addAction(saveAction);

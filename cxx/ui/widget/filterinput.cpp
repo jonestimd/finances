@@ -16,10 +16,10 @@ public:
     };
 };
 
-FilterInput::FilterInput(const char *placeholderText, QSortFilterProxyModel *model, QWidget *parent)
+FilterInput::FilterInput(const QString placeholderText, QSortFilterProxyModel *model, QWidget *parent)
     : QLineEdit(parent)
 {
-    setPlaceholderText(tr(placeholderText));
+    setPlaceholderText(placeholderText);
     setClearButtonEnabled(true);
     auto margins = textMargins();
     QFont font = finances::iconFont->font();

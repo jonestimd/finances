@@ -9,8 +9,8 @@ namespace dialog {
     template<typename T>
     bool confirmDiscardChanges(QWidget *parent, T *model) {
         if (model->hasUnsavedChanges()) {
-            auto confirm = QMessageBox::warning(parent, QObject::tr("Unsaved changes"),
-                                                QObject::tr("Discard unsaved changes?"),
+            auto confirm = QMessageBox::warning(parent, QMessageBox::tr("Unsaved changes"),
+                                                QMessageBox::tr("Discard unsaved changes?"),
                                                 QMessageBox::Yes| QMessageBox::No);
             if (confirm != QMessageBox::Yes) return false;
             model->clearChanges();
@@ -18,7 +18,7 @@ namespace dialog {
         return true;
     }
 
-    bool confirmDelete(QWidget *parent, const char *title, const char *message, QStringList items);
+    bool confirmDelete(QWidget *parent, const QString title, const QString message, QStringList items);
 
     void showError(QWidget *parent, const QString message);
 }

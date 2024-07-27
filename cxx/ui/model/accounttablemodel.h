@@ -8,6 +8,7 @@
 #include <QAbstractTableModel>
 
 class AccountTableModel : public PodTableModel<Account> {
+    Q_OBJECT
     using AddCompany = ComboBoxModel::CreateValue;
 
     DataStore *dataStore;

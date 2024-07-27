@@ -6,6 +6,7 @@
 #include <QValidator>
 
 class UniqueValidatorFactory : public ValidatorFactory {
+    Q_OBJECT
 public:
     UniqueValidatorFactory();
 

@@ -32,11 +32,8 @@ QSqlDatabase ConnectionPool::acquire() {
             db.setDatabaseName(schema);
             db.setNumericalPrecisionPolicy(QSql::HighPrecision);
             if (!db.open(user, password)) {
-                // QMessageBox::critical(nullptr, QObject::tr("Cannot open database"),
-                //                       QObject::tr("Unable to establish a database connection."),
-                //                       QMessageBox::Cancel);
                 qCritical() << "ConnectionPool:" << dbName << db.lastError().text();
-                throw "Failed to connect to the database.";
+                throw QObject::tr("Failed to connect to the database.");
             }
         }
         nameStore.setLocalData(dbName);

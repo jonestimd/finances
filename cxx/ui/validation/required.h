@@ -5,6 +5,7 @@
 #include <QValidator>
 
 class RequiredValidatorFactory : public ValidatorFactory {
+    Q_OBJECT
 public:
     RequiredValidatorFactory();
 

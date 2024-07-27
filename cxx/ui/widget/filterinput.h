@@ -13,7 +13,7 @@ class FilterInput : public QLineEdit
 protected Q_SLOTS:
     void onTextChanged(const QString &text);
 public:
-    FilterInput(const char *placeholderText, QSortFilterProxyModel *model, QWidget *parent = nullptr);
+    FilterInput(const QString placeholderText, QSortFilterProxyModel *model, QWidget *parent = nullptr);
 
 Q_SIGNALS:
     void filterChanged(const QRegularExpression &);

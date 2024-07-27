@@ -33,11 +33,11 @@ public:
 Q_DECLARE_METATYPE(const NamedEntity*)
 // static const int namedEntityTypeId = qRegisterMetaType<NamedEntity>();
 
-struct EnumValue {
+struct EnumValue : QObject {
     const char *code;
     const QString name;
 
-    EnumValue(const char *code, const char *name);
+    EnumValue(const char *code, const QString name);
 
     static bool less(const EnumValue *, const EnumValue *);
 };

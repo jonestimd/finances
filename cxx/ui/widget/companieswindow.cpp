@@ -14,14 +14,14 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , model{dataStore->companies().values(), this}
     , toolbar{this}
     , statusBar{this}
-    , tableSort{this, &model, "Company filter", "Name", &statusBar}
+    , tableSort{this, &model, tr("Company filter"), tr("Name"), &statusBar}
 {
     setWindowTitle(tr("Companies[*]"));
-    toolbar.addAction(tableSort.addAction("Add company"));
-    toolbar.addAction(tableSort.deleteAction("Delete company", [&](int rowIndex) {
+    toolbar.addAction(tableSort.addAction(tr("Add company")));
+    toolbar.addAction(tableSort.deleteAction(tr("Delete company"), [&](int rowIndex) {
         return model.row(rowIndex)->accounts.toInt() == 0;
     }));
-    toolbar.addAction(tableSort.undoAction("Undo"));
+    toolbar.addAction(tableSort.undoAction());
 
     saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveCompanies()), false);
     toolbar.addAction(saveAction);
@@ -76,10 +76,11 @@ bool CompaniesWindow::confirmDelete(const QSet<int> rowIndex) {
     for (auto r : rowIndex) {
         if (model.row(r)->accounts.toInt() > 0) nonEmpty.append(model.row(r)->name.toString());
     }
-    return dialog::confirmDelete(this, "Confirm delete companies",
-            "The following companies have accounts.  "
+    // FIXME: delete is disabled for non-empty company
+    return dialog::confirmDelete(this, tr("Confirm delete companies"),
+            tr("The following companies have accounts.  "
             "The accounts will remain but will no longer be associated with a company.  "
-            "Do you want to delete these companies?" DIALOG_ITEM_SEPARATOR "%1", nonEmpty);
+            "Do you want to delete these companies?" DIALOG_ITEM_SEPARATOR "%1"), nonEmpty);
 }
 
 void CompaniesWindow::closeEvent(QCloseEvent *event) {

@@ -14,7 +14,9 @@
 #define COMPANY_COLUMN 1
 #define NAME_COLUMN 2
 
-struct NameValidatorFactory : public ValidatorFactory {
+class NameValidatorFactory : public ValidatorFactory {
+    Q_OBJECT
+public:
     NameValidatorFactory() : ValidatorFactory(true) {}
 
     const QString isValid(const QModelIndex &index, QString &value) const override {
@@ -27,7 +29,7 @@ struct NameValidatorFactory : public ValidatorFactory {
                 values.append(other.toString().toLower());
             }
         }
-        return values.contains(value.trimmed().toLower()) ? formatMessage("%1 must be unique", index): nullptr;
+        return values.contains(value.trimmed().toLower()) ? formatMessage(tr("%1 must be unique"), index): nullptr;
     }
 
     const QString isValid(const QModelIndex &index) const {
@@ -69,3 +71,5 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
         parent,
     }
 {}
+
+#include "accounttablemodel.moc"

@@ -5,6 +5,7 @@
 
 class StatusBar : public QStatusBar
 {
+    Q_OBJECT
     QStringList messages;
 public:
     StatusBar(QWidget *parent = nullptr);

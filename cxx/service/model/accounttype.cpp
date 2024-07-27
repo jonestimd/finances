@@ -2,7 +2,7 @@
 
 QHash<QString, const AccountType*> AccountType::values;
 
-AccountType::AccountType(const char *code, const char *name, bool security)
+AccountType::AccountType(const char *code, const QString name, bool security)
     : EnumValue(code, name), security{security}
 {
     values[code] = this;
@@ -13,9 +13,11 @@ bool AccountType::isCompatible(const Account *account, const AccountType *type) 
            || values.value(account->type.toString())->security == type->security;
 }
 
-const AccountType AccountType::bank = AccountType("BANK", "Bank", false);
-const AccountType AccountType::brokerage = AccountType("BROKERAGE", "Brokerage", true);
-const AccountType AccountType::cash = AccountType("CASH", "Cash", false);
-const AccountType AccountType::credit = AccountType("CREDIT", "Credit", false);
-const AccountType AccountType::loan = AccountType("LOAN", "Loan", false);
-const AccountType AccountType::_401k = AccountType("401K", "401(K)", true);
+const AccountType AccountType::bank = AccountType("BANK", tr("Bank"), false);
+const AccountType AccountType::brokerage = AccountType("BROKERAGE", tr("Brokerage"), true);
+const AccountType AccountType::cash = AccountType("CASH", tr("Cash"), false);
+const AccountType AccountType::credit = AccountType("CREDIT", tr("Credit"), false);
+const AccountType AccountType::loan = AccountType("LOAN", tr("Loan"), false);
+const AccountType AccountType::_401k = AccountType("401K", tr("401(K)"), true);
+
+#include "accounttype.moc"

@@ -25,8 +25,8 @@ QVariant NamedEntity::getId(const QVariant &value) {
     return entity ? entity->id : QVariant{};
 }
 
-EnumValue::EnumValue(const char *code, const char *name)
-    : code{code}, name{QObject::tr(name)} {}
+EnumValue::EnumValue(const char *code, const QString name)
+    : code{code}, name{name} {}
 
 bool EnumValue::less(const EnumValue *lhs, const EnumValue *rhs) {
     return lhs->name < rhs->name;

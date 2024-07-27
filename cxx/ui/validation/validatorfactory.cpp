@@ -54,6 +54,6 @@ QList<QModelIndex> ValidatorFactory::revalidate(QHash<QModelIndex, QString> &err
     return changes;
 }
 
-QString ValidatorFactory::formatMessage(const char *format, const QModelIndex &index) {
-    return tr(format).arg(index.model()->headerData(index.column(), Qt::Horizontal).toString());
+QString ValidatorFactory::formatMessage(const QString format, const QModelIndex &index) {
+    return format.arg(index.model()->headerData(index.column(), Qt::Horizontal).toString());
 }

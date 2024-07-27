@@ -5,16 +5,16 @@
 #include <QTableWidget>
 #include <QTimer>
 
-TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const char * filterLabel, const char *defaultSort, QStatusBar *statusBar)
+TableSort::TableSort(QWidget *parent, AdapterTableModel *model, const QString filterLabel, const QString defaultSort, QStatusBar *statusBar)
     : QObject(parent)
     , model{model}
     , sortModel{parent}
     , table{parent}
     , filterInput{filterLabel, &sortModel, parent}
+    , defaultSort{defaultSort}
     , statusBar{statusBar}
     , itemDelegate{parent, statusBar}
 {
-    if (defaultSort) this->defaultSort = parent->tr(defaultSort);
     sortModel.setSourceModel(model);
     sortModel.setSortRole(finances::SortRole);
     sortModel.setFilterKeyColumn(-1);
@@ -121,16 +121,16 @@ void TableSort::startEdit(int rowIndex) {
     }
 }
 
-QAction *TableSort::addAction(const char *text) {
-    auto addAction = finances::iconAction(finances::AddCircle, tr(text), QKeySequence::New, this);
+QAction *TableSort::addAction(const QString text) {
+    auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this);
     connect(addAction, SIGNAL(triggered(bool)), this, SLOT(addRow()));
     connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
     connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
     return addAction;
 }
 
-QAction *TableSort::deleteAction(const char *text, std::function<bool(int)> enableDelete) {
-    auto action = finances::iconAction(finances::Trash, tr(text), QKeySequence::Delete, this, SLOT(queueDeletes()));
+QAction *TableSort::deleteAction(const QString text, std::function<bool(int)> enableDelete) {
+    auto action = finances::iconAction(finances::Trash, text, QKeySequence::Delete, this, SLOT(queueDeletes()));
     auto setEnabled = [=, this]() {
         auto indexes = sortModel.mapSelectionToSource(table.selectionModel()->selection()).indexes();
         bool enabled = !indexes.empty();
@@ -142,8 +142,8 @@ QAction *TableSort::deleteAction(const char *text, std::function<bool(int)> enab
     return action;
 }
 
-QAction *TableSort::undoAction(const char *text) {
-    auto undoAction = finances::iconAction(finances::Undo, tr(text), QKeySequence::Undo, this, SLOT(undoChanges()));
+QAction *TableSort::undoAction() {
+    auto undoAction = finances::iconAction(finances::Undo, tr("Undo"), QKeySequence::Undo, this, SLOT(undoChanges()));
     return undoAction;
 }
 

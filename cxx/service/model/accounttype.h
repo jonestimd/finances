@@ -5,7 +5,8 @@
 #include <QString>
 
 class AccountType : public EnumValue {
-    AccountType(const char *code, const char *name, bool security);
+    Q_OBJECT
+    AccountType(const char *code, const QString name, bool security);
 public:
     const bool security;
 

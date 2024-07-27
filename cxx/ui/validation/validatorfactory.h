@@ -45,7 +45,7 @@ public:
 
     virtual QList<QModelIndex> revalidate(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const;
 
-    static QString formatMessage(const char *format, const QModelIndex &index);
+    static QString formatMessage(const QString format, const QModelIndex &index);
 };
 
 Q_DECLARE_OPAQUE_POINTER(ValidatorFactory*)

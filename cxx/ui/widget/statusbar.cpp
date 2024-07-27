@@ -15,3 +15,5 @@ void StatusBar::removeMessage(QString message) {
         else showMessage(messages.first());
     }
 }
+
+#include "statusbar.moc"

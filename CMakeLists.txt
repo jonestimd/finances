@@ -1,6 +1,7 @@
 # cmds:
 # $ cmake -S . -B build
 # $ cmake --build build -v
+# $ cmake --build build --target update_translations
 # env:
 # CMAKE_PREFIX_PATH=/opt/Qt/6.7.2/gcc_64/lib/cmake
 cmake_minimum_required(VERSION 3.27)
@@ -37,9 +38,9 @@ set_target_properties(libqdecimal
 )
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test LinguistTools)
 
-qt_standard_project_setup()
+qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)
 
 set(PROJECT_RESOURCES
     cxx/ui/resources/finances.qrc
