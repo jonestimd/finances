@@ -19,6 +19,8 @@ public:
 
     Account();
     Account(QSqlRecord record);
+
+    bool deletable() const;
 };
 
 #endif // ACCOUNT_H

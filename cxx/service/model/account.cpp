@@ -25,3 +25,7 @@ Account::Account(QSqlRecord record) : BaseDomain::BaseDomain(record) {
     balance = decimalValue(record, "balance");
     currency = record.field("currency").value();
 }
+
+bool Account::deletable() const {
+    return transactions.toInt() == 0;
+}

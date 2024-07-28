@@ -13,3 +13,7 @@ Company::Company(const QString &name) : name{name} {}
 QString Company::displayName() const {
     return name.toString();
 }
+
+bool Company::deletable() const {
+    return accounts.toInt() == 0;
+}

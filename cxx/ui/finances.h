@@ -55,9 +55,8 @@ namespace finances {
     QIcon qIcon(FontIcon icon);
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction* iconAction(FontIcon icon, QString text, QObject *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *member, bool enabled = true);
-    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *parent = nullptr);
+    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot, bool enabled = true);
+    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
     QAction* iconAction(const char *iconFile, QString text, QObject *parent = nullptr);
 
     class App : public QApplication {

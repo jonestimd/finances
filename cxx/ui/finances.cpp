@@ -93,19 +93,18 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *parent) {
-        return iconAction(icon, text, QKeySequence(shortcut), parent);
-    }
-
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *member, bool enabled) {
-        auto action = iconAction(icon, text, shortcut, receiver);
+    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot, bool enabled) {
+        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
-        QObject::connect(action, SIGNAL(triggered(bool)), receiver, member);
+        QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QObject *parent) {
-        return iconAction(icon, text, QKeySequence(shortcut), parent);
+    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
+        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
+        action->setEnabled(enabled);
+        if (receiver && slot) QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
+        return action;
     }
 
     QAction *iconAction(const char *iconFile, QString text, QObject *parent) {

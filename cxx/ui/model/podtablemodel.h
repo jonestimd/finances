@@ -100,8 +100,11 @@ public:
             if (!message.isNull()) errors[i] = message;
         }
         endInsertRows();
-        emitChange(rowIndex);
         return rowIndex;
+    }
+
+    bool enableDelete(int rowIndex) const override {
+        return row(rowIndex)->deletable();
     }
 
     void queueDelete(int rowIndex) override {
@@ -140,11 +143,11 @@ public:
         return -1;
     }
 
-    bool hasUnsavedChanges() {
+    virtual bool hasUnsavedChanges() const override {
         return !changes.isEmpty() || !pendingAdds.isEmpty() || !pendingDeletes.isEmpty();
     }
 
-    bool isValid() {
+    virtual bool isValid() const override {
         return errors.isEmpty();
     }
 

@@ -1,25 +1,29 @@
-#ifndef TABLES_H
-#define TABLES_H
+#ifndef ENTITY_TABLE_H
+#define ENTITY_TABLE_H
 
 #include "filterinput.h"
+#include "statusbar.h"
 #include "tableitemdelegate.h"
 #include "../model/adaptertablemodel.h"
 #include <QStatusBar>
 #include <QTableView>
 
-class TableSort : public QObject {
+class EntityTable : public QObject {
     Q_OBJECT
+    QWidget *const window;
     TableItemDelegate itemDelegate;
 public:
     AdapterTableModel *model;
     QTableView table;
     QSortFilterProxyModel sortModel;
-    FilterInput filterInput;
-    QStatusBar *statusBar;
+    FilterInput *filterInput;
+    QToolBar toolbar;
+    StatusBar statusBar;
+    QAction *const saveAction;
     const QString defaultSort;
 
-    TableSort(QWidget *parent, AdapterTableModel *model, const QString filterLabel,
-              const QString defaultSort, QStatusBar *statusBar = nullptr);
+    EntityTable(QWidget *window, AdapterTableModel *model, const QString filterLabel, const QString defaultSort, const char *saveSlot, const char *loadSlot,
+                QList<QAction*> actions = QList<QAction*>{});
 
     int columnIndex(const QString name) const;
 
@@ -39,17 +43,19 @@ public:
 
     void startEdit(int rowIndex);
 
+    void setEnabled(auto action, std::function<bool(int)> enableDelete);
+
+private:
     QAction *addAction(const QString text);
     QAction *deleteAction(const QString text, std::function<bool(int)> enableDelete = nullptr);
     QAction *undoAction();
 
-    void setEnabled(auto action, std::function<bool(int)> enableDelete);
-
 public Q_SLOTS:
+    void dataChanged();
     void showValidation(const QModelIndex &index);
     void addRow();
     void queueDeletes();
     void undoChanges();
 };
 
-#endif // TABLES_H
+#endif // ENTITY_TABLE_H

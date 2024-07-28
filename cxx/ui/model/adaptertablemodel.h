@@ -11,6 +11,10 @@ public:
 
     virtual int columnIndex(const QString name) const = 0;
 
+    virtual bool hasUnsavedChanges() const = 0;
+    virtual bool isValid() const = 0;
+    virtual bool enableDelete(int rowIndex) const = 0;
+
 public Q_SLOTS:
     virtual int queueAdd() = 0;
     virtual void queueDelete(int rowIndex) = 0;

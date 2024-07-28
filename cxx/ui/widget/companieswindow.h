@@ -3,7 +3,7 @@
 
 #include "../model/companytablemodel.h"
 #include "../model/datastore.h"
-#include "tablesort.h"
+#include "entitytable.h"
 #include <QBoxLayout>
 #include <QDialog>
 #include <QMainWindow>
@@ -15,18 +15,14 @@ class CompaniesWindow : public QDialog
 {
     Q_OBJECT
     QVBoxLayout layout;
-    QToolBar toolbar;
     DataStore *dataStore;
     CompanyTableModel model;
-    TableSort tableSort;
-    QAction *saveAction;
-    QStatusBar statusBar;
+    EntityTable tableSort;
 
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
 protected Q_SLOTS:
-    void dataChanged();
     void loadCompanies();
     void saveCompanies();
     void setCompanies(const QHash<qlonglong, const Company*> companies);

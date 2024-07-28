@@ -6,7 +6,7 @@ QSettings *appSettings() {
     return static_cast<finances::App*>(QApplication::instance())->settings;
 }
 
-void settings::saveWindowState(const char *group, QWidget *widget, TableSort *tableSort) {
+void settings::saveWindowState(const char *group, QWidget *widget, EntityTable *tableSort) {
     auto settings = appSettings();
 
     settings->beginGroup(group);
@@ -28,7 +28,7 @@ int columnIndex(QAbstractItemModel *model, const QString name) {
     return -1;
 }
 
-void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultSize, TableSort *tableSort) {
+void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultSize, EntityTable *tableSort) {
     auto settings = appSettings();
 
     auto geometry = settings->value(group + "/geometry", QVariant{});

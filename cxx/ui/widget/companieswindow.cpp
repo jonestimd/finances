@@ -12,33 +12,16 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , layout{this}
     , dataStore{dataStore}
     , model{dataStore->companies().values(), this}
-    , toolbar{this}
-    , statusBar{this}
-    , tableSort{this, &model, tr("Company filter"), tr("Name"), &statusBar}
+    , tableSort{this, &model, tr("Company"), tr("Name"), SLOT(saveCompanies()), SLOT(loadCompanies())}
 {
     setWindowTitle(tr("Companies[*]"));
-    toolbar.addAction(tableSort.addAction(tr("Add company")));
-    toolbar.addAction(tableSort.deleteAction(tr("Delete company"), [&](int rowIndex) {
-        return model.row(rowIndex)->accounts.toInt() == 0;
-    }));
-    toolbar.addAction(tableSort.undoAction());
 
-    saveAction = finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, this, SLOT(saveCompanies()), false);
-    toolbar.addAction(saveAction);
-
-    auto reloadAction = finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, this, SLOT(loadCompanies()));
-    toolbar.addAction(reloadAction);
-
-    connect(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
     connect(dataStore, SIGNAL(companiesLoaded(QHash<qlonglong,const Company*>)),
             this, SLOT(setCompanies(QHash<qlonglong,const Company*>)));
-    toolbar.setMovable(false);
-    toolbar.addWidget(&tableSort.filterInput);
 
-    layout.addWidget(&toolbar);
-    layout.addWidget(&toolbar);
+    layout.addWidget(&tableSort.toolbar);
     layout.addWidget(&tableSort.table);
-    layout.addWidget(&statusBar);
+    layout.addWidget(&tableSort.statusBar);
     layout.setSpacing(0);
     layout.setContentsMargins(0, 0, 0, 0);
 
@@ -47,27 +30,22 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     settings::restoreWindowState("companies", this, QSize{400, 500});
 }
 
-void CompaniesWindow::dataChanged() {
-    saveAction->setEnabled(model.hasUnsavedChanges() && model.isValid());
-    setWindowModified(model.hasUnsavedChanges());
-}
-
 void CompaniesWindow::loadCompanies() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
     tableSort.table.setEnabled(false); // TODO save/restore selection
-    statusBar.showMessage(tr("Loading companies..."));
+    tableSort.statusBar.showMessage(tr("Loading companies..."));
     dataStore->loadCompanies(this, true);
 }
 
 void CompaniesWindow::saveCompanies() {
-    statusBar.showMessage(tr("Saving companies..."));
+    tableSort.statusBar.showMessage(tr("Saving companies..."));
     tableSort.table.setEnabled(false);
     dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void CompaniesWindow::setCompanies(const QHash<qlonglong, const Company *> companies) {
     model.setRows(companies.values());
-    statusBar.showMessage(tr("Done loading"), 1500);
+    tableSort.statusBar.showMessage(tr("Done loading"), 1500);
     tableSort.table.setEnabled(true);
 }
 

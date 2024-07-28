@@ -3,25 +3,16 @@
 
 #include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
-#include "../widget/statusbar.h"
 #include "companieswindow.h"
-#include "tablesort.h"
+#include "entitytable.h"
 #include <QMainWindow>
 #include <QTableView>
-
-QT_BEGIN_NAMESPACE
-namespace Ui {
-    class AccountsWindow;
-}
-QT_END_NAMESPACE
 
 class AccountsWindow : public QMainWindow {
     Q_OBJECT
     DataStore *dataStore;
-    QAction *saveAction;
-    StatusBar statusBar;
     AccountTableModel model;
-    TableSort tableSort;
+    EntityTable tableSort;
     CompaniesWindow *companiesDialog;
 
 public:
@@ -29,7 +20,6 @@ public:
     ~AccountsWindow();
 
 public Q_SLOTS:
-    void dataChanged();
     void loadAccounts();
     void saveAccounts();
     void setCompanies(const QHash<qlonglong, const Company*> companies);

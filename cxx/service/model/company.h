@@ -15,6 +15,7 @@ public:
     Company(const QString &name);
 
     QString displayName() const override;
+    bool deletable() const;
 };
 
 #endif // COMPANY_H
