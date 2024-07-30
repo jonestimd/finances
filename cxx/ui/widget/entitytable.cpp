@@ -1,4 +1,5 @@
 #include "entitytable.h"
+#include "dialog.h"
 #include "tableitemdelegate.h"
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -145,6 +146,19 @@ void EntityTable::startEdit(int rowIndex) {
     }
 }
 
+void EntityTable::loadData(QString statusMessage, std::function<void ()> doLoad) {
+    if (!dialog::confirmDiscardChanges(window, model)) return;
+    table.setEnabled(false); // TODO save/restore selection
+    statusBar.addMessage(statusMessage);
+    doLoad();
+}
+
+void EntityTable::saveData(QString statusMessage, std::function<void ()> doSave) {
+    statusBar.addMessage(statusMessage);
+    table.setEnabled(false);
+    doSave();
+}
+
 QAction *EntityTable::addAction(const QString text) {
     auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this, SLOT(addRow()));
     connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
@@ -191,11 +205,12 @@ void EntityTable::undoChanges() {
 }
 
 void EntityTable::showValidation(const QModelIndex &index) {
-    auto range = table.selectionModel()->selection().indexes();
-    if (range.length() == 1 && range.contains(index)) {
-        auto message = index.data(finances::ValidationMessageRole);
-        if (!message.isNull()) statusBar.showMessage(message.toString());
-        else statusBar.clearMessage();
-    }
+    // auto range = table.selectionModel()->selection().indexes();
+    // TODO index not in range for mouse click
+    // qDebug() << "showValidation" << range.length() << range.contains(index);
+    // if (range.length() == 1 && range.contains(index)) {
+    auto message = index.data(finances::ValidationMessageRole);
+    if (!message.isNull()) statusBar.showMessage(message.toString());
     else statusBar.clearMessage();
+    // } else statusBar.clearMessage();
 }

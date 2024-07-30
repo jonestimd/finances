@@ -18,7 +18,8 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     , dataStore{dataStore}
     , model(dataStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
     , tableSort{this, &model, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
-        iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies()))
+        iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
+        iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
     }}
 {
     setCentralWidget(&tableSort.table);
@@ -41,22 +42,18 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 }
 
 AccountsWindow::~AccountsWindow() {
-    if (companiesDialog) {
-        delete companiesDialog;
-    }
+    if (companiesDialog) delete companiesDialog;
+    if (payeesWindow) delete payeesWindow;
 }
 
 void AccountsWindow::loadAccounts() {
-    if (!dialog::confirmDiscardChanges(this, &model)) return;
-    tableSort.table.setEnabled(false); // TODO save/restore selection
-    tableSort.statusBar.addMessage(tr(LOADING_ACCOUNTS));
-    dataStore->loadAccounts(this, true);
+    tableSort.loadData(tr(LOADING_ACCOUNTS), [this]() { dataStore->loadAccounts(this, true); });
 }
 
 void AccountsWindow::saveAccounts() {
-    tableSort.statusBar.addMessage(tr(SAVING_ACCOUNTS));
-    tableSort.table.setEnabled(false);
-    dataStore->updateAccounts(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    tableSort.saveData(tr(SAVING_ACCOUNTS), [this]() {
+        dataStore->updateAccounts(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    });
 }
 
 void AccountsWindow::setCompanies(const QHash<qlonglong, const Company*> companies) {
@@ -76,6 +73,11 @@ void AccountsWindow::showCompanies() {
         companiesDialog->setWindowModality(Qt::WindowModal);
     }
     companiesDialog->show();
+}
+
+void AccountsWindow::showPayees() {
+    if (!payeesWindow) payeesWindow = new PayeesWindow(dataStore);
+    payeesWindow->show();
 }
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {

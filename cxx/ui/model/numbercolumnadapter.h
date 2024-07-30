@@ -14,9 +14,9 @@ public:
     NumberColumnAdapter(QString title, QVariant T::* field, bool editable = false)
         : ColumnAdapter<T>(title, field, editable) {}
 
-    QVariant value(const T *row, const QVariant current, int role) const override {
+    virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         if (role == Qt::TextAlignmentRole) return numberAlignment; // TODO move
-        return ColumnAdapter<T>::value(row, current, role);
+        return ColumnAdapter<T>::value(row, index, current, role);
     }
 };
 

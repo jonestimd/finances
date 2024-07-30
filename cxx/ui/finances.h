@@ -30,6 +30,7 @@ namespace finances {
         AddCircle = 0xe147,
         Checked = 0xe834,
         Filter = 0xe152,
+        Person = 0xe7fd,
         Refresh = 0xe5d5,
         Save = 0xe161,
         Trash = 0xe872,

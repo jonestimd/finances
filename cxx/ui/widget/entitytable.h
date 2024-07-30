@@ -45,6 +45,9 @@ public:
 
     void setEnabled(auto action, std::function<bool(int)> enableDelete);
 
+    void loadData(QString statusMessage, std::function<void()> doLoad);
+    void saveData(QString statusMessage, std::function<void()> doSave);
+
 private:
     QAction *addAction(const QString text);
     QAction *deleteAction(const QString text, std::function<bool(int)> enableDelete = nullptr);

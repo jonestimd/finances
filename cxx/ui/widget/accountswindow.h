@@ -5,6 +5,7 @@
 #include "../model/accounttablemodel.h"
 #include "companieswindow.h"
 #include "entitytable.h"
+#include "payeeswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -14,6 +15,7 @@ class AccountsWindow : public QMainWindow {
     AccountTableModel model;
     EntityTable tableSort;
     CompaniesWindow *companiesDialog;
+    PayeesWindow *payeesWindow;
 
 public:
     AccountsWindow(DataStore *dataStore);
@@ -25,6 +27,7 @@ public Q_SLOTS:
     void setCompanies(const QHash<qlonglong, const Company*> companies);
     void setAccounts(const QHash<qlonglong, const Account*> accounts);
     void showCompanies();
+    void showPayees();
 
     // QWidget interface
 protected:

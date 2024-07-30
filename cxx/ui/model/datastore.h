@@ -25,9 +25,14 @@ public:
     void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes);
     void addCompany(QWidget *source, const QString &name, std::function<void(const Company*)> callback);
 
+    bool loadPayees(QWidget *source, bool reload = false);
+    const QHash<qlonglong, const Payee*> payees() const;
+    void updatePayees(QWidget *source, QList<Payee*> updates, const QList<Payee*> adds, const QList<const Payee*> deletes);
+
 Q_SIGNALS:
     void accountsLoaded(const QHash<qlonglong, const Account*>);
     void companiesLoaded(const QHash<qlonglong, const Company*>);
+    void payeesLoaded(const QHash<qlonglong, const Payee*>);
 };
 
 #endif // DATASTORE_H

@@ -2,17 +2,14 @@
 #define ACCOUNTSERVICE_H
 
 #include "database/connectionpool.h"
-#include "model/account.h"
+#include "database/accountdao.h"
+#include "entityservice.h"
 #include "model/company.h"
-#include <service/model/bulkupdate.h>
 
-class AccountService
+class AccountService : public EntityService<Account, AccountDao>
 {
-    ConnectionPool *connectionPool;
 public:
     AccountService(ConnectionPool *connectionPool);
-
-    QList<const Account*> getAll();
 
     QList<const Account*> update(BulkUpdate<Account> &changes, const QString &user, QList<const Company*> *companies = nullptr);
 };

@@ -12,24 +12,32 @@ protected:
 
     QVariant T::* field;
     const IsEditable isEditable;
-    const ValidatorFactory *validatorFactory;
+    ValidatorFactory *const validatorFactory;
 public:
     const QString title;
 
-    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, const ValidatorFactory *factory = nullptr)
+    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
         : ColumnAdapter(title, field, [editable](const T *r) { return editable; }, factory) {}
 
-    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, const ValidatorFactory *factory = nullptr)
+    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, ValidatorFactory *factory = nullptr)
         : title{title}, field{field}, isEditable{isEditable}, validatorFactory{factory} {}
 
-    virtual QVariant value(const T *row, const QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
+    ~ColumnAdapter() {
+        if (validatorFactory && validatorFactory->multiRow) delete validatorFactory;
+    }
+
+    void initialize(QAbstractTableModel *model) {
+        if (validatorFactory) validatorFactory->initialize(model);
+    }
+
+    virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
         switch (role) {
         case Qt::DisplayRole:
         case Qt::EditRole:
         case finances::SortRole:
             return current.isValid() ? current : row->*(this->field);
         case finances::ValidatorFactoryRole:
-            if (validatorFactory) return QVariant::fromValue(validatorFactory);
+            if (validatorFactory) return QVariant::fromValue(validatorFactory->factory(index));
             break;
         }
         return current.isValid() ? current : QVariant{};
@@ -47,10 +55,10 @@ public:
         return allowEdit && (!isEditable || isEditable(row)) ? Qt::ItemIsEditable : Qt::NoItemFlags;
     }
 
-    const QString isValid(const T *row, const QModelIndex &index, QObject *parent) const {
+    const QString isValid(const QModelIndex &index) const {
         if (validatorFactory) {
-            QString val = value(row).toString();
-            return validatorFactory->validator(index, parent)->isValid(val);
+            QString val = index.data().toString();
+            return validatorFactory->isValid(index, val);
         }
         return nullptr;
     }

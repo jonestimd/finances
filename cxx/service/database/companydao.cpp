@@ -1,5 +1,4 @@
 #include "companydao.h"
-
 #include <QtSql>
 
 static const auto getCompaniesSql = R"(
@@ -20,71 +19,9 @@ values (:name, 0, :user, current_timestamp))";
 
 static const auto deleteCompanySql = "delete from company where id = :id";
 
-namespace companyDao {
-    QList<const Company*> getAll(QSqlDatabase &db) {
-        QSqlQuery query(db);
-        if (!query.exec(getCompaniesSql)) {
-            qCritical() << "companyDao.getAll:" << query.lastError().text();
-            throw query.lastError().text();
-        }
-        QList<const Company*> companies;
-        if (query.size() > 0) companies.reserve(query.size());
-        while (query.next()) {
-            companies.append(new Company(query.record()));
-        }
-        return companies;
-    }
+CompanyDao::CompanyDao()
+    : EntityDao<Company>{getCompaniesSql, updateCompanySql, insertCompanySql, deleteCompanySql, "CompanyDao",
+                         tr("Companies have been modified.  Please reload and try again.")}
+{}
 
-    QList<const Company*> update(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
-        QSqlQuery query(db);
-        QList<const Company*> result;
-        result.reserve(companies.length());
-        query.prepare(updateCompanySql);
-        query.bindValue(":user", user);
-        for (auto company : companies) {
-            query.bindValue(":id", company->id);
-            query.bindValue(":name", company->name);
-            query.bindValue(":version", company->version);
-            if (!query.exec()) {
-                qCritical() << "companyDao.update:" << query.lastError();
-                throw query.lastError().text();
-            }
-            if (query.numRowsAffected() < 1) throw QObject::tr("Companies have been modified.  Please reload and try again.");
-            company->version = company->version.toInt() + 1;
-            company->changeUser = user;
-            result.append(company);
-        }
-        return result;
-    }
-
-    QList<const Company*> add(QSqlDatabase &db, QList<Company*> companies, const QString &user) {
-        QSqlQuery query(db);
-        QList<const Company*> result;
-        result.reserve(companies.length());
-        query.prepare(insertCompanySql);
-        query.bindValue(":user", user);
-        for (auto company : companies) {
-            query.bindValue(":name", company->name);
-            if (!query.exec()) {
-                qCritical() << "companyDao.insert:" << query.lastError();
-                throw query.lastError().text();
-            }
-            company->id = query.lastInsertId();
-            company->changeUser = user;
-            result.append(company);
-        }
-        return result;
-    }
-
-    void remove(QSqlDatabase &db, QList<const Company *> companies) {
-        QSqlQuery query(db);
-        query.prepare(deleteCompanySql);
-        for (auto company : companies) {
-            query.bindValue(":id", company->id);
-            if (!query.exec()) {
-                qCritical() << "companyDao.remove:" << query.lastError();
-                throw query.lastError().text();
-            }
-        }
-    }
-}
+#include "companydao.moc"

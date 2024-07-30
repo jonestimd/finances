@@ -12,6 +12,7 @@ public:
     virtual int columnIndex(const QString name) const = 0;
 
     virtual bool hasUnsavedChanges() const = 0;
+    virtual void clearChanges() = 0;
     virtual bool isValid() const = 0;
     virtual bool enableDelete(int rowIndex) const = 0;
 

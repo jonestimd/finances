@@ -1,17 +1,20 @@
-#ifndef ACCOUNTDAO_H
-#define ACCOUNTDAO_H
+#ifndef ACCOUNT_DAO_H
+#define ACCOUNT_DAO_H
 
+#include "entitydao.h"
 #include "../model/account.h"
 #include <QtSql/QSqlDatabase>
 
-namespace accountDao {
-    QList<const Account*> getAll(QSqlDatabase &db);
+class AccountDao : public QObject, public EntityDao<Account> {
+    Q_OBJECT
+public:
+    AccountDao();
 
-    QList<const Account*> update(QSqlDatabase &db, QList<Account*> accounts, const QString &user);
+protected:
+    virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;
+    virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;
+};
 
-    QList<const Account*> add(QSqlDatabase &db, QList<Account*> accounts, const QString &user);
+Q_GLOBAL_STATIC(AccountDao, accountDao)
 
-    void remove(QSqlDatabase &db, QList<const Account*> companies);
-}
-
-#endif // ACCOUNTDAO_H
+#endif // ACCOUNT_DAO_H

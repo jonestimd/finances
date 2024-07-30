@@ -1,17 +1,16 @@
-#ifndef COMPANYDAO_H
-#define COMPANYDAO_H
+#ifndef COMPANY_DAO_H
+#define COMPANY_DAO_H
 
+#include "entitydao.h"
 #include "../model/company.h"
 #include <QtSql/QSqlDatabase>
 
-namespace companyDao {
-    QList<const Company*> getAll(QSqlDatabase &db);
+class CompanyDao : public QObject, public EntityDao<Company> {
+    Q_OBJECT
+public:
+    CompanyDao();
+};
 
-    QList<const Company*> update(QSqlDatabase &db, QList<Company*> companies, const QString &user);
+Q_GLOBAL_STATIC(CompanyDao, companyDao)
 
-    QList<const Company*> add(QSqlDatabase &db, QList<Company*> companies, const QString &user);
-
-    void remove(QSqlDatabase &db, QList<const Company*> companies);
-}
-
-#endif // COMPANYDAO_H
+#endif // COMPANY_DAO_H

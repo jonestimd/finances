@@ -3,16 +3,31 @@
 #include <QSqlError>
 #include <QtConcurrent>
 
-template<typename T>
-class Holder {
+template<typename T, class Service>
+class Holder
+{
+    DataStore *dataStore;
     QHash<qlonglong, T> byId;
+    Service *service;
+
 public:
     bool loaded;
 
-    Holder() : loaded{false} {};
+    Holder(DataStore *dataStore, Service *service)
+        : dataStore{dataStore}
+        , loaded{false}, service{service} {};
 
     const QHash<qlonglong, T> values() const {
         return this->byId;
+    }
+
+    bool load(QWidget *source, bool reload, void (DataStore::*valuesLoaded)(QHash<qlonglong, T>)) {
+        if (!reload && loaded) return true;
+        doInBackground(source, [valuesLoaded, this]() {
+            setValues(service->getAll());
+            (dataStore->*valuesLoaded)(values());
+        });
+        return false;
     }
 
     void update(const QList<T> &updates, const QList<T> deletes = QList<T>{}) {
@@ -32,8 +47,14 @@ public:
 };
 
 struct DataStorePrivate {
-    Holder<const Account*> accounts;
-    Holder<const Company*> companies;
+    Holder<const Account*, AccountService> accounts;
+    Holder<const Company*, CompanyService> companies;
+    Holder<const Payee*, PayeeService> payees;
+
+    DataStorePrivate(DataStore *dataStore, ServiceContext *services)
+        : accounts{dataStore, &services->accountService}
+        , companies{dataStore, &services->companyService}
+        , payees{dataStore, &services->payeeService} {}
 };
 
 typedef std::function<void()> Runnable;
@@ -57,7 +78,7 @@ void doInBackground(QWidget *source, Runnable task, OnComplete onComplete = null
 }
 
 DataStore::DataStore(ServiceContext *services)
-    : p{new DataStorePrivate}
+    : p{new DataStorePrivate(this, services)}
     , services{services}
     , user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))}
 {}
@@ -67,12 +88,7 @@ DataStore::~DataStore() {
 }
 
 bool DataStore::loadAccounts(QWidget *source, bool reload) {
-    if (!reload && p->accounts.loaded) return true;
-    doInBackground(source, [this]() {
-        p->accounts.setValues(services->accountService.getAll());
-        emit accountsLoaded(p->accounts.values());
-    });
-    return false;
+    return p->accounts.load(source, reload, &DataStore::accountsLoaded);
 }
 
 const QHash<qlonglong, const Account *> DataStore::accounts() const {
@@ -93,12 +109,7 @@ void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const 
 }
 
 bool DataStore::loadCompanies(QWidget *source, bool reload) {
-    if (!reload && p->companies.loaded) return true;
-    doInBackground(source, [this]() {
-        p->companies.setValues(services->companyService.getAll());
-        emit companiesLoaded(p->companies.values());
-    });
-    return false;
+    return p->companies.load(source, reload, &DataStore::companiesLoaded);
 }
 
 const QHash<qlonglong, const Company*> DataStore::companies() const {
@@ -123,3 +134,21 @@ void DataStore::addCompany(QWidget *source, const QString &name, std::function<v
         if (!success) callback(nullptr);
     });
 }
+
+bool DataStore::loadPayees(QWidget *source, bool reload) {
+    return p->payees.load(source, reload, &DataStore::payeesLoaded);
+}
+
+const QHash<qlonglong, const Payee *> DataStore::payees() const {
+    return p->payees.values();
+}
+
+void DataStore::updatePayees(QWidget *source, QList<Payee *> updates, const QList<Payee *> adds, const QList<const Payee *> deletes) {
+    doInBackground(source, [this, updates, adds, deletes] {
+        auto changes = BulkUpdate{updates, adds, deletes};
+        auto payees = services->payeeService.update(changes, user);
+        p->payees.update(payees, deletes);
+    }, [this](bool success) { emit payeesLoaded(p->payees.values()); });
+}
+
+#include "datastore.moc"

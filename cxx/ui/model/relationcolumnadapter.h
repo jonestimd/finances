@@ -15,13 +15,13 @@ class RelationColumnAdapter : public ColumnAdapter<T> {
 
 public:
     RelationColumnAdapter(QString title, QVariant T::*field, ValuesSupplier<V> values, CreateValue newValue = nullptr,
-                          const ValidatorFactory *validatorFactory = nullptr)
+                          ValidatorFactory *validatorFactory = nullptr)
         : ColumnAdapter<T>(title, field, true, validatorFactory)
         , values{values}
         , createValue{newValue} {}
 
-    QVariant value(const T *row, const QVariant current, int role) const override {
-        QVariant value = ColumnAdapter<T>::value(row, NamedEntity::getId(current), role);
+    virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
+        QVariant value = ColumnAdapter<T>::value(row, index, NamedEntity::getId(current), role);
         if (role == finances::SortRole && value.isNull()) return "";
         if (role == Qt::DisplayRole || role == finances::SortRole) {
             if (current.isValid() && current.isNull()) return "";
@@ -44,13 +44,13 @@ public:
         return value;
     }
 
-    bool isEqual(const QVariant &value1, const QVariant &value2) override {
+    virtual bool isEqual(const QVariant &value1, const QVariant &value2) override {
         auto e1 = value1.value<const NamedEntity*>(), e2 = value2.value<const NamedEntity*>();
         if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->id, e2->id);
         return !e2;
     }
 
-    void setValue(T *row, QVariant value) override {
+    virtual void setValue(T *row, QVariant value) override {
         auto entity = value.value<const NamedEntity*>();
         ColumnAdapter<T>::setValue(row, entity ? entity->id : QVariant{});
     }

@@ -70,9 +70,9 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
         auto lineEdit = qobject_cast<QLineEdit*>(editor);
         auto validatorFactory = index.data(finances::ValidatorFactoryRole);
         if (validatorFactory.isValid() && lineEdit) {
-            auto factory = validatorFactory.value<ValidatorFactory*>();
+            auto factory = validatorFactory.value<ValidatorFactory::Factory>();
             if (factory) {
-                auto validator = factory->validator(index, lineEdit, statusBar);
+                auto validator = factory(lineEdit, statusBar);
                 lineEdit->setValidator(validator);
                 connect(lineEdit, &QLineEdit::textChanged, [=]() { lineEdit->style()->unpolish(lineEdit); });
             }

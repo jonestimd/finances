@@ -27,17 +27,20 @@ public:
     virtual void fixup(QString &text) const override;
 };
 
-class ValidatorFactory : public QObject {
-    Q_OBJECT
-public:
+struct ValidatorFactory : public QObject {
+    typedef std::function<const ValidationStatus*(QObject*,QStatusBar*)> Factory;
+
     /*!
      * \brief multiRow indicates whether the validation depends on multiple rows.
+     *  Multi-row validators are owned/deleted by the column adapter and should not be global/shared.
      */
     const bool multiRow;
 
     ValidatorFactory(bool multiRow = false);
 
-    virtual const ValidationStatus *validator(const QModelIndex &index, QObject *parent, QStatusBar *statusBar = nullptr) const;
+    virtual void initialize(QAbstractTableModel *model);
+
+    virtual const Factory factory(const QModelIndex &index) const;
 
     virtual const QString isValid(const QModelIndex &index, QString &value) const = 0;
 
@@ -48,6 +51,6 @@ public:
     static QString formatMessage(const QString format, const QModelIndex &index);
 };
 
-Q_DECLARE_OPAQUE_POINTER(ValidatorFactory*)
+Q_DECLARE_OPAQUE_POINTER(ValidatorFactory::Factory)
 
 #endif // FACTORY_H

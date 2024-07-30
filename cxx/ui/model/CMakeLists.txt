@@ -9,6 +9,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/columnadapter.h
     ${CMAKE_CURRENT_LIST_DIR}/relationcolumnadapter.h
     ${CMAKE_CURRENT_LIST_DIR}/podtablemodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/payeetablemodel.h ${CMAKE_CURRENT_LIST_DIR}/payeetablemodel.cpp
 )
 
 add_subdirectory(tests/)

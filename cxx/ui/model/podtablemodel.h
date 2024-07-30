@@ -24,7 +24,7 @@ protected:
     QList<int> pendingDeletes;
 
     QVariant value_(const QModelIndex index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const {
-        return columns[index.column()]->value(row(index.row()), current, role);
+        return columns[index.column()]->value(row(index.row()), index, current, role);
     }
 
     void emitChange(int from, int to) {
@@ -39,17 +39,10 @@ protected:
         columns[column]->setValue(row, value);
     }
 
-    // void revalidateRow(int rowIndex) {
-    //   * TODO validate other columns
-    //     - when an error is added/removed, revalidate column in other rows
-    //     - remove company validator in account table model
-    // }
-
-    void revalidate() {
-        QObject deleter;
+    void removeStaleErrors() {
         QList<QModelIndex> fixes;
         for (auto [index, message] : errors.asKeyValueRange()) {
-            auto newMessage = columns[index.column()]->isValid(row(index.row()), index, &deleter);
+            auto newMessage = columns[index.column()]->isValid(index);
             if (newMessage.isNull()) fixes.append(index);
         }
         for (auto index : fixes) {
@@ -65,14 +58,37 @@ protected:
         }
     }
 
+    void revalidateRow(int rowIndex) {
+        for (int c = 0; c < columns.length(); ++c) {
+            auto i = index(rowIndex, c);
+            auto message = columns[c]->isValid(i);
+            if (message.isEmpty()) {
+                if (errors.remove(i)) {
+                    emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
+                    removeStaleErrors();
+                }
+            } else {
+                if (!errors.contains(i) || message != errors.value(i)) {
+                    errors.insert(i, message);
+                    emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
+                }
+                // uniqueness conflict may have moved to another row
+                revalidateColumn(c);
+            }
+        }
+    }
+
 public:
     explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
-        : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns} {}
+        : AdapterTableModel(parent), rows(QList<const Row*>()), columns{columns}
+    {
+        for (auto column : columns) {
+            column->initialize(this);
+        }
+    }
 
     ~PodTableModel() {
-        for (auto column : columns) {
-            delete column;
-        }
+        for (auto column : columns) delete column;
     }
 
     void setRows(QList<const Row*> rows) {
@@ -93,10 +109,9 @@ public:
         beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
         Row *row = new Row;
         pendingAdds.append(row);
-        QObject deleter;
         for (int colIndex = 0; colIndex < columns.length(); ++colIndex) {
             auto i = index(rowIndex, colIndex);
-            auto message = columns[colIndex]->isValid(row, i, &deleter);
+            auto message = columns[colIndex]->isValid(i);
             if (!message.isNull()) errors[i] = message;
         }
         endInsertRows();
@@ -119,7 +134,7 @@ public:
             errors.clear();
             errors.insert(updateErrors);
             endRemoveRows();
-            revalidate();
+            removeStaleErrors();
         }
         else if (!pendingDeletes.contains(rowIndex)) {
             pendingDeletes.append(rowIndex);
@@ -132,7 +147,7 @@ public:
         else if (changes.contains(index)) {
             changes.remove(index);
             emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-            revalidateColumn(index.column());
+            revalidateRow(index.row());
         }
     }
 
@@ -181,7 +196,7 @@ public:
         return deletes;
     }
 
-    void clearChanges() {
+    virtual void clearChanges() override {
         changes.clear();
         pendingDeletes.clear();
         errors.clear();
@@ -232,7 +247,7 @@ public:
             if (index.row() >= savedRows) {
                 setValue_(pendingAdds[index.row()-savedRows], index.column(), value);
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole));
-                revalidateColumn(index.column());
+                revalidateRow(index.row());
                 return true;
             }
             auto column = columns[index.column()];
@@ -241,13 +256,13 @@ public:
                 if (changes.contains(index)) {
                     changes.remove(index);
                     emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-                    revalidateColumn(index.column());
+                    revalidateRow(index.row());
                     return true;
                 }
             } else if (!changes.contains(index) || !column->isEqual(value, changes[index])) {
                 changes[index] = value;
                 emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-                revalidateColumn(index.column());
+                revalidateRow(index.row());
                 return true;
             }
         }
