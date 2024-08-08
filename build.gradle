@@ -8,7 +8,7 @@ plugins {
 compileJava.sourceCompatibility = 1.8
 
 group = 'io.github.jonestimd'
-version = '1.6.4'
+version = '1.7.0'
 
 allprojects { // TODO add plugin-api module and test-common module
     apply plugin: 'java'
