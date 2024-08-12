@@ -1,3 +1,6 @@
+#ifndef ACCOUNT_TYPE_H
+#define ACCOUNT_TYPE_H
+
 #include "service/model/basedomain.h"
 #include "account.h"
 #include <QHash>
@@ -21,3 +24,5 @@ public:
 
     static bool isCompatible(const Account* account, const AccountType *type);
 };
+
+#endif // ACCOUNT_TYPE_H

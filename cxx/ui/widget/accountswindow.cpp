@@ -20,6 +20,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     , tableSort{this, &model, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
+        iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
     }}
 {
     setCentralWidget(&tableSort.table);
@@ -78,6 +79,11 @@ void AccountsWindow::showCompanies() {
 void AccountsWindow::showPayees() {
     if (!payeesWindow) payeesWindow = new PayeesWindow(dataStore);
     payeesWindow->show();
+}
+
+void AccountsWindow::showCategories() {
+    if (!categoriesWindow) categoriesWindow = new CategoriesWindow(dataStore);
+    categoriesWindow->show();
 }
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {

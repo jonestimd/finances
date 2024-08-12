@@ -5,7 +5,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 
-class Payee : public BaseDomain {
+class Payee : public NamedEntity {
 public:
     QVariant name;
     QVariant transactions;
@@ -14,6 +14,8 @@ public:
     Payee(QSqlRecord record);
 
     bool deletable() const;
+
+    QString displayName() const override;
 };
 
 #endif // PAYEE_H

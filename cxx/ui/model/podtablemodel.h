@@ -270,7 +270,7 @@ public:
     }
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
-        if (role == Qt::DisplayRole && orientation == Qt::Horizontal && section < columns.count()) {
+        if (role == Qt::DisplayRole && orientation == Qt::Horizontal && section >= 0 && section < columns.count()) {
             return columns[section]->title;
         }
         return QVariant{};

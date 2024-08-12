@@ -33,7 +33,7 @@ public:
         , className{className}
         , staleDataMessage{staleDataMessage} {}
 
-    QList<const Entity*> getAll(QSqlDatabase &db) {
+    virtual QList<const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         if (!query.exec(getAllSql)) {
             qCritical() << className + ".getAll:" << query.lastError().text();
@@ -47,7 +47,7 @@ public:
         return entities;
     }
 
-    QList<const Entity*> update(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
+    virtual QList<const Entity*> update(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;
         result.reserve(entities.length());
@@ -67,7 +67,7 @@ public:
         return result;
     }
 
-    QList<const Entity*> add(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
+    virtual QList<const Entity*> add(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;
         result.reserve(entities.length());
@@ -86,7 +86,7 @@ public:
         return result;
     }
 
-    void remove(QSqlDatabase &db, QList<const Entity*> entities) {
+    virtual void remove(QSqlDatabase &db, QList<const Entity*> entities) {
         QSqlQuery query(db);
         query.prepare(deleteSql);
         for (auto entity : entities) {

@@ -28,6 +28,7 @@ namespace finances {
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
+        Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
         Person = 0xe7fd,

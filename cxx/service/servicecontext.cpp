@@ -4,4 +4,5 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     : pool{pool}
     , accountService{pool}
     , companyService{pool}
-    , payeeService{pool} {}
+    , payeeService{pool}
+    , categoryService{pool} {}

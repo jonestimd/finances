@@ -50,11 +50,13 @@ struct DataStorePrivate {
     Holder<const Account*, AccountService> accounts;
     Holder<const Company*, CompanyService> companies;
     Holder<const Payee*, PayeeService> payees;
+    Holder<const Category*, CategoryService> categories;
 
     DataStorePrivate(DataStore *dataStore, ServiceContext *services)
         : accounts{dataStore, &services->accountService}
         , companies{dataStore, &services->companyService}
-        , payees{dataStore, &services->payeeService} {}
+        , payees{dataStore, &services->payeeService}
+        , categories{dataStore, &services->categoryService} {}
 };
 
 typedef std::function<void()> Runnable;
@@ -149,6 +151,14 @@ void DataStore::updatePayees(QWidget *source, QList<Payee *> updates, const QLis
         auto payees = services->payeeService.update(changes, user);
         p->payees.update(payees, deletes);
     }, [this](bool success) { emit payeesLoaded(p->payees.values()); });
+}
+
+bool DataStore::loadCategories(QWidget *source, bool reload) {
+    return p->categories.load(source, reload, &DataStore::categoriesLoaded);
+}
+
+const QHash<qlonglong, const Category *> DataStore::categories() const {
+    return p->categories.values();
 }
 
 #include "datastore.moc"

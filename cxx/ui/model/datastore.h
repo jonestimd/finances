@@ -29,10 +29,14 @@ public:
     const QHash<qlonglong, const Payee*> payees() const;
     void updatePayees(QWidget *source, QList<Payee*> updates, const QList<Payee*> adds, const QList<const Payee*> deletes);
 
+    bool loadCategories(QWidget *source, bool reload = false);
+    const QHash<qlonglong, const Category*> categories() const;
+
 Q_SIGNALS:
     void accountsLoaded(const QHash<qlonglong, const Account*>);
     void companiesLoaded(const QHash<qlonglong, const Company*>);
     void payeesLoaded(const QHash<qlonglong, const Payee*>);
+    void categoriesLoaded(const QHash<qlonglong, const Category*>);
 };
 
 #endif // DATASTORE_H

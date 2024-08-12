@@ -3,6 +3,7 @@
 
 #include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
+#include "categorieswindow.h"
 #include "companieswindow.h"
 #include "entitytable.h"
 #include "payeeswindow.h"
@@ -14,8 +15,9 @@ class AccountsWindow : public QMainWindow {
     DataStore *dataStore;
     AccountTableModel model;
     EntityTable tableSort;
-    CompaniesWindow *companiesDialog;
-    PayeesWindow *payeesWindow;
+    CompaniesWindow *companiesDialog{};
+    PayeesWindow *payeesWindow{};
+    CategoriesWindow *categoriesWindow{};
 
 public:
     AccountsWindow(DataStore *dataStore);
@@ -28,6 +30,7 @@ public Q_SLOTS:
     void setAccounts(const QHash<qlonglong, const Account*> accounts);
     void showCompanies();
     void showPayees();
+    void showCategories();
 
     // QWidget interface
 protected:

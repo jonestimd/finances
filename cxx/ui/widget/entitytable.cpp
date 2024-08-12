@@ -30,6 +30,7 @@ EntityTable::EntityTable(QWidget *window, AdapterTableModel *model, const QStrin
     table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
     table.setSortingEnabled(true);
+    // table.verticalHeader()->setDefaultSectionSize(5); // minimize row height
 
     toolbar.setMovable(false);
     toolbar.addAction(addAction(tr("Add %1").arg(entityName.toLower())));
@@ -93,8 +94,10 @@ bool EntityTable::focusFilter(QKeyEvent *event) {
 
 void EntityTable::saveSort(QSettings *settings) {
     auto header = table.horizontalHeader();
-    settings->setValue("sort.column", model->headerData(header->sortIndicatorSection(), Qt::Horizontal));
-    settings->setValue("sort.order", header->sortIndicatorOrder());
+    if (header->sortIndicatorSection() >= 0) {
+        settings->setValue("sort.column", model->headerData(header->sortIndicatorSection(), Qt::Horizontal));
+        settings->setValue("sort.order", header->sortIndicatorOrder());
+    }
 }
 
 void EntityTable::saveSizes(QString group, QSettings *settings) {
