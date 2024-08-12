@@ -12,7 +12,7 @@ const QString UniqueValidatorFactory::isValid(const QModelIndex &index, QString 
     return rows.length() > 1 || !rows.isEmpty() && !rows.contains(index.row()) ? formatMessage(tr("%1 must be unique"), index) : nullptr;
 }
 
-void UniqueValidatorFactory::initialize(QAbstractTableModel *model) {
+void UniqueValidatorFactory::initialize(QAbstractItemModel *model) {
     this->model = model;
     connect(model, SIGNAL(modelReset()), this, SLOT(modelReset()));
     connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged(QModelIndex,QModelIndex,QList<int>)));
@@ -56,5 +56,3 @@ QStringList UniqueValidatorFactory::rowValues(const QString value, const QModelI
     }
     return values;
 }
-
-#include "unique.moc"

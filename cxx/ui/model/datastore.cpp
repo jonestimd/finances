@@ -99,15 +99,15 @@ const QHash<qlonglong, const Account *> DataStore::accounts() const {
 
 void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const QList<Account *> adds, const QList<const Account *> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
-            auto changes = BulkUpdate{updates, adds, deletes};
-            QList<const Company*> companies;
-            auto accounts = services->accountService.update(changes, user, &companies);
-            p->accounts.update(accounts, deletes);
-            p->companies.update(companies);
-        }, [this](bool success) {
-            emit accountsLoaded(p->accounts.values());
-            emit companiesLoaded(p->companies.values());
-        });
+        auto changes = BulkUpdate{updates, adds, deletes};
+        QList<const Company*> companies;
+        auto accounts = services->accountService.update(changes, user, &companies);
+        p->accounts.update(accounts, deletes);
+        p->companies.update(companies);
+    }, [this](bool success) {
+        emit accountsLoaded(p->accounts.values());
+        emit companiesLoaded(p->companies.values());
+    });
 }
 
 bool DataStore::loadCompanies(QWidget *source, bool reload) {
@@ -160,5 +160,3 @@ bool DataStore::loadCategories(QWidget *source, bool reload) {
 const QHash<qlonglong, const Category *> DataStore::categories() const {
     return p->categories.values();
 }
-
-#include "datastore.moc"

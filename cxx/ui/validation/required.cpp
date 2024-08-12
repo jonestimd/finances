@@ -9,5 +9,3 @@ const QString RequiredValidatorFactory::isValid(const QModelIndex &index, QStrin
     if (!message.isEmpty()) return message;
     return value.isEmpty() ? formatMessage(tr("%1 is required"), index): nullptr;
 }
-
-#include "required.moc"

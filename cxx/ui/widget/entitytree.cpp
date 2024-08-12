@@ -1,4 +1,4 @@
-#include "entitytable.h"
+#include "entitytree.h"
 #include "dialog.h"
 #include "tableitemdelegate.h"
 #include <QHeaderView>
@@ -6,7 +6,7 @@
 #include <QTableWidget>
 #include <QTimer>
 
-EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString entityName, const QString defaultSort,
+EntityTree::EntityTree(QWidget *window, AdapterItemModel *model, const QString entityName, const QString defaultSort,
                          const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
     : QObject(window)
     , window{window}
@@ -27,7 +27,7 @@ EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString
     table.setModel(&sortModel);
     table.setItemDelegate(&itemDelegate);
 
-    table.resizeColumnsToContents();
+    // table.resizeColumnsToContents();
     table.setAlternatingRowColors(true);
     table.setSortingEnabled(true);
     // table.verticalHeader()->setDefaultSectionSize(5); // minimize row height
@@ -57,7 +57,7 @@ EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString
     connect(table.itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(table.selectionModel()->currentIndex()); });
 
-    auto header = table.horizontalHeader();
+    auto header = table.header();
     header->setSectionsMovable(true);
     header->setSortIndicatorShown(true);
     header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
@@ -65,27 +65,27 @@ EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString
     table.selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
 }
 
-int EntityTable::columnIndex(const QString name) const {
+int EntityTree::columnIndex(const QString name) const {
     return model->columnIndex(name);
 }
 
-QModelIndex EntityTable::selectedIndex() {
+QModelIndex EntityTree::selectedIndex() {
     return sortModel.mapToSource(table.selectionModel()->selectedIndexes().first());
 }
 
-void EntityTable::enableColumnResize() {
-    table.horizontalHeader()->setStretchLastSection(true);
+void EntityTree::enableColumnResize() {
+    table.header()->setStretchLastSection(true);
 }
 
-void EntityTable::setColumnResize(const std::vector<int> stretchColumns) {
-    auto header = table.horizontalHeader();
+void EntityTree::setColumnResize(const std::vector<int> stretchColumns) {
+    auto header = table.header();
     header->setSectionResizeMode(QHeaderView::ResizeToContents);
     for (int i : stretchColumns) {
         header->setSectionResizeMode(i, QHeaderView::Stretch);
     }
 }
 
-bool EntityTable::focusFilter(QKeyEvent *event) {
+bool EntityTree::focusFilter(QKeyEvent *event) {
     if (event->matches(QKeySequence::Find) && !filterInput->hasFocus()) {
         filterInput->setFocus();
         return true;
@@ -93,16 +93,16 @@ bool EntityTable::focusFilter(QKeyEvent *event) {
     return false;
 }
 
-void EntityTable::saveSort(QSettings *settings) {
-    auto header = table.horizontalHeader();
+void EntityTree::saveSort(QSettings *settings) {
+    auto header = table.header();
     if (header->sortIndicatorSection() >= 0) {
         settings->setValue("sort.column", model->headerData(header->sortIndicatorSection(), Qt::Horizontal));
         settings->setValue("sort.order", header->sortIndicatorOrder());
     }
 }
 
-void EntityTable::saveSizes(QString group, QSettings *settings) {
-    auto header = table.horizontalHeader();
+void EntityTree::saveSizes(QString group, QSettings *settings) {
+    auto header = table.header();
     settings->beginGroup(QString(group).append(".columns"));
     for (int section = 0; section < header->count(); ++section) {
         auto name = model->headerData(section, Qt::Horizontal).toString();
@@ -113,9 +113,9 @@ void EntityTable::saveSizes(QString group, QSettings *settings) {
     settings->endGroup();
 }
 
-void EntityTable::restore(QString group, QSettings *settings) {
+void EntityTree::restore(QString group, QSettings *settings) {
     auto model = table.model();
-    auto header = table.horizontalHeader();
+    auto header = table.header();
     auto sortColumn = settings->value(group + "/sort.column", defaultSort).toString();
     if (!sortColumn.isEmpty()) {
         auto sortOrder = settings->value(group + "/sort.order", 0).toInt();
@@ -133,44 +133,44 @@ void EntityTable::restore(QString group, QSettings *settings) {
     }
 }
 
-bool selectEditColumn(QModelIndex &index) {
-    auto columnCount = index.model()->columnCount();
-    while (index.column() < columnCount) {
-        if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
-        index = index.sibling(index.row(), index.column()+1);
-    }
-    return false;
+// bool selectEditColumn(QModelIndex &index) {
+//     auto columnCount = index.model()->columnCount();
+//     while (index.column() < columnCount) {
+//         if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
+//         index = index.sibling(index.row(), index.column()+1);
+//     }
+//     return false;
+// }
+
+void EntityTree::startEdit(int rowIndex) {
+    // auto index = sortModel.index(rowIndex, 0);
+    // if (selectEditColumn(index)) {
+    //     table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+    //     table.edit(index);
+    // }
 }
 
-void EntityTable::startEdit(int rowIndex) {
-    auto index = sortModel.index(rowIndex, 0);
-    if (selectEditColumn(index)) {
-        table.selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-        table.edit(index);
-    }
-}
-
-void EntityTable::loadData(QString statusMessage, std::function<void ()> doLoad) {
+void EntityTree::loadData(QString statusMessage, std::function<void ()> doLoad) {
     if (!dialog::confirmDiscardChanges(window, model)) return;
     table.setEnabled(false); // TODO save/restore selection
     statusBar.addMessage(statusMessage);
     doLoad();
 }
 
-void EntityTable::saveData(QString statusMessage, std::function<void ()> doSave) {
+void EntityTree::saveData(QString statusMessage, std::function<void ()> doSave) {
     statusBar.addMessage(statusMessage);
     table.setEnabled(false);
     doSave();
 }
 
-QAction *EntityTable::addAction(const QString text) {
+QAction *EntityTree::addAction(const QString text) {
     auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this, SLOT(addRow()));
     connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
     connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
     return addAction;
 }
 
-QAction *EntityTable::deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete) {
+QAction *EntityTree::deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete) {
     auto action = finances::iconAction(finances::Trash, text, QKeySequence::Delete, this, SLOT(queueDeletes()));
     auto setEnabled = [=, this]() {
         auto indexes = sortModel.mapSelectionToSource(table.selectionModel()->selection()).indexes();
@@ -183,32 +183,32 @@ QAction *EntityTable::deleteAction(const QString text, std::function<bool(const 
     return action;
 }
 
-QAction *EntityTable::undoAction() {
+QAction *EntityTree::undoAction() {
     auto undoAction = finances::iconAction(finances::Undo, tr("Undo"), QKeySequence::Undo, this, SLOT(undoChanges()));
     return undoAction;
 }
 
-void EntityTable::dataChanged() {
+void EntityTree::dataChanged() {
     saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
     window->setWindowModified(model->hasUnsavedChanges());
 }
 
-void EntityTable::addRow() {
+void EntityTree::addRow() {
     int rowIndex = sortModel.mapFromSource(model->index(model->queueAdd(), 0)).row();
     startEdit(rowIndex);
 }
 
-void EntityTable::queueDeletes() {
+void EntityTree::queueDeletes() {
     auto selection = sortModel.mapSelectionToSource(table.selectionModel()->selection());
     for (auto i : selection.indexes()) model->queueDelete(i);
 }
 
-void EntityTable::undoChanges() {
+void EntityTree::undoChanges() {
     auto selection = sortModel.mapSelectionToSource(table.selectionModel()->selection());
     for (auto i : selection.indexes()) model->undoChange(i);
 }
 
-void EntityTable::showValidation(const QModelIndex &index) {
+void EntityTree::showValidation(const QModelIndex &index) {
     // auto range = table.selectionModel()->selection().indexes();
     // TODO index not in range for mouse click
     // qDebug() << "showValidation" << range.length() << range.contains(index);

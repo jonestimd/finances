@@ -1,20 +1,20 @@
-#ifndef ENTITY_TABLE_H
-#define ENTITY_TABLE_H
+#ifndef ENTITY_TREE_H
+#define ENTITY_TREE_H
 
 #include "filterinput.h"
 #include "statusbar.h"
 #include "tableitemdelegate.h"
 #include "../model/adapteritemmodel.h"
 #include <QStatusBar>
-#include <QTableView>
+#include <QTreeView>
 
-class EntityTable : public QObject {
+class EntityTree : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
 public:
     AdapterItemModel *model;
-    QTableView table;
+    QTreeView table;
     QSortFilterProxyModel sortModel;
     FilterInput *filterInput;
     QToolBar toolbar;
@@ -22,7 +22,7 @@ public:
     QAction *const saveAction;
     const QString defaultSort;
 
-    EntityTable(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort, const char *saveSlot, const char *loadSlot,
+    EntityTree(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort, const char *saveSlot, const char *loadSlot,
                 QList<QAction*> actions = QList<QAction*>{});
 
     int columnIndex(const QString name) const;
@@ -61,4 +61,4 @@ public Q_SLOTS:
     void undoChanges();
 };
 
-#endif // ENTITY_TABLE_H
+#endif // ENTITY_TREE_H

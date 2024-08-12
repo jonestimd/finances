@@ -6,6 +6,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.h ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dialog.h ${CMAKE_CURRENT_LIST_DIR}/dialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entitytable.h ${CMAKE_CURRENT_LIST_DIR}/entitytable.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/entitytree.h ${CMAKE_CURRENT_LIST_DIR}/entitytree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.h ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.cpp
     ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.h ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.cpp
     ${CMAKE_CURRENT_LIST_DIR}/filterinput.h ${CMAKE_CURRENT_LIST_DIR}/filterinput.cpp

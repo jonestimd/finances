@@ -13,6 +13,7 @@ public:
     QVariant income;
     QVariant security;
     QVariant parentId;
+    QList<QVariant> childIds;
     QVariant transactions;
 
     Category();

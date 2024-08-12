@@ -23,5 +23,3 @@ CompanyDao::CompanyDao()
     : EntityDao<Company>{getCompaniesSql, updateCompanySql, insertCompanySql, deleteCompanySql, "CompanyDao",
                          tr("Companies have been modified.  Please reload and try again.")}
 {}
-
-#include "companydao.moc"

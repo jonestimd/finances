@@ -22,5 +22,3 @@ PayeeDao::PayeeDao()
     : EntityDao<Payee>{getPayeesSql, updatePayeeSql, insertPayeeSql, deletePayeeSql, "PayeeDao",
                        tr("Payees have been modified.  Please reload and try again.")}
 {}
-
-#include "payeedao.moc"

@@ -1,7 +1,8 @@
 #include "category.h"
+#include "../database/mapping.h"
 #include <QSqlField>
 
-Category::Category() : NamedEntity() {}
+Category::Category() : NamedEntity(), childIds() {}
 
 Category::Category(QSqlRecord record) : NamedEntity(record) {
     name = record.field("code").value();
@@ -10,6 +11,7 @@ Category::Category(QSqlRecord record) : NamedEntity(record) {
     income = record.field("income").value().toString() == "Y";
     security = record.field("security").value().toString() == "Y";
     parentId = record.field("parent_id").value();
+    childIds = mapping::jsonToList(record.field("child_ids").value());
     transactions = record.field("transactions").value();
 }
 

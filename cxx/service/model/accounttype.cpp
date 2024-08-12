@@ -19,5 +19,3 @@ const AccountType AccountType::cash = AccountType("CASH", tr("Cash"), false);
 const AccountType AccountType::credit = AccountType("CREDIT", tr("Credit"), false);
 const AccountType AccountType::loan = AccountType("LOAN", tr("Loan"), false);
 const AccountType AccountType::_401k = AccountType("401K", tr("401(K)"), true);
-
-#include "accounttype.moc"

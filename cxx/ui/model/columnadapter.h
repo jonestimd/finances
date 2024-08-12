@@ -26,7 +26,7 @@ public:
         if (validatorFactory && validatorFactory->multiRow) delete validatorFactory;
     }
 
-    void initialize(QAbstractTableModel *model) {
+    void initialize(QAbstractItemModel *model) {
         if (validatorFactory) validatorFactory->initialize(model);
     }
 

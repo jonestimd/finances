@@ -16,5 +16,3 @@ CompanyTableModel::CompanyTableModel(QList<const Company*> companies, QObject *p
 {
     setRows(companies);
 }
-
-#include "companytablemodel.moc"

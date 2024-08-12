@@ -10,14 +10,14 @@ class UniqueValidatorFactory : public ValidatorFactory {
     const int columnIndex;
     const QList<int> groupingColumns;
     QMultiHash<QStringList, int> values;
-    QAbstractTableModel *model;
+    QAbstractItemModel *model;
 
 public:
     UniqueValidatorFactory(int columnIndex, QList<int> groupingColumns = QList<int>{});
 
     const QString isValid(const QModelIndex &index, QString &value) const override;
 
-    virtual void initialize(QAbstractTableModel *model) override;
+    virtual void initialize(QAbstractItemModel *model) override;
 
 public Q_SLOTS:
     void modelReset();

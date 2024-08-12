@@ -8,10 +8,16 @@ with summary as (
   select td.tx_category_id, count(distinct td.tx_id) transactions
   from tx_detail td
   group by td.tx_category_id
+), children as (
+  select parent_id id, json_arrayagg(id) child_ids
+  from tx_category
+  where parent_id is not null
+  group by parent_id
 )
-select c.*, coalesce(s.transactions, 0) transactions
+select c.*, coalesce(s.transactions, 0) transactions, ch.child_ids
 from tx_category c
 left join summary s on c.id = s.tx_category_id
+left join children ch on c.id = ch.id
 order by c.code)";
 
 static const auto updateCategorySql = R"(
@@ -57,5 +63,3 @@ void CategoryDao::bindInsertValues(QSqlQuery &query, Category *category) {
     query.bindValue(":income", mapping::toYesNo(category->income));
     query.bindValue(":security", mapping::toYesNo(category->security));
 }
-
-#include "categorydao.moc"

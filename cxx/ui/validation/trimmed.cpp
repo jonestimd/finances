@@ -14,5 +14,3 @@ const QString TrimmedValidatorFactory::isValid(const QModelIndex &index, QString
 void TrimmedValidatorFactory::fixup(QString &text) const {
     text = text.trimmed();
 }
-
-#include "trimmed.moc"

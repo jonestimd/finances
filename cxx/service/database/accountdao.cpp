@@ -53,5 +53,3 @@ void AccountDao::bindInsertValues(QSqlQuery &query, Account *account) {
     query.bindValue(":accountNo", account->accountNumber);
     query.bindValue(":closed", mapping::toYesNo(account->closed));
 }
-
-#include "accountdao.moc"

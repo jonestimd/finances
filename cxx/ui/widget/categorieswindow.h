@@ -3,7 +3,7 @@
 
 #include "../model/datastore.h"
 #include "../model/categorytablemodel.h"
-#include "entitytable.h"
+#include "entitytree.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -11,7 +11,7 @@ class CategoriesWindow : public QMainWindow {
     Q_OBJECT
     DataStore *dataStore;
     CategoryTableModel model;
-    EntityTable tableSort;
+    EntityTree tableSort;
 
 public:
     CategoriesWindow(DataStore *dataStore);

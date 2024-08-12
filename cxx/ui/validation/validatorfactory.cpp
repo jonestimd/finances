@@ -30,7 +30,7 @@ void ValidationStatus::fixup(QString &text) const {
 
 ValidatorFactory::ValidatorFactory(bool multiRow): multiRow{multiRow} {}
 
-void ValidatorFactory::initialize(QAbstractTableModel *model) {}
+void ValidatorFactory::initialize(QAbstractItemModel *model) {}
 
 const ValidatorFactory::Factory ValidatorFactory::factory(const QModelIndex &index) const {
     return [this, index](QObject *parent, QStatusBar *statusBar = nullptr) -> const ValidationStatus* {

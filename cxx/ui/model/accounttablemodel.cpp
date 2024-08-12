@@ -30,5 +30,3 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
         parent,
     }
 {}
-
-#include "accounttablemodel.moc"

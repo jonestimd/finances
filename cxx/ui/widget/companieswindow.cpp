@@ -49,10 +49,10 @@ void CompaniesWindow::setCompanies(const QHash<qlonglong, const Company *> compa
     tableSort.table.setEnabled(true);
 }
 
-bool CompaniesWindow::confirmDelete(const QSet<int> rowIndex) {
+bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
     QStringList nonEmpty;
-    for (auto r : rowIndex) {
-        if (model.row(r)->accounts.toInt() > 0) nonEmpty.append(model.row(r)->name.toString());
+    for (auto i : indexes) {
+        if (model.getRow(i)->accounts.toInt() > 0) nonEmpty.append(model.getRow(i)->name.toString());
     }
     // FIXME: delete is disabled for non-empty company
     return dialog::confirmDelete(this, tr("Confirm delete companies"),

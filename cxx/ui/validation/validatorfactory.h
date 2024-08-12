@@ -38,7 +38,7 @@ struct ValidatorFactory : public QObject {
 
     ValidatorFactory(bool multiRow = false);
 
-    virtual void initialize(QAbstractTableModel *model);
+    virtual void initialize(QAbstractItemModel *model);
 
     virtual const Factory factory(const QModelIndex &index) const;
 

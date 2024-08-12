@@ -28,7 +28,7 @@ protected Q_SLOTS:
     void setCompanies(const QHash<qlonglong, const Company*> companies);
 
 protected:
-    bool confirmDelete(const QSet<int> rowIndex);
+    bool confirmDelete(const QSet<const QModelIndex> rowIndex);
 
     // QWidget interface
     void closeEvent(QCloseEvent *event) override;

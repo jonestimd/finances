@@ -10,5 +10,3 @@ AmountType::AmountType(const char *code, const QString name, bool affectsBalance
 
 const AmountType AmountType::debitDeposit = AmountType("DEBIT_DEPOSIT", tr("Debit/despoit"), true);
 const AmountType AmountType::assetValue = AmountType("ASSET_VALUE", tr("Asset value"), false);
-
-#include "amounttype.moc"
