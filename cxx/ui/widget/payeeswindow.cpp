@@ -14,7 +14,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     , model{dataStore, this}
     , tableSort{this, &model, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
 {
-    setCentralWidget(&tableSort.table);
+    setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("Finances - Payees[*]"));
 
@@ -44,7 +44,7 @@ void PayeesWindow::setPayees(const QHash<qlonglong, const Payee *> payees) {
     model.setRows(payees.values());
     tableSort.statusBar.removeMessage(tr(LOADING_PAYEES));
     tableSort.statusBar.removeMessage(tr(SAVING_PAYEES));
-    tableSort.table.setEnabled(true);
+    tableSort.itemView->setEnabled(true);
 }
 
 void PayeesWindow::closeEvent(QCloseEvent *event) {

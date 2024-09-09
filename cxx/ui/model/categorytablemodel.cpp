@@ -18,7 +18,6 @@ CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
     , rootIds()
     , PodItemModel<Category> {
         QList<ColumnAdapter<Category>*>{
-            // new RelationColumnAdapter<Category, Category>(tr("Parent"), &Category::parentId, std::bind(&DataStore::categories, ds)),
             new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new UniqueValidatorFactory(CATEGORY_NAME_COLUMN, QList<int>{CATEGORY_PARENT_COLUMN})),
             new ColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
             new EnumColumnAdapter<Category, AmountType>(tr("Amount Type"), &Category::amountType, &AmountType::values, requiredValidatorFactory, true),

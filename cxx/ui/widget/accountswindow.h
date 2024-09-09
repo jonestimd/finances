@@ -5,7 +5,7 @@
 #include "../model/accounttablemodel.h"
 #include "categorieswindow.h"
 #include "companieswindow.h"
-#include "entitytable.h"
+#include "entityview.h"
 #include "payeeswindow.h"
 #include <QMainWindow>
 #include <QTableView>

@@ -6,17 +6,17 @@ QSettings *appSettings() {
     return static_cast<finances::App*>(QApplication::instance())->settings;
 }
 
-void settings::saveWindowState(const char *group, QWidget *widget, EntityTable *tableSort) {
+void settings::saveWindowState(const char *group, QWidget *widget, EntityView *entityView) {
     auto settings = appSettings();
 
     settings->beginGroup(group);
     settings->setValue("geometry", widget->saveGeometry());
     settings->setValue("width", widget->width());
     settings->setValue("height", widget->height());
-    if (tableSort) tableSort->saveSort(settings);
+    if (entityView) entityView->saveSort(settings);
     settings->endGroup();
 
-    if (tableSort) tableSort->saveSizes(group, settings);
+    if (entityView) entityView->saveSizes(group, settings);
 }
 
 int columnIndex(QAbstractItemModel *model, const QString name) {
@@ -28,7 +28,7 @@ int columnIndex(QAbstractItemModel *model, const QString name) {
     return -1;
 }
 
-void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultSize, EntityTable *tableSort) {
+void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultSize, EntityView *entityView) {
     auto settings = appSettings();
 
     auto geometry = settings->value(group + "/geometry", QVariant{});
@@ -38,5 +38,5 @@ void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultS
         widget->resize(QSize{width.toInt(), height.toInt()});
     }
 
-    if (tableSort) tableSort->restore(group, settings);
+    if (entityView) entityView->restore(group, settings);
 }

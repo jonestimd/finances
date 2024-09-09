@@ -3,7 +3,7 @@
 
 #include "../model/companytablemodel.h"
 #include "../model/datastore.h"
-#include "entitytable.h"
+#include "entityview.h"
 #include <QBoxLayout>
 #include <QDialog>
 #include <QMainWindow>

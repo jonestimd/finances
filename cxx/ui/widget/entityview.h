@@ -1,29 +1,33 @@
-#ifndef ENTITY_TREE_H
-#define ENTITY_TREE_H
+#ifndef ENTITY_VIEW_H
+#define ENTITY_VIEW_H
 
 #include "filterinput.h"
 #include "statusbar.h"
 #include "tableitemdelegate.h"
 #include "../model/adapteritemmodel.h"
 #include <QStatusBar>
+#include <QTableView>
 #include <QTreeView>
 
-class EntityTree : public QObject {
+class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
+protected:
+    virtual QHeaderView *viewHeader() const = 0;
+
 public:
-    AdapterItemModel *model;
-    QTreeView table;
+    AdapterItemModel *const model;
+    QAbstractItemView *const itemView;
     QSortFilterProxyModel sortModel;
-    FilterInput *filterInput;
+    FilterInput *const filterInput;
     QToolBar toolbar;
     StatusBar statusBar;
     QAction *const saveAction;
     const QString defaultSort;
 
-    EntityTree(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort, const char *saveSlot, const char *loadSlot,
-                QList<QAction*> actions = QList<QAction*>{});
+    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, const QString filterLabel, const QString defaultSort,
+               const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
 
     int columnIndex(const QString name) const;
 
@@ -61,4 +65,28 @@ public Q_SLOTS:
     void undoChanges();
 };
 
-#endif // ENTITY_TREE_H
+class EntityTable : public EntityView {
+public:
+    EntityTable(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
+
+    ~EntityTable();
+
+protected:
+    inline QTableView *tableView() const;
+    virtual QHeaderView *viewHeader() const override;
+};
+
+class EntityTree : public EntityView {
+public:
+    EntityTree(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
+
+    ~EntityTree();
+
+protected:
+    inline QTreeView *treeView() const;
+    virtual QHeaderView *viewHeader() const override;
+};
+
+#endif // ENTITY_VIEW_H

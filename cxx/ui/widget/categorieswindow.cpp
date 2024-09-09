@@ -1,6 +1,6 @@
 #include "categorieswindow.h"
 #include "dialog.h"
-// #include "settings.h"
+#include "settings.h"
 #include <QtSql>
 #include <QtWidgets>
 #include <QtConcurrent>
@@ -15,7 +15,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     , model{dataStore, this}
     , tableSort{this, &model, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
 {
-    setCentralWidget(&tableSort.table);
+    setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("Finances - Categories[*]"));
 
@@ -26,13 +26,14 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     if (dataStore->loadCategories(this)) model.setRows(dataStore->categories());
     else tableSort.statusBar.addMessage(tr(LOADING_CATEGORIES));
 
-    tableSort.setColumnResize({0});
+    tableSort.enableColumnResize();
+    // tableSort.setColumnResize({0});
     // tableSort.table.setRootIsDecorated(true);
     // tableSort.table.setRootIndex(QModelIndex{});
     // tableSort.table.setItemsExpandable(true);
     // tableSort.table.setTreePosition(-1);
 
-    // settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
+    settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
 }
 
 void CategoriesWindow::loadCategories() {
@@ -49,12 +50,12 @@ void CategoriesWindow::setCategories(const QHash<qlonglong, const Category*> cat
     model.setRows(categories);
     tableSort.statusBar.removeMessage(tr(LOADING_CATEGORIES));
     tableSort.statusBar.removeMessage(tr(SAVING_CATEGORIES));
-    tableSort.table.setEnabled(true);
+    tableSort.itemView->setEnabled(true);
 }
 
 void CategoriesWindow::closeEvent(QCloseEvent *event) {
     if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    // else settings::saveWindowState(CATEGORY_SETTINGS, this, &tableSort);
+    else settings::saveWindowState(CATEGORY_SETTINGS, this, &tableSort);
 }
 
 void CategoriesWindow::keyPressEvent(QKeyEvent *event) {

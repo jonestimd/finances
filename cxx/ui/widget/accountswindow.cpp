@@ -23,7 +23,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
         iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
     }}
 {
-    setCentralWidget(&tableSort.table);
+    setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("Finances - Accounts[*]"));
     // QMetaObject::connectSlotsByName(this);
@@ -65,7 +65,7 @@ void AccountsWindow::setAccounts(const QHash<qlonglong, const Account *> account
     model.setRows(accounts.values());
     tableSort.statusBar.removeMessage(tr(LOADING_ACCOUNTS));
     tableSort.statusBar.removeMessage(tr(SAVING_ACCOUNTS));
-    tableSort.table.setEnabled(true);
+    tableSort.itemView->setEnabled(true);
 }
 
 void AccountsWindow::showCompanies() {
@@ -98,13 +98,13 @@ void AccountsWindow::keyPressEvent(QKeyEvent *event) {
 void AccountsWindow::addCompany(const QString &name) {
     auto index = tableSort.selectedIndex();
     tableSort.statusBar.addMessage(tr(SAVING_COMPANY));
-    tableSort.table.setEnabled(false);
+    tableSort.itemView->setEnabled(false);
     dataStore->addCompany(this, name, [=, this](const Company* company) {
         if (company) {
             model.setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
         }
         tableSort.statusBar.removeMessage(tr(SAVING_COMPANY));
-        tableSort.table.setEnabled(true);
-        tableSort.table.setFocus(Qt::ActiveWindowFocusReason);
+        tableSort.itemView->setEnabled(true);
+        tableSort.itemView->setFocus(Qt::ActiveWindowFocusReason);
     });
 }

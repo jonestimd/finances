@@ -3,7 +3,7 @@
 
 #include "../model/datastore.h"
 #include "../model/categorytablemodel.h"
-#include "entitytree.h"
+#include "entityview.h"
 #include <QMainWindow>
 #include <QTableView>
 
