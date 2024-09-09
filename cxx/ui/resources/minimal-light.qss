@@ -1,8 +1,10 @@
-QTableView {
+QTableView,
+QTreeView {
     accent-color: rgb(255, 0, 0)
 }
 
-QTableView QLineEdit[acceptableInput="false"] {
+QTableView QLineEdit[acceptableInput="false"],
+QTreeView QLineEdit[acceptableInput="false"] {
     background-image: url(:/images/invalid.svg);
     background-repeat: no-repeat;
     background-position: center right;

@@ -1,4 +1,5 @@
-QTableView {
+QTableView,
+QTreeView {
     accent-color: rgb(255, 160, 160);
 }
 
