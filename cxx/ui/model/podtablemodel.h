@@ -47,14 +47,6 @@ public:
         if (parent.isValid()) return 0;
         return rows.length() + this->pendingAdds().length();
     };
-
-    const QList<Row*> unsavedAdds() const { // TODO abstract?
-        QList<Row*> rows;
-        for (auto row : this->pendingAdds()) {
-            rows.append(new Row(*row));
-        }
-        return rows;
-    }
 };
 
 #endif // POD_TABLE_MODEL_H

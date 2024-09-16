@@ -160,3 +160,11 @@ bool DataStore::loadCategories(QWidget *source, bool reload) {
 const QHash<qlonglong, const Category *> DataStore::categories() const {
     return p->categories.values();
 }
+
+void DataStore::updateCategories(QWidget *source, QList<Category *> updates, const QList<Category *> adds, const QList<const Category *> deletes) {
+    doInBackground(source, [this, updates, adds, deletes] {
+        auto changes = BulkUpdate{updates, adds, deletes};
+        auto categories = services->categoryService.update(changes, user);
+        p->categories.update(categories, deletes);
+    }, [this](bool success) { emit categoriesLoaded(p->categories.values()); });
+}

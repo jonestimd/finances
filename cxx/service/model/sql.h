@@ -6,6 +6,8 @@
 
 namespace sql {
     QVariant getValue(QSqlRecord record, const char *name);
+
+    QVariant yesNoValue(QSqlRecord record, const char *name);
 }
 
 #endif // SQL_H

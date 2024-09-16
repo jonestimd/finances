@@ -4,7 +4,7 @@
 #include "QJsonValue"
 
 namespace mapping {
-    QVariant toYesNo(QVariant &boolValue) {
+    QVariant toYesNo(const QVariant &boolValue) {
         return boolValue.toBool() ? "Y" : "N";
     }
 

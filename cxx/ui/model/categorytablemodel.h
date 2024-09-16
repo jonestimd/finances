@@ -24,8 +24,6 @@ public:
     const Category* getRow(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    const QList<Category*> unsavedAdds() const;
-
     // QAbstractItemModel interface
     virtual QModelIndex index(int row, int column, const QModelIndex &parent) const override;
     virtual QModelIndex parent(const QModelIndex &child) const override;

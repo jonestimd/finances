@@ -27,11 +27,6 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     else tableSort.statusBar.addMessage(tr(LOADING_CATEGORIES));
 
     tableSort.enableColumnResize();
-    // tableSort.setColumnResize({0});
-    // tableSort.table.setRootIsDecorated(true);
-    // tableSort.table.setRootIndex(QModelIndex{});
-    // tableSort.table.setItemsExpandable(true);
-    // tableSort.table.setTreePosition(-1);
 
     settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
 }
@@ -41,9 +36,9 @@ void CategoriesWindow::loadCategories() {
 }
 
 void CategoriesWindow::saveCategories() {
-    // tableSort.saveData(tr(SAVING_CATEGORIES), [this]() {
-    //     dataStore->updateCategories(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
-    // });
+    tableSort.saveData(tr(SAVING_CATEGORIES), [this]() {
+        dataStore->updateCategories(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    });
 }
 
 void CategoriesWindow::setCategories(const QHash<qlonglong, const Category*> categories) {

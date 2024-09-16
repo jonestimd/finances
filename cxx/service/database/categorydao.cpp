@@ -18,7 +18,7 @@ select c.*, coalesce(s.transactions, 0) transactions, ch.child_ids
 from tx_category c
 left join summary s on c.id = s.tx_category_id
 left join children ch on c.id = ch.id
-order by c.code)";
+order by c.parent_id, c.id)";
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -31,7 +31,7 @@ static const auto insertCategorySql = R"(
 insert into tx_category (code, parent_id, description, amount_type, income, security, version, change_user, change_date)
 values (:name, :parentId, :description, :amountType, :income, :security, 0, :user, current_timestamp))";
 
-static const auto deleteCategorySql = "delete from category where id = :id";
+static const auto deleteCategorySql = "delete from tx_category where id = :id";
 
 CategoryDao::CategoryDao()
     : EntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",

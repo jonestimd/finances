@@ -4,7 +4,7 @@
 #include <QVariant>
 
 namespace mapping {
-    QVariant toYesNo(QVariant &value);
+    QVariant toYesNo(const QVariant &value);
 
     QList<QVariant> jsonToList(const QVariant &value);
 };

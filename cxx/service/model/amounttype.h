@@ -6,6 +6,9 @@
 #include <QObject>
 #include <QString>
 
+#define DEBIT_DEPOSIT "DEBIT_DEPOSIT"
+#define ASSET_VALUE "ASSET_VALUE"
+
 class AmountType : public EnumValue {
     Q_OBJECT
     AmountType(const char *code, const QString name, bool affectsBalance);

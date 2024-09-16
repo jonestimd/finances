@@ -8,12 +8,11 @@
 class UniqueValidatorFactory : public ValidatorFactory {
     Q_OBJECT
     const int columnIndex;
-    const QList<int> groupingColumns;
     QMultiHash<QStringList, int> values;
     QAbstractItemModel *model;
 
 public:
-    UniqueValidatorFactory(int columnIndex, QList<int> groupingColumns = QList<int>{});
+    UniqueValidatorFactory(int columnIndex);
 
     const QString isValid(const QModelIndex &index, QString &value) const override;
 
@@ -25,9 +24,12 @@ public Q_SLOTS:
     void rowsInserted(const QModelIndex &parent, int first, int last);
     void rowsRemoved(const QModelIndex &parent, int first, int last);
 
-private:
+protected:
     QStringList rowValues(const QModelIndex &index) const;
-    QStringList rowValues(const QString value, const QModelIndex &index) const;
+    virtual QStringList rowValues(const QString value, const QModelIndex &index) const;
+    virtual inline bool isValidated(int columnIndex) const {
+        return this->columnIndex == columnIndex;
+    }
 };
 
 #endif // UNIQUE_H

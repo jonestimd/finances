@@ -31,6 +31,7 @@ public:
 
     bool loadCategories(QWidget *source, bool reload = false);
     const QHash<qlonglong, const Category*> categories() const;
+    void updateCategories(QWidget *source, QList<Category*> updates, const QList<Category*> adds, const QList<const Category*> deletes);
 
 Q_SIGNALS:
     void accountsLoaded(const QHash<qlonglong, const Account*>);

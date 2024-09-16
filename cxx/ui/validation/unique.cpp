@@ -1,9 +1,11 @@
 #include "unique.h"
 #include "required.h"
 
-UniqueValidatorFactory::UniqueValidatorFactory(int columnIndex, QList<int> groupingColumns)
+UniqueValidatorFactory::UniqueValidatorFactory(int columnIndex)
     : ValidatorFactory(true)
-    , columnIndex{columnIndex}, groupingColumns{groupingColumns}, values{}, model{nullptr} {}
+    , columnIndex{columnIndex}
+    , model{nullptr}
+    , values{} {}
 
 const QString UniqueValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     auto message = requiredValidatorFactory->isValid(index, value);
@@ -27,7 +29,7 @@ void UniqueValidatorFactory::modelReset() {
 
 void UniqueValidatorFactory::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {
     for (int c = topLeft.column(); c <= bottomRight.column(); ++c) {
-        if (c == columnIndex || groupingColumns.contains(c)) {
+        if (isValidated(c)) {
             rowsRemoved(QModelIndex{}, topLeft.row(), bottomRight.row());
             rowsInserted(QModelIndex{}, topLeft.row(), bottomRight.row());
             break;
@@ -50,9 +52,5 @@ QStringList UniqueValidatorFactory::rowValues(const QModelIndex &index) const {
 }
 
 QStringList UniqueValidatorFactory::rowValues(const QString value, const QModelIndex &index) const {
-    QStringList values{value.toLower()};
-    for (int c : groupingColumns) {
-        values.append(index.siblingAtColumn(c).data().toString());
-    }
-    return values;
+    return QStringList{value.toLower()};
 }

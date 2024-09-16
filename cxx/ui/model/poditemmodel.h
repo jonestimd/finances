@@ -80,6 +80,16 @@ protected:
         }
     }
 
+    const QList<int> rowIndexes(const QModelIndex &index) const {
+        QList<int> indexes{index.row()};
+        auto parent = index.parent();
+        while (parent.isValid()) {
+            indexes.append(parent.row());
+            parent = parent.parent();
+        }
+        return indexes;
+    }
+
 public:
     explicit PodItemModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
         : AdapterItemModel(parent), columns{columns}
@@ -160,15 +170,26 @@ public:
         return errors.isEmpty();
     }
 
+    const QList<Row*> unsavedAdds() const {
+        QList<Row*> rows;
+        for (const auto &children : newRows) {
+            for (auto row : children) {
+                rows.append(new Row(*row));
+            }
+        }
+        return rows;
+    }
+
     const QList<Row*> unsavedChanges() { // TODO override in category model to handle parent change
-        QHash<const QModelIndex, Row*> changeRows;
+        QHash<const QList<int>, Row*> changeRows;
         for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
             if (pendingDeletes.contains(getRow(i.key()))) continue;
             Row *updated;
-            if (changeRows.contains(i.key())) updated = changeRows[i.key()];
+            auto indexes = rowIndexes(i.key());
+            if (changeRows.contains(indexes)) updated = changeRows[indexes];
             else {
                 updated = new Row(*getRow(i.key()));
-                changeRows[i.key()] = updated;
+                changeRows[indexes] = updated;
             }
             setValue_(updated, i.key().column(), i.value());
         }

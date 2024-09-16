@@ -1,18 +1,20 @@
 #include "category.h"
+#include "amounttype.h"
 #include "../database/mapping.h"
+#include "sql.h"
 #include <QSqlField>
 
-Category::Category() : NamedEntity(), childIds() {}
+Category::Category() : NamedEntity(), income{false}, security{false}, amountType{DEBIT_DEPOSIT}, childIds() {}
 
 Category::Category(QSqlRecord record) : NamedEntity(record) {
-    name = record.field("code").value();
-    amountType = record.field("amount_type").value();
-    description = record.field("description").value();
-    income = record.field("income").value().toString() == "Y";
-    security = record.field("security").value().toString() == "Y";
-    parentId = record.field("parent_id").value();
+    name = sql::getValue(record, "code");
+    amountType = sql::getValue(record, "amount_type");
+    description = sql::getValue(record, "description");
+    income = sql::yesNoValue(record, "income");
+    security = sql::yesNoValue(record, "security");
+    parentId = sql::getValue(record, "parent_id");
     childIds = mapping::jsonToList(record.field("child_ids").value());
-    transactions = record.field("transactions").value();
+    transactions = sql::getValue(record, "transactions");
 }
 
 bool Category::deletable() const {
