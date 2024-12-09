@@ -41,20 +41,21 @@ public class SecuritySummary extends TransactionSummary<Security> {
     }
 
     public SecuritySummary(Security security, long transactionCount, BigDecimal shares, Date firstAcquired, BigDecimal costBasis, BigDecimal dividends) {
-        this(null, security, transactionCount, shares, firstAcquired, costBasis, dividends);
+        this(null, security, transactionCount, shares, firstAcquired, costBasis);
+        this.dividends = dividends;
     }
 
     public SecuritySummary(Security security, long transactionCount, BigDecimal shares, Account account) {
-        this(account, security, transactionCount, shares, null, null, null);
+        this(account, security, transactionCount, shares, null, null);
     }
 
-    public SecuritySummary(Account account, Security security, long transactionCount, BigDecimal shares, Date firstAcquired, BigDecimal costBasis, BigDecimal dividends) {
+    public SecuritySummary(Account account, Security security, long transactionCount, BigDecimal shares, Date firstAcquired, BigDecimal costBasis) {
         super(security, transactionCount);
         this.shares = shares;
         this.account = account;
         this.firstAcquired = firstAcquired;
         this.costBasis = costBasis;
-        this.dividends = dividends;
+        this.dividends = null;
     }
 
     public SecuritySummary(Security security, long transactionCount, BigDecimal shares) {
