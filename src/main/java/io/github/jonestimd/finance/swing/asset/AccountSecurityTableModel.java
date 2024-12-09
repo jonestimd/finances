@@ -54,8 +54,7 @@ public class AccountSecurityTableModel extends BeanListMultimapTableModel<Long, 
             SecurityColumnAdapter.FIRST_PURCHASE_ADAPTER,
             TransactionSummaryColumnAdapter.COUNT_ADAPTER,
             SecurityColumnAdapter.SHARES_ADAPTER,
-            SecurityColumnAdapter.COST_BASIS_ADAPTER,
-            SecurityColumnAdapter.DIVIDENDS_ADAPTER);
+            SecurityColumnAdapter.COST_BASIS_ADAPTER);
     public static final int NAME_INDEX = ADAPTERS.indexOf(SecurityColumnAdapter.NAME_ADAPTER);
 
     // use account ID because the user can change the account key (company and name)

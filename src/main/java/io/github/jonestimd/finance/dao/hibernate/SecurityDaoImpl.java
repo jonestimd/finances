@@ -44,7 +44,7 @@ public class SecurityDaoImpl extends HibernateDao<Security, Long> implements Sec
             constructor(SecuritySummary.class, Security.class, long.class, BigDecimal.class));
     private static final ResultTransformer ACCOUNT_SUMMARIES_TRANSFORMER = new AliasToBeanConstructorResultTransformer(
             ReflectionUtils.constructor(SecuritySummary.class,
-                    Account.class, Security.class, long.class, BigDecimal.class, Date.class, BigDecimal.class, BigDecimal.class));
+                    Account.class, Security.class, long.class, BigDecimal.class, Date.class, BigDecimal.class));
 
     public SecurityDaoImpl(SessionFactory sessionFactory) {
         super(sessionFactory, Security.class);

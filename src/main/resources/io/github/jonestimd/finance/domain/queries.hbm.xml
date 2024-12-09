@@ -67,13 +67,20 @@
         <return-scalar column="firstAcquired" type="java.util.Date"/>
         <return-scalar column="costBasis" type="java.math.BigDecimal"/>
         <return-scalar column="dividends" type="java.math.BigDecimal"/><!-- TODO include commission in cost basis -->
-        select {security.*}, coalesce(summary.useCount, 0) useCount, coalesce(summary.shares, 0) shares,
-            summary.firstAcquired, summary.costBasis, summary.dividends
+        with summary as (
+            select security_id
+                 , sum(use_count) use_count
+                 , sum(shares) shares
+                 , min(first_acquired) first_acquired
+                 , sum(cost_basis) cost_basis
+                 , sum(dividends) dividends
+            from account_security
+            group by security_id
+        )
+        select {security.*}, coalesce(summary.use_count, 0) useCount, coalesce(summary.shares, 0) shares
+             , summary.first_acquired firstAcquired, summary.cost_basis costBasis, summary.dividends
         from asset security &joinSecurity;
-        left join (
-            select &securitySummary;
-            group by t.security_id
-        ) summary on summary.security_id = security.id
+        left join summary on summary.security_id = security.id
     </sql-query>
     <sql-query name="security.getSummariesByAccount">
         <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
@@ -82,16 +89,16 @@
         <return-scalar column="shares" type="java.math.BigDecimal"/>
         <return-scalar column="firstAcquired" type="java.util.Date"/>
         <return-scalar column="costBasis" type="java.math.BigDecimal"/>
-        <return-scalar column="dividends" type="java.math.BigDecimal"/>
-        select {security.*}, summary.useCount, summary.shares, {account.*}, summary.firstAcquired, summary.costBasis, summary.dividends
-        from (
-            select t.account_id, &securitySummary;
-            group by t.account_id, t.security_id
-            having sum(coalesce(&adjustedShares;, 0)) != 0
-        ) summary
-        join account on summary.account_id = account.id
-        join asset security on summary.security_id = security.id
+        select {account.*}, {security.*}
+             , sa.use_count useCount
+             , sa.shares
+             , sa.first_acquired firstAcquired
+             , sa.cost_basis costBasis
+        from account_security sa
+        join account on sa.account_id = account.id
+        join asset security on sa.security_id = security.id
         &joinSecurity;
+        having shares != 0
     </sql-query>
     <sql-query name="security.getSummary">
         <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
