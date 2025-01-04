@@ -1,13 +1,11 @@
 #include "category.h"
-#include "amounttype.h"
 #include "../database/mapping.h"
 #include "sql.h"
 #include <QSqlField>
 
-Category::Category() : NamedEntity(), income{false}, security{false}, amountType{DEBIT_DEPOSIT}, childIds() {}
+Category::Category() : NamedEntity() {}
 
-Category::Category(QSqlRecord record) : NamedEntity(record) {
-    name = sql::getValue(record, "code");
+Category::Category(QSqlRecord record) : NamedEntity(record, "code") {
     amountType = sql::getValue(record, "amount_type");
     description = sql::getValue(record, "description");
     income = sql::yesNoValue(record, "income");
@@ -17,16 +15,8 @@ Category::Category(QSqlRecord record) : NamedEntity(record) {
     transactions = sql::getValue(record, "transactions");
 }
 
+Category::Category(const QString &name) : NamedEntity{name} {}
+
 bool Category::deletable() const {
-    return transactions.toInt() == 0;
+    return transactions.toInt() == 0 && childIds.empty();
 }
-
-QString Category::displayName() const {
-    if (parentId.isValid() && categories.contains(parentId.toLongLong())) {
-        auto parentName = categories.value(parentId.toLongLong())->displayName();
-        return parentName + "\u25ba" + name.toString();
-    }
-    return name.toString();
-}
-
-QHash<qlonglong, const Category*> Category::categories{};

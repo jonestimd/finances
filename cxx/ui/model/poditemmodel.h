@@ -103,7 +103,7 @@ public:
         for (auto column : columns) delete column;
     }
 
-    virtual const Row *getRow(const QModelIndex &index) const = 0; // {
+    virtual const Row *getRow(const QModelIndex &index) const = 0;
 
     int queueAdd(const QModelIndex &parent) override {
         auto rowIndex = rowCount(parent);
@@ -236,6 +236,7 @@ public:
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
+        if (!index.isValid()) return Qt::NoItemFlags;
         bool pendingDelete = pendingDeletes.contains(getRow(index));
         return AdapterItemModel::flags(index) | columns[index.column()]->flags(getRow(index), !pendingDelete);
     }

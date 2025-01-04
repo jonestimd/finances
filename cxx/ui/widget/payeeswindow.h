@@ -19,7 +19,7 @@ public:
 public Q_SLOTS:
     void loadPayees();
     void savePayees();
-    void setPayees(const QHash<qlonglong, const Payee*> payees);
+    void setPayees(const QList<qlonglong> payeeIds);
 
     // QWidget interface
 protected:

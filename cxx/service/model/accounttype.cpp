@@ -1,4 +1,5 @@
 #include "accounttype.h"
+#include "account.h"
 
 QHash<QString, const AccountType*> AccountType::values;
 

@@ -10,7 +10,7 @@ class CategoryDao : public QObject, public EntityDao<Category> {
 public:
     CategoryDao();
 
-    QList<const Category*> getAll(QSqlDatabase &db) override;
+    QList<const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Category *entity) override;

@@ -1,18 +1,11 @@
 #include "account.h"
-#include "accounttype.h"
-#include "decimal.h"
 
 #include "sql.h"
 #include <QSqlField>
-#include <QDecNumber.hh>
 
 using sql::getValue;
 
-Account::Account() : BaseDomain()
-    , closed{false}
-    , type{AccountType::bank.code}
-    , transactions{0}
-    , balance{QVariant::fromValue(QDEC_ZERO)} {}
+Account::Account() : BaseDomain() {}
 
 Account::Account(QSqlRecord record) : BaseDomain(record) {
     companyId = getValue(record, "company_id");

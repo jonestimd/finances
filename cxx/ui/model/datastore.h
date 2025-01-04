@@ -2,42 +2,58 @@
 #define DATASTORE_H
 
 #include "service/servicecontext.h"
-#include <QFuture>
-
-class DataStorePrivate;
+#include "background.h"
+#include "entitystore.h"
+#include "categorystore.h"
 
 class DataStore : public QObject
 {
     Q_OBJECT
-    DataStorePrivate *p;
     ServiceContext *services;
     const QString user;
+
+    EntityStore<const Account*> *const accountStore;
+    EntityStore<const Company*> *const companyStore;
+    EntityStore<const Payee*> *const payeeStore;
+    CategoryStore *const categoryStore;
+
+    template<typename T, class Service>
+    bool load(QWidget *source, bool reload, EntityStore<const T*> *store, Service *service, void (DataStore::*valuesLoaded)(QList<qlonglong>)) {
+        if (!reload && store->loaded) return true;
+        doInBackground(source, [=, this]() {
+            store->setValues(service->getAll());
+            (this->*valuesLoaded)(store->ids());
+        });
+        return false;
+    }
+
 public:
     DataStore(ServiceContext *services);
     ~DataStore();
 
     bool loadAccounts(QWidget *source, bool reload = false);
-    const QHash<qlonglong, const Account*> accounts() const;
+    const EntityStore<const Account*> *accounts() const;
     void updateAccounts(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
 
     bool loadCompanies(QWidget *source, bool reload = false);
-    const QHash<qlonglong, const Company*> companies() const;
+    const EntityStore<const Company*> *companies() const;
     void updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes);
-    void addCompany(QWidget *source, const QString &name, std::function<void(const Company*)> callback);
+    void addCompany(QWidget *source, const QString &name, const char *callback);
 
     bool loadPayees(QWidget *source, bool reload = false);
-    const QHash<qlonglong, const Payee*> payees() const;
+    const EntityStore<const Payee*> *payees() const;
     void updatePayees(QWidget *source, QList<Payee*> updates, const QList<Payee*> adds, const QList<const Payee*> deletes);
 
     bool loadCategories(QWidget *source, bool reload = false);
-    const QHash<qlonglong, const Category*> categories() const;
+    const CategoryStore *categories() const;
     void updateCategories(QWidget *source, QList<Category*> updates, const QList<Category*> adds, const QList<const Category*> deletes);
+    void setParent(QWidget *source, const Category *category, const QVariant parentId);
 
 Q_SIGNALS:
-    void accountsLoaded(const QHash<qlonglong, const Account*>);
-    void companiesLoaded(const QHash<qlonglong, const Company*>);
-    void payeesLoaded(const QHash<qlonglong, const Payee*>);
-    void categoriesLoaded(const QHash<qlonglong, const Category*>);
+    void accountsLoaded(const QList<qlonglong>);
+    void companiesLoaded(const QList<qlonglong>);
+    void payeesLoaded(const QList<qlonglong>);
+    void categoriesLoaded(const QList<qlonglong>);
 };
 
 #endif // DATASTORE_H

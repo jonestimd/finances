@@ -2,10 +2,11 @@
 #define ACCOUNT_TYPE_H
 
 #include "service/model/basedomain.h"
-#include "account.h"
 #include <QHash>
 #include <QObject>
 #include <QString>
+
+class Account;
 
 class AccountType : public EnumValue {
     Q_OBJECT

@@ -8,14 +8,13 @@
 class Payee : public NamedEntity {
 public:
     QVariant name;
-    QVariant transactions;
+    QVariant transactions{0};
 
     Payee();
     Payee(QSqlRecord record);
+    Payee(const QString &name);
 
     bool deletable() const;
-
-    QString displayName() const override;
 };
 
 #endif // PAYEE_H

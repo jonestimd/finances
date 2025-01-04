@@ -8,10 +8,8 @@ Payee::Payee(QSqlRecord record) : NamedEntity(record) {
     transactions = record.field("transactions").value();
 }
 
+Payee::Payee(const QString &name) : NamedEntity{name} {}
+
 bool Payee::deletable() const {
     return transactions.toInt() == 0;
-}
-
-QString Payee::displayName() const {
-    return name.toString();
 }

@@ -8,6 +8,7 @@
 PayeeTableModel::PayeeTableModel(DataStore *dataStore, QObject *parent)
     : dataStore{dataStore}
     , PodTableModel<Payee> {
+        dataStore->payees(),
         QList<ColumnAdapter<Payee>*>{
             new ColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
             new NumberColumnAdapter<Payee>(tr("Transactions"), &Payee::transactions),

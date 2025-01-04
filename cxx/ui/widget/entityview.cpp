@@ -200,14 +200,11 @@ void EntityView::undoChanges() {
 }
 
 void EntityView::showValidation(const QModelIndex &index) {
-    // auto range = table.selectionModel()->selection().indexes();
-    // TODO index not in range for mouse click
-    // qDebug() << "showValidation" << range.length() << range.contains(index);
-    // if (range.length() == 1 && range.contains(index)) {
+    // make sure index is in selection
+    if (!itemView->selectionModel()->hasSelection()) itemView->selectionModel()->select(index, QItemSelectionModel::Select);
     auto message = index.data(finances::ValidationMessageRole);
     if (!message.isNull()) statusBar.showMessage(message.toString());
     else statusBar.clearMessage();
-    // } else statusBar.clearMessage();
 }
 
 EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,

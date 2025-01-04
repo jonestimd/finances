@@ -24,10 +24,7 @@ protected:
 };
 
 CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
-    : dataStore{ds}
-    , categories()
-    , rootIds()
-    , PodItemModel<Category> {
+    : PodItemModel<Category> {
         QList<ColumnAdapter<Category>*>{
             new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
             new ColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
@@ -38,21 +35,18 @@ CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
         },
         parent,
     }
+    , store{ds->categories()}
 {}
 
 int CategoryTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->childIds.length() : rootIds.length();
 }
 
-void CategoryTableModel::setRows(QHash<qlonglong, const Category*> categories) {
+void CategoryTableModel::setRows(QList<qlonglong> categoryIds) {
     clearChanges();
     beginResetModel();
-    this->categories.clear();
     rootIds.clear();
-    this->categories.insert(categories);
-    for (const Category* category : std::as_const(categories)) {
-        if (category->parentId.isNull()) rootIds.append(category->id);
-    }
+    rootIds.append(store->rootIds().values());
     endResetModel();
 }
 
@@ -67,16 +61,21 @@ int CategoryTableModel::rowCount(const QModelIndex &parent) const {
     return childCount(parent) + addCount;
 }
 
+bool CategoryTableModel::movable(const QModelIndex &index) {
+    auto row = getRow(index);
+    return row->id.isValid() && store->movable(row->id.toLongLong());
+}
+
 QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (hasIndex(row, column, parent)) {
         if (parent.isValid()) {
             auto p = static_cast<const Category*>(parent.internalPointer());
-            auto rowId = categories[p->id.toLongLong()]->childIds[row].toLongLong();
-            return createIndex(row, column, categories[rowId]);
+            auto rowId = store->value(p->id.toLongLong())->childIds[row].toLongLong();
+            return createIndex(row, column, store->value(rowId));
         }
         if (row < rootIds.length()) {
-            auto rowId = rootIds[row].toLongLong();
-            return createIndex(row, column, categories[rowId]);
+            auto rowId = rootIds.value(row);
+            return createIndex(row, column, store->value(rowId));
         }
         auto category = newRows[parent][row - rootIds.length()];
         return createIndex(row, column, category);
@@ -90,10 +89,10 @@ QModelIndex CategoryTableModel::parent(const QModelIndex &index) const {
         auto child = static_cast<const Category*>(index.internalPointer());
         auto parentId = child->parentId;
         if (!parentId.isNull()) {
-            auto parent = categories[parentId.toLongLong()];
+            auto parent = store->value(parentId.toLongLong());
             auto gpId = parent->parentId;
             if (!gpId.isNull()) {
-                auto gp = categories[gpId.toLongLong()];
+                auto gp = store->value(gpId.toLongLong());
                 auto row = gp->childIds.indexOf(child->id);
                 return createIndex(row, 0, gp);
             }

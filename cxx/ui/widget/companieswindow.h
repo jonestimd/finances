@@ -25,7 +25,7 @@ public:
 protected Q_SLOTS:
     void loadCompanies();
     void saveCompanies();
-    void setCompanies(const QHash<qlonglong, const Company*> companies);
+    void setCompanies(const QList<qlonglong> companyIds);
 
 protected:
     bool confirmDelete(const QSet<const QModelIndex> rowIndex);

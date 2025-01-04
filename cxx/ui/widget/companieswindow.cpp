@@ -11,13 +11,12 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
     , dataStore{dataStore}
-    , model{dataStore->companies().values(), this}
+    , model{dataStore->companies(), this}
     , tableSort{this, &model, tr("Company"), tr("Name"), SLOT(saveCompanies()), SLOT(loadCompanies())}
 {
     setWindowTitle(tr("Companies[*]"));
 
-    connect(dataStore, SIGNAL(companiesLoaded(QHash<qlonglong,const Company*>)),
-            this, SLOT(setCompanies(QHash<qlonglong,const Company*>)));
+    connect(dataStore, SIGNAL(companiesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
 
     layout.addWidget(&tableSort.toolbar);
     layout.addWidget(tableSort.itemView);
@@ -43,8 +42,8 @@ void CompaniesWindow::saveCompanies() {
     dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
-void CompaniesWindow::setCompanies(const QHash<qlonglong, const Company *> companies) {
-    model.setRows(companies.values());
+void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
+    model.setRows(companyIds);
     tableSort.statusBar.showMessage(tr("Done loading"), 1500);
     tableSort.itemView->setEnabled(true);
 }

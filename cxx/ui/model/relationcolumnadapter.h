@@ -3,42 +3,50 @@
 
 #include "columnadapter.h"
 #include "comboboxmodel.h"
+#include "entitystore.h"
 #include "service/model/basedomain.h"
 #include <QVariant>
 
 template<class T, NameAndId V>
 class RelationColumnAdapter : public ColumnAdapter<T> {
+    using GetName = ComboBoxModel::GetName;
     using CreateValue = ComboBoxModel::CreateValue;
 
-    ValuesSupplier<V> values;
+    const EntityStore<const V*> *values;
+    GetName getName;
     CreateValue createValue;
 
 public:
-    RelationColumnAdapter(QString title, QVariant T::*field, ValuesSupplier<V> values, CreateValue newValue = nullptr,
+    RelationColumnAdapter(QString title, QVariant T::*field, const EntityStore<const V*> *values,
+                          CreateValue newValue = nullptr, GetName getName = NamedEntity::getName,
                           ValidatorFactory *validatorFactory = nullptr)
         : ColumnAdapter<T>(title, field, true, validatorFactory)
         , values{values}
+        , getName{getName}
         , createValue{newValue} {}
 
+    /**
+     * @param current pointer to new related entity if cell has been modified
+     */
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
+        // value is the ID of the related entity
         QVariant value = ColumnAdapter<T>::value(row, index, NamedEntity::getId(current), role);
         if (role == finances::SortRole && value.isNull()) return "";
         if (role == Qt::DisplayRole || role == finances::SortRole) {
             if (current.isValid() && current.isNull()) return "";
-            auto values = this->values();
-            if (value.isValid() && values.contains(value.toLongLong())) {
-                return values.value(value.toLongLong())->displayName();
+            if (value.isValid() && values->contains(value.toLongLong())) {
+                return values->value(value.toLongLong())->name;
             }
         }
         if (role == Qt::EditRole) {
             if (current.isValid()) return current;
-            const NamedEntity *v = this->values().value(value.toLongLong());
+            const NamedEntity *v = values->value(value.toLongLong());
             return QVariant::fromValue(v);
         }
         if (role == finances::OptionsRole) {
             QList<const NamedEntity*> options;
-            for (auto entity : values()) options.append(entity);
-            auto model = new ComboBoxModel(options, createValue);
+            for (auto id : values->ids()) options.append(values->value(id));
+            auto model = new ComboBoxModel(options, getName, createValue);
             return QVariant::fromValue(model);
         }
         return value;

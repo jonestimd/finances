@@ -7,14 +7,12 @@
 
 class Company : public NamedEntity {
 public:
-    QVariant name;
-    QVariant accounts;
+    QVariant accounts{0};
 
     Company();
     Company(QSqlRecord record);
     Company(const QString &name);
 
-    QString displayName() const override;
     bool deletable() const;
 };
 

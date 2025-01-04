@@ -31,11 +31,11 @@ protected:
 };
 
 AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany addCompany)
-    : dataStore{ds}
-    , PodTableModel<Account>{
+    : PodTableModel<Account>{
+        ds->accounts(),
         QList<ColumnAdapter<Account>*>{
             new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, std::bind(&DataStore::companies, ds), addCompany),
+            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, ds->companies(), addCompany),
             new ColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
             new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
@@ -44,5 +44,6 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance, false),
         },
         parent,
-    }
+    },
+    dataStore{ds}
 {}

@@ -3,6 +3,7 @@
 
 #include <QBrush>
 #include <QDecNumber.hh>
+#include "entitystore.h"
 #include "poditemmodel.h"
 #include "columnadapter.h"
 
@@ -10,28 +11,35 @@ template<Copyable Row>
 class PodTableModel : public PodItemModel<Row>
 {
 protected:
-    QList<const Row*> rows;
+    QList<qlonglong> rowIds;
+    const EntityStore<const Row*> *const store;
 
     int childCount(const QModelIndex &index) const override {
-        return index.isValid() ? 0 : rows.length();
+        return index.isValid() ? 0 : rowIds.length();
     }
 
 public:
-    explicit PodTableModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
-        : PodItemModel<Row>(columns, parent), rows(QList<const Row*>())
+    explicit PodTableModel(const EntityStore<const Row*> *store, const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
+        : PodItemModel<Row>(columns, parent)
+        , store{store}
+        , rowIds(store->ids())
     {}
 
-    void setRows(QList<const Row*> rows) {
+    void setRows(const QList<qlonglong> rowIds) {
         this->clearChanges();
         this->beginResetModel();
-        this->rows.clear();
-        this->rows.append(rows);
+        this->rowIds.clear();
+        this->rowIds.append(rowIds);
         this->endResetModel();
     }
 
     const Row *getRow(const QModelIndex &index) const override {
-        auto i = rows.length();
-        return index.row() < i ? rows[index.row()] : this->pendingAdds()[index.row() - i];
+        auto i = rowIds.length();
+        if (index.row() < i) {
+            auto id = rowIds.value(index.row());
+            return store->value(id);
+        }
+        return this->pendingAdds()[index.row() - i];
     }
 
     // QAbstractItemModel interface
@@ -45,7 +53,7 @@ public:
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {
         if (parent.isValid()) return 0;
-        return rows.length() + this->pendingAdds().length();
+        return rowIds.length() + this->pendingAdds().length();
     };
 };
 

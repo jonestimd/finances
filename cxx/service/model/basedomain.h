@@ -7,7 +7,7 @@
 class BaseDomain {
 public:
     QVariant id;
-    QVariant version;
+    QVariant version{0};
     QVariant changeUser;
     QVariant changeDate;
 
@@ -17,17 +17,18 @@ public:
 
 class NamedEntity : public BaseDomain {
 public:
+    QVariant name;
+
     NamedEntity() = default;
-    NamedEntity(QSqlRecord);
+    NamedEntity(QSqlRecord, const char *nameColumn = "name");
+    NamedEntity(const QString &name);
 
-    virtual QString displayName() const = 0;
-
-    static bool less(const NamedEntity *, const NamedEntity *);
     /*!
      * \brief getId Get the id of a \c NamedEntity\c.
      * \param value the \c NamedEntity\c
      */
     static QVariant getId(const QVariant &value);
+    static QString getName(const NamedEntity *entity);
 };
 
 Q_DECLARE_METATYPE(const NamedEntity*)

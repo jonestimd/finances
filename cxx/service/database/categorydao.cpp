@@ -1,5 +1,6 @@
 #include "categorydao.h"
 #include "mapping.h"
+#include "service/model/sql.h"
 
 #include <QtSql>
 
@@ -18,7 +19,9 @@ select c.*, coalesce(s.transactions, 0) transactions, ch.child_ids
 from tx_category c
 left join summary s on c.id = s.tx_category_id
 left join children ch on c.id = ch.id
-order by c.parent_id, c.id)";
+)";
+
+Q_GLOBAL_STATIC(const QString, categoriesByIdsSql, getCategoriesSql + QString("\nwhere c.id member of (:ids)"))
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -33,17 +36,34 @@ values (:name, :parentId, :description, :amountType, :income, :security, 0, :use
 
 static const auto deleteCategorySql = "delete from tx_category where id = :id";
 
+static const auto setParentSql = R"(update tx_category
+set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
+where id = :id and version = :version)";
+
 CategoryDao::CategoryDao()
     : EntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
                          tr("Categories have been modified.  Please reload and try again.")} {}
 
-QList<const Category *> CategoryDao::getAll(QSqlDatabase &db) {
-    auto result = EntityDao::getAll(db);
-    Category::categories.clear();
-    for (auto category : result) {
-        Category::categories.insert(category->id.toLongLong(), category);
+QList<const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
+    QSqlQuery query(db);
+    QJsonArray ids{category->id.toLongLong()};
+    if (!category->parentId.isNull()) ids.append(category->parentId.toLongLong());
+    if (!parentId.isNull()) ids.append(parentId.toLongLong());
+    query.prepare(setParentSql);
+    query.bindValue(":user", user);
+    query.bindValue(":id", category->id);
+    query.bindValue(":version", category->version);
+    query.bindValue(":parentId", parentId);
+    if (!query.exec()) {
+        qCritical() << "categoryDao.setParent:" << query.lastError();
+        throw query.lastError().text();
     }
-    return result;
+    if (query.numRowsAffected() < 1) throw staleDataMessage;
+
+    query.prepare(*categoriesByIdsSql);
+    sql::bindArray(query, ids, ":ids");
+    exec(query, "setParent");
+    return load(query);
 }
 
 void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {

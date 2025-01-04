@@ -30,6 +30,9 @@ public:
         if (validatorFactory) validatorFactory->initialize(model);
     }
 
+    /**
+     * @param current unsaved value if cell has been modified
+     */
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current = QVariant{}, int role = Qt::DisplayRole) const {
         switch (role) {
         case Qt::DisplayRole:

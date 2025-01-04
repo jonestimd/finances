@@ -2,28 +2,25 @@
 #define CATEGORY_H
 
 #include "basedomain.h"
+#include "amounttype.h"
 #include <QSqlRecord>
 #include <QVariant>
 
 class Category : public NamedEntity {
 public:
-    QVariant name;
-    QVariant amountType;
+    QVariant amountType{DEBIT_DEPOSIT};
     QVariant description;
-    QVariant income;
-    QVariant security;
+    QVariant income{false};
+    QVariant security{false};
     QVariant parentId;
-    QList<QVariant> childIds;
-    QVariant transactions;
+    QList<QVariant> childIds{};
+    QVariant transactions{0};
 
     Category();
     Category(QSqlRecord record);
+    Category(const QString &name);
 
     bool deletable() const;
-
-    QString displayName() const override;
-
-    static QHash<qlonglong, const Category*> categories;
 };
 
 #endif // CATEGORY_H

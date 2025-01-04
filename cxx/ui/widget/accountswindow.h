@@ -26,8 +26,8 @@ public:
 public Q_SLOTS:
     void loadAccounts();
     void saveAccounts();
-    void setCompanies(const QHash<qlonglong, const Company*> companies);
-    void setAccounts(const QHash<qlonglong, const Account*> accounts);
+    void setCompanies(const QList<qlonglong> companyIds);
+    void setAccounts(const QList<qlonglong> accountIds);
     void showCompanies();
     void showPayees();
     void showCategories();
@@ -39,5 +39,6 @@ protected:
 
 private:
     void addCompany(const QString &name);
+    Q_INVOKABLE void newCompany(const Company *company);
 };
 #endif // ACCOUNTSWINDOW_H

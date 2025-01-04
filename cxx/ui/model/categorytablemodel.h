@@ -1,6 +1,7 @@
 #ifndef CATEGORY_TABLE_MODEL_H
 #define CATEGORY_TABLE_MODEL_H
 
+#include "categorystore.h"
 #include "datastore.h"
 #include "poditemmodel.h"
 #include "service/model/category.h"
@@ -8,9 +9,8 @@
 
 class CategoryTableModel : public PodItemModel<Category> {
     Q_OBJECT
-    DataStore* dataStore;
-    QHash<qlonglong, const Category*> categories;
-    QList<QVariant> rootIds;
+    const CategoryStore *store;
+    QList<qlonglong> rootIds;
 
     const Category* row(const QModelIndex &index) const;
 
@@ -20,9 +20,10 @@ protected:
 public:
     explicit CategoryTableModel(DataStore *datastore, QObject *parent);
 
-    void setRows(QHash<qlonglong, const Category*> categories);
+    void setRows(QList<qlonglong> categoryIds);
     const Category* getRow(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    bool movable(const QModelIndex &index);
 
     // QAbstractItemModel interface
     virtual QModelIndex index(int row, int column, const QModelIndex &parent) const override;

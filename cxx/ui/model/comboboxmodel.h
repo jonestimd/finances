@@ -6,8 +6,8 @@
 #include <QValidator>
 
 class ComboBoxModel : public QAbstractListModel {
-    QList<const NamedEntity*> options;
 public:
+    typedef std::function<QString(const NamedEntity *)> GetName;
     typedef std::function<void(const QString &)> CreateValue;
 
     class Validator : public QValidator {
@@ -19,11 +19,14 @@ public:
         void fixup(QString &input) const override;
     };
     const Validator validator;
+
 private:
+    QList<const NamedEntity*> options;
+    GetName getName;
     CreateValue createValue;
 
 public:
-    explicit ComboBoxModel(const QList<const NamedEntity*> values, CreateValue newValue = nullptr);
+    explicit ComboBoxModel(const QList<const NamedEntity*> values, GetName getName, CreateValue newValue = nullptr);
 
     const NamedEntity *valueOf(const QString &name) const;
 

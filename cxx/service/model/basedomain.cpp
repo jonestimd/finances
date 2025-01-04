@@ -3,7 +3,7 @@
 #include <QDate>
 #include <QSqlField>
 
-BaseDomain::BaseDomain() : version{0} {}
+BaseDomain::BaseDomain() {}
 
 BaseDomain::BaseDomain(QSqlRecord record) {
     id = record.field("id").value();
@@ -12,17 +12,19 @@ BaseDomain::BaseDomain(QSqlRecord record) {
     changeDate = record.field("change_date").value();
 }
 
-NamedEntity::NamedEntity(QSqlRecord record) : BaseDomain{record} {}
+NamedEntity::NamedEntity(QSqlRecord record, const char *nameColumn)
+    : BaseDomain{record}
+    , name{record.field(nameColumn).value()} {}
 
-bool NamedEntity::less(const NamedEntity *lhs, const NamedEntity *rhs) {
-    auto name1 = lhs->displayName(), name2 = rhs->displayName();
-    auto lname1 = name1.toLower(), lname2 = name2.toLower();
-    return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
-}
+NamedEntity::NamedEntity(const QString &name) : BaseDomain{}, name{name} {}
 
 QVariant NamedEntity::getId(const QVariant &value) {
     auto entity = value.value<const NamedEntity*>();
     return entity ? entity->id : QVariant{};
+}
+
+QString NamedEntity::getName(const NamedEntity *entity) {
+    return entity->name.toString();
 }
 
 EnumValue::EnumValue(const char *code, const QString name)

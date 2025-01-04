@@ -1,100 +1,28 @@
 #include "datastore.h"
-#include "../widget/dialog.h"
 #include <QSqlError>
-#include <QtConcurrent>
-
-template<typename T, class Service>
-class Holder
-{
-    DataStore *dataStore;
-    QHash<qlonglong, T> byId;
-    Service *service;
-
-public:
-    bool loaded;
-
-    Holder(DataStore *dataStore, Service *service)
-        : dataStore{dataStore}
-        , loaded{false}, service{service} {};
-
-    const QHash<qlonglong, T> values() const {
-        return this->byId;
-    }
-
-    bool load(QWidget *source, bool reload, void (DataStore::*valuesLoaded)(QHash<qlonglong, T>)) {
-        if (!reload && loaded) return true;
-        doInBackground(source, [valuesLoaded, this]() {
-            setValues(service->getAll());
-            (dataStore->*valuesLoaded)(values());
-        });
-        return false;
-    }
-
-    void update(const QList<T> &updates, const QList<T> deletes = QList<T>{}) {
-        for (auto updated : updates) {
-            delete byId.take(updated->id.toLongLong());
-            byId[updated->id.toLongLong()] = updated;
-        }
-        for (auto i : deletes) delete byId.take(i->id.toLongLong());
-    }
-
-    void setValues(QList<T> values) {
-        for (auto value : values) {
-            this->byId[value->id.toLongLong()] = value;
-        }
-        this->loaded = true;
-    }
-};
-
-struct DataStorePrivate {
-    Holder<const Account*, AccountService> accounts;
-    Holder<const Company*, CompanyService> companies;
-    Holder<const Payee*, PayeeService> payees;
-    Holder<const Category*, CategoryService> categories;
-
-    DataStorePrivate(DataStore *dataStore, ServiceContext *services)
-        : accounts{dataStore, &services->accountService}
-        , companies{dataStore, &services->companyService}
-        , payees{dataStore, &services->payeeService}
-        , categories{dataStore, &services->categoryService} {}
-};
-
-typedef std::function<void()> Runnable;
-typedef std::function<void(bool)> OnComplete;
-
-bool handleError(QWidget *source, Runnable task) {
-    try {
-        task();
-        return true;
-    } catch(const QString error) {
-        dialog::showError(source, error);
-    }
-    return false;
-}
-
-void doInBackground(QWidget *source, Runnable task, OnComplete onComplete = nullptr) {
-    QThreadPool::globalInstance()->start([=]() {
-        auto result = handleError(source, task);
-        if (onComplete) onComplete(result);
-    });
-}
 
 DataStore::DataStore(ServiceContext *services)
-    : p{new DataStorePrivate(this, services)}
-    , services{services}
+    : services{services}
     , user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))}
+    , accountStore{new EntityStore<const Account*>}
+    , companyStore{new EntityStore<const Company*>}
+    , payeeStore{new EntityStore<const Payee*>}
+    , categoryStore{new CategoryStore}
 {}
 
 DataStore::~DataStore() {
-    delete p;
+    delete accountStore;
+    delete companyStore;
+    delete payeeStore;
+    delete categoryStore;
 }
 
 bool DataStore::loadAccounts(QWidget *source, bool reload) {
-    return p->accounts.load(source, reload, &DataStore::accountsLoaded);
+    return load(source, reload, accountStore, &services->accountService, &DataStore::accountsLoaded);
 }
 
-const QHash<qlonglong, const Account *> DataStore::accounts() const {
-    return p->accounts.values();
+const EntityStore<const Account *> *DataStore::accounts() const {
+    return accountStore;
 }
 
 void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const QList<Account *> adds, const QList<const Account *> deletes) {
@@ -102,69 +30,76 @@ void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const 
         auto changes = BulkUpdate{updates, adds, deletes};
         QList<const Company*> companies;
         auto accounts = services->accountService.update(changes, user, &companies);
-        p->accounts.update(accounts, deletes);
-        p->companies.update(companies);
+        accountStore->update(accounts, deletes);
+        companyStore->update(companies);
     }, [this](bool success) {
-        emit accountsLoaded(p->accounts.values());
-        emit companiesLoaded(p->companies.values());
+        emit accountsLoaded(accountStore->ids());
+        emit companiesLoaded(companyStore->ids());
     });
 }
 
 bool DataStore::loadCompanies(QWidget *source, bool reload) {
-    return p->companies.load(source, reload, &DataStore::companiesLoaded);
+    return load(source, reload, companyStore, &services->companyService, &DataStore::companiesLoaded);
 }
 
-const QHash<qlonglong, const Company*> DataStore::companies() const {
-    return p->companies.values();
+const EntityStore<const Company*> *DataStore::companies() const {
+    return companyStore;
 }
 
 void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const QList<Company*> adds, const QList<const Company*> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
         auto companies = services->companyService.update(changes, user);
-        p->companies.update(companies, deletes);
-    }, [this](bool success) { emit companiesLoaded(p->companies.values()); });
+        companyStore->update(companies, deletes);
+    }, [this](bool success) { emit companiesLoaded(companyStore->ids()); });
 }
 
-void DataStore::addCompany(QWidget *source, const QString &name, std::function<void(const Company*)> callback) {
+void DataStore::addCompany(QWidget *source, const QString &name, const char *callback) {
     doInBackground(source, [=, this] {
         auto company = services->companyService.add(name, user);
-        p->companies.update(QList{company});
-        if (callback) callback(company);
+        companyStore->update(QList{company});
+        QMetaObject::invokeMethod(source, callback, company);
     }, [=, this](bool success) {
-        emit companiesLoaded(p->companies.values());
-        if (!success) callback(nullptr);
+        emit companiesLoaded(companyStore->ids());
+        if (!success) QMetaObject::invokeMethod(source, callback, nullptr);
     });
 }
 
 bool DataStore::loadPayees(QWidget *source, bool reload) {
-    return p->payees.load(source, reload, &DataStore::payeesLoaded);
+    return load(source, reload, payeeStore, &services->payeeService, &DataStore::payeesLoaded);
 }
 
-const QHash<qlonglong, const Payee *> DataStore::payees() const {
-    return p->payees.values();
+const EntityStore<const Payee *> *DataStore::payees() const {
+    return payeeStore;
 }
 
 void DataStore::updatePayees(QWidget *source, QList<Payee *> updates, const QList<Payee *> adds, const QList<const Payee *> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
         auto payees = services->payeeService.update(changes, user);
-        p->payees.update(payees, deletes);
-    }, [this](bool success) { emit payeesLoaded(p->payees.values()); });
+        payeeStore->update(payees, deletes);
+    }, [this](bool success) { emit payeesLoaded(payeeStore->ids()); });
 }
 
 bool DataStore::loadCategories(QWidget *source, bool reload) {
-    return p->categories.load(source, reload, &DataStore::categoriesLoaded);
+    return load(source, reload, categoryStore, &services->categoryService, &DataStore::categoriesLoaded);
 }
 
-const QHash<qlonglong, const Category *> DataStore::categories() const {
-    return p->categories.values();
+const CategoryStore *DataStore::categories() const {
+    return categoryStore;
 }
 
 void DataStore::updateCategories(QWidget *source, QList<Category *> updates, const QList<Category *> adds, const QList<const Category *> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
         auto categories = services->categoryService.update(changes, user);
-        p->categories.update(categories, deletes);
-    }, [this](bool success) { emit categoriesLoaded(p->categories.values()); });
+        categoryStore->update(categories, deletes);
+    }, [this](bool success) { emit categoriesLoaded(categoryStore->ids()); });
+}
+
+void DataStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
+    doInBackground(source, [this, category, parentId] {
+        auto categories = services->categoryService.setParent(category, parentId, user);
+        categoryStore->update(categories);
+    }, [this](bool success) { emit categoriesLoaded(categoryStore->ids()); });
 }

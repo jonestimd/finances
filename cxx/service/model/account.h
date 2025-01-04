@@ -2,6 +2,8 @@
 #define ACCOUNT_H
 
 #include "basedomain.h"
+#include "accounttype.h"
+#include "decimal.h"
 #include <QSqlRecord>
 #include <QVariant>
 
@@ -10,11 +12,11 @@ public:
     QVariant companyId;
     QVariant name;
     QVariant description;
-    QVariant type;
+    QVariant type{AccountType::bank.code};
     QVariant accountNumber;
-    QVariant closed;
-    QVariant transactions;
-    QVariant balance;
+    QVariant closed{false};
+    QVariant transactions{0};
+    QVariant balance{QVariant::fromValue(QDEC_ZERO)};
     QVariant currency;
 
     Account();

@@ -8,22 +8,17 @@ private slots:
 };
 
 struct TestOption : NamedEntity {
-    QVariant name;
-
-    TestOption(QVariant id, QVariant name) : name{name} {
+    TestOption(QVariant id, QVariant name) {
         this->id = id;
+        this->name = name;
     };
-
-    QString displayName() const override {
-        return name.toString();
-    }
 };
 
 void TestComboBoxModel::sortsOptions() {
     TestOption o1(1, "aaa"), o2(2, "zzz"), o3(3, "bbb"), o4(4, "Bbb");
     const QList<const NamedEntity*> values{&o1, &o2, &o3, &o4};
 
-    ComboBoxModel model(values);
+    ComboBoxModel model(values, NamedEntity::getName);
 
     QStringList ids;
     QStringList names;

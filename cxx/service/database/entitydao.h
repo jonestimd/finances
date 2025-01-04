@@ -11,9 +11,26 @@ class EntityDao {
     const char *const insertSql;
     const char *const deleteSql;
     const QString className;
-    const QString staleDataMessage;
 
 protected:
+    const QString staleDataMessage;
+
+    QList<const Entity*> load(QSqlQuery &query) {
+        QList<const Entity*> entities;
+        if (query.size() > 0) entities.reserve(query.size());
+        while (query.next()) {
+            entities.append(new Entity(query.record()));
+        }
+        return entities;
+    }
+
+    void exec(QSqlQuery &query, const char *methodName) {
+        if (!query.exec()) {
+            qCritical() << className << "." << methodName << ":" << query.lastError();
+            throw query.lastError().text();
+        }
+    }
+
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) {
         query.bindValue(":id", entity->id);
         query.bindValue(":name", entity->name);
@@ -34,17 +51,9 @@ public:
         , staleDataMessage{staleDataMessage} {}
 
     virtual QList<const Entity*> getAll(QSqlDatabase &db) {
-        QSqlQuery query(db);
-        if (!query.exec(getAllSql)) {
-            qCritical() << className + ".getAll:" << query.lastError().text();
-            throw query.lastError().text();
-        }
-        QList<const Entity*> entities;
-        if (query.size() > 0) entities.reserve(query.size());
-        while (query.next()) {
-            entities.append(new Entity(query.record()));
-        }
-        return entities;
+        QSqlQuery query(getAllSql, db);
+        exec(query, "getAll");
+        return load(query);
     }
 
     virtual QList<const Entity*> update(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
@@ -55,10 +64,7 @@ public:
         query.bindValue(":user", user);
         for (auto entity : entities) {
             bindUpdateValues(query, entity);
-            if (!query.exec()) {
-                qCritical() << className + ".update:" << query.lastError();
-                throw query.lastError().text();
-            }
+            exec(query, "update");
             if (query.numRowsAffected() < 1) throw staleDataMessage;
             entity->version = entity->version.toInt() + 1;
             entity->changeUser = user;
@@ -75,13 +81,10 @@ public:
         query.bindValue(":user", user);
         for (auto entity : entities) {
             bindInsertValues(query, entity);
-            if (!query.exec()) {
-                qCritical() << className + ".insert:" << query.lastError();
-                throw query.lastError().text();
-            }
-            entity ->id = query.lastInsertId();
-            entity ->changeUser = user;
-            result.append(entity );
+            exec(query, "insert");
+            entity->id = query.lastInsertId();
+            entity->changeUser = user;
+            result.append(entity);
         }
         return result;
     }
@@ -91,10 +94,7 @@ public:
         query.prepare(deleteSql);
         for (auto entity : entities) {
             query.bindValue(":id", entity ->id);
-            if (!query.exec()) {
-                qCritical() << className + ".remove:" << query.lastError();
-                throw query.lastError().text();
-            }
+            exec(query, "remove");
         }
     }
 };

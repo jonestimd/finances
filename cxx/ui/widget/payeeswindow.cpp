@@ -20,9 +20,9 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 
     addToolBar(&tableSort.toolbar);
 
-    connect(dataStore, SIGNAL(payeesLoaded(QHash<qlonglong,const Payee*>)), this, SLOT(setPayees(QHash<qlonglong,const Payee*>)));
+    connect(dataStore, SIGNAL(payeesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
 
-    if (dataStore->loadPayees(this)) model.setRows(dataStore->payees().values());
+    if (dataStore->loadPayees(this)) model.setRows(dataStore->payees()->ids());
     else tableSort.statusBar.addMessage(tr(LOADING_PAYEES));
 
     tableSort.setColumnResize({0});
@@ -40,8 +40,8 @@ void PayeesWindow::savePayees() {
     });
 }
 
-void PayeesWindow::setPayees(const QHash<qlonglong, const Payee *> payees) {
-    model.setRows(payees.values());
+void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
+    model.setRows(payeeIds);
     tableSort.statusBar.removeMessage(tr(LOADING_PAYEES));
     tableSort.statusBar.removeMessage(tr(SAVING_PAYEES));
     tableSort.itemView->setEnabled(true);

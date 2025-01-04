@@ -12,6 +12,7 @@ class CategoriesWindow : public QMainWindow {
     DataStore *dataStore;
     CategoryTableModel model;
     EntityTree tableSort;
+    QAction *moveAction;
 
 public:
     CategoriesWindow(DataStore *dataStore);
@@ -19,7 +20,9 @@ public:
 public Q_SLOTS:
     void loadCategories();
     void saveCategories();
-    void setCategories(const QHash<qlonglong, const Category*> categories);
+    void setCategories(const QList<qlonglong> categoryIds);
+    void reparent();
+    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
 
     // QWidget interface
 protected:

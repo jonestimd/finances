@@ -1,4 +1,5 @@
 #include "categorieswindow.h"
+#include "categoryparentdialog.h"
 #include "dialog.h"
 #include "settings.h"
 #include <QtSql>
@@ -20,10 +21,16 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     setWindowTitle(tr("Finances - Categories[*]"));
 
     addToolBar(&tableSort.toolbar);
+    // TODO disable with pending changes
+    moveAction = finances::iconAction(finances::MoveUp, tr("Change parent"), tr("alt+m", "reparent"), this, SLOT(reparent()));
+    moveAction->setEnabled(false);
+    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], moveAction);
+    connect(tableSort.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
-    connect(dataStore, SIGNAL(categoriesLoaded(QHash<qlonglong,const Category*>)), this, SLOT(setCategories(QHash<qlonglong,const Category*>)));
+    connect(dataStore, SIGNAL(categoriesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
-    if (dataStore->loadCategories(this)) model.setRows(dataStore->categories());
+    if (dataStore->loadCategories(this)) model.setRows(dataStore->categories()->ids());
     else tableSort.statusBar.addMessage(tr(LOADING_CATEGORIES));
 
     tableSort.enableColumnResize();
@@ -41,11 +48,29 @@ void CategoriesWindow::saveCategories() {
     });
 }
 
-void CategoriesWindow::setCategories(const QHash<qlonglong, const Category*> categories) {
-    model.setRows(categories);
+void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
+    model.setRows(categoryIds);
     tableSort.statusBar.removeMessage(tr(LOADING_CATEGORIES));
     tableSort.statusBar.removeMessage(tr(SAVING_CATEGORIES));
     tableSort.itemView->setEnabled(true);
+}
+
+void CategoriesWindow::reparent() {
+    auto category = model.getRow(tableSort.selectedIndex());
+    CategoryParentDialog dialog(this, dataStore->categories(), category);
+    auto result = dialog.exec();
+    if (result == QDialog::Accepted) {
+        auto parentId = dialog.parentId();
+        if (category->parentId != dialog.parentId()) {
+            tableSort.saveData(tr(SAVING_CATEGORIES), [this, category, parentId]() {
+                dataStore->setParent(this, category, parentId);
+            });
+        }
+    }
+}
+
+void CategoriesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+    moveAction->setEnabled(model.movable(tableSort.selectedIndex()));
 }
 
 void CategoriesWindow::closeEvent(QCloseEvent *event) {

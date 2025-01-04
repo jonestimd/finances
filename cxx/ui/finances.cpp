@@ -79,7 +79,7 @@ namespace finances {
         return label;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QObject *parent) {
+    QAction *iconAction(FontIcon icon, const QString text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
@@ -87,27 +87,27 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence shortcut, QObject *parent) {
-        auto action = iconAction(icon, text, parent);
+    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence shortcut, QObject *parent) {
+        auto action = iconAction(icon, QString(text).append(" (%1)").arg(shortcut.toString()), parent);
         action->setShortcut(shortcut);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString text, const QString shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         if (receiver && slot) QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(const char *iconFile, QString text, QObject *parent) {
+    QAction *iconAction(const char *iconFile, const QString text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);

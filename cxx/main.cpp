@@ -17,9 +17,6 @@ int main(int argc, char *argv[])
     QMetaType::registerConverter<QDecNumber, QString>(
         [](const QDecNumber &value) -> QString { return QString(value.toString()); }
     );
-    QMetaType::registerConverter<const NamedEntity*, QString>(
-        [](const NamedEntity *value) -> QString { return value ? value->displayName() : ""; }
-    );
     QMetaType::registerConverter<const EnumValue*, QString>(
         [](const EnumValue *value) -> QString { return value ? value->name : ""; }
     );
