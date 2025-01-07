@@ -23,6 +23,7 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     sortModel.setSourceModel(model);
     sortModel.setSortRole(finances::SortRole);
     sortModel.setFilterKeyColumn(-1);
+    sortModel.setSortCaseSensitivity(Qt::CaseInsensitive);
 
     itemView->setModel(&sortModel);
     itemView->setItemDelegate(&itemDelegate);
