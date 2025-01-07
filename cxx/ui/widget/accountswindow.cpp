@@ -59,6 +59,7 @@ void AccountsWindow::saveAccounts() {
 
 void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
     tableSort.statusBar.removeMessage(tr(LOADING_COMPANIES));
+    model.companiesLoaded(companyIds);
 }
 
 void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {

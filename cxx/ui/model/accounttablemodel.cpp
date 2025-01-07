@@ -47,3 +47,19 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
     },
     dataStore{ds}
 {}
+
+void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {
+    for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
+        for (qsizetype i = 0; i < children.length(); i++) {
+            auto account = children[i];
+            if (!companyIds.contains(account->companyId.toLongLong())) {
+                setData(index(rowIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
+            }
+        }
+    }
+    for (auto [index, value] : changes.asKeyValueRange()) {
+        if (index.column() == COMPANY_COLUMN && !companyIds.contains(value.toLongLong())) {
+            undoChange(index);
+        }
+    }
+}

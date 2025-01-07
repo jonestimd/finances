@@ -14,6 +14,8 @@ class AccountTableModel : public PodTableModel<Account> {
     DataStore *dataStore;
 public:
     explicit AccountTableModel(DataStore *datastore, QObject *parent, AddCompany addCompany = nullptr);
+
+    void companiesLoaded(const QList<qlonglong> companyIds);
 };
 
 #endif // ACCOUNTTABLEMODEL_H
