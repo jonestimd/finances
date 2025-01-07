@@ -11,10 +11,10 @@ bool handleError(QWidget *source, Runnable task) {
     return false;
 }
 
-void doInBackground(QWidget *source, Runnable task, OnComplete onComplete)
+void doInBackground(QWidget *source, Runnable task, Runnable onError)
 {
     QThreadPool::globalInstance()->start([=]() {
-        auto result = handleError(source, task);
-        if (onComplete) onComplete(result);
+        auto success = handleError(source, task);
+        if (!success && onError) onError();
     });
 }

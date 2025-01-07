@@ -4,8 +4,7 @@
 #include <QtConcurrent>
 
 typedef std::function<void()> Runnable;
-typedef std::function<void(bool)> OnComplete;
 
-void doInBackground(QWidget *source, Runnable task, OnComplete onComplete = nullptr);
+void doInBackground(QWidget *source, Runnable task, Runnable onError= nullptr);
 
 #endif // BACKGROUND_H

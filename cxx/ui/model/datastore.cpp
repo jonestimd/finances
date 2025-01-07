@@ -32,7 +32,6 @@ void DataStore::updateAccounts(QWidget *source, QList<Account *> updates, const 
         auto accounts = services->accountService.update(changes, user, &companies);
         accountStore->update(accounts, deletes);
         companyStore->update(companies);
-    }, [this](bool success) {
         emit accountsLoaded(accountStore->ids());
         emit companiesLoaded(companyStore->ids());
     });
@@ -51,7 +50,8 @@ void DataStore::updateCompanies(QWidget *source, QList<Company*> updates, const 
         auto changes = BulkUpdate{updates, adds, deletes};
         auto companies = services->companyService.update(changes, user);
         companyStore->update(companies, deletes);
-    }, [this](bool success) { emit companiesLoaded(companyStore->ids()); });
+        emit companiesLoaded(companyStore->ids());
+    });
 }
 
 void DataStore::addCompany(QWidget *source, const QString &name, const char *callback) {
@@ -59,9 +59,9 @@ void DataStore::addCompany(QWidget *source, const QString &name, const char *cal
         auto company = services->companyService.add(name, user);
         companyStore->update(QList{company});
         QMetaObject::invokeMethod(source, callback, company);
-    }, [=, this](bool success) {
         emit companiesLoaded(companyStore->ids());
-        if (!success) QMetaObject::invokeMethod(source, callback, nullptr);
+    }, [=]() {
+        QMetaObject::invokeMethod(source, callback, nullptr);
     });
 }
 
@@ -78,7 +78,8 @@ void DataStore::updatePayees(QWidget *source, QList<Payee *> updates, const QLis
         auto changes = BulkUpdate{updates, adds, deletes};
         auto payees = services->payeeService.update(changes, user);
         payeeStore->update(payees, deletes);
-    }, [this](bool success) { emit payeesLoaded(payeeStore->ids()); });
+        emit payeesLoaded(payeeStore->ids());
+    });
 }
 
 bool DataStore::loadCategories(QWidget *source, bool reload) {
@@ -94,12 +95,14 @@ void DataStore::updateCategories(QWidget *source, QList<Category *> updates, con
         auto changes = BulkUpdate{updates, adds, deletes};
         auto categories = services->categoryService.update(changes, user);
         categoryStore->update(categories, deletes);
-    }, [this](bool success) { emit categoriesLoaded(categoryStore->ids()); });
+        emit categoriesLoaded(categoryStore->ids());
+    });
 }
 
 void DataStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
     doInBackground(source, [this, category, parentId] {
         auto categories = services->categoryService.setParent(category, parentId, user);
         categoryStore->update(categories);
-    }, [this](bool success) { emit categoriesLoaded(categoryStore->ids()); });
+        emit categoriesLoaded(categoryStore->ids());
+    });
 }
