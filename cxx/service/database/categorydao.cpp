@@ -48,6 +48,14 @@ CategoryDao::CategoryDao()
     : EntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
                           QObject::tr("Categories have been modified.  Please reload and try again.")} {}
 
+QList<const Category *> CategoryDao::get(QSqlDatabase &db, QVariantList ids) {
+    QSqlQuery query(db);
+    query.prepare(*categoriesByIdsSql);
+    sql::bindList(query, ids, ":ids");
+    exec(query, "getByIds");
+    return load(query);
+}
+
 QList<const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
     QSqlQuery query(db);
     QVariantList ids{category->id};
