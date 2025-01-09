@@ -8,7 +8,7 @@ QList<const Account *> AccountService::update(BulkUpdate<Account> &changes, cons
     auto result = EntityService::update(changes, user);
     if (companies) {
         auto conn = Connection(connectionPool);
-        *companies = companyDao->getAll(conn.db);
+        *companies = companyDao.getAll(conn.db);
     }
     return result;
 };

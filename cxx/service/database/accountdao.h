@@ -5,8 +5,7 @@
 #include "../model/account.h"
 #include <QtSql/QSqlDatabase>
 
-class AccountDao : public QObject, public EntityDao<Account> {
-    Q_OBJECT
+class AccountDao : public EntityDao<Account> {
 public:
     AccountDao();
 
@@ -15,6 +14,6 @@ protected:
     virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;
 };
 
-Q_GLOBAL_STATIC(AccountDao, accountDao)
+static AccountDao accountDao;
 
 #endif // ACCOUNT_DAO_H

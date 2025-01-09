@@ -17,6 +17,9 @@ public:
     QString displayName(qlonglong categoryId) const;
     QString displayName(const Category *category) const;
     bool movable(qlonglong categoryId) const;
+    /**
+     * @return `true` if `parentId` is an ancestor of `categoryId`.
+     */
     bool isAncestor(qlonglong categoryId, const QVariant parentId) const;
 
 protected:

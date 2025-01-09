@@ -10,7 +10,9 @@ namespace sql {
 
     QVariant yesNoValue(QSqlRecord record, const char *name);
 
-    void bindArray(QSqlQuery &query, QJsonArray &value, const char *name);
+    void bindList(QSqlQuery &query, const QVariantList &values, const char *name);
+
+    void exec(QSqlQuery &query, const QString &className, const char *queryName);
 }
 
 #endif // SQL_H

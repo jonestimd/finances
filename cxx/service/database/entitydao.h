@@ -1,6 +1,7 @@
 #ifndef ENTITY_DAO_H
 #define ENTITY_DAO_H
 
+#include "service/model/sql.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql>
 
@@ -24,11 +25,8 @@ protected:
         return entities;
     }
 
-    void exec(QSqlQuery &query, const char *methodName) {
-        if (!query.exec()) {
-            qCritical() << className << "." << methodName << ":" << query.lastError();
-            throw query.lastError().text();
-        }
+    void exec(QSqlQuery &query, const char *queryName) {
+        sql::exec(query, className, queryName);
     }
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) {
@@ -41,7 +39,6 @@ protected:
         query.bindValue(":name", entity ->name);
     }
 
-public:
     EntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql, const char *className, const QString staleDataMessage)
         : getAllSql{getAllSql}
         , updateSql{updateSql}
@@ -50,6 +47,7 @@ public:
         , className{className}
         , staleDataMessage{staleDataMessage} {}
 
+public:
     virtual QList<const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(getAllSql, db);
         exec(query, "getAll");

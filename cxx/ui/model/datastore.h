@@ -48,6 +48,7 @@ public:
     const CategoryStore *categories() const;
     void updateCategories(QWidget *source, QList<Category*> updates, const QList<Category*> adds, const QList<const Category*> deletes);
     void setParent(QWidget *source, const Category *category, const QVariant parentId);
+    void mergeCategories(QWidget *source, const Category *category, const QVariant destinationId);
 
 Q_SIGNALS:
     void accountsLoaded(const QList<qlonglong>);

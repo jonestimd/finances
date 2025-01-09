@@ -20,5 +20,5 @@ static const auto deletePayeeSql = "delete from payee where id = :id";
 
 PayeeDao::PayeeDao()
     : EntityDao<Payee>{getPayeesSql, updatePayeeSql, insertPayeeSql, deletePayeeSql, "PayeeDao",
-                       tr("Payees have been modified.  Please reload and try again.")}
+                       QObject::tr("Payees have been modified.  Please reload and try again.")}
 {}

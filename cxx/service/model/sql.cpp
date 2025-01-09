@@ -1,6 +1,8 @@
 #include "sql.h"
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QSqlField>
+#include <QSqlError>
 
 QVariant sql::getValue(QSqlRecord record, const char *name) {
     auto field = record.field(name);
@@ -11,6 +13,13 @@ QVariant sql::yesNoValue(QSqlRecord record, const char *name) {
     return getValue(record, name).toString() == "Y";
 }
 
-void sql::bindArray(QSqlQuery &query, QJsonArray &value, const char *name) {
-    query.bindValue(name, QString::fromUtf8(QJsonDocument(value).toJson()));
+void sql::bindList(QSqlQuery &query, const QVariantList &values, const char *name) {
+    query.bindValue(name, QString::fromUtf8(QJsonDocument(QJsonArray::fromVariantList(values)).toJson()));
+}
+
+void sql::exec(QSqlQuery &query, const QString &className, const char *queryName) {
+    if (!query.exec()) {
+        qCritical().noquote().nospace() << className << "." << queryName << ": " << query.lastError().text();
+        throw query.lastError().text();
+    }
 }

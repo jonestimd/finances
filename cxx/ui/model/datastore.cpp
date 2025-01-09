@@ -106,3 +106,11 @@ void DataStore::setParent(QWidget *source, const Category *category, const QVari
         emit categoriesLoaded(categoryStore->ids());
     });
 }
+
+void DataStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
+    doInBackground(source, [this, category, destinationId] {
+        auto categories = services->categoryService.merge(category, destinationId, user);
+        categoryStore->update(categories, QList{category});
+        emit categoriesLoaded(categoryStore->ids());
+    });
+}

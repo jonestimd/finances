@@ -31,6 +31,8 @@ namespace finances {
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
+        Merge = 0xeb98,
+        MergeType = 0xe252, // merge category
         MoveItem = 0xf1ff,
         MoveDown = 0xeb61,
         MoveUp = 0xeb64,

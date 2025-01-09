@@ -13,6 +13,7 @@ class CategoriesWindow : public QMainWindow {
     CategoryTableModel model;
     EntityTree tableSort;
     QAction *moveAction;
+    QAction *mergeAction;
 
 public:
     CategoriesWindow(DataStore *dataStore);
@@ -22,6 +23,7 @@ public Q_SLOTS:
     void saveCategories();
     void setCategories(const QList<qlonglong> categoryIds);
     void reparent();
+    void merge();
     void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
 
     // QWidget interface

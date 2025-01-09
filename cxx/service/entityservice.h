@@ -8,23 +8,23 @@ template<class Entity, class Dao>
 class EntityService
 {
 protected:
-    Dao *const dao;
+    Dao &dao;
     ConnectionPool *connectionPool;
 public:
-    EntityService(ConnectionPool *connectionPool, Dao *dao) : dao{dao}, connectionPool{connectionPool} {}
+    EntityService(ConnectionPool *connectionPool, Dao &dao) : dao{dao}, connectionPool{connectionPool} {}
 
     QList<const Entity*> getAll() {
         auto conn = Connection(connectionPool);
-        return dao->getAll(conn.db);
+        return dao.getAll(conn.db);
     }
 
-    QList<const Entity*> update(BulkUpdate<Entity> &changes, const QString &user) {
+    virtual QList<const Entity*> update(BulkUpdate<Entity> &changes, const QString &user) {
         auto conn = Connection(connectionPool);
         try {
             QList<const Entity*> result;
-            if (!changes.updates.empty()) result += dao->update(conn.db, changes.updates, user);
-            if (!changes.adds.empty()) result += dao->add(conn.db, changes.adds, user);
-            if (!changes.deletes.empty()) dao->remove(conn.db, changes.deletes);
+            if (!changes.deletes.empty()) dao.remove(conn.db, changes.deletes);
+            if (!changes.updates.empty()) result += dao.update(conn.db, changes.updates, user);
+            if (!changes.adds.empty()) result += dao.add(conn.db, changes.adds, user);
             return result;
         } catch(...) {
             conn.db.rollback();
@@ -37,11 +37,22 @@ public:
         auto entity = new Entity(name);
         auto conn = Connection(connectionPool);
         try {
-            dao->add(conn.db, QList{entity}, user);
+            dao.add(conn.db, QList{entity}, user);
             return entity;
         } catch(...) {
             conn.db.rollback();
             delete entity;
+            throw;
+        }
+    }
+
+protected:
+    QList<const Entity*> doInTransaction(std::function<QList<const Entity*>(QSqlDatabase&)> update) {
+        auto conn = Connection(connectionPool);
+        try {
+            return update(conn.db);
+        } catch(...) {
+            conn.db.rollback();
             throw;
         }
     }

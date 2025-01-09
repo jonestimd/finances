@@ -12,8 +12,6 @@ class CategoryTableModel : public PodItemModel<Category> {
     const CategoryStore *store;
     QList<qlonglong> rootIds;
 
-    const Category* row(const QModelIndex &index) const;
-
 protected:
     int childCount(const QModelIndex &parent) const override;
 

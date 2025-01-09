@@ -1,5 +1,5 @@
 #include "categorieswindow.h"
-#include "categoryparentdialog.h"
+#include "entityselectiondialog.h"
 #include "dialog.h"
 #include "settings.h"
 #include <QtSql>
@@ -22,9 +22,14 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 
     addToolBar(&tableSort.toolbar);
     // TODO disable with pending changes
-    moveAction = finances::iconAction(finances::MoveUp, tr("Change parent"), tr("alt+m", "reparent"), this, SLOT(reparent()));
+    moveAction = finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()));
     moveAction->setEnabled(false);
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], moveAction);
+
+    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Into"), tr("ctrl+y", "merge category"), this, SLOT(merge()));
+    mergeAction->setEnabled(false);
+    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[3], mergeAction);
+
     connect(tableSort.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
@@ -57,11 +62,19 @@ void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
 
 void CategoriesWindow::reparent() {
     auto category = model.getRow(tableSort.selectedIndex());
-    CategoryParentDialog dialog(this, dataStore->categories(), category);
+    auto store = dataStore->categories();
+    QList<const NamedEntity*> options;
+    for (auto id : store->ids()) {
+        auto option = store->value(id);
+        if (option != category && !store->isAncestor(id, category->id)) options.append(option);
+    }
+    auto model = new ComboBoxModel(options, [store](const NamedEntity *category) { return store->displayName(category->id.toLongLong()); });
+    EntitySelectionDialog dialog(this, model, tr("Move Category"), tr("Select parent category:"));
+    if (!category->parentId.isNull()) dialog.setSelectedEntity(store->value(category->parentId.toLongLong()));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
-        auto parentId = dialog.parentId();
-        if (category->parentId != dialog.parentId()) {
+        auto parentId = dialog.selectedId();
+        if (category->parentId != dialog.selectedId()) {
             tableSort.saveData(tr(SAVING_CATEGORIES), [this, category, parentId]() {
                 dataStore->setParent(this, category, parentId);
             });
@@ -69,8 +82,30 @@ void CategoriesWindow::reparent() {
     }
 }
 
+void CategoriesWindow::merge() {
+    auto category = model.getRow(tableSort.selectedIndex());
+    auto store = dataStore->categories();
+    QList<const NamedEntity*> options;
+    for (auto id : store->ids()) {
+        auto option = store->value(id);
+        if (option != category) options.append(option);
+    }
+    auto model = new ComboBoxModel(options, [store](const NamedEntity *category) { return store->displayName(category->id.toLongLong()); });
+    EntitySelectionDialog dialog(this, model, tr("Merge Categories"), tr("Select destination category:"));
+    auto result = dialog.exec();
+    if (result == QDialog::Accepted) {
+        auto selectedId = dialog.selectedId();
+        if (!selectedId.isNull()) {
+            tableSort.saveData(tr(SAVING_CATEGORIES), [this, category, selectedId]() {
+                dataStore->mergeCategories(this, category, selectedId);
+            });
+        }
+    }
+}
+
 void CategoriesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
     moveAction->setEnabled(model.movable(tableSort.selectedIndex()));
+    mergeAction->setEnabled(tableSort.selectedIndex().isValid());
 }
 
 void CategoriesWindow::closeEvent(QCloseEvent *event) {

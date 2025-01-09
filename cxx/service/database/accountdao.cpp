@@ -34,7 +34,7 @@ static const auto deleteAccountSql = "delete from account where id = :id";
 
 AccountDao::AccountDao()
     : EntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
-                         tr("Accounts have been modified.  Please reload and try again.")} {}
+                         QObject::tr("Accounts have been modified.  Please reload and try again.")} {}
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
     EntityDao::bindUpdateValues(query, account);

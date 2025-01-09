@@ -10,7 +10,7 @@ with summary as (
   from tx_detail td
   group by td.tx_category_id
 ), children as (
-  select parent_id id, json_arrayagg(id) child_ids
+  select parent_id, json_arrayagg(id) child_ids
   from tx_category
   where parent_id is not null
   group by parent_id
@@ -18,10 +18,10 @@ with summary as (
 select c.*, coalesce(s.transactions, 0) transactions, ch.child_ids
 from tx_category c
 left join summary s on c.id = s.tx_category_id
-left join children ch on c.id = ch.id
+left join children ch on c.id = ch.parent_id
 )";
 
-Q_GLOBAL_STATIC(const QString, categoriesByIdsSql, getCategoriesSql + QString("\nwhere c.id member of (:ids)"))
+Q_GLOBAL_STATIC(const QString, categoriesByIdsSql, getCategoriesSql + QString("\nwhere id member of (:ids)"))
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -40,28 +40,47 @@ static const auto setParentSql = R"(update tx_category
 set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
+static const auto setParentsSql = R"(update tx_category
+set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
+where parent_id = :oldParentId and id member of (:ids))";
+
 CategoryDao::CategoryDao()
     : EntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
-                         tr("Categories have been modified.  Please reload and try again.")} {}
+                          QObject::tr("Categories have been modified.  Please reload and try again.")} {}
 
 QList<const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
     QSqlQuery query(db);
-    QJsonArray ids{category->id.toLongLong()};
+    QVariantList ids{category->id};
     if (!category->parentId.isNull()) ids.append(category->parentId.toLongLong());
-    if (!parentId.isNull()) ids.append(parentId.toLongLong());
+    if (!parentId.isNull()) ids.append(parentId);
     query.prepare(setParentSql);
     query.bindValue(":user", user);
     query.bindValue(":id", category->id);
     query.bindValue(":version", category->version);
     query.bindValue(":parentId", parentId);
-    if (!query.exec()) {
-        qCritical() << "categoryDao.setParent:" << query.lastError();
-        throw query.lastError().text();
-    }
+    exec(query, "setParent");
     if (query.numRowsAffected() < 1) throw staleDataMessage;
+    return get(db, ids);
+}
+
+QList<const Category *> CategoryDao::merge(QSqlDatabase &db, const Category *category, const QVariant destinationId, const QString user) {
+    QSqlQuery query(db);
+    QVariantList ids{destinationId};
+    if (!category->childIds.isEmpty()) {
+        ids.append(category->childIds);
+        query.prepare(setParentsSql);
+        query.bindValue(":user", user);
+        query.bindValue(":parentId", destinationId);
+        query.bindValue(":oldParentId", category->id);
+        sql::bindList(query, category->childIds, ":ids");
+        exec(query, "setParents");
+        if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
+    }
+
+    remove(db, QList{category});
 
     query.prepare(*categoriesByIdsSql);
-    sql::bindArray(query, ids, ":ids");
+    sql::bindList(query, ids, ":ids");
     exec(query, "setParent");
     return load(query);
 }

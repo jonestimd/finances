@@ -5,12 +5,11 @@
 #include "../model/company.h"
 #include <QtSql/QSqlDatabase>
 
-class CompanyDao : public QObject, public EntityDao<Company> {
-    Q_OBJECT
+class CompanyDao : public EntityDao<Company> {
 public:
     CompanyDao();
 };
 
-Q_GLOBAL_STATIC(CompanyDao, companyDao)
+static CompanyDao companyDao;
 
 #endif // COMPANY_DAO_H
