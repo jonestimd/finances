@@ -83,11 +83,12 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
 }
 
 bool TableItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {
+    using enum QEvent::Type;
     auto eventType = event->type();
-    if (eventType == QEvent::MouseButtonPress || eventType == QEvent::KeyPress && index.flags().testFlag(Qt::ItemIsEditable)) {
+    if (eventType == MouseButtonPress || eventType == MouseButtonDblClick || eventType == KeyPress && index.flags().testFlag(Qt::ItemIsEditable)) {
         auto value = index.data(Qt::EditRole);
         if (value.typeId() == QMetaType::Bool) {
-            model->setData(index, !value.toBool());
+            if (eventType != MouseButtonDblClick) model->setData(index, !value.toBool());
             return true;
         }
     }
