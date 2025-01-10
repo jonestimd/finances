@@ -29,6 +29,15 @@ bool CategoryStore::isAncestor(qlonglong categoryId, const QVariant parentId) co
     return category->parentId == parentId || isAncestor(category->parentId.toLongLong(), parentId);
 }
 
+bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
+    auto category = value(categoryId);
+    auto lowerName = name.toString().toLower();
+    for (auto childId : category->childIds) {
+        if (value(childId.toLongLong())->name.toString().toLower() == lowerName) return true;
+    }
+    return false;
+}
+
 void CategoryStore::update(const QList<const Category *> &updates, const QList<const Category *> deletes) {
     for (auto category : deletes) rootIds_.remove(category->id.toLongLong());
     EntityStore::update(updates, deletes);

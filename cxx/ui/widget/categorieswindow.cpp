@@ -15,6 +15,9 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     , dataStore{dataStore}
     , model{dataStore, this}
     , tableSort{this, &model, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
+    , getName{[dataStore](const NamedEntity* entity) {
+        return dataStore->categories()->displayName(entity->id.toLongLong());
+    }}
 {
     setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
@@ -62,14 +65,20 @@ void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
 
 void CategoriesWindow::reparent() {
     auto category = model.getRow(tableSort.selectedIndex());
+    auto name = category->name.toString();
     auto store = dataStore->categories();
     QList<const NamedEntity*> options;
+    QHash<qlonglong, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
-        if (option != category && !store->isAncestor(id, category->id)) options.append(option);
+        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString()).arg(name);
+        if (option != category && !store->isAncestor(id, category->id)) {
+            options.append(option);
+            if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.toLongLong(), message);
+        }
     }
-    auto model = new ComboBoxModel(options, [store](const NamedEntity *category) { return store->displayName(category->id.toLongLong()); });
-    EntitySelectionDialog dialog(this, model, tr("Move Category"), tr("Select parent category:"));
+    auto model = new ComboBoxModel(options, getName);
+    EntitySelectionDialog dialog(this, model, tr("Move Category"), tr("Select parent category for \"%1\":").arg(name), disabledOptions);
     if (!category->parentId.isNull()) dialog.setSelectedEntity(store->value(category->parentId.toLongLong()));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
@@ -90,7 +99,7 @@ void CategoriesWindow::merge() {
         auto option = store->value(id);
         if (option != category) options.append(option);
     }
-    auto model = new ComboBoxModel(options, [store](const NamedEntity *category) { return store->displayName(category->id.toLongLong()); });
+    auto model = new ComboBoxModel(options, getName);
     EntitySelectionDialog dialog(this, model, tr("Merge Categories"), tr("Select destination category:"));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {

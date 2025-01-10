@@ -5,8 +5,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-EntitySelectionDialog::EntitySelectionDialog(QWidget *parent, ComboBoxModel *model, const QString &title, const QString &label)
+EntitySelectionDialog::EntitySelectionDialog(QWidget *parent, ComboBoxModel *model, const QString &title, const QString &label,
+    QHash<qlonglong, QString> disabledOptions)
     : QDialog{parent}
+    , disabledOptions{disabledOptions}
 {
     setWindowModality(Qt::WindowModal);
     setWindowTitle(title);
@@ -15,6 +17,7 @@ EntitySelectionDialog::EntitySelectionDialog(QWidget *parent, ComboBoxModel *mod
     auto layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(label));
     layout->addWidget(selectionInput);
+    layout->addWidget(errorMessage);
     layout->addStretch();
 
     QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
@@ -35,5 +38,13 @@ QVariant EntitySelectionDialog::selectedId() const {
 }
 
 void EntitySelectionDialog::inputChanged() {
-    saveButton->setEnabled(selectionInput->hasAcceptableInput());
+    auto id = selectedId();
+    if (id.isValid() && disabledOptions.contains(id.toLongLong())) {
+        errorMessage->setText(disabledOptions.value(id.toLongLong()));
+        saveButton->setEnabled(false);
+    }
+    else {
+        errorMessage->clear();
+        saveButton->setEnabled(selectionInput->hasAcceptableInput());
+    }
 }

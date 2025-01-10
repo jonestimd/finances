@@ -21,6 +21,7 @@ public:
      * @return `true` if `parentId` is an ancestor of `categoryId`.
      */
     bool isAncestor(qlonglong categoryId, const QVariant parentId) const;
+    bool hasChild(qlonglong categoryId, const QVariant &name) const;
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;

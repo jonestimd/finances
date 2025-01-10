@@ -6,6 +6,7 @@
 #include "entityview.h"
 #include <QMainWindow>
 #include <QTableView>
+#include <ui/model/comboboxmodel.h>
 
 class CategoriesWindow : public QMainWindow {
     Q_OBJECT
@@ -14,6 +15,7 @@ class CategoriesWindow : public QMainWindow {
     EntityTree tableSort;
     QAction *moveAction;
     QAction *mergeAction;
+    ComboBoxModel::GetName getName;
 
 public:
     CategoriesWindow(DataStore *dataStore);
