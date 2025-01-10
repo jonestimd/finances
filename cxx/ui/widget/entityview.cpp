@@ -52,7 +52,7 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     connect(model, SIGNAL(modelReset()), this, SLOT(dataChanged()));
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
-    [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
+            [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
 
     itemView->selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
 }
@@ -239,9 +239,11 @@ EntityTree::EntityTree(QWidget *window, AdapterItemModel *model, const QString f
                          const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
     : EntityView(window, model, new QTreeView(), filterLabel, defaultSort, saveSlot, loadSlot, actions)
 {
+    using enum QAbstractItemView::EditTrigger;
     auto view = treeView();
     view->setSortingEnabled(true);
     view->setSelectionBehavior(QAbstractItemView::SelectItems);
+    view->setEditTriggers(AllEditTriggers ^ CurrentChanged);
 
     auto header = view->header();
     header->setSectionsMovable(true);
