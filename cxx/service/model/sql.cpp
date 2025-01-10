@@ -6,7 +6,11 @@
 
 QVariant sql::getValue(QSqlRecord record, const char *name) {
     auto field = record.field(name);
-    return field.isNull() ? QVariant{} : field.value();
+    auto value = field.value();
+    if (field.isNull()) return QVariant{};
+    // fix value comparison for table/tree cell edits
+    if (value.typeId() == QMetaType::QByteArray) return QVariant{value.toString()};
+    return value;
 }
 
 QVariant sql::yesNoValue(QSqlRecord record, const char *name) {

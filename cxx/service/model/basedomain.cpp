@@ -1,20 +1,20 @@
 #include "basedomain.h"
-
 #include <QDate>
 #include <QSqlField>
 
 BaseDomain::BaseDomain() {}
 
-BaseDomain::BaseDomain(QSqlRecord record) {
-    id = record.field("id").value();
-    version = record.field("version").value();
-    changeUser = record.field("change_user").value();
-    changeDate = record.field("change_date").value();
-}
+BaseDomain::BaseDomain(QSqlRecord record)
+    : id{record.field("id").value()}
+    , version{record.field("version").value()}
+    , changeUser{record.field("change_user").value()}
+    , changeDate{record.field("change_date").value()}
+{}
 
 NamedEntity::NamedEntity(QSqlRecord record, const char *nameColumn)
     : BaseDomain{record}
-    , name{record.field(nameColumn).value()} {}
+    , name{record.field(nameColumn).value().toString()}
+{}
 
 NamedEntity::NamedEntity(const QString &name) : BaseDomain{}, name{name} {}
 
