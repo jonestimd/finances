@@ -155,6 +155,11 @@ void EntityView::saveData(QString statusMessage, std::function<void ()> doSave) 
     doSave();
 }
 
+void EntityView::enableUi() {
+    statusBar.clear();
+    itemView->setEnabled(true);
+}
+
 QAction *EntityView::addAction(const QString text) {
     auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this, SLOT(addRow()));
     connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });

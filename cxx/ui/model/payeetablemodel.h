@@ -6,7 +6,6 @@
 #include "podtablemodel.h"
 
 class PayeeTableModel : public PodTableModel<Payee> {
-    DataStore *dataStore;
 public:
     explicit PayeeTableModel(DataStore *dataStore, QObject *parent = nullptr);
 };

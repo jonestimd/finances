@@ -46,6 +46,10 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
 }
 
+void CategoriesWindow::enableUi() {
+    tableSort.enableUi();
+}
+
 void CategoriesWindow::loadCategories() {
     tableSort.loadData(tr(LOADING_CATEGORIES), [this]() { dataStore->loadCategories(this, true); });
 }

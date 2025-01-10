@@ -23,6 +23,8 @@ public:
     AccountsWindow(DataStore *dataStore);
     ~AccountsWindow();
 
+    Q_INVOKABLE void enableUi();
+
 public Q_SLOTS:
     void loadAccounts();
     void saveAccounts();

@@ -52,6 +52,8 @@ public:
     void loadData(QString statusMessage, std::function<void()> doLoad);
     void saveData(QString statusMessage, std::function<void()> doSave);
 
+    void enableUi();
+
 private:
     QAction *addAction(const QString text);
     QAction *deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete = nullptr);

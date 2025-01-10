@@ -47,6 +47,10 @@ AccountsWindow::~AccountsWindow() {
     if (payeesWindow) delete payeesWindow;
 }
 
+void AccountsWindow::enableUi() {
+    tableSort.enableUi();
+}
+
 void AccountsWindow::loadAccounts() {
     tableSort.loadData(tr(LOADING_ACCOUNTS), [this]() { dataStore->loadAccounts(this, true); });
 }

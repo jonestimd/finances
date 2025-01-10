@@ -29,6 +29,10 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     settings::restoreWindowState("companies", this, QSize{400, 500});
 }
 
+void CompaniesWindow::enableUi() {
+    tableSort.enableUi();
+}
+
 void CompaniesWindow::loadCompanies() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
     tableSort.itemView->setEnabled(false); // TODO save/restore selection

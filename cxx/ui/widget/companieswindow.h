@@ -22,6 +22,8 @@ class CompaniesWindow : public QDialog
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
+    Q_INVOKABLE void enableUi();
+
 protected Q_SLOTS:
     void loadCompanies();
     void saveCompanies();

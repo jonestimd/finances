@@ -44,8 +44,7 @@ AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany 
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance, false),
         },
         parent,
-    },
-    dataStore{ds}
+    }
 {}
 
 void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {

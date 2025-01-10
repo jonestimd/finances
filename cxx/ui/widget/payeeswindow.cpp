@@ -30,6 +30,10 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     settings::restoreWindowState("payees", this, QSize{400, 500}, &tableSort);
 }
 
+void PayeesWindow::enableUi() {
+    tableSort.enableUi();
+}
+
 void PayeesWindow::loadPayees() {
     tableSort.loadData(tr(LOADING_PAYEES), [this]() { dataStore->loadPayees(this, true); });
 }

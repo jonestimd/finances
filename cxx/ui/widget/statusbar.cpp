@@ -15,3 +15,8 @@ void StatusBar::removeMessage(QString message) {
         else showMessage(messages.first());
     }
 }
+
+void StatusBar::clear() {
+    messages.clear();
+    clearMessage();
+}

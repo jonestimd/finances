@@ -16,6 +16,8 @@ class PayeesWindow : public QMainWindow {
 public:
     PayeesWindow(DataStore *dataStore);
 
+    Q_INVOKABLE void enableUi();
+
 public Q_SLOTS:
     void loadPayees();
     void savePayees();

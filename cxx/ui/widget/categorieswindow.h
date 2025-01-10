@@ -20,6 +20,8 @@ class CategoriesWindow : public QMainWindow {
 public:
     CategoriesWindow(DataStore *dataStore);
 
+    Q_INVOKABLE void enableUi();
+
 public Q_SLOTS:
     void loadCategories();
     void saveCategories();

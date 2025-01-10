@@ -12,6 +12,7 @@ public:
 
     void addMessage(QString message);
     void removeMessage(QString message);
+    void clear();
 };
 
 #endif // STATUSBAR_H

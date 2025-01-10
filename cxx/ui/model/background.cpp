@@ -7,12 +7,12 @@ bool handleError(QWidget *source, Runnable task) {
         return true;
     } catch(const QString error) {
         dialog::showError(source, error);
+        QMetaObject::invokeMethod(source, "enableUi");
     }
     return false;
 }
 
-void doInBackground(QWidget *source, Runnable task, Runnable onError)
-{
+void doInBackground(QWidget *source, Runnable task, Runnable onError) {
     QThreadPool::globalInstance()->start([=]() {
         auto success = handleError(source, task);
         if (!success && onError) onError();

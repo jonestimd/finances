@@ -11,7 +11,6 @@ class AccountTableModel : public PodTableModel<Account> {
     Q_OBJECT
     using AddCompany = ComboBoxModel::CreateValue;
 
-    DataStore *dataStore;
 public:
     explicit AccountTableModel(DataStore *datastore, QObject *parent, AddCompany addCompany = nullptr);
 
