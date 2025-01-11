@@ -13,6 +13,7 @@ Category::Category(QSqlRecord record) : NamedEntity(record, "code") {
     parentId = sql::getValue(record, "parent_id");
     childIds = mapping::jsonToList(record.field("child_ids").value());
     transactions = sql::getValue(record, "transactions");
+    details = sql::getValue(record, "details");
 }
 
 Category::Category(const QString &name) : NamedEntity{name} {}

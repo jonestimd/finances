@@ -17,5 +17,5 @@ void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *cat
     query.bindValue(":categoryId", newCategoryId);
     query.bindValue(":oldCategoryId", category->id);
     sql::exec(query, "TransactionDetailDao", "setCategory");
-    if (query.numRowsAffected() != category->transactions.toInt()) throw staleDataMessage;
+    if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
 }

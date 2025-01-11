@@ -82,6 +82,14 @@ void DataStore::updatePayees(QWidget *source, QList<Payee *> updates, const QLis
     });
 }
 
+void DataStore::mergePayees(QWidget *source, const Payee *payee, const QVariant destinationId) {
+    doInBackground(source, [this, payee, destinationId] {
+        auto payees = services->payeeService.merge(payee, destinationId, user);
+        payeeStore->update(payees, QList{payee});
+        emit payeesLoaded(payeeStore->ids());
+    });
+}
+
 bool DataStore::loadCategories(QWidget *source, bool reload) {
     return load(source, reload, categoryStore, &services->categoryService, &DataStore::categoriesLoaded);
 }

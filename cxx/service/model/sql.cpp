@@ -24,6 +24,7 @@ void sql::bindList(QSqlQuery &query, const QVariantList &values, const char *nam
 void sql::exec(QSqlQuery &query, const QString &className, const char *queryName) {
     if (!query.exec()) {
         qCritical().noquote().nospace() << className << "." << queryName << ": " << query.lastError().text();
+        qCritical().noquote() << query.executedQuery();
         throw query.lastError().text();
     }
 }

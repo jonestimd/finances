@@ -29,7 +29,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     moveAction->setEnabled(false);
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], moveAction);
 
-    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Into"), tr("ctrl+y", "merge category"), this, SLOT(merge()));
+    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()));
     mergeAction->setEnabled(false);
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[3], mergeAction);
 

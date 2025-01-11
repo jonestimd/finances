@@ -1,11 +1,14 @@
 #include "payeedao.h"
 
 static const auto getPayeesSql = R"(
-select p.*, count(tx.id) transactions
+with summary as (
+    select payee_id, count(*) transactions
+    from tx
+    group by payee_id
+)
+select p.*, s.transactions
 from payee p
-left join tx on p.id = tx.payee_id
-group by p.id
-order by p.name)";
+left join summary s on p.id = s.payee_id)";
 
 static const auto updatePayeeSql = R"(
 update payee
@@ -22,3 +25,4 @@ PayeeDao::PayeeDao()
     : EntityDao<Payee>{getPayeesSql, updatePayeeSql, insertPayeeSql, deletePayeeSql, "PayeeDao",
                        QObject::tr("Payees have been modified.  Please reload and try again.")}
 {}
+

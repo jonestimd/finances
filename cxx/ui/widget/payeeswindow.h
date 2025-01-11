@@ -12,6 +12,7 @@ class PayeesWindow : public QMainWindow {
     DataStore *dataStore;
     PayeeTableModel model;
     EntityTable tableSort;
+    QAction *mergeAction;
 
 public:
     PayeesWindow(DataStore *dataStore);
@@ -22,6 +23,8 @@ public Q_SLOTS:
     void loadPayees();
     void savePayees();
     void setPayees(const QList<qlonglong> payeeIds);
+    void merge();
+    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
 
     // QWidget interface
 protected:

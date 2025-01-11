@@ -31,10 +31,11 @@ QList<const Category*> CategoryService::setParent(const Category *category, cons
 QList<const Category *> CategoryService::merge(const Category *category, const QVariant destinationId, const QString &user) {
     return doInTransaction([=, this](QSqlDatabase &db) {
         transactionDetailDao.replaceCategory(db, category, destinationId, user);
-        auto updatedCategories = dao.merge(db, category, destinationId, user);
-        if (!category->parentId.isNull()) {
-            updatedCategories += categoryDao.get(db, QVariantList{category->parentId});
-        }
-        return updatedCategories;
+        dao.moveChildren(db, category, destinationId, user);
+        dao.remove(db, QList{category});
+        QVariantList ids{destinationId};
+        ids.append(category->childIds);
+        if (!category->parentId.isNull()) ids.append(category->parentId);
+        return dao.get(db, ids);
     });
 }

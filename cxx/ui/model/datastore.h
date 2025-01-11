@@ -43,6 +43,7 @@ public:
     bool loadPayees(QWidget *source, bool reload = false);
     const EntityStore<const Payee*> *payees() const;
     void updatePayees(QWidget *source, QList<Payee*> updates, const QList<Payee*> adds, const QList<const Payee*> deletes);
+    void mergePayees(QWidget *source, const Payee *payee, const QVariant destinationId);
 
     bool loadCategories(QWidget *source, bool reload = false);
     const CategoryStore *categories() const;

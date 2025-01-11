@@ -1,9 +1,11 @@
 #include "payeeswindow.h"
 #include "dialog.h"
 #include "settings.h"
+#include "entityselectiondialog.h"
 #include <QtSql>
 #include <QtWidgets>
 #include <QtConcurrent>
+#include <ui/model/comboboxmodel.h>
 
 #define LOADING_PAYEES "Loading payees..."
 #define SAVING_PAYEES "Saving payees..."
@@ -20,7 +22,13 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 
     addToolBar(&tableSort.toolbar);
 
+    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Payees"), tr("ctrl+y", "merge payee"), this, SLOT(merge()));
+    mergeAction->setEnabled(false);
+    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], mergeAction);
+
     connect(dataStore, SIGNAL(payeesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
+    connect(tableSort.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
     if (dataStore->loadPayees(this)) model.setRows(dataStore->payees()->ids());
     else tableSort.statusBar.addMessage(tr(LOADING_PAYEES));
@@ -49,6 +57,31 @@ void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
     tableSort.statusBar.removeMessage(tr(LOADING_PAYEES));
     tableSort.statusBar.removeMessage(tr(SAVING_PAYEES));
     tableSort.itemView->setEnabled(true);
+}
+
+void PayeesWindow::merge() {
+    auto payee = model.getRow(tableSort.selectedIndex());
+    auto store = dataStore->payees();
+    QList<const NamedEntity*> options;
+    for (auto id : store->ids()) {
+        auto option = store->value(id);
+        if (option != payee) options.append(option);
+    }
+    auto model = new ComboBoxModel(options, NamedEntity::getName);
+    EntitySelectionDialog dialog(this, model, tr("Merge Payees"), tr("Select destination payee:"));
+    auto result = dialog.exec();
+    if (result == QDialog::Accepted) {
+        auto selectedId = dialog.selectedId();
+        if (!selectedId.isNull()) {
+            tableSort.saveData(tr(SAVING_PAYEES), [this, payee, selectedId]() {
+                dataStore->mergePayees(this, payee, selectedId);
+            });
+        }
+    }
+}
+
+void PayeesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+    mergeAction->setEnabled(tableSort.selectedIndex().isValid());
 }
 
 void PayeesWindow::closeEvent(QCloseEvent *event) {

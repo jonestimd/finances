@@ -8,6 +8,7 @@
 template<class Entity>
 class EntityDao {
     const char *const getAllSql;
+    const QString getByIdsSql;
     const char *const updateSql;
     const char *const insertSql;
     const char *const deleteSql;
@@ -44,13 +45,23 @@ protected:
         , updateSql{updateSql}
         , insertSql{insertSql}
         , deleteSql{deleteSql}
+        , getByIdsSql{QString(getAllSql) + "\nwhere id member of (:ids)"}
         , className{className}
         , staleDataMessage{staleDataMessage} {}
 
 public:
     virtual QList<const Entity*> getAll(QSqlDatabase &db) {
-        QSqlQuery query(getAllSql, db);
+        QSqlQuery query(db);
+        query.prepare(getAllSql);
         exec(query, "getAll");
+        return load(query);
+    }
+
+    QList<const Entity*> get(QSqlDatabase &db, QVariantList ids) {
+        QSqlQuery query(db);
+        query.prepare(getByIdsSql);
+        sql::bindList(query, ids, ":ids");
+        exec(query, "getByIds");
         return load(query);
     }
 
