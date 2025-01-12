@@ -18,6 +18,7 @@ ConnectionPool::ConnectionPool(
     const char *const password)
     : dbType{dbType}, host{host}, port{port}, schema{schema}, user{user}, password{password}
     , name{makeName(dbType, host, schema)}
+    , displayName{QString("%1:%2").arg(host, schema)}
 {}
 
 QSqlDatabase ConnectionPool::acquire() {

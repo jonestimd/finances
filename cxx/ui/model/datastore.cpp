@@ -17,6 +17,10 @@ DataStore::~DataStore() {
     delete categoryStore;
 }
 
+const QString DataStore::connectionName() const {
+    return services->connectionName();
+}
+
 bool DataStore::loadAccounts(QWidget *source, bool reload) {
     return load(source, reload, accountStore, &services->accountService, &DataStore::accountsLoaded);
 }

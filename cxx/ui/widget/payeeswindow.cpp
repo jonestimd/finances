@@ -18,7 +18,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 {
     setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
-    setWindowTitle(tr("Finances - Payees[*]"));
+    setWindowTitle(tr("%1 - Payees[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
 

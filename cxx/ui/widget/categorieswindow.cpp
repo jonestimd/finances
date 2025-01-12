@@ -21,7 +21,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 {
     setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
-    setWindowTitle(tr("Finances - Categories[*]"));
+    setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
     // TODO disable with pending changes

@@ -25,7 +25,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 {
     setCentralWidget(tableSort.itemView);
     setStatusBar(&tableSort.statusBar);
-    setWindowTitle(tr("Finances - Accounts[*]"));
+    setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
     // QMetaObject::connectSlotsByName(this);
 
     addToolBar(&tableSort.toolbar);

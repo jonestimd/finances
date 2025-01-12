@@ -26,6 +26,8 @@ class ConnectionPool {
     QSqlDatabase acquire();
 
 public:
+    const QString displayName;
+
     ConnectionPool(
         const char *const dbType,
         const char *const host,

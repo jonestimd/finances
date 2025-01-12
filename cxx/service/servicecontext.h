@@ -18,6 +18,8 @@ public:
     CategoryService categoryService;
 
     ServiceContext(ConnectionPool *pool);
+
+    const QString connectionName() const;
 };
 
 #endif // SERVICECONTEXT_H

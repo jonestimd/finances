@@ -31,6 +31,8 @@ public:
     DataStore(ServiceContext *services);
     ~DataStore();
 
+    const QString connectionName() const;
+
     bool loadAccounts(QWidget *source, bool reload = false);
     const EntityStore<const Account*> *accounts() const;
     void updateAccounts(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
