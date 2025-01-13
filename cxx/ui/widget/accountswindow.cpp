@@ -45,6 +45,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 AccountsWindow::~AccountsWindow() {
     if (companiesDialog) delete companiesDialog;
     if (payeesWindow) delete payeesWindow;
+    if (categoriesWindow) delete categoriesWindow;
 }
 
 void AccountsWindow::enableUi() {
