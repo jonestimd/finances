@@ -100,7 +100,7 @@ public:
     }
 
     ~PodItemModel() {
-        for (auto column : columns) delete column;
+        qDeleteAll(columns);
     }
 
     virtual const Row *getRow(const QModelIndex &index) const = 0;

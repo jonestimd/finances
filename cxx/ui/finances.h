@@ -73,6 +73,7 @@ namespace finances {
         QSettings *const settings;
 
         App(int &argc, char **argv);
+        ~App();
 
     public slots:
         void updateStyleSheet(Qt::ColorScheme scheme);

@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
         [](const EnumValue *value) -> QString { return value ? value->name : ""; }
     );
 
-    QThreadPool::globalInstance()->setMaxThreadCount(5);
     ConnectionPool connectionPool("QMYSQL", "hydra", 3306, DB_NAME, DB_USER, DB_USER);
     ServiceContext serviceContext(&connectionPool);
     DataStore dataStore(&serviceContext);

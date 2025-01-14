@@ -6,7 +6,9 @@
 #include <QPainter>
 #include <QPalette>
 #include <QStyleHints>
+#include <QThreadPool>
 #include <QTranslator>
+#include <QtSql/QSqlDatabase>
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -127,6 +129,12 @@ namespace finances {
         connect(styleHints(), SIGNAL(colorSchemeChanged(Qt::ColorScheme)), this, SLOT(updateStyleSheet(Qt::ColorScheme)));
         QTranslator translator;
         if (translator.load(QLocale::system(), "finances", "_", ":/i18n")) installTranslator(&translator);
+
+        QThreadPool::globalInstance()->setMaxThreadCount(5);
+    }
+
+    App::~App() {
+        QThreadPool::globalInstance()->waitForDone();
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {

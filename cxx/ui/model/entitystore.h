@@ -16,6 +16,10 @@ class EntityStore
 
 public:
     EntityStore() {};
+    ~EntityStore() {
+        qDeleteAll(byId);
+        byId.clear();
+    }
 
     const QList<qlonglong> ids() const {
         return byId.keys();
