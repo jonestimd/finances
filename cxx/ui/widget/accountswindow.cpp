@@ -14,17 +14,16 @@ using namespace std::placeholders;
 using namespace finances;
 
 AccountsWindow::AccountsWindow(DataStore *dataStore)
-    : QMainWindow()
+    : StatusWindow()
     , dataStore{dataStore}
     , model(dataStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
-    , tableSort{this, &model, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
+    , tableSort{this, &model, &statusBar, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
         iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
     }}
 {
     setCentralWidget(tableSort.itemView);
-    setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
     // QMetaObject::connectSlotsByName(this);
 
@@ -34,8 +33,8 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     connect(dataStore, SIGNAL(accountsLoaded(QList<qlonglong>)), this, SLOT(setAccounts(QList<qlonglong>)));
 
     if (dataStore->loadAccounts(this)) model.setRows(dataStore->accounts()->ids());
-    else tableSort.statusBar.addMessage(tr(LOADING_ACCOUNTS));
-    if (!dataStore->loadCompanies(this)) tableSort.statusBar.addMessage(tr(LOADING_COMPANIES));
+    else statusBar.addMessage(tr(LOADING_ACCOUNTS));
+    if (!dataStore->loadCompanies(this)) statusBar.addMessage(tr(LOADING_COMPANIES));
 
     tableSort.enableColumnResize();
 
@@ -46,10 +45,6 @@ AccountsWindow::~AccountsWindow() {
     if (companiesDialog) delete companiesDialog;
     if (payeesWindow) delete payeesWindow;
     if (categoriesWindow) delete categoriesWindow;
-}
-
-void AccountsWindow::enableUi() {
-    tableSort.enableUi();
 }
 
 void AccountsWindow::loadAccounts() {
@@ -63,14 +58,14 @@ void AccountsWindow::saveAccounts() {
 }
 
 void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
-    tableSort.statusBar.removeMessage(tr(LOADING_COMPANIES));
+    statusBar.removeMessage(tr(LOADING_COMPANIES));
     model.companiesLoaded(companyIds);
 }
 
 void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {
     model.setRows(accountIds);
-    tableSort.statusBar.removeMessage(tr(LOADING_ACCOUNTS));
-    tableSort.statusBar.removeMessage(tr(SAVING_ACCOUNTS));
+    statusBar.removeMessage(tr(LOADING_ACCOUNTS));
+    statusBar.removeMessage(tr(SAVING_ACCOUNTS));
     tableSort.itemView->setEnabled(true);
 }
 
@@ -103,7 +98,7 @@ void AccountsWindow::keyPressEvent(QKeyEvent *event) {
 
 void AccountsWindow::addCompany(const QString &name) {
     auto index = tableSort.selectedIndex();
-    tableSort.statusBar.addMessage(tr(SAVING_COMPANY));
+    statusBar.addMessage(tr(SAVING_COMPANY));
     tableSort.itemView->setEnabled(false);
     dataStore->addCompany(this, name, "newCompany");
 }
@@ -113,7 +108,7 @@ void AccountsWindow::newCompany(const Company *company) {
         auto index = tableSort.selectedIndex();
         model.setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
     }
-    tableSort.statusBar.removeMessage(tr(SAVING_COMPANY));
+    statusBar.removeMessage(tr(SAVING_COMPANY));
     tableSort.itemView->setEnabled(true);
     tableSort.itemView->setFocus(Qt::ActiveWindowFocusReason);
 }

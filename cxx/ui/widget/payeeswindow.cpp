@@ -11,13 +11,12 @@
 #define SAVING_PAYEES "Saving payees..."
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
-    : QMainWindow()
+    : StatusWindow()
     , dataStore{dataStore}
     , model{dataStore, this}
-    , tableSort{this, &model, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
+    , tableSort{this, &model, &statusBar, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
 {
     setCentralWidget(tableSort.itemView);
-    setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("%1 - Payees[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
@@ -31,15 +30,11 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
     if (dataStore->loadPayees(this)) model.setRows(dataStore->payees()->ids());
-    else tableSort.statusBar.addMessage(tr(LOADING_PAYEES));
+    else statusBar.addMessage(tr(LOADING_PAYEES));
 
     tableSort.setColumnResize({0});
 
     settings::restoreWindowState("payees", this, QSize{400, 500}, &tableSort);
-}
-
-void PayeesWindow::enableUi() {
-    tableSort.enableUi();
 }
 
 void PayeesWindow::loadPayees() {
@@ -54,8 +49,8 @@ void PayeesWindow::savePayees() {
 
 void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
     model.setRows(payeeIds);
-    tableSort.statusBar.removeMessage(tr(LOADING_PAYEES));
-    tableSort.statusBar.removeMessage(tr(SAVING_PAYEES));
+    statusBar.removeMessage(tr(LOADING_PAYEES));
+    statusBar.removeMessage(tr(SAVING_PAYEES));
     tableSort.itemView->setEnabled(true);
 }
 

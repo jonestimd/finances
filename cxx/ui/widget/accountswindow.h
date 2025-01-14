@@ -7,10 +7,11 @@
 #include "companieswindow.h"
 #include "entityview.h"
 #include "payeeswindow.h"
+#include "statuswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
-class AccountsWindow : public QMainWindow {
+class AccountsWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     AccountTableModel model;
@@ -22,8 +23,6 @@ class AccountsWindow : public QMainWindow {
 public:
     AccountsWindow(DataStore *dataStore);
     ~AccountsWindow();
-
-    Q_INVOKABLE void enableUi();
 
 public Q_SLOTS:
     void loadAccounts();

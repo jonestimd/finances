@@ -4,10 +4,11 @@
 #include "../model/datastore.h"
 #include "../model/payeetablemodel.h"
 #include "entityview.h"
+#include "statuswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
-class PayeesWindow : public QMainWindow {
+class PayeesWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     PayeeTableModel model;
@@ -16,8 +17,6 @@ class PayeesWindow : public QMainWindow {
 
 public:
     PayeesWindow(DataStore *dataStore);
-
-    Q_INVOKABLE void enableUi();
 
 public Q_SLOTS:
     void loadPayees();

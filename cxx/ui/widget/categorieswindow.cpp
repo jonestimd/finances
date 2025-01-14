@@ -11,16 +11,15 @@
 #define CATEGORY_SETTINGS "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : QMainWindow()
+    : StatusWindow()
     , dataStore{dataStore}
     , model{dataStore, this}
-    , tableSort{this, &model, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
+    , tableSort{this, &model, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
     , getName{[dataStore](const NamedEntity* entity) {
         return dataStore->categories()->displayName(entity->id.toLongLong());
     }}
 {
     setCentralWidget(tableSort.itemView);
-    setStatusBar(&tableSort.statusBar);
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
@@ -39,15 +38,11 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     connect(dataStore, SIGNAL(categoriesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
     if (dataStore->loadCategories(this)) model.setRows(dataStore->categories()->ids());
-    else tableSort.statusBar.addMessage(tr(LOADING_CATEGORIES));
+    else statusBar.addMessage(tr(LOADING_CATEGORIES));
 
     tableSort.enableColumnResize();
 
     settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
-}
-
-void CategoriesWindow::enableUi() {
-    tableSort.enableUi();
 }
 
 void CategoriesWindow::loadCategories() {
@@ -62,8 +57,8 @@ void CategoriesWindow::saveCategories() {
 
 void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
     model.setRows(categoryIds);
-    tableSort.statusBar.removeMessage(tr(LOADING_CATEGORIES));
-    tableSort.statusBar.removeMessage(tr(SAVING_CATEGORIES));
+    statusBar.removeMessage(tr(LOADING_CATEGORIES));
+    statusBar.removeMessage(tr(SAVING_CATEGORIES));
     tableSort.itemView->setEnabled(true);
 }
 

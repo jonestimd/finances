@@ -13,4 +13,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/statusbar.h ${CMAKE_CURRENT_LIST_DIR}/statusbar.cpp
     ${CMAKE_CURRENT_LIST_DIR}/relationeditor.h ${CMAKE_CURRENT_LIST_DIR}/relationeditor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/settings.h ${CMAKE_CURRENT_LIST_DIR}/settings.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/statuswindow.h ${CMAKE_CURRENT_LIST_DIR}/statuswindow.cpp
 )

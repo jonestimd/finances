@@ -9,24 +9,29 @@
 #include <QTableView>
 #include <QTreeView>
 
+// TODO - break up?
+//   - save/restore
+//   - actions (toolbar?)
 class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
 protected:
+    StatusBar *statusBar;
+
     virtual QHeaderView *viewHeader() const = 0;
 
 public:
-    AdapterItemModel *const model;
+    AdapterItemModel *const model; // TODO move to window save/restore class?
     QAbstractItemView *const itemView;
     QSortFilterProxyModel sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
-    StatusBar statusBar;
     QAction *const saveAction;
     const QString defaultSort;
 
-    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, const QString filterLabel, const QString defaultSort,
+    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, StatusBar *statusBar,
+               const QString filterLabel, const QString defaultSort,
                const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
 
     int columnIndex(const QString name) const;
@@ -69,7 +74,7 @@ public Q_SLOTS:
 
 class EntityTable : public EntityView {
 public:
-    EntityTable(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+    EntityTable(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
                 const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
 
     ~EntityTable();
@@ -81,7 +86,7 @@ protected:
 
 class EntityTree : public EntityView {
 public:
-    EntityTree(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+    EntityTree(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
                 const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
 
     ~EntityTree();

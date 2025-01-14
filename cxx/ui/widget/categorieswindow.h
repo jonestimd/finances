@@ -4,11 +4,12 @@
 #include "../model/datastore.h"
 #include "../model/categorytablemodel.h"
 #include "entityview.h"
+#include "statuswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 #include <ui/model/comboboxmodel.h>
 
-class CategoriesWindow : public QMainWindow {
+class CategoriesWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     CategoryTableModel model;
@@ -19,8 +20,6 @@ class CategoriesWindow : public QMainWindow {
 
 public:
     CategoriesWindow(DataStore *dataStore);
-
-    Q_INVOKABLE void enableUi();
 
 public Q_SLOTS:
     void loadCategories();

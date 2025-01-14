@@ -6,8 +6,9 @@
 #include <QTableWidget>
 #include <QTimer>
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, const QString entityName, const QString defaultSort,
-                       const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, StatusBar *statusBar,
+            const QString entityName, const QString defaultSort,
+            const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
     : QObject(window)
     , window{window}
     , model{model}
@@ -16,8 +17,8 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), &sortModel, window)}
     , defaultSort{defaultSort}
     , toolbar{window}
-    , statusBar{window}
-    , itemDelegate{window, &statusBar}
+    , statusBar{statusBar}
+    , itemDelegate{window, statusBar}
     , saveAction{finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, window, saveSlot, false)}
 {
     sortModel.setSourceModel(model);
@@ -145,18 +146,18 @@ void EntityView::startEdit(int rowIndex) {
 void EntityView::loadData(QString statusMessage, std::function<void ()> doLoad) {
     if (!dialog::confirmDiscardChanges(window, model)) return;
     itemView->setEnabled(false); // TODO save/restore selection
-    statusBar.addMessage(statusMessage);
+    statusBar->addMessage(statusMessage);
     doLoad();
 }
 
 void EntityView::saveData(QString statusMessage, std::function<void ()> doSave) {
-    statusBar.addMessage(statusMessage);
+    statusBar->addMessage(statusMessage);
     itemView->setEnabled(false);
     doSave();
 }
 
 void EntityView::enableUi() {
-    statusBar.clear();
+    statusBar->clear();
     itemView->setEnabled(true);
 }
 
@@ -209,13 +210,13 @@ void EntityView::showValidation(const QModelIndex &index) {
     // make sure index is in selection
     if (!itemView->selectionModel()->hasSelection()) itemView->selectionModel()->select(index, QItemSelectionModel::Select);
     auto message = index.data(finances::ValidationMessageRole);
-    if (!message.isNull()) statusBar.showMessage(message.toString());
-    else statusBar.clearMessage();
+    if (!message.isNull()) statusBar->showMessage(message.toString());
+    else statusBar->clearMessage();
 }
 
-EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
                          const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, new QTableView(), filterLabel, defaultSort, saveSlot, loadSlot, actions)
+    : EntityView(window, model, new QTableView(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
 {
     auto view = tableView();
     view->resizeColumnsToContents();
@@ -240,9 +241,9 @@ QHeaderView *EntityTable::viewHeader() const {
     return tableView()->horizontalHeader();
 }
 
-EntityTree::EntityTree(QWidget *window, AdapterItemModel *model, const QString filterLabel, const QString defaultSort,
+EntityTree::EntityTree(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
                          const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, new QTreeView(), filterLabel, defaultSort, saveSlot, loadSlot, actions)
+    : EntityView(window, model, new QTreeView(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
 {
     using enum QAbstractItemView::EditTrigger;
     auto view = treeView();

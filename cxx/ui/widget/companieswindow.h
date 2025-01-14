@@ -15,6 +15,7 @@ class CompaniesWindow : public QDialog
 {
     Q_OBJECT
     QVBoxLayout layout;
+    StatusBar statusBar{};
     DataStore *dataStore;
     CompanyTableModel model;
     EntityTable tableSort;
