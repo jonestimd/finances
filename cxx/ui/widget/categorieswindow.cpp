@@ -14,12 +14,12 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     : StatusWindow()
     , dataStore{dataStore}
     , model{dataStore, this}
-    , tableSort{this, &model, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
+    , tableSort{this, &model, itemView, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
     , getName{[dataStore](const NamedEntity* entity) {
         return dataStore->categories()->displayName(entity->id.toLongLong());
     }}
 {
-    setCentralWidget(tableSort.itemView);
+    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
@@ -32,7 +32,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     mergeAction->setEnabled(false);
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[3], mergeAction);
 
-    connect(tableSort.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
     connect(dataStore, SIGNAL(categoriesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
@@ -59,7 +59,7 @@ void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
     model.setRows(categoryIds);
     statusBar.removeMessage(tr(LOADING_CATEGORIES));
     statusBar.removeMessage(tr(SAVING_CATEGORIES));
-    tableSort.itemView->setEnabled(true);
+    itemView->setEnabled(true);
 }
 
 void CategoriesWindow::reparent() {

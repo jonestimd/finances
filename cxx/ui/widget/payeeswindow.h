@@ -12,7 +12,8 @@ class PayeesWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     PayeeTableModel model;
-    EntityTable tableSort;
+    QTableView *itemView{new QTableView(this)};
+    EntityView tableSort;
     QAction *mergeAction;
 
 public:

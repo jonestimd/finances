@@ -18,7 +18,8 @@ class CompaniesWindow : public QDialog
     StatusBar statusBar{};
     DataStore *dataStore;
     CompanyTableModel model;
-    EntityTable tableSort;
+    QTableView *itemView{new QTableView(this)};
+    EntityView tableSort;
 
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);

@@ -17,13 +17,13 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     : StatusWindow()
     , dataStore{dataStore}
     , model(dataStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
-    , tableSort{this, &model, &statusBar, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
+    , tableSort{this, &model, itemView, &statusBar, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
         iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
     }}
 {
-    setCentralWidget(tableSort.itemView);
+    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
     // QMetaObject::connectSlotsByName(this);
 
@@ -66,7 +66,7 @@ void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {
     model.setRows(accountIds);
     statusBar.removeMessage(tr(LOADING_ACCOUNTS));
     statusBar.removeMessage(tr(SAVING_ACCOUNTS));
-    tableSort.itemView->setEnabled(true);
+    itemView->setEnabled(true);
 }
 
 void AccountsWindow::showCompanies() {
@@ -99,7 +99,7 @@ void AccountsWindow::keyPressEvent(QKeyEvent *event) {
 void AccountsWindow::addCompany(const QString &name) {
     auto index = tableSort.selectedIndex();
     statusBar.addMessage(tr(SAVING_COMPANY));
-    tableSort.itemView->setEnabled(false);
+    itemView->setEnabled(false);
     dataStore->addCompany(this, name, "newCompany");
 }
 
@@ -109,6 +109,6 @@ void AccountsWindow::newCompany(const Company *company) {
         model.setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
     }
     statusBar.removeMessage(tr(SAVING_COMPANY));
-    tableSort.itemView->setEnabled(true);
-    tableSort.itemView->setFocus(Qt::ActiveWindowFocusReason);
+    itemView->setEnabled(true);
+    itemView->setFocus(Qt::ActiveWindowFocusReason);
 }

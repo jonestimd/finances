@@ -16,23 +16,29 @@ class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
-protected:
     StatusBar *statusBar;
-
-    virtual QHeaderView *viewHeader() const = 0;
-
-public:
+    QHeaderView *viewHeader;
     AdapterItemModel *const model; // TODO move to window save/restore class?
     QAbstractItemView *const itemView;
+
+    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
+               StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
+               const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
+
+public:
     QSortFilterProxyModel sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
     QAction *const saveAction;
     const QString defaultSort;
 
-    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, StatusBar *statusBar,
+    EntityView(QWidget *window, AdapterItemModel *model, QTableView *itemView, StatusBar *statusBar,
                const QString filterLabel, const QString defaultSort,
-               const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
+               const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
+
+    EntityView(QWidget *window, AdapterItemModel *model, QTreeView *itemView, StatusBar *statusBar,
+               const QString filterLabel, const QString defaultSort,
+               const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
 
     int columnIndex(const QString name) const;
 
@@ -70,30 +76,6 @@ public Q_SLOTS:
     void addRow();
     void queueDeletes();
     void undoChanges();
-};
-
-class EntityTable : public EntityView {
-public:
-    EntityTable(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
-                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
-
-    ~EntityTable();
-
-protected:
-    inline QTableView *tableView() const;
-    virtual QHeaderView *viewHeader() const override;
-};
-
-class EntityTree : public EntityView {
-public:
-    EntityTree(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
-                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
-
-    ~EntityTree();
-
-protected:
-    inline QTreeView *treeView() const;
-    virtual QHeaderView *viewHeader() const override;
 };
 
 #endif // ENTITY_VIEW_H

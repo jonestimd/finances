@@ -12,14 +12,14 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , layout{this}
     , dataStore{dataStore}
     , model{dataStore->companies(), this}
-    , tableSort{this, &model, &statusBar, tr("Company"), tr("Name"), SLOT(saveCompanies()), SLOT(loadCompanies())}
+    , tableSort{this, &model, itemView, &statusBar, tr("Company"), tr("Name"), SLOT(saveCompanies()), SLOT(loadCompanies())}
 {
     setWindowTitle(tr("Companies[*]"));
 
     connect(dataStore, SIGNAL(companiesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
 
     layout.addWidget(&tableSort.toolbar);
-    layout.addWidget(tableSort.itemView);
+    layout.addWidget(itemView);
     layout.addWidget(&statusBar);
     layout.setSpacing(0);
     layout.setContentsMargins(0, 0, 0, 0);
@@ -35,21 +35,21 @@ void CompaniesWindow::enableUi() {
 
 void CompaniesWindow::loadCompanies() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
-    tableSort.itemView->setEnabled(false); // TODO save/restore selection
+    itemView->setEnabled(false); // TODO save/restore selection
     statusBar.showMessage(tr("Loading companies..."));
     dataStore->loadCompanies(this, true);
 }
 
 void CompaniesWindow::saveCompanies() {
     statusBar.showMessage(tr("Saving companies..."));
-    tableSort.itemView->setEnabled(false);
+    itemView->setEnabled(false);
     dataStore->updateCompanies(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
     model.setRows(companyIds);
     statusBar.showMessage(tr("Done loading"), 1500);
-    tableSort.itemView->setEnabled(true);
+    itemView->setEnabled(true);
 }
 
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {

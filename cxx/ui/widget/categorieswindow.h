@@ -13,7 +13,8 @@ class CategoriesWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     CategoryTableModel model;
-    EntityTree tableSort;
+    QTreeView *itemView{new QTreeView(this)};
+    EntityView tableSort;
     QAction *moveAction;
     QAction *mergeAction;
     ComboBoxModel::GetName getName;

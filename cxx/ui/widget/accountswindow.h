@@ -15,7 +15,8 @@ class AccountsWindow : public StatusWindow {
     Q_OBJECT
     DataStore *dataStore;
     AccountTableModel model;
-    EntityTable tableSort;
+    QTableView *itemView{new QTableView(this)};
+    EntityView tableSort;
     CompaniesWindow *companiesDialog{};
     PayeesWindow *payeesWindow{};
     CategoriesWindow *categoriesWindow{};

@@ -6,14 +6,15 @@
 #include <QTableWidget>
 #include <QTimer>
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, StatusBar *statusBar,
-            const QString entityName, const QString defaultSort,
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
+            StatusBar *statusBar, const QString entityName, const QString defaultSort,
             const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
     : QObject(window)
     , window{window}
     , model{model}
     , sortModel{window}
     , itemView{itemView}
+    , viewHeader{viewHeader}
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), &sortModel, window)}
     , defaultSort{defaultSort}
     , toolbar{window}
@@ -67,14 +68,13 @@ QModelIndex EntityView::selectedIndex() {
 }
 
 void EntityView::enableColumnResize() {
-    viewHeader()->setStretchLastSection(true);
+    viewHeader->setStretchLastSection(true);
 }
 
 void EntityView::setColumnResize(const std::vector<int> stretchColumns) {
-    auto header = viewHeader();
-    header->setSectionResizeMode(QHeaderView::ResizeToContents);
+    viewHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
     for (int i : stretchColumns) {
-        header->setSectionResizeMode(i, QHeaderView::Stretch);
+        viewHeader->setSectionResizeMode(i, QHeaderView::Stretch);
     }
 }
 
@@ -87,42 +87,39 @@ bool EntityView::focusFilter(QKeyEvent *event) {
 }
 
 void EntityView::saveSort(QSettings *settings) {
-    auto header = viewHeader();
-    if (header->sortIndicatorSection() >= 0) {
-        settings->setValue("sort.column", model->headerData(header->sortIndicatorSection(), Qt::Horizontal));
-        settings->setValue("sort.order", header->sortIndicatorOrder());
+    if (viewHeader->sortIndicatorSection() >= 0) {
+        settings->setValue("sort.column", model->headerData(viewHeader->sortIndicatorSection(), Qt::Horizontal));
+        settings->setValue("sort.order", viewHeader->sortIndicatorOrder());
     }
 }
 
 void EntityView::saveSizes(QString group, QSettings *settings) {
-    auto header = viewHeader();
     settings->beginGroup(QString(group).append(".columns"));
-    for (int section = 0; section < header->count(); ++section) {
+    for (int section = 0; section < viewHeader->count(); ++section) {
         auto name = model->headerData(section, Qt::Horizontal).toString();
-        auto width = header->sectionSize(section);
+        auto width = viewHeader->sectionSize(section);
         settings->setValue(name + ".width", width);
-        settings->setValue(name + ".pos", header->visualIndex(section));
+        settings->setValue(name + ".pos", viewHeader->visualIndex(section));
     }
     settings->endGroup();
 }
 
 void EntityView::restore(QString group, QSettings *settings) {
     auto model = itemView->model();
-    auto header = viewHeader();
     auto sortColumn = settings->value(group + "/sort.column", defaultSort).toString();
     if (!sortColumn.isEmpty()) {
         auto sortOrder = settings->value(group + "/sort.order", 0).toInt();
         auto index = columnIndex(sortColumn);
-        header->setSortIndicator(index, static_cast<Qt::SortOrder>(sortOrder));
+        viewHeader->setSortIndicator(index, static_cast<Qt::SortOrder>(sortOrder));
     }
-    for (int section = 0; section < header->count(); ++section) {
+    for (int section = 0; section < viewHeader->count(); ++section) {
         bool ok;
         auto name = model->headerData(section, Qt::Horizontal, Qt::DisplayRole).toString();
         QString column = group + ".columns/" + name;
         auto width = settings->value(column + ".width").toInt(&ok);
-        if (ok) header->resizeSection(section, width);
+        if (ok) viewHeader->resizeSection(section, width);
         auto pos = settings->value(column + ".pos").toInt(&ok);
-        if (ok) header->moveSection(header->visualIndex(section), pos);
+        if (ok) viewHeader->moveSection(viewHeader->visualIndex(section), pos);
     }
 }
 
@@ -214,57 +211,29 @@ void EntityView::showValidation(const QModelIndex &index) {
     else statusBar->clearMessage();
 }
 
-EntityTable::EntityTable(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
-                         const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, new QTableView(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, StatusBar *statusBar, const QString filterLabel,
+                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
+    : EntityView(window, model, view, view->horizontalHeader(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
 {
-    auto view = tableView();
     view->resizeColumnsToContents();
     view->setSortingEnabled(true);
     // view->verticalHeader()->setDefaultSectionSize(5); // minimize row height
 
-    auto header = view->horizontalHeader();
-    header->setSectionsMovable(true);
-    header->setSortIndicatorShown(true);
-    header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
+    viewHeader->setSectionsMovable(true);
+    viewHeader->setSortIndicatorShown(true);
+    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 }
 
-EntityTable::~EntityTable() {
-    delete itemView;
-}
-
-QTableView *EntityTable::tableView() const {
-    return static_cast<QTableView*>(itemView);
-}
-
-QHeaderView *EntityTable::viewHeader() const {
-    return tableView()->horizontalHeader();
-}
-
-EntityTree::EntityTree(QWidget *window, AdapterItemModel *model, StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
-                         const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, new QTreeView(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTreeView *view, StatusBar *statusBar, const QString filterLabel,
+                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
+    : EntityView(window, model, view, view->header(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
 {
     using enum QAbstractItemView::EditTrigger;
-    auto view = treeView();
     view->setSortingEnabled(true);
     view->setSelectionBehavior(QAbstractItemView::SelectItems);
     view->setEditTriggers(AllEditTriggers ^ CurrentChanged);
 
-    auto header = view->header();
-    header->setSectionsMovable(true);
-    header->setSortIndicatorShown(true);
-    header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
-}
-
-EntityTree::~EntityTree() {
-    delete itemView;
-}
-
-QTreeView *EntityTree::treeView() const {
-    return static_cast<QTreeView*>(itemView);
-}
-
-QHeaderView *EntityTree::viewHeader() const {
-    return treeView()->header();
+    viewHeader->setSectionsMovable(true);
+    viewHeader->setSortIndicatorShown(true);
+    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 }

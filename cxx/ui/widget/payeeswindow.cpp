@@ -14,9 +14,9 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     : StatusWindow()
     , dataStore{dataStore}
     , model{dataStore, this}
-    , tableSort{this, &model, &statusBar, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
+    , tableSort{this, &model, itemView, &statusBar, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
 {
-    setCentralWidget(tableSort.itemView);
+    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Payees[*]").arg(dataStore->connectionName()));
 
     addToolBar(&tableSort.toolbar);
@@ -26,7 +26,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], mergeAction);
 
     connect(dataStore, SIGNAL(payeesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
-    connect(tableSort.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
     if (dataStore->loadPayees(this)) model.setRows(dataStore->payees()->ids());
@@ -51,7 +51,7 @@ void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
     model.setRows(payeeIds);
     statusBar.removeMessage(tr(LOADING_PAYEES));
     statusBar.removeMessage(tr(SAVING_PAYEES));
-    tableSort.itemView->setEnabled(true);
+    itemView->setEnabled(true);
 }
 
 void PayeesWindow::merge() {
