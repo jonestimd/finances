@@ -11,7 +11,7 @@
 
 class CategoriesWindow : public StatusWindow {
     Q_OBJECT
-    DataStore *dataStore;
+    CategoryStore *store;
     CategoryTableModel model;
     QTreeView *itemView{new QTreeView(this)};
     EntityView tableSort;

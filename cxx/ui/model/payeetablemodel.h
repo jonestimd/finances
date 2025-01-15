@@ -1,13 +1,13 @@
 #ifndef PAYEETABLEMODEL_H
 #define PAYEETABLEMODEL_H
 
-#include "datastore.h"
 #include "service/model/payee.h"
+#include "payeestore.h"
 #include "podtablemodel.h"
 
-class PayeeTableModel : public PodTableModel<Payee> {
+class PayeeTableModel : public PodTableModel<Payee, PayeeService> {
 public:
-    explicit PayeeTableModel(DataStore *dataStore, QObject *parent = nullptr);
+    explicit PayeeTableModel(PayeeStore *payeeStore, QObject *parent = nullptr);
 };
 
 #endif // PAYEETABLEMODEL_H

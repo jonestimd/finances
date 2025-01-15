@@ -5,8 +5,8 @@
 
 #define COMPANY_NAME_COLUMN 0
 
-CompanyTableModel::CompanyTableModel(const EntityStore<const Company*> *store, QObject *parent)
-    : PodTableModel<Company> {
+CompanyTableModel::CompanyTableModel(const CompanyStore *store, QObject *parent)
+    : PodTableModel<Company, CompanyService> {
         store,
         QList<ColumnAdapter<Company>*>{
             new ColumnAdapter<Company>(tr("Company Name"), &Company::name, true, new UniqueValidatorFactory(COMPANY_NAME_COLUMN)),

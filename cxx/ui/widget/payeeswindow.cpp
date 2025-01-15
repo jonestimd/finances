@@ -12,8 +12,8 @@
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
     : StatusWindow()
-    , dataStore{dataStore}
-    , model{dataStore, this}
+    , store{dataStore->payeeStore}
+    , model{dataStore->payeeStore, this}
     , tableSort{this, &model, itemView, &statusBar, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
 {
     setCentralWidget(itemView);
@@ -25,11 +25,11 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     mergeAction->setEnabled(false);
     tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], mergeAction);
 
-    connect(dataStore, SIGNAL(payeesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
-    if (dataStore->loadPayees(this)) model.setRows(dataStore->payees()->ids());
+    if (store->load(this)) model.setRows(store->ids());
     else statusBar.addMessage(tr(LOADING_PAYEES));
 
     tableSort.setColumnResize({0});
@@ -38,13 +38,12 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 }
 
 void PayeesWindow::loadPayees() {
-    tableSort.loadData(tr(LOADING_PAYEES), [this]() { dataStore->loadPayees(this, true); });
+    tableSort.loadData(tr(LOADING_PAYEES), [this]() { store->load(this, true); });
 }
 
 void PayeesWindow::savePayees() {
-    tableSort.saveData(tr(SAVING_PAYEES), [this]() {
-        dataStore->updatePayees(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
-    });
+    disableUi(tr(SAVING_PAYEES));
+    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
@@ -56,7 +55,6 @@ void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
 
 void PayeesWindow::merge() {
     auto payee = model.getRow(tableSort.selectedIndex());
-    auto store = dataStore->payees();
     QList<const NamedEntity*> options;
     for (auto id : store->ids()) {
         auto option = store->value(id);
@@ -68,9 +66,8 @@ void PayeesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            tableSort.saveData(tr(SAVING_PAYEES), [this, payee, selectedId]() {
-                dataStore->mergePayees(this, payee, selectedId);
-            });
+            disableUi(tr(SAVING_PAYEES));
+            store->mergePayees(this, payee, selectedId);
         }
     }
 }

@@ -1,6 +1,6 @@
 #include "categorystore.h"
 
-CategoryStore::CategoryStore() : EntityStore() {}
+CategoryStore::CategoryStore(CategoryService *service) : EntityStore(service) {}
 
 const QSet<qlonglong> CategoryStore::rootIds() const {
     return rootIds_;
@@ -36,6 +36,22 @@ bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
         if (value(childId.toLongLong())->name.toString().toLower() == lowerName) return true;
     }
     return false;
+}
+
+void CategoryStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
+    doInBackground(source, [this, category, parentId] {
+        auto categories = service->setParent(category, parentId, user);
+        update(categories);
+        emit valuesLoaded(ids());
+    });
+}
+
+void CategoryStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
+    doInBackground(source, [this, category, destinationId] {
+        auto categories = service->merge(category, destinationId, user);
+        update(categories, QList{category});
+        emit valuesLoaded(ids());
+    });
 }
 
 void CategoryStore::update(const QList<const Category *> &updates, const QList<const Category *> deletes) {

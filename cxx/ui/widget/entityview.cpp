@@ -147,12 +147,6 @@ void EntityView::loadData(QString statusMessage, std::function<void ()> doLoad) 
     doLoad();
 }
 
-void EntityView::saveData(QString statusMessage, std::function<void ()> doSave) {
-    statusBar->addMessage(statusMessage);
-    itemView->setEnabled(false);
-    doSave();
-}
-
 void EntityView::enableUi() {
     statusBar->clear();
     itemView->setEnabled(true);

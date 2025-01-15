@@ -7,17 +7,18 @@
 #include "service/model/basedomain.h"
 #include <QVariant>
 
-template<class T, NameAndId V>
+template<class T, NameAndId V, class Service>
 class RelationColumnAdapter : public ColumnAdapter<T> {
     using GetName = ComboBoxModel::GetName;
     using CreateValue = ComboBoxModel::CreateValue;
+    typedef EntityStore<V, Service> Store;
 
-    const EntityStore<const V*> *values;
+    const Store *values;
     GetName getName;
     CreateValue createValue;
 
 public:
-    RelationColumnAdapter(QString title, QVariant T::*field, const EntityStore<const V*> *values,
+    RelationColumnAdapter(QString title, QVariant T::*field, const Store *values,
                           CreateValue newValue = nullptr, GetName getName = NamedEntity::getName,
                           ValidatorFactory *validatorFactory = nullptr)
         : ColumnAdapter<T>(title, field, true, validatorFactory)

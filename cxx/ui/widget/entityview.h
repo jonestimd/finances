@@ -60,8 +60,8 @@ public:
 
     void setEnabled(auto action, std::function<bool(int)> enableDelete);
 
+    /** @deprecated Use `StatusWindow::disableUi` with ??? */
     void loadData(QString statusMessage, std::function<void()> doLoad);
-    void saveData(QString statusMessage, std::function<void()> doSave);
 
     void enableUi();
 

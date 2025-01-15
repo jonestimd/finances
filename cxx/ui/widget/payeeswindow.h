@@ -10,7 +10,7 @@
 
 class PayeesWindow : public StatusWindow {
     Q_OBJECT
-    DataStore *dataStore;
+    PayeeStore *store;
     PayeeTableModel model;
     QTableView *itemView{new QTableView(this)};
     EntityView tableSort;

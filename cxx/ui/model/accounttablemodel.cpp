@@ -30,12 +30,12 @@ protected:
     }
 };
 
-AccountTableModel::AccountTableModel(DataStore *ds, QObject *parent, AddCompany addCompany)
-    : PodTableModel<Account>{
-        ds->accounts(),
+AccountTableModel::AccountTableModel(AccountStore *store, QObject *parent, AddCompany addCompany)
+    : PodTableModel<Account, AccountService>{
+        store,
         QList<ColumnAdapter<Account>*>{
             new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company>(tr("Company"), &Account::companyId, ds->companies(), addCompany),
+            new RelationColumnAdapter<Account, Company, CompanyService>(tr("Company"), &Account::companyId, store->companyStore, addCompany),
             new ColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
             new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),

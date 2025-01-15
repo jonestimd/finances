@@ -16,7 +16,7 @@ using namespace finances;
 AccountsWindow::AccountsWindow(DataStore *dataStore)
     : StatusWindow()
     , dataStore{dataStore}
-    , model(dataStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
+    , model(dataStore->accountStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
     , tableSort{this, &model, itemView, &statusBar, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
@@ -29,12 +29,13 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 
     addToolBar(&tableSort.toolbar);
 
-    connect(dataStore, SIGNAL(companiesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
-    connect(dataStore, SIGNAL(accountsLoaded(QList<qlonglong>)), this, SLOT(setAccounts(QList<qlonglong>)));
+    auto companyStore = dataStore->accountStore->companyStore;
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setAccounts(QList<qlonglong>)));
+    connect(companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
 
-    if (dataStore->loadAccounts(this)) model.setRows(dataStore->accounts()->ids());
+    if (dataStore->accountStore->load(this)) model.setRows(dataStore->accountStore->ids());
     else statusBar.addMessage(tr(LOADING_ACCOUNTS));
-    if (!dataStore->loadCompanies(this)) statusBar.addMessage(tr(LOADING_COMPANIES));
+    if (!companyStore->load(this)) statusBar.addMessage(tr(LOADING_COMPANIES));
 
     tableSort.enableColumnResize();
 
@@ -48,13 +49,12 @@ AccountsWindow::~AccountsWindow() {
 }
 
 void AccountsWindow::loadAccounts() {
-    tableSort.loadData(tr(LOADING_ACCOUNTS), [this]() { dataStore->loadAccounts(this, true); });
+    tableSort.loadData(tr(LOADING_ACCOUNTS), [this]() { dataStore->accountStore->load(this, true); });
 }
 
 void AccountsWindow::saveAccounts() {
-    tableSort.saveData(tr(SAVING_ACCOUNTS), [this]() {
-        dataStore->updateAccounts(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
-    });
+    disableUi(tr(SAVING_ACCOUNTS));
+    dataStore->accountStore->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
@@ -97,10 +97,8 @@ void AccountsWindow::keyPressEvent(QKeyEvent *event) {
 }
 
 void AccountsWindow::addCompany(const QString &name) {
-    auto index = tableSort.selectedIndex();
-    statusBar.addMessage(tr(SAVING_COMPANY));
-    itemView->setEnabled(false);
-    dataStore->addCompany(this, name, "newCompany");
+    disableUi(tr(SAVING_COMPANY));
+    dataStore->accountStore->companyStore->addCompany(this, name, "newCompany");
 }
 
 void AccountsWindow::newCompany(const Company *company) {

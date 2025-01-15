@@ -35,7 +35,7 @@ CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
         },
         parent,
     }
-    , store{ds->categories()}
+    , store{ds->categoryStore}
 {}
 
 int CategoryTableModel::childCount(const QModelIndex &parent) const {

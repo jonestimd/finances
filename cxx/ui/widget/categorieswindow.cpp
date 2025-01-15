@@ -12,11 +12,11 @@
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     : StatusWindow()
-    , dataStore{dataStore}
+    , store{dataStore->categoryStore}
     , model{dataStore, this}
     , tableSort{this, &model, itemView, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
-    , getName{[dataStore](const NamedEntity* entity) {
-        return dataStore->categories()->displayName(entity->id.toLongLong());
+    , getName{[this](const NamedEntity* entity) {
+        return store->displayName(entity->id.toLongLong());
     }}
 {
     setCentralWidget(itemView);
@@ -35,9 +35,9 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
-    connect(dataStore, SIGNAL(categoriesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
-    if (dataStore->loadCategories(this)) model.setRows(dataStore->categories()->ids());
+    if (store->load(this)) model.setRows(store->ids());
     else statusBar.addMessage(tr(LOADING_CATEGORIES));
 
     tableSort.enableColumnResize();
@@ -46,13 +46,12 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 }
 
 void CategoriesWindow::loadCategories() {
-    tableSort.loadData(tr(LOADING_CATEGORIES), [this]() { dataStore->loadCategories(this, true); });
+    tableSort.loadData(tr(LOADING_CATEGORIES), [this]() { store->load(this, true); });
 }
 
 void CategoriesWindow::saveCategories() {
-    tableSort.saveData(tr(SAVING_CATEGORIES), [this]() {
-        dataStore->updateCategories(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
-    });
+    disableUi(tr(SAVING_CATEGORIES));
+    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
@@ -65,7 +64,6 @@ void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
 void CategoriesWindow::reparent() {
     auto category = model.getRow(tableSort.selectedIndex());
     auto name = category->name.toString();
-    auto store = dataStore->categories();
     QList<const NamedEntity*> options;
     QHash<qlonglong, QString> disabledOptions;
     for (auto id : store->ids()) {
@@ -83,16 +81,14 @@ void CategoriesWindow::reparent() {
     if (result == QDialog::Accepted) {
         auto parentId = dialog.selectedId();
         if (category->parentId != dialog.selectedId()) {
-            tableSort.saveData(tr(SAVING_CATEGORIES), [this, category, parentId]() {
-                dataStore->setParent(this, category, parentId);
-            });
+            disableUi(tr(SAVING_CATEGORIES));
+            store->setParent(this, category, parentId);
         }
     }
 }
 
 void CategoriesWindow::merge() {
     auto category = model.getRow(tableSort.selectedIndex());
-    auto store = dataStore->categories();
     QList<const NamedEntity*> options;
     for (auto id : store->ids()) {
         auto option = store->value(id);
@@ -104,9 +100,8 @@ void CategoriesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            tableSort.saveData(tr(SAVING_CATEGORIES), [this, category, selectedId]() {
-                dataStore->mergeCategories(this, category, selectedId);
-            });
+            disableUi(tr(SAVING_CATEGORIES));
+            store->mergeCategories(this, category, selectedId);
         }
     }
 }

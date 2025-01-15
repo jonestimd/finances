@@ -7,19 +7,19 @@
 #include "poditemmodel.h"
 #include "columnadapter.h"
 
-template<Copyable Row>
+template<Copyable Row, class Service>
 class PodTableModel : public PodItemModel<Row>
 {
 protected:
     QList<qlonglong> rowIds;
-    const EntityStore<const Row*> *const store;
+    const EntityStore<Row, Service> *const store;
 
     int childCount(const QModelIndex &index) const override {
         return index.isValid() ? 0 : rowIds.length();
     }
 
 public:
-    explicit PodTableModel(const EntityStore<const Row*> *store, const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
+    explicit PodTableModel(const EntityStore<Row, Service> *store, const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
         : PodItemModel<Row>(columns, parent)
         , store{store}
         , rowIds(store->ids())

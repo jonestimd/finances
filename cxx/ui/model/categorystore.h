@@ -3,14 +3,13 @@
 
 #include "entitystore.h"
 #include "service/model/category.h"
+#include "service/categoryservice.h"
 
-class CategoryStore : public EntityStore<const Category*> {
-    friend DataStore;
-
+class CategoryStore : public EntityStore<Category, CategoryService> {
     QSet<qlonglong> rootIds_;
 
 public:
-    CategoryStore();
+    CategoryStore(CategoryService *service);
 
     const QSet<qlonglong> rootIds() const;
 
@@ -22,6 +21,11 @@ public:
      */
     bool isAncestor(qlonglong categoryId, const QVariant parentId) const;
     bool hasChild(qlonglong categoryId, const QVariant &name) const;
+
+    void setParent(QWidget *source, const Category *category, const QVariant parentId);
+    void mergeCategories(QWidget *source, const Category *category, const QVariant destinationId);
+
+    using EntityStore::update;
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;

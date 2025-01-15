@@ -1,18 +1,18 @@
 #ifndef ACCOUNTTABLEMODEL_H
 #define ACCOUNTTABLEMODEL_H
 
-#include "datastore.h"
 #include "podtablemodel.h"
 #include "comboboxmodel.h"
+#include "accountstore.h"
 #include "service/model/account.h"
 #include <QAbstractTableModel>
 
-class AccountTableModel : public PodTableModel<Account> {
+class AccountTableModel : public PodTableModel<Account, AccountService> {
     Q_OBJECT
     using AddCompany = ComboBoxModel::CreateValue;
 
 public:
-    explicit AccountTableModel(DataStore *datastore, QObject *parent, AddCompany addCompany = nullptr);
+    explicit AccountTableModel(AccountStore *store, QObject *parent, AddCompany addCompany = nullptr);
 
     void companiesLoaded(const QList<qlonglong> companyIds);
 };
