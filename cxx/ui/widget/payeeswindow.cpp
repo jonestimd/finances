@@ -38,7 +38,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 }
 
 void PayeesWindow::loadPayees() {
-    tableSort.loadData(tr(LOADING_PAYEES), [this]() { store->load(this, true); });
+    if (tableSort.confirmLoadData(tr(LOADING_PAYEES))) store->load(this, true);
 }
 
 void PayeesWindow::savePayees() {

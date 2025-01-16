@@ -46,7 +46,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 }
 
 void CategoriesWindow::loadCategories() {
-    tableSort.loadData(tr(LOADING_CATEGORIES), [this]() { store->load(this, true); });
+    if (tableSort.confirmLoadData(tr(LOADING_CATEGORIES))) store->load(this, true);
 }
 
 void CategoriesWindow::saveCategories() {

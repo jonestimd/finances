@@ -49,7 +49,7 @@ AccountsWindow::~AccountsWindow() {
 }
 
 void AccountsWindow::loadAccounts() {
-    tableSort.loadData(tr(LOADING_ACCOUNTS), [this]() { dataStore->accountStore->load(this, true); });
+    if (tableSort.confirmLoadData(tr(LOADING_ACCOUNTS))) dataStore->accountStore->load(this, true);
 }
 
 void AccountsWindow::saveAccounts() {

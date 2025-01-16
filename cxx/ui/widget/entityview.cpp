@@ -140,11 +140,13 @@ void EntityView::startEdit(int rowIndex) {
     }
 }
 
-void EntityView::loadData(QString statusMessage, std::function<void ()> doLoad) {
-    if (!dialog::confirmDiscardChanges(window, model)) return;
-    itemView->setEnabled(false); // TODO save/restore selection
-    statusBar->addMessage(statusMessage);
-    doLoad();
+bool EntityView::confirmLoadData(QString loadingMessage) {
+    if (dialog::confirmDiscardChanges(window, model)) {
+        itemView->setEnabled(false); // TODO save/restore selection
+        statusBar->addMessage(loadingMessage);
+        return true;
+    }
+    return false;
 }
 
 void EntityView::enableUi() {
