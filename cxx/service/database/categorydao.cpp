@@ -18,8 +18,7 @@ with summary as (
 select c.*, coalesce(s.transactions, 0) transactions, coalesce(s.details, 0) details, ch.child_ids
 from tx_category c
 left join summary s on c.id = s.tx_category_id
-left join children ch on c.id = ch.parent_id
-)";
+left join children ch on c.id = ch.parent_id)";
 
 static const auto updateCategorySql = R"(
 update tx_category

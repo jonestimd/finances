@@ -1,0 +1,41 @@
+#include "groupswindow.h"
+#include "ui/widget/settings.h"
+
+#define LOADING_GROUPS "Loading groups..."
+#define SAVING_GROUPS "Saving groups..."
+
+GroupsWindow::GroupsWindow(DataStore *dataStore)
+    : StatusWindow{}
+    , store{dataStore->groupStore}
+    , model{dataStore->groupStore, this}
+    , tableSort{this, &model, itemView, &statusBar, tr("Groups"), tr("Name"), SLOT(saveGroups()), SLOT(loadGroups())}
+{
+    setCentralWidget(itemView);
+    setWindowTitle(tr("%1 - Groups[*]").arg(dataStore->connectionName()));
+
+    addToolBar(&tableSort.toolbar);
+
+    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setGroups(QList<qlonglong>)));
+
+    if (store->load(this)) model.setRows(store->ids());
+    else statusBar.addMessage(tr(LOADING_GROUPS));
+
+    tableSort.enableColumnResize();
+    settings::restoreWindowState("groups", this, QSize{400, 500}, &tableSort);
+}
+
+void GroupsWindow::loadGroups() {
+    if (tableSort.confirmLoadData(tr(LOADING_GROUPS))) store->load(this, true);
+}
+
+void GroupsWindow::saveGroups() {
+    disableUi(tr(SAVING_GROUPS));
+    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+}
+
+void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
+    model.setRows(groupIds);
+    statusBar.removeMessage(tr(LOADING_GROUPS));
+    statusBar.removeMessage(tr(SAVING_GROUPS));
+    itemView->setEnabled(true);
+}

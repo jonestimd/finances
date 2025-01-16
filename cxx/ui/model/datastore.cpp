@@ -6,12 +6,14 @@ DataStore::DataStore(ServiceContext *services)
     , accountStore{new AccountStore(services)}
     , payeeStore{new PayeeStore(&services->payeeService)}
     , categoryStore{new CategoryStore(&services->categoryService)}
+    , groupStore{new GroupStore{&services->groupService}}
 {}
 
 DataStore::~DataStore() {
     delete accountStore;
     delete payeeStore;
     delete categoryStore;
+    delete groupStore;
 }
 
 const QString DataStore::connectionName() const {

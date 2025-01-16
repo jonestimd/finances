@@ -7,6 +7,7 @@
 #include "companyservice.h"
 #include "payeeservice.h"
 #include "categoryservice.h"
+#include "groupservice.h"
 
 class ServiceContext
 {
@@ -16,6 +17,7 @@ public:
     CompanyService companyService;
     PayeeService payeeService;
     CategoryService categoryService;
+    GroupService groupService;
 
     ServiceContext(ConnectionPool *pool);
 

@@ -8,6 +8,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/category.h ${CMAKE_CURRENT_LIST_DIR}/category.cpp
     ${CMAKE_CURRENT_LIST_DIR}/company.h ${CMAKE_CURRENT_LIST_DIR}/company.cpp
     ${CMAKE_CURRENT_LIST_DIR}/decimal.h ${CMAKE_CURRENT_LIST_DIR}/decimal.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/transactiongroup.h ${CMAKE_CURRENT_LIST_DIR}/transactiongroup.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payee.h ${CMAKE_CURRENT_LIST_DIR}/payee.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sql.h ${CMAKE_CURRENT_LIST_DIR}/sql.cpp
 )

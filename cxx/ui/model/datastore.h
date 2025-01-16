@@ -7,6 +7,8 @@
 #include "companystore.h"
 #include "payeestore.h"
 
+typedef EntityStore<TransactionGroup, GroupService> GroupStore;
+
 class DataStore : public QObject
 {
     Q_OBJECT
@@ -16,6 +18,7 @@ public:
     AccountStore *const accountStore;
     PayeeStore *const payeeStore;
     CategoryStore *const categoryStore;
+    GroupStore *const groupStore;
 
     DataStore(ServiceContext *services);
     ~DataStore();

@@ -21,6 +21,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
         iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
+        iconAction(FontIcon::Workspaces, tr("Groups"), tr("alt+g", "groups"), this, SLOT(showGroups())),
     }}
 {
     setCentralWidget(itemView);
@@ -46,6 +47,7 @@ AccountsWindow::~AccountsWindow() {
     if (companiesDialog) delete companiesDialog;
     if (payeesWindow) delete payeesWindow;
     if (categoriesWindow) delete categoriesWindow;
+    if (groupsWindow) delete groupsWindow;
 }
 
 void AccountsWindow::loadAccounts() {
@@ -85,6 +87,11 @@ void AccountsWindow::showPayees() {
 void AccountsWindow::showCategories() {
     if (!categoriesWindow) categoriesWindow = new CategoriesWindow(dataStore);
     categoriesWindow->show();
+}
+
+void AccountsWindow::showGroups() {
+    if (!groupsWindow) groupsWindow = new GroupsWindow(dataStore);
+    groupsWindow->show();
 }
 
 void AccountsWindow::closeEvent(QCloseEvent *event) {

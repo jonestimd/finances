@@ -5,7 +5,8 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , accountService{pool}
     , companyService{pool}
     , payeeService{pool}
-    , categoryService{pool} {}
+    , categoryService{pool}
+    , groupService{pool} {}
 
 const QString ServiceContext::connectionName() const {
     return pool->displayName;

@@ -5,6 +5,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/connectionpool.h ${CMAKE_CURRENT_LIST_DIR}/connectionpool.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companydao.h ${CMAKE_CURRENT_LIST_DIR}/companydao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entitydao.h
+    ${CMAKE_CURRENT_LIST_DIR}/transactiongroupdao.h ${CMAKE_CURRENT_LIST_DIR}/transactiongroupdao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mapping.h ${CMAKE_CURRENT_LIST_DIR}/mapping.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeedao.h ${CMAKE_CURRENT_LIST_DIR}/payeedao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiondao.h ${CMAKE_CURRENT_LIST_DIR}/transactiondao.cpp

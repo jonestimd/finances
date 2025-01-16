@@ -28,11 +28,13 @@ namespace finances {
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
+        AreaChart  = 0xe770, // security?
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
         Merge = 0xeb98,
         MergeType = 0xe252, // merge category
+        // MoneyBag = 0xf3ee, // security?
         MoveItem = 0xf1ff,
         MoveDown = 0xeb61,
         MoveUp = 0xeb64,
@@ -42,6 +44,7 @@ namespace finances {
         Trash = 0xe872,
         Unchecked = 0xe835,
         Undo = 0xe166,
+        Workspaces = 0xe1a0, // groups
     };
 
     class FontResource {
