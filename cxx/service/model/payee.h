@@ -11,7 +11,7 @@ public:
     QVariant transactions{0};
 
     Payee();
-    Payee(QSqlRecord record);
+    Payee(const QSqlRecord &record);
     Payee(const QString &name);
 
     bool deletable() const;

@@ -32,6 +32,7 @@ namespace finances {
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
+        HideSource = 0xf023,
         Merge = 0xeb98,
         MergeType = 0xe252, // merge category
         // MoneyBag = 0xf3ee, // security?
@@ -68,7 +69,7 @@ namespace finances {
     QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot, bool enabled = true);
     QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
     QAction* iconAction(const char *iconFile, QString text, QObject *parent = nullptr);
-
+    QAction* iconToggle(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot);
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;

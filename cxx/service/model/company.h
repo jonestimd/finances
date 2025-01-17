@@ -10,7 +10,7 @@ public:
     QVariant accounts{0};
 
     Company();
-    Company(QSqlRecord record);
+    Company(const QSqlRecord &record);
     Company(const QString &name);
 
     bool deletable() const;

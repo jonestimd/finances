@@ -9,11 +9,11 @@
 
 template<class T>
 class AmountColumnAdapter : public NumberColumnAdapter<T> {
-    typedef QString (*formatterType)(const T*, QVariant);
+    typedef QString (*FormatterType)(const T*, const QVariant &);
 public:
-    const formatterType formatter;
+    const FormatterType formatter;
 
-    AmountColumnAdapter(QString title, QVariant T::* field, formatterType formatter, bool editable)
+    AmountColumnAdapter(QString title, QVariant T::* field, FormatterType formatter, bool editable)
         : NumberColumnAdapter<T>(title, field, editable), formatter{formatter} {}
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {

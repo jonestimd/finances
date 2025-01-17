@@ -9,6 +9,7 @@
 #define SAVING_ACCOUNTS "Saving accounts..."
 #define LOADING_COMPANIES "Loading companies..."
 #define SAVING_COMPANY "Saving company..."
+#define SETTINGS_GROUP "accounts"
 
 using namespace std::placeholders;
 using namespace finances;
@@ -22,6 +23,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
         iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
         iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
         iconAction(FontIcon::Workspaces, tr("Groups"), tr("alt+g", "groups"), this, SLOT(showGroups())),
+        iconAction(FontIcon::AreaChart, tr("Securities"), tr("alt+s", "securities"), this, SLOT(showSecurities())),
     }}
 {
     setCentralWidget(itemView);
@@ -40,7 +42,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 
     tableSort.enableColumnResize();
 
-    settings::restoreWindowState("accounts", this, QSize{800, 600}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &tableSort);
 }
 
 AccountsWindow::~AccountsWindow() {
@@ -48,6 +50,7 @@ AccountsWindow::~AccountsWindow() {
     if (payeesWindow) delete payeesWindow;
     if (categoriesWindow) delete categoriesWindow;
     if (groupsWindow) delete groupsWindow;
+    if (securitiesWindow) delete securitiesWindow;
 }
 
 void AccountsWindow::loadAccounts() {
@@ -94,9 +97,14 @@ void AccountsWindow::showGroups() {
     groupsWindow->show();
 }
 
+void AccountsWindow::showSecurities() {
+    if (!securitiesWindow) securitiesWindow = new SecuritiesWindow(dataStore);
+    securitiesWindow->show();
+}
+
 void AccountsWindow::closeEvent(QCloseEvent *event) {
     if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState("accounts", this, &tableSort);
+    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
 }
 
 void AccountsWindow::keyPressEvent(QKeyEvent *event) {

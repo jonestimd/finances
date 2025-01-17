@@ -20,6 +20,11 @@ public Q_SLOTS:
     void loadGroups();
     void saveGroups();
     void setGroups(const QList<qlonglong> groupIds);
+
+    // QWidget interface
+protected:
+    void closeEvent(QCloseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 };
 
 #endif // GROUPSWINDOW_H

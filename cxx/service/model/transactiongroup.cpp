@@ -4,7 +4,7 @@
 
 TransactionGroup::TransactionGroup() : NamedEntity() {}
 
-TransactionGroup::TransactionGroup(QSqlRecord record) : NamedEntity(record) {
+TransactionGroup::TransactionGroup(const QSqlRecord &record) : NamedEntity(record) {
     name = record.field("name").value();
     description = sql::getValue(record, "description");
     transactions = record.field("transactions").value();

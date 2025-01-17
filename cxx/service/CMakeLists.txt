@@ -7,6 +7,7 @@ target_sources(finances
   ${CMAKE_CURRENT_LIST_DIR}/entityservice.h
   ${CMAKE_CURRENT_LIST_DIR}/groupservice.h ${CMAKE_CURRENT_LIST_DIR}/groupservice.cpp
   ${CMAKE_CURRENT_LIST_DIR}/payeeservice.h ${CMAKE_CURRENT_LIST_DIR}/payeeservice.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/securityservice.h ${CMAKE_CURRENT_LIST_DIR}/securityservice.cpp
 )
 
 add_subdirectory(model/)

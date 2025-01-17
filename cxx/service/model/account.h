@@ -20,7 +20,7 @@ public:
     QVariant currency;
 
     Account();
-    Account(QSqlRecord record);
+    Account(const QSqlRecord &record);
 
     bool deletable() const;
 };

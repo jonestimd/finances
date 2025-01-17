@@ -13,7 +13,7 @@ public:
     QVariant details{0};
 
     TransactionGroup();
-    TransactionGroup(QSqlRecord record);
+    TransactionGroup(const QSqlRecord &record);
     TransactionGroup(const QString &name);
 
     bool deletable() const;

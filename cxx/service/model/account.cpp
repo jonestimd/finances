@@ -5,7 +5,7 @@
 
 Account::Account() : BaseDomain() {}
 
-Account::Account(QSqlRecord record)
+Account::Account(const QSqlRecord &record)
     : BaseDomain(record)
     , companyId{sql::getValue(record, "company_id")}
     , name{record.field("name").value().toString()}

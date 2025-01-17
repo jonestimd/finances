@@ -8,5 +8,5 @@ AmountType::AmountType(const char *code, const QString name, bool affectsBalance
     values[code] = this;
 }
 
-const AmountType AmountType::debitDeposit = AmountType(DEBIT_DEPOSIT, tr("Debit/despoit"), true);
-const AmountType AmountType::assetValue = AmountType(ASSET_VALUE, tr("Asset value"), false);
+const AmountType AmountType::debitDeposit(DEBIT_DEPOSIT, tr("Debit/despoit"), true);
+const AmountType AmountType::assetValue(ASSET_VALUE, tr("Asset value"), false);

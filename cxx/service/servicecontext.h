@@ -8,6 +8,7 @@
 #include "payeeservice.h"
 #include "categoryservice.h"
 #include "groupservice.h"
+#include "service/securityservice.h"
 
 class ServiceContext
 {
@@ -18,6 +19,7 @@ public:
     PayeeService payeeService;
     CategoryService categoryService;
     GroupService groupService;
+    SecurityService securityService;
 
     ServiceContext(ConnectionPool *pool);
 

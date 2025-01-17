@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QTimer>
 
+#define SETTINGS_GROUP "companies"
+
 CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
@@ -26,7 +28,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
 
     tableSort.setColumnResize({0});
 
-    settings::restoreWindowState("companies", this, QSize{400, 500});
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
 }
 
 void CompaniesWindow::enableUi() {
@@ -66,7 +68,7 @@ bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
 
 void CompaniesWindow::closeEvent(QCloseEvent *event) {
     if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState("companies", this);
+    else settings::saveWindowState(SETTINGS_GROUP, this);
 }
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {

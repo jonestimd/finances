@@ -3,7 +3,7 @@
 
 Company::Company() {}
 
-Company::Company(QSqlRecord record) : NamedEntity{record} {
+Company::Company(const QSqlRecord &record) : NamedEntity{record} {
     accounts = record.field("accounts").value();
 }
 

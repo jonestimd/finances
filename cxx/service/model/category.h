@@ -18,7 +18,7 @@ public:
     QVariant details{0};
 
     Category();
-    Category(QSqlRecord record);
+    Category(const QSqlRecord &record);
     Category(const QString &name);
 
     bool deletable() const;

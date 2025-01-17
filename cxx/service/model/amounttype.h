@@ -1,7 +1,7 @@
 #ifndef AMOUNT_TYPE_H
 #define AMOUNT_TYPE_H
 
-#include "service/model/basedomain.h"
+#include "basedomain.h"
 #include <QHash>
 #include <QObject>
 #include <QString>
@@ -10,8 +10,8 @@
 #define ASSET_VALUE "ASSET_VALUE"
 
 class AmountType : public EnumValue {
-    Q_OBJECT
     AmountType(const char *code, const QString name, bool affectsBalance);
+
 public:
     const bool affectsBalance;
 

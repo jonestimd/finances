@@ -5,7 +5,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 
-QVariant decimalValue(QSqlRecord record, const char* name);
+QVariant decimalValue(const QSqlRecord &record, const char* name);
 
 Q_GLOBAL_STATIC(QDecNumber, QDEC_ZERO, QDecNumber{0})
 

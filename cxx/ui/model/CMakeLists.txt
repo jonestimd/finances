@@ -19,6 +19,9 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/poditemmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/podtablemodel.h
     ${CMAKE_CURRENT_LIST_DIR}/relationcolumnadapter.h
+    ${CMAKE_CURRENT_LIST_DIR}/securitystore.h ${CMAKE_CURRENT_LIST_DIR}/securitystore.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.h ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.cpp
 )
 
 add_subdirectory(tests/)

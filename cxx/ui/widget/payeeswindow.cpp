@@ -9,6 +9,7 @@
 
 #define LOADING_PAYEES "Loading payees..."
 #define SAVING_PAYEES "Saving payees..."
+#define SETTINGS_GROUP "payees"
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
     : StatusWindow()
@@ -34,7 +35,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 
     tableSort.setColumnResize({0});
 
-    settings::restoreWindowState("payees", this, QSize{400, 500}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &tableSort);
 }
 
 void PayeesWindow::loadPayees() {
@@ -78,7 +79,7 @@ void PayeesWindow::selectionChanged(const QModelIndex &current, const QModelInde
 
 void PayeesWindow::closeEvent(QCloseEvent *event) {
     if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState("payees", this, &tableSort);
+    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
 }
 
 void PayeesWindow::keyPressEvent(QKeyEvent *event) {

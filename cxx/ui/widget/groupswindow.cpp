@@ -1,8 +1,11 @@
 #include "groupswindow.h"
+#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
+#include <QCloseEvent>
 
 #define LOADING_GROUPS "Loading groups..."
 #define SAVING_GROUPS "Saving groups..."
+#define SETTINGS_GROUP "groups"
 
 GroupsWindow::GroupsWindow(DataStore *dataStore)
     : StatusWindow{}
@@ -12,7 +15,6 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
 {
     setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Groups[*]").arg(dataStore->connectionName()));
-
     addToolBar(&tableSort.toolbar);
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setGroups(QList<qlonglong>)));
@@ -21,7 +23,7 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
     else statusBar.addMessage(tr(LOADING_GROUPS));
 
     tableSort.enableColumnResize();
-    settings::restoreWindowState("groups", this, QSize{400, 500}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &tableSort);
 }
 
 void GroupsWindow::loadGroups() {
@@ -38,4 +40,13 @@ void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
     statusBar.removeMessage(tr(LOADING_GROUPS));
     statusBar.removeMessage(tr(SAVING_GROUPS));
     itemView->setEnabled(true);
+}
+
+void GroupsWindow::closeEvent(QCloseEvent *event) {
+    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
+    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
+}
+
+void GroupsWindow::keyPressEvent(QKeyEvent *event) {
+    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
 }

@@ -8,6 +8,7 @@
 #include <QStatusBar>
 #include <QTableView>
 #include <QTreeView>
+#include <ui/model/sortfilterproxymodel.h>
 
 // TODO - break up?
 //   - save/restore
@@ -26,7 +27,7 @@ class EntityView : public QObject {
                const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
 
 public:
-    QSortFilterProxyModel sortModel;
+    SortFilterProxyModel sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
     QAction *const saveAction;
@@ -57,8 +58,6 @@ public:
     void restore(QString group, QSettings *settings);
 
     void startEdit(int rowIndex);
-
-    void setEnabled(auto action, std::function<bool(int)> enableDelete);
 
     bool confirmLoadData(QString loadingMessage);
 

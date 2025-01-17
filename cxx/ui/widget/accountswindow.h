@@ -8,6 +8,7 @@
 #include "entityview.h"
 #include "groupswindow.h"
 #include "payeeswindow.h"
+#include "securitieswindow.h"
 #include "statuswindow.h"
 #include <QMainWindow>
 #include <QTableView>
@@ -22,6 +23,7 @@ class AccountsWindow : public StatusWindow {
     PayeesWindow *payeesWindow{};
     CategoriesWindow *categoriesWindow{};
     GroupsWindow *groupsWindow{};
+    SecuritiesWindow *securitiesWindow{};
 
 public:
     AccountsWindow(DataStore *dataStore);
@@ -36,6 +38,7 @@ public Q_SLOTS:
     void showPayees();
     void showCategories();
     void showGroups();
+    void showSecurities();
 
     // QWidget interface
 protected:

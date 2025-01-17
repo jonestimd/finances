@@ -5,7 +5,7 @@
 
 Category::Category() : NamedEntity() {}
 
-Category::Category(QSqlRecord record) : NamedEntity(record, "code") {
+Category::Category(const QSqlRecord &record) : NamedEntity(record, "code") {
     amountType = sql::getValue(record, "amount_type");
     description = sql::getValue(record, "description");
     income = sql::yesNoValue(record, "income");

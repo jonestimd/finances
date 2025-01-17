@@ -12,7 +12,7 @@ public:
     QVariant changeDate;
 
     BaseDomain();
-    BaseDomain(QSqlRecord record);
+    BaseDomain(const QSqlRecord &record);
 };
 
 class NamedEntity : public BaseDomain {
@@ -20,7 +20,7 @@ public:
     QVariant name;
 
     NamedEntity() = default;
-    NamedEntity(QSqlRecord, const char *nameColumn = "name");
+    NamedEntity(const QSqlRecord &record, const char *nameColumn = "name");
     NamedEntity(const QString &name);
 
     /*!
