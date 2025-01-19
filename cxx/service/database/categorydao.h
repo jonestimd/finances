@@ -5,12 +5,12 @@
 #include "../model/category.h"
 #include <QtSql/QSqlDatabase>
 
-class CategoryDao : public EntityDao<Category> {
+class CategoryDao : public NamedEntityDao<Category> {
 
 public:
     CategoryDao();
 
-    QList<const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
+    QHash<qlonglong, const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
     void moveChildren(QSqlDatabase &db, const Category* category, const QVariant destinationId, const QString user);
 
 protected:

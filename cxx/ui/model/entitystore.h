@@ -84,18 +84,10 @@ protected:
         for (auto i : deletes) delete byId.take(i->id.toLongLong());
     }
 
-    virtual void setValues(QList<const T*> values) {
-        QList<qlonglong> ids;
-        for (auto value : values) {
-            auto id = value->id.toLongLong();
-            auto oldValue = byId.value(id);
-            ids.append(id);
-            byId.insert(id, value);
-            if (oldValue) delete oldValue;
-        }
-        erase_if(byId, [ids](QHash<qlonglong, const T*>::iterator i) {
-            return !ids.contains(i.key());
-        });
+    virtual void setValues(QHash<qlonglong, const T*> values) {
+        auto oldValues = byId;
+        byId = values;
+        qDeleteAll(oldValues);
         this->loaded = true;
     }
 };

@@ -29,7 +29,7 @@ public:
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;
-    virtual void setValues(QList<const Category*> values) override;
+    virtual void setValues(QHash<qlonglong, const Category*> values) override;
 };
 
 #endif // CATEGORYSTORE_H

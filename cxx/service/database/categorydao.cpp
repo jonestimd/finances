@@ -42,10 +42,10 @@ set parent_id = :parentId, change_user = :user, change_date = current_timestamp,
 where parent_id = :oldParentId and id member of (:ids))";
 
 CategoryDao::CategoryDao()
-    : EntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
-                          QObject::tr("Categories have been modified.  Please reload and try again.")} {}
+    : NamedEntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
+                               QObject::tr("Categories have been modified.  Please reload and try again.")} {}
 
-QList<const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
+QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
     QSqlQuery query(db);
     QVariantList ids{category->id};
     if (!category->parentId.isNull()) ids.append(category->parentId.toLongLong());
@@ -74,7 +74,7 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
 }
 
 void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {
-    EntityDao::bindUpdateValues(query, category);
+    NamedEntityDao::bindUpdateValues(query, category);
     query.bindValue(":parentId", category->parentId);
     query.bindValue(":description", category->description);
     query.bindValue(":amountType", category->amountType);
@@ -83,7 +83,7 @@ void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {
 }
 
 void CategoryDao::bindInsertValues(QSqlQuery &query, Category *category) {
-    EntityDao::bindInsertValues(query, category);
+    NamedEntityDao::bindInsertValues(query, category);
     query.bindValue(":parentId", category->parentId);
     query.bindValue(":description", category->description);
     query.bindValue(":amountType", category->amountType);

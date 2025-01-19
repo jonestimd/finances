@@ -10,7 +10,8 @@ class PayeeService : public EntityService<Payee, PayeeDao>
 public:
     PayeeService(ConnectionPool *connectionPool);
 
-    QList<const Payee*> merge(const Payee *payee, const QVariant destinationId, const QString &user);
+    // TODO return updated transactions?
+    QHash<qlonglong, const Payee*> merge(const Payee *payee, const QVariant destinationId, const QString &user);
 };
 
 #endif // PAYEESERVICE_H

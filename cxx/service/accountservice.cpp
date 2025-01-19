@@ -4,11 +4,9 @@
 
 AccountService::AccountService(ConnectionPool *connectionPool) : EntityService(connectionPool, accountDao) {}
 
-QList<const Account *> AccountService::update(BulkUpdate<Account> &changes, const QString &user, QList<const Company*> *companies) {
+QList<const Account*> AccountService::update(BulkUpdate<Account> &changes, const QString &user, QHash<qlonglong, const Company*> &companies) {
     auto result = EntityService::update(changes, user);
-    if (companies) {
-        auto conn = Connection(connectionPool);
-        *companies = companyDao.getAll(conn.db);
-    }
+    auto conn = Connection(connectionPool);
+    companies = companyDao.getAll(conn.db);
     return result;
 };

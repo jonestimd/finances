@@ -4,7 +4,7 @@
 #include "entitydao.h"
 #include "service/model/transactiongroup.h"
 
-class TransactionGroupDao : public EntityDao<TransactionGroup> {
+class TransactionGroupDao : public NamedEntityDao<TransactionGroup> {
 public:
     TransactionGroupDao();
 

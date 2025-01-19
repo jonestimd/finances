@@ -4,7 +4,7 @@
 #include "entitydao.h"
 #include "service/model/security.h"
 
-class SecurityDao : public EntityDao<Security> {
+class SecurityDao : public NamedEntityDao<Security> {
 public:
     SecurityDao();
 

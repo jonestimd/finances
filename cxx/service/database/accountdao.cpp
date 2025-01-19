@@ -33,11 +33,11 @@ where c.type = 'Currency' and c.symbol = '$')";
 static const auto deleteAccountSql = "delete from account where id = :id";
 
 AccountDao::AccountDao()
-    : EntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
-                         QObject::tr("Accounts have been modified.  Please reload and try again.")} {}
+    : NamedEntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
+                              QObject::tr("Accounts have been modified.  Please reload and try again.")} {}
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
-    EntityDao::bindUpdateValues(query, account);
+    NamedEntityDao::bindUpdateValues(query, account);
     query.bindValue(":companyId", account->companyId);
     query.bindValue(":description", account->description);
     query.bindValue(":type", account->type);
@@ -46,7 +46,7 @@ void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
 }
 
 void AccountDao::bindInsertValues(QSqlQuery &query, Account *account) {
-    EntityDao::bindInsertValues(query, account);
+    NamedEntityDao::bindInsertValues(query, account);
     query.bindValue(":companyId", account->companyId);
     query.bindValue(":description", account->description);
     query.bindValue(":type", account->type);

@@ -41,7 +41,7 @@ bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
 void CategoryStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
     doInBackground(source, [this, category, parentId] {
         auto categories = service->setParent(category, parentId, user);
-        update(categories);
+        update(categories.values());
         emit valuesLoaded(ids());
     });
 }
@@ -49,7 +49,7 @@ void CategoryStore::setParent(QWidget *source, const Category *category, const Q
 void CategoryStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
-        update(categories, QList{category});
+        update(categories.values(), QList{category});
         emit valuesLoaded(ids());
     });
 }
@@ -64,7 +64,7 @@ void CategoryStore::update(const QList<const Category *> &updates, const QList<c
     }
 }
 
-void CategoryStore::setValues(QList<const Category *> values) {
+void CategoryStore::setValues(QHash<qlonglong, const Category*> values) {
     EntityStore::setValues(values);
     rootIds_.clear();
     for (auto id : ids()) {

@@ -5,7 +5,7 @@
 #include "../model/account.h"
 #include <QtSql/QSqlDatabase>
 
-class AccountDao : public EntityDao<Account> {
+class AccountDao : public NamedEntityDao<Account> {
 public:
     AccountDao();
 

@@ -23,15 +23,15 @@ values (:name, :description, 0, :user, current_timestamp))";
 static const auto deleteQuery = "delete from tx_group where id = :id";
 
 TransactionGroupDao::TransactionGroupDao()
-    : EntityDao<TransactionGroup>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionGroupDao",
-                                  QObject::tr("Groups have been modified.  Please reload and try again.")} {}
+    : NamedEntityDao<TransactionGroup>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionGroupDao",
+                                       QObject::tr("Groups have been modified.  Please reload and try again.")} {}
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {
-    EntityDao::bindUpdateValues(query, entity);
+    NamedEntityDao::bindUpdateValues(query, entity);
     query.bindValue(":description", entity->description);
 }
 
 void TransactionGroupDao::bindInsertValues(QSqlQuery &query, TransactionGroup *entity) {
-    EntityDao::bindInsertValues(query, entity);
+    NamedEntityDao::bindInsertValues(query, entity);
     query.bindValue(":description", entity->description);
 }

@@ -35,8 +35,8 @@ static const auto insertSecurityQuery = "insert into security (asset_id, type) v
 static const auto deleteQuery = "delete from security where asset_id = :id";
 
 SecurityDao::SecurityDao()
-    : EntityDao<Security>{getAllQuery, updateQuery , insertQuery, deleteQuery, "SecurityDao",
-                          QObject::tr("Securities have been modified.  Please reload and try again")} {}
+    : NamedEntityDao<Security>{getAllQuery, updateQuery , insertQuery, deleteQuery, "SecurityDao",
+                               QObject::tr("Securities have been modified.  Please reload and try again")} {}
 
 QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> securities, const QString &user) {
     auto result = EntityDao::add(db, securities, user);
@@ -61,13 +61,13 @@ void SecurityDao::remove(QSqlDatabase &db, QList<const Security*> securities) {
 }
 
 void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {
-    EntityDao::bindUpdateValues(query, security);
+    NamedEntityDao::bindUpdateValues(query, security);
     query.bindValue(":symbol", security->symbol);
     query.bindValue(":securityType", security->securityType);
 }
 
  void SecurityDao::bindInsertValues(QSqlQuery &query, Security *security) {
-    EntityDao::bindInsertValues(query, security);
+    NamedEntityDao::bindInsertValues(query, security);
     query.bindValue(":type", security->type);
     query.bindValue(":symbol", security->symbol);
     query.bindValue(":scale", security->scale);

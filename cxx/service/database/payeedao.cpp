@@ -22,7 +22,7 @@ values (:name, 0, :user, current_timestamp))";
 static const auto deleteQuery = "delete from payee where id = :id";
 
 PayeeDao::PayeeDao()
-    : EntityDao<Payee>{getAllQuery, updateQuery, insertQuery, deleteQuery, "PayeeDao",
-                       QObject::tr("Payees have been modified.  Please reload and try again.")}
+    : NamedEntityDao<Payee>{getAllQuery, updateQuery, insertQuery, deleteQuery, "PayeeDao",
+                            QObject::tr("Payees have been modified.  Please reload and try again.")}
 {}
 

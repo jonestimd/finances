@@ -20,6 +20,6 @@ values (:name, 0, :user, current_timestamp))";
 static const auto deleteCompanySql = "delete from company where id = :id";
 
 CompanyDao::CompanyDao()
-    : EntityDao<Company>{getCompaniesSql, updateCompanySql, insertCompanySql, deleteCompanySql, "CompanyDao",
-                         QObject::tr("Companies have been modified.  Please reload and try again.")}
+    : NamedEntityDao<Company>{getCompaniesSql, updateCompanySql, insertCompanySql, deleteCompanySql, "CompanyDao",
+                              QObject::tr("Companies have been modified.  Please reload and try again.")}
 {}

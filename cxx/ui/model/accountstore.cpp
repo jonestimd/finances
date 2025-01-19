@@ -16,10 +16,10 @@ void AccountStore::update(QWidget *source, AccountTableModel *model) {
 void AccountStore::update(QWidget *source, QList<Account *> updates, const QList<Account *> adds, const QList<const Account *> deletes) {
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
-        QList<const Company*> companies;
-        auto accounts = service->update(changes, user, &companies);
+        QHash<qlonglong, const Company*> companies;
+        auto accounts = service->update(changes, user, companies);
         update(accounts, deletes);
-        companyStore->update(companies);
+        companyStore->update(companies.values());
         emit valuesLoaded(ids());
         emit companyStore->valuesLoaded(companyStore->ids());
     });

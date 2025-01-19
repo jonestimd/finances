@@ -5,7 +5,7 @@
 #include "../model/company.h"
 #include <QtSql/QSqlDatabase>
 
-class CompanyDao : public EntityDao<Company> {
+class CompanyDao : public NamedEntityDao<Company> {
 public:
     CompanyDao();
 };
