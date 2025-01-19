@@ -13,6 +13,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/payee.h ${CMAKE_CURRENT_LIST_DIR}/payee.cpp
     ${CMAKE_CURRENT_LIST_DIR}/security.h ${CMAKE_CURRENT_LIST_DIR}/security.cpp
     ${CMAKE_CURRENT_LIST_DIR}/securitytype.h ${CMAKE_CURRENT_LIST_DIR}/securitytype.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sql.h ${CMAKE_CURRENT_LIST_DIR}/sql.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiongroup.h ${CMAKE_CURRENT_LIST_DIR}/transactiongroup.cpp
 )

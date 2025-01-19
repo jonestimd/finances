@@ -1,7 +1,7 @@
 #include "security.h"
 #include "QSqlField"
 #include "service/model/decimal.h"
-#include "service/model/sql.h"
+#include "service/database/sql.h"
 
 Security::Security() : Asset{AssetType::security} {}
 

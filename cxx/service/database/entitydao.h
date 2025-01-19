@@ -1,7 +1,7 @@
 #ifndef ENTITY_DAO_H
 #define ENTITY_DAO_H
 
-#include "service/model/sql.h"
+#include "sql.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql>
 

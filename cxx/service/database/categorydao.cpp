@@ -1,6 +1,6 @@
 #include "categorydao.h"
 #include "mapping.h"
-#include "service/model/sql.h"
+#include "sql.h"
 
 #include <QtSql>
 

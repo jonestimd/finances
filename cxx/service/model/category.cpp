@@ -1,6 +1,6 @@
 #include "category.h"
 #include "../database/mapping.h"
-#include "sql.h"
+#include "../database/sql.h"
 #include <QSqlField>
 
 Category::Category() : NamedEntity() {}

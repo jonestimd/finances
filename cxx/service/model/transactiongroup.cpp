@@ -1,5 +1,5 @@
 #include "transactiongroup.h"
-#include "service/model/sql.h"
+#include "service/database/sql.h"
 #include <QSqlField>
 
 TransactionGroup::TransactionGroup() : NamedEntity() {}

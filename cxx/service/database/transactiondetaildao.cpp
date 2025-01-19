@@ -1,5 +1,5 @@
 #include "transactiondetaildao.h"
-#include "service/model/sql.h"
+#include "sql.h"
 #include <QSqlQuery>
 
 static const auto setCategorySql = R"(update tx_detail

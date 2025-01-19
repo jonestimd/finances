@@ -1,5 +1,5 @@
 #include "transactiondao.h"
-#include "service/model/sql.h"
+#include "sql.h"
 #include <QSqlQuery>
 
 static const auto setPayeeSql = R"(update tx
