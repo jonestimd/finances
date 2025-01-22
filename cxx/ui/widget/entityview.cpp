@@ -69,7 +69,10 @@ void EntityView::insertAction(qsizetype index, QAction *action) {
 }
 
 QModelIndex EntityView::selectedIndex() {
-    return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
+    if (itemView->selectionModel()->hasSelection()) {
+        return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
+    }
+    return QModelIndex{};
 }
 
 bool EntityView::focusFilter(QKeyEvent *event) {
@@ -80,13 +83,8 @@ bool EntityView::focusFilter(QKeyEvent *event) {
     return false;
 }
 
-bool EntityView::confirmLoadData(QString loadingMessage) {
-    if (dialog::confirmDiscardChanges(window, model)) {
-        itemView->setEnabled(false); // TODO save/restore selection
-        statusBar.addMessage(loadingMessage);
-        return true;
-    }
-    return false;
+bool EntityView::confirmLoadData() {
+    return dialog::confirmDiscardChanges(window, model);
 }
 
 void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
@@ -102,6 +100,11 @@ void EntityView::enableUi() {
 void EntityView::disableUi(const QString &message) {
     statusBar.addMessage(message);
     itemView->setEnabled(false);
+}
+
+void EntityView::removeMessage(const QString &message) {
+    statusBar.removeMessage(message);
+    if (statusBar.isEmpty()) itemView->setEnabled(true);
 }
 
 void EntityView::dataChanged() {

@@ -18,4 +18,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/statusbar.h ${CMAKE_CURRENT_LIST_DIR}/statusbar.cpp
     ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.h ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.cpp
     ${CMAKE_CURRENT_LIST_DIR}/treeview.h ${CMAKE_CURRENT_LIST_DIR}/treeview.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.h ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.cpp
 )

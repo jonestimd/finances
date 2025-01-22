@@ -1,9 +1,8 @@
 #include "groupswindow.h"
+#include "statusmessage.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
-#define LOADING_GROUPS "Loading groups..."
-#define SAVING_GROUPS "Saving groups..."
 #define SETTINGS_GROUP "groups"
 
 GroupsWindow::GroupsWindow(DataStore *dataStore)
@@ -14,8 +13,7 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setGroups(QList<qlonglong>)));
 
-    if (store->load(this)) model()->setRows(store->ids());
-    else disableUi(tr(LOADING_GROUPS));
+    if (store->load(&entityView, tr(LOADING_GROUPS))) model()->setRows(store->ids());
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
@@ -25,15 +23,16 @@ GroupTableModel *GroupsWindow::model() {
 }
 
 void GroupsWindow::loadData() {
-    if (entityView.confirmLoadData(tr(LOADING_GROUPS))) store->load(this, true);
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_GROUPS), true);
 }
 
 void GroupsWindow::saveData() {
-    disableUi(tr(SAVING_GROUPS));
-    store->update(this, model()->unsavedChanges(), model()->unsavedAdds(), model()->unsavedDeletes());
+    entityView.disableUi(tr(SAVING_GROUPS));
+    store->update(this, model());
 }
 
 void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
     model()->setRows(groupIds);
     entityView.enableUi();
 }
+

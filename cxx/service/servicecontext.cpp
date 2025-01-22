@@ -8,6 +8,8 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , categoryService{pool}
     , groupService{pool}
     , securityService{pool}
+    , transationDetailService{pool}
+    , transationService{pool}
 {}
 
 const QString ServiceContext::connectionName() const {

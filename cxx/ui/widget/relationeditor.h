@@ -20,8 +20,11 @@ public:
 
     Q_SIGNAL void entityChanged(const NamedEntity *);
 
+protected Q_SLOTS:
+    void inputTextChanged(const QString &text);
+    void activated(const QModelIndex &index);
+
 protected:
-    // QWidget interface
     void keyReleaseEvent(QKeyEvent *event) override;
 };
 

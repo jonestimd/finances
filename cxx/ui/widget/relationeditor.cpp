@@ -1,4 +1,5 @@
 #include "relationeditor.h"
+#include "ui/finances.h"
 
 #include <QCompleter>
 #include <QKeyEvent>
@@ -16,18 +17,12 @@ RelationEditor::RelationEditor(ComboBoxModel *model, QWidget *parent)
     model->setParent(this);
     auto completer = new QCompleter(model, this);
     setCompleter(completer);
-    completer->setCompletionColumn(1);
     completer->setCompletionRole(Qt::DisplayRole);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     completer->setFilterMode(Qt::MatchContains);
     setValidator(&model->validator);
-    connect(this, &QLineEdit::textChanged, this, [this](const QString &text) {
-        auto value = this->model->valueOf(text);
-        if (value != entity_) {
-            entity_ = value;
-            emit entityChanged(entity_);
-        }
-    });
+    connect(completer, SIGNAL(activated(QModelIndex)), this, SLOT(activated(QModelIndex)));
+    connect(this, SIGNAL(textChanged(QString)), this, SLOT(inputTextChanged(QString)));
 }
 
 const NamedEntity *RelationEditor::entity() const {
@@ -38,6 +33,24 @@ void RelationEditor::setEntity(const NamedEntity *entity) {
     entity_ = entity;
     if (entity) setText(entity->name.toString());
     else setText("");
+}
+
+void RelationEditor::inputTextChanged(const QString &text) {
+    if (entity_) {
+        if (text != entity_->name) {
+            entity_ = nullptr;
+            emit entityChanged(entity_);
+        }
+    }
+    else if (completer()->completionCount() == 1) {
+        auto index = completer()->completionModel()->index(0, 0);
+        if (text == index.data()) activated(index);
+    }
+}
+
+void RelationEditor::activated(const QModelIndex &index) {
+    entity_ = index.data(finances::EntityPtrRole).value<const NamedEntity*>();
+    emit entityChanged(entity_);
 }
 
 void RelationEditor::keyReleaseEvent(QKeyEvent *event) {

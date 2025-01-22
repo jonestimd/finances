@@ -6,7 +6,7 @@
 #include <QVariant>
 
 namespace sql {
-    QVariant getValue(QSqlRecord record, const char *name);
+    QVariant getValue(QSqlRecord record, const char *name, QVariant defaultValue = {});
 
     QVariant yesNoValue(QSqlRecord record, const char *name);
 

@@ -1,9 +1,8 @@
 #include "securitieswindow.h"
+#include "statusmessage.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
-#define LOADING_SECURITIES "Loading Securities..."
-#define SAVING_SECURITIES "Saving Securities..."
 #define SETTINGS_GROUP "securities"
 
 using namespace std::placeholders;
@@ -17,8 +16,7 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setSecurities(QList<qlonglong>)));
 
-    if (store->load(this)) model()->setRows(store->ids());
-    else disableUi(tr(LOADING_SECURITIES));
+    if (store->load(&entityView, tr(LOADING_SECURITIES))) model()->setRows(store->ids());
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
@@ -28,12 +26,12 @@ SecurityTableModel *SecuritiesWindow::model() const {
 }
 
 void SecuritiesWindow::loadData() {
-    if (entityView.confirmLoadData(tr(LOADING_SECURITIES))) store->load(this, true);
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_SECURITIES), true);
 }
 
 void SecuritiesWindow::saveData() {
-    disableUi(tr(SAVING_SECURITIES));
-    store->update(this, model()->unsavedChanges(), model()->unsavedAdds(), model()->unsavedDeletes());
+    entityView.disableUi(tr(SAVING_SECURITIES));
+    store->update(this, model());
 }
 
 void SecuritiesWindow::setSecurities(const QList<qlonglong> ids) {

@@ -2,6 +2,7 @@
 
 #include "settings.h"
 #include "dialog.h"
+#include "statusmessage.h"
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QPushButton>
@@ -12,8 +13,8 @@
 CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
-    , store{dataStore->accountStore->companyStore}
-    , model{dataStore->accountStore->companyStore, this}
+    , store{&dataStore->accountStore->companyStore}
+    , model{&dataStore->accountStore->companyStore, this}
     , entityView{this, &model, itemView, tr("Company")}
 {
     setWindowTitle(tr("Companies[*]"));
@@ -35,21 +36,19 @@ void CompaniesWindow::enableUi() {
 
 void CompaniesWindow::loadData() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
-    itemView->setEnabled(false); // TODO save/restore selection
-    entityView.statusBar.showMessage(tr("Loading companies..."));
-    store->load(this, true);
+    itemView->setEnabled(false);
+    store->load(&entityView, tr(LOADING_COMPANIES), true);
 }
 
 void CompaniesWindow::saveData() {
-    entityView.statusBar.showMessage(tr("Saving companies..."));
+    entityView.disableUi(tr("Saving companies..."));
     itemView->setEnabled(false);
     store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
 }
 
 void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
     model.setRows(companyIds);
-    entityView.statusBar.showMessage(tr("Done loading"), 1500);
-    itemView->setEnabled(true);
+    entityView.enableUi();
 }
 
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {

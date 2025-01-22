@@ -2,12 +2,13 @@
 
 StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent) {}
 
-void StatusBar::addMessage(QString message) {
+void StatusBar::addMessage(const QString &message) {
     messages.append(message);
     if (messages.length() == 1) showMessage(message);
 }
 
-void StatusBar::removeMessage(QString message) {
+void StatusBar::removeMessage(const QString &message) {
+    // TODO only call from EntityView and enable itemView when no more messages
     auto index = messages.indexOf(message);
     if (index >= 0) {
         messages.removeAt(index);
@@ -19,4 +20,8 @@ void StatusBar::removeMessage(QString message) {
 void StatusBar::clear() {
     messages.clear();
     clearMessage();
+}
+
+bool StatusBar::isEmpty() const {
+    return messages.isEmpty();
 }

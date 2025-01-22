@@ -1,16 +1,23 @@
-#ifndef TRANSACTIONDETAILDAO_H
-#define TRANSACTIONDETAILDAO_H
+#ifndef TRANSACTIONDAO_H
+#define TRANSACTIONDAO_H
 
 #include "service/model/payee.h"
+#include "service/model/transaction.h"
+#include "entitydao.h"
 #include <QSqlDatabase>
 
-class TransactionDao {
+class TransactionDao : public EntityDao<Transaction> {
 public:
     TransactionDao();
 
-    void replacePayee(QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user);
+    QHash<qlonglong, const Transaction*> getAll(const QSqlDatabase &db, qlonglong accountId);
+
+    void replacePayee(const QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user);
+
+protected:
+    virtual void bindInsertValues(QSqlQuery &query, Transaction *entity) override;
 };
 
 static TransactionDao transactionDao;
 
-#endif // TRANSACTIONDETAILDAO_H
+#endif // TRANSACTIONDAO_H

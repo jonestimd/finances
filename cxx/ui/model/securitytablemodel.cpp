@@ -20,9 +20,9 @@ SecurityTableModel::SecurityTableModel(SecurityStore *store)
             new EnumColumnAdapter<Security, SecurityType>(tr("Type"), &Security::securityType, &SecurityType::values, requiredValidatorFactory, true),
             new NumberColumnAdapter<Security>(tr("Transactions"), &Security::transactions),
             new AmountColumnAdapter<Security>(tr("Shares"), &Security::shares, securityShares, false),
-            new FormatColumnAdapter<Security>{tr("First Acquired"), &Security::firstAcquired, formatDate, false},
-            new AmountColumnAdapter<Security>(tr("Cost Basis"), &Security::costBasis, securityDollarAmount, false),
-            new AmountColumnAdapter<Security>(tr("Dividends"), &Security::dividends, securityDollarAmount, false),
+            new FormatColumnAdapter<Security>{tr("First Acquired"), &Security::firstAcquired, dateFormat, false},
+            new AmountColumnAdapter<Security>(tr("Cost Basis"), &Security::costBasis, dollarFormat, false),
+            new AmountColumnAdapter<Security>(tr("Dividends"), &Security::dividends, dollarFormat, false),
         },
     }
 {}

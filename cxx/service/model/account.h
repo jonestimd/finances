@@ -7,10 +7,9 @@
 #include <QSqlRecord>
 #include <QVariant>
 
-class Account : public BaseDomain {
+class Account : public TransactionType {
 public:
     QVariant companyId;
-    QVariant name;
     QVariant description;
     QVariant type{AccountType::bank.code};
     QVariant accountNumber;

@@ -26,7 +26,7 @@ protected:
         return columns[index.column()]->value(getRow(index), index, current, role);
     }
 
-    virtual int childCount(const QModelIndex &index) const = 0;
+    virtual int childCount(const QModelIndex &index) const = 0; // TODO use rowCount()?
 
     void rowsChanged(int from, int to, const QModelIndex &parent) {
         emit dataChanged(index(from, 0, parent), index(to, columns.length()-1, parent), QList<int>{Qt::DisplayRole, finances::UnsavedRole});
@@ -79,6 +79,9 @@ protected:
         }
     }
 
+    /**
+     * @brief rowIndexes Returns index of row and its ancestors.
+     */
     const QList<int> rowIndexes(const QModelIndex &index) const {
         QList<int> indexes{index.row()};
         auto parent = index.parent();
@@ -87,6 +90,13 @@ protected:
             parent = parent.parent();
         }
         return indexes;
+    }
+
+    int columnIndex(const QString &title) const {
+        for (int i = 0; i < columns.length(); i++) {
+            if (columns[i]->title == title) return i;
+        }
+        return -1;
     }
 
 public:

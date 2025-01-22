@@ -44,13 +44,13 @@ public:
         return QVariant{};
     }
 
-    virtual bool isEqual(const QVariant &value1, const QVariant &value2) override {
+    virtual bool isEqual(const QVariant &value1, const QVariant &value2) const override {
         auto e1 = value1.value<const EnumValue*>(), e2 = value2.value<const EnumValue*>();
         if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->name, e2->name);
         return !e2;
     }
 
-    virtual void setValue(T *row, QVariant value) override {
+    virtual void setValue(T *row, QVariant value) const override {
         auto entity = value.value<const EnumValue*>();
         ColumnAdapter<T>::setValue(row, entity ? entity->code: QVariant{});
     }

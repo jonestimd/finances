@@ -38,7 +38,7 @@ public:
         case Qt::DisplayRole:
         case Qt::EditRole:
         case finances::SortRole:
-            return current.isValid() ? current : row->*(this->field);
+            return current.isValid() ? current : fieldValue(row);
         case finances::ValidatorFactoryRole:
             if (validatorFactory) return QVariant::fromValue(validatorFactory->factory(index));
             break;
@@ -46,11 +46,15 @@ public:
         return current.isValid() ? current : QVariant{};
     };
 
-    virtual void setValue(T *row, QVariant value) {
+    virtual QVariant fieldValue(const T *row) const {
+        return row->*(this->field);
+    }
+
+    virtual void setValue(T *row, QVariant value) const {
         row->*(this->field) = value;
     }
 
-    virtual bool isEqual(const QVariant &value1, const QVariant &value2) {
+    virtual bool isEqual(const QVariant &value1, const QVariant &value2) const {
         return is_eq(QVariant::compare(value1, value2));
     }
 

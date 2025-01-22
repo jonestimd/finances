@@ -4,11 +4,11 @@
 #include <QSqlField>
 #include <QSqlError>
 
-QVariant sql::getValue(QSqlRecord record, const char *name) {
+QVariant sql::getValue(QSqlRecord record, const char *name, QVariant defaultValue) {
     auto field = record.field(name);
+    if (field.isNull()) return defaultValue;
+    // fix value comparison for table/tree cell edits on VARCHAR column
     auto value = field.value();
-    if (field.isNull()) return QVariant{};
-    // fix value comparison for table/tree cell edits
     if (value.typeId() == QMetaType::QByteArray) return QVariant{value.toString()};
     return value;
 }

@@ -7,6 +7,7 @@
 #include "companystore.h"
 #include "payeestore.h"
 #include "securitystore.h"
+#include "transactionstore.h"
 
 typedef EntityStore<TransactionGroup, GroupService> GroupStore;
 
@@ -21,6 +22,7 @@ public:
     CategoryStore *const categoryStore;
     GroupStore *const groupStore;
     SecurityStore *const securityStore;
+    TransactionStore *const transactionStore;
 
     DataStore(ServiceContext *services);
     ~DataStore();

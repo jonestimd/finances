@@ -27,6 +27,6 @@ public Q_SLOTS:
     void setCategories(const QList<qlonglong> categoryIds);
     void reparent();
     void merge();
-    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void selectionChanged();
 };
 #endif // CATEGORIES_WINDOW_H

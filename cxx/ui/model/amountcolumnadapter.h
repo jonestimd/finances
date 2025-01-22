@@ -9,7 +9,7 @@
 
 template<class T>
 class AmountColumnAdapter : public NumberColumnAdapter<T> {
-    typedef QString (*FormatterType)(const T*, const QVariant &);
+    typedef QString (*FormatterType)(const QVariant &);
 public:
     const FormatterType formatter;
 
@@ -18,11 +18,11 @@ public:
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         QVariant value = NumberColumnAdapter<T>::value(row, index, current, role);
-        if (role == Qt::DisplayRole) return formatter(row, value);
+        if (role == Qt::DisplayRole) return formatter(value);
         if (role == finances::SortRole) return value.value<QDecNumber>().toDouble();
         if (role == finances::TextHighlightRole) {
             QVariant amount = NumberColumnAdapter<T>::value(row, index, current, Qt::DisplayRole);
-            if (amount.value<QDecNumber>().isNegative()) return true;
+            if (amount.value<QDecNumber>().isNegative()) return finances::Accent;
         }
         return value;
     }

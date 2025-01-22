@@ -17,7 +17,13 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     QStyledItemDelegate::initStyleOption(option, index);
     QVariant highlight = index.data(finances::TextHighlightRole);
     if (highlight.isValid() && highlight.toBool()) {
-        auto brush = option->palette.accent();
+        auto value = highlight.value<finances::TextHighlight>();
+        QBrush brush(option->palette.text());
+        if (value & finances::Accent) brush = option->palette.accent();
+        if (value & finances::Dimmed) {
+            auto color = brush.color();
+            brush.setColor(QColor(color.red(), color.green(), color.blue(), 160));
+        }
         option->palette.setBrush(QPalette::Text, brush);
         option->palette.setBrush(QPalette::HighlightedText, brush);
     }
@@ -40,6 +46,11 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
         option->font = finances::iconFont->font();
         option->text = QChar(value.toBool() ? finances::Checked : finances::Unchecked);
         option->displayAlignment = Qt::AlignCenter;
+    }
+    auto decoration = index.data(Qt::DecorationRole);
+    if (!decoration.isNull()) {
+        auto icon = decoration.value<finances::FontIcon>();
+        option->icon = finances::materialIcon(icon, option->widget->palette().text().color());
     }
 }
 

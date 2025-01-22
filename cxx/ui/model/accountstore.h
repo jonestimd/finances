@@ -9,12 +9,15 @@ class AccountTableModel;
 
 class AccountStore : public EntityStore<Account, AccountService> {
 public:
-    CompanyStore *const companyStore;
+    CompanyStore companyStore;
 
     AccountStore(ServiceContext *services);
-    ~AccountStore();
+
+    bool load(EntityView *source, bool reload = false);
 
     void update(QWidget *source, AccountTableModel *model);
+
+    QString qualifiedName(const QVariant &accountId, QChar delimiter) const;
 
 protected:
     void update(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);

@@ -9,6 +9,7 @@
 #include "groupswindow.h"
 #include "payeeswindow.h"
 #include "securitieswindow.h"
+#include "transactionswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
@@ -20,6 +21,8 @@ class AccountsWindow : public AppWindow {
     CategoriesWindow *categoriesWindow{};
     GroupsWindow *groupsWindow{};
     SecuritiesWindow *securitiesWindow{};
+    TransactionsWindow *transactionsWindow{};
+    QAction *showAccount;
 
 public:
     AccountsWindow(DataStore *dataStore);
@@ -38,6 +41,8 @@ public Q_SLOTS:
     void showCategories();
     void showGroups();
     void showSecurities();
+    void showTransactions();
+    void selectionChanged();
 
 private:
     void addCompany(const QString &name);

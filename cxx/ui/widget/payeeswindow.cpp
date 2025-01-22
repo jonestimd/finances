@@ -1,10 +1,10 @@
 #include "payeeswindow.h"
 #include "settings.h"
 #include "entityselectiondialog.h"
+#include "settings.h"
+#include "statusmessage.h"
 #include <ui/model/comboboxmodel.h>
 
-#define LOADING_PAYEES "Loading payees..."
-#define SAVING_PAYEES "Saving payees..."
 #define SETTINGS_GROUP "payees"
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
@@ -20,8 +20,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
-    if (store->load(this)) model()->setRows(store->ids());
-    else disableUi(tr(LOADING_PAYEES));
+    if (store->load(&entityView, tr(LOADING_PAYEES))) model()->setRows(store->ids());
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
@@ -31,11 +30,11 @@ PayeeTableModel *PayeesWindow::model() const {
 }
 
 void PayeesWindow::loadData() {
-    if (entityView.confirmLoadData(tr(LOADING_PAYEES))) store->load(this, true);
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_PAYEES), true);
 }
 
 void PayeesWindow::saveData() {
-    disableUi(tr(SAVING_PAYEES));
+    entityView.disableUi(tr(SAVING_PAYEES));
     store->update(this, model());
 }
 
@@ -57,7 +56,7 @@ void PayeesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            disableUi(tr(SAVING_PAYEES));
+            entityView.disableUi(tr(SAVING_PAYEES));
             store->mergePayees(this, payee, selectedId);
         }
     }

@@ -27,11 +27,8 @@ public:
     Q_INVOKABLE virtual void loadData() = 0;
     Q_INVOKABLE virtual void saveData() = 0;
     Q_INVOKABLE void enableUi();
-    Q_INVOKABLE void disableUi(const QString &message);
 
 protected:
-    void removeMessage(const QString &message);
-
     void closeEvent(QCloseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 };

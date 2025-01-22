@@ -2,27 +2,29 @@
 #define ENTITYSTORE_H
 
 #include "background.h"
+#include "comboboxmodel.h"
 #include "service/model/bulkupdate.h"
+#include "ui/widget/entityview.h"
 #include <QHash>
 #include <QWidget>
 
 class DataStore;
 
-class EntityStoreSignals : public QObject {
+class AbstractEntityStore : public QObject {
     Q_OBJECT
 
 protected:
     static const QString user;
 
 public:
-    EntityStoreSignals(QObject *parent = nullptr);
+    AbstractEntityStore(QObject *parent = nullptr);
 
 Q_SIGNALS:
     void valuesLoaded(QList<qlonglong> ids);
 };
 
-template<typename T, class Service>
-class EntityStore : public EntityStoreSignals {
+template<typename T, class Service, typename... GetAllArgs>
+class EntityStore : public AbstractEntityStore {
     QHash<qlonglong, const T*> byId{};
     bool loaded{false};
 protected:
@@ -43,18 +45,30 @@ public:
         return byId.size();
     }
 
-    const T *value(qlonglong id) const {
-        return byId.value(id);
+    const T *value(const QVariant &id) const {
+        return byId.value(id.toLongLong());
     }
 
-    bool contains(qlonglong id) const {
-        return byId.contains(id);
+    bool contains(const QVariant &id) const {
+        return byId.contains(id.toLongLong());
     }
 
-    bool load(QWidget *source, bool reload = false) {
+    const QList<const T*> values() const {
+        return byId.values();
+    }
+
+    ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const {
+        QList<const NamedEntity*> options;
+        for (auto entity : values()) options.append(entity);
+        return new ComboBoxModel(options, NamedEntity::getName, createValue);
+    }
+
+    bool load(EntityView *view, const QString &statusMessage, GetAllArgs... args, bool reload = false) {
         if (!reload && loaded) return true;
-        doInBackground(source, [=, this]() {
-            setValues(service->getAll());
+        view->disableUi(statusMessage);
+        doInBackground(view->statusBar.parentWidget(), [=, this]() {
+            setValues(args..., service->getAll(args...));
+            QMetaObject::invokeMethod(view, "removeMessage", statusMessage);
             emit valuesLoaded(ids());
         });
         return false;
@@ -81,13 +95,15 @@ protected:
             byId[id] = updated;
             if (oldValue) delete oldValue;
         }
-        for (auto i : deletes) delete byId.take(i->id.toLongLong());
+        for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
     }
 
-    virtual void setValues(QHash<qlonglong, const T*> values) {
-        auto oldValues = byId;
-        byId = values;
-        qDeleteAll(oldValues);
+    virtual void setValues(GetAllArgs... args, QHash<qlonglong, const T*> values) {
+        for (auto [id, entity] : values.asKeyValueRange()) {
+            auto oldEntity = byId.take(id);
+            byId.insert(id, entity);
+            if (oldEntity) delete oldEntity;
+        }
         this->loaded = true;
     }
 };

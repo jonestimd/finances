@@ -6,7 +6,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 
-class Category : public NamedEntity {
+class Category : public TransactionType {
 public:
     QVariant amountType{DEBIT_DEPOSIT};
     QVariant description;
@@ -19,7 +19,6 @@ public:
 
     Category();
     Category(const QSqlRecord &record);
-    Category(const QString &name);
 
     bool deletable() const;
 };

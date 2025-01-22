@@ -1,22 +1,27 @@
 #include "formats.h"
 #include <QTime>
 #include <QDecNumber.hh>
+#include <QRegularExpression>
 
-QString accountBalance(const Account *row, const QVariant &balance) {
-    QDecNumber value = balance.value<QDecNumber>();
-    return QString("%1%2").arg(row->currency.toString()).arg(value.toDouble(), 0, 'f', 2);
-}
-
-QString securityDollarAmount(const Security *row, const QVariant &amount) {
+QString moneyFormat(const QVariant &amount) {
     QDecNumber value = amount.value<QDecNumber>();
-    return QString("$%1").arg(value.toDouble(), 0, 'f', 2); // TODO currency
+    auto exponent = value.data()->exponent;
+    QString result = value.toString();
+    if (exponent == 0) result += ".00";
+    else if (exponent == -1) result += "0";
+    return result;
 }
 
-QString securityShares(const Security *row, const QVariant &amount) {
+QString dollarFormat(const QVariant &amount) {
+    return moneyFormat(amount).prepend("$");
+}
+
+QString securityShares(const QVariant &amount) {
+    if (amount.isNull()) return "";
     QDecNumber value = amount.value<QDecNumber>();
-    return QString("%1").arg(value.toDouble(), 0, 'f', row->scale.toInt());
+    return value.trim().toString();
 }
 
-QString formatDate(const QVariant &date) {
+QString dateFormat(const QVariant &date) {
     return date.value<QDate>().toString(Qt::ISODate);
 }

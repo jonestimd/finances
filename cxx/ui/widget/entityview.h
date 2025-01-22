@@ -35,11 +35,12 @@ public:
 
     bool focusFilter(QKeyEvent *event);
 
-    bool confirmLoadData(QString loadingMessage);
+    bool confirmLoadData();
     void confirmClose(QCloseEvent *event, const char *settingsGroup);
 
     void enableUi();
     void disableUi(const QString &message);
+    Q_INVOKABLE void removeMessage(const QString &message);
 
 public Q_SLOTS:
     void dataChanged();

@@ -23,16 +23,32 @@ public:
     NamedEntity(const QSqlRecord &record, const char *nameColumn = "name");
     NamedEntity(const QString &name);
 
-    /*!
-     * \brief getId Get the id of a \c NamedEntity\c.
-     * \param value the \c NamedEntity\c
-     */
-    static QVariant getId(const QVariant &value);
     static QString getName(const NamedEntity *entity);
 };
 
 Q_DECLARE_METATYPE(const NamedEntity*)
 // static const int namedEntityTypeId = qRegisterMetaType<NamedEntity>();
+
+class TransactionType : public NamedEntity {
+public:
+    const bool transfer;
+
+    TransactionType(bool transfer);
+    TransactionType(bool transfer, const QSqlRecord &record, const char *nameColumn = "name");
+};
+
+Q_DECLARE_METATYPE(const TransactionType*)
+
+struct TransactionTypeId {
+    const bool transfer;
+    const QVariant id;
+
+    TransactionTypeId(bool transfer = false, QVariant id = QVariant{});
+    TransactionTypeId(const TransactionType &tt);
+    TransactionTypeId(const TransactionType *tt);
+};
+
+Q_DECLARE_METATYPE(const TransactionTypeId)
 
 struct EnumValue : QObject {
     const char *code;
@@ -47,8 +63,5 @@ Q_DECLARE_METATYPE(const EnumValue*)
 
 template<typename T>
 concept NameAndId = std::is_base_of<NamedEntity, T>::value;
-
-template<NameAndId T>
-using ValuesSupplier = std::function<const QHash<qlonglong, const T*>()>;
 
 #endif // BASEDOMAIN_H

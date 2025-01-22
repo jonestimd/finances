@@ -30,14 +30,6 @@ void AppWindow::enableUi() {
     entityView.enableUi();
 }
 
-void AppWindow::disableUi(const QString &message) {
-    entityView.disableUi(message);
-}
-
-void AppWindow::removeMessage(const QString &message) {
-    entityView.statusBar.removeMessage(message);
-}
-
 void AppWindow::closeEvent(QCloseEvent *event) {
     entityView.confirmClose(event, settingsGroup);
 }

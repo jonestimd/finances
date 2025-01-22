@@ -2,9 +2,8 @@
 #include "entityselectiondialog.h"
 #include "settings.h"
 #include "treeview.h"
+#include "statusmessage.h"
 
-#define LOADING_CATEGORIES "Loading categories..."
-#define SAVING_CATEGORIES "Saving categories..."
 #define CATEGORY_SETTINGS "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
@@ -22,13 +21,10 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     entityView.insertAction(2, moveAction);
     entityView.insertAction(3, mergeAction);
 
-    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
-
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
-    if (store->load(this)) model()->setRows(store->ids());
-    else disableUi(tr(LOADING_CATEGORIES));
+    if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
     settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &entityView);
 }
@@ -38,11 +34,11 @@ CategoryTableModel *CategoriesWindow::model() {
 }
 
 void CategoriesWindow::loadData() {
-    if (entityView.confirmLoadData(tr(LOADING_CATEGORIES))) store->load(this, true);
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_CATEGORIES), true);
 }
 
 void CategoriesWindow::saveData() {
-    disableUi(tr(SAVING_CATEGORIES));
+    entityView.disableUi(tr(SAVING_CATEGORIES));
     store->update(this, model());
 }
 
@@ -71,7 +67,7 @@ void CategoriesWindow::reparent() {
     if (result == QDialog::Accepted) {
         auto parentId = dialog.selectedId();
         if (category->parentId != dialog.selectedId()) {
-            disableUi(tr(SAVING_CATEGORIES));
+            entityView.disableUi(tr(SAVING_CATEGORIES));
             store->setParent(this, category, parentId);
         }
     }
@@ -90,13 +86,13 @@ void CategoriesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            disableUi(tr(SAVING_CATEGORIES));
+            entityView.disableUi(tr(SAVING_CATEGORIES));
             store->mergeCategories(this, category, selectedId);
         }
     }
 }
 
-void CategoriesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+void CategoriesWindow::selectionChanged() {
     moveAction->setEnabled(model()->movable(entityView.selectedIndex()));
     mergeAction->setEnabled(entityView.selectedIndex().isValid());
 }

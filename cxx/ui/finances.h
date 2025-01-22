@@ -19,6 +19,13 @@ namespace finances {
         OptionsRole,
         ValidationMessageRole,
         ValidatorFactoryRole,
+        EntityIdRole,
+        EntityPtrRole,
+    };
+
+    enum TextHighlight {
+        Accent = 0x01,
+        Dimmed = 0x02,
     };
 
     enum UnsavedState {
@@ -29,24 +36,26 @@ namespace finances {
     enum FontIcon {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
-        AreaChart  = 0xe770, // security?
+        AreaChart  = 0xe770,
+        ArrowRight = 0xf81c,
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
         HideSource = 0xf023,
         Merge = 0xeb98,
         MergeType = 0xe252, // merge category
-        // MoneyBag = 0xf3ee, // security?
         MoveItem = 0xf1ff,
         MoveDown = 0xeb61,
         MoveUp = 0xeb64,
         Person = 0xe7fd,
         Refresh = 0xe5d5,
         Save = 0xe161,
+        Table = 0xf191,
         Trash = 0xe872,
         Unchecked = 0xe835,
         Undo = 0xe166,
         Workspaces = 0xe1a0, // groups
+        None = ' ',
     };
 
     class FontResource {
@@ -64,7 +73,7 @@ namespace finances {
 
     Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
 
-    QIcon qIcon(FontIcon icon);
+    QIcon materialIcon(FontIcon icon, QColor color = {});
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
     QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip);
     QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut);
