@@ -56,13 +56,6 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
 }
 
-int EntityView::columnIndex(const QString &name) const {
-    for (int col = 0; col < model->columnCount(); ++col) {
-        if (model->headerData(col, Qt::Horizontal) == name) return col;
-    }
-    return -1;
-}
-
 QModelIndex EntityView::selectedIndex() {
     return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
 }
@@ -84,42 +77,6 @@ bool EntityView::focusFilter(QKeyEvent *event) {
         return true;
     }
     return false;
-}
-
-void EntityView::saveSort(QSettings *settings) {
-    if (viewHeader->sortIndicatorSection() >= 0) {
-        settings->setValue("sort.column", model->headerData(viewHeader->sortIndicatorSection(), Qt::Horizontal));
-        settings->setValue("sort.order", viewHeader->sortIndicatorOrder());
-    }
-}
-
-void EntityView::saveSizes(QString group, QSettings *settings) {
-    settings->beginGroup(QString(group).append(".columns"));
-    for (int section = 0; section < viewHeader->count(); ++section) {
-        auto name = model->headerData(section, Qt::Horizontal).toString();
-        auto width = viewHeader->sectionSize(section);
-        settings->setValue(name + ".width", width);
-        settings->setValue(name + ".pos", viewHeader->visualIndex(section));
-    }
-    settings->endGroup();
-}
-
-void EntityView::restore(QString group, QSettings *settings) {
-    auto sortColumn = settings->value(group + "/sort.column", defaultSort).toString();
-    if (!sortColumn.isEmpty()) {
-        auto sortOrder = settings->value(group + "/sort.order", 0).toInt();
-        auto index = columnIndex(sortColumn);
-        viewHeader->setSortIndicator(index, static_cast<Qt::SortOrder>(sortOrder));
-    }
-    for (int section = 0; section < viewHeader->count(); ++section) {
-        bool ok;
-        auto name = model->headerData(section, Qt::Horizontal).toString();
-        QString column = group + ".columns/" + name;
-        auto width = settings->value(column + ".width").toInt(&ok);
-        if (ok) viewHeader->resizeSection(section, width);
-        auto pos = settings->value(column + ".pos").toInt(&ok);
-        if (ok) viewHeader->moveSection(viewHeader->visualIndex(section), pos);
-    }
 }
 
 bool EntityView::confirmLoadData(QString loadingMessage) {

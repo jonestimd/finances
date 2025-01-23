@@ -17,16 +17,16 @@ class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
-    StatusBar *statusBar;
-    QHeaderView *viewHeader;
-    AdapterItemModel *const model; // TODO move to window save/restore class?
-    QAbstractItemView *const itemView;
+    StatusBar *const statusBar;
 
     EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
                StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
                const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
 
 public:
+    QHeaderView *const viewHeader;
+    AdapterItemModel *const model; // TODO move to window save/restore class?
+    QAbstractItemView *const itemView;
     SortFilterProxyModel sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
@@ -41,8 +41,6 @@ public:
                const QString filterLabel, const QString defaultSort,
                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
 
-    int columnIndex(const QString &name) const;
-
     QModelIndex selectedIndex();
 
     void enableColumnResize();
@@ -50,12 +48,6 @@ public:
     void setColumnResize(const std::vector<int> stretchColumns);
 
     bool focusFilter(QKeyEvent *event);
-
-    void saveSort(QSettings *settings);
-
-    void saveSizes(QString group, QSettings *settings);
-
-    void restore(QString group, QSettings *settings);
 
     bool confirmLoadData(QString loadingMessage);
 
