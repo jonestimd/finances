@@ -4,6 +4,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.h ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companieswindow.h ${CMAKE_CURRENT_LIST_DIR}/companieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dialog.h ${CMAKE_CURRENT_LIST_DIR}/dialog.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.h ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.h ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityview.h ${CMAKE_CURRENT_LIST_DIR}/entityview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.h ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.cpp

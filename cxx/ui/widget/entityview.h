@@ -57,23 +57,13 @@ public:
 
     void restore(QString group, QSettings *settings);
 
-    void startEdit(int rowIndex);
-
     bool confirmLoadData(QString loadingMessage);
 
     void enableUi();
 
-private:
-    QAction *addAction(const QString text);
-    QAction *deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete = nullptr);
-    QAction *undoAction();
-
 public Q_SLOTS:
     void dataChanged();
     void showValidation(const QModelIndex &index);
-    void addRow();
-    void queueDeletes();
-    void undoChanges();
 };
 
 #endif // ENTITY_VIEW_H

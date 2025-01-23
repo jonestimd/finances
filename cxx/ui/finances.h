@@ -65,11 +65,14 @@ namespace finances {
 
     QIcon qIcon(FontIcon icon);
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QObject *parent = nullptr);
-    QAction* iconAction(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot, bool enabled = true);
-    QAction* iconAction(FontIcon icon, QString text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
-    QAction* iconAction(const char *iconFile, QString text, QObject *parent = nullptr);
-    QAction* iconToggle(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot);
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip);
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut);
+    QAction* iconAction(FontIcon icon, const QString &text, QObject *parent = nullptr);
+    QAction* iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled = true);
+    QAction* iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
+    QAction* iconAction(const char *iconFile, const QString &text, QObject *parent = nullptr);
+    QAction* iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
+
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;

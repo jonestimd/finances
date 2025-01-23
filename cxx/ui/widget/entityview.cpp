@@ -1,6 +1,7 @@
 #include "entityview.h"
 #include "dialog.h"
 #include "tableitemdelegate.h"
+#include "entityrowaction.h"
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QTableWidget>
@@ -32,11 +33,9 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     itemView->setAlternatingRowColors(true);
 
     toolbar.setMovable(false);
-    toolbar.addAction(addAction(tr("Add %1").arg(entityName.toLower())));
-    toolbar.addAction(deleteAction(tr("Delete %1").arg(entityName.toLower()), [model](const QModelIndex &index) {
-        return model->enableDelete(index);
-    }));
-    toolbar.addAction(undoAction());
+    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, model, itemView, this));
+    toolbar.addAction(new DeleteRowAction(entityName, &sortModel, model, itemView, this));
+    toolbar.addAction(new UndoChangeAction(&sortModel, model, itemView, this));
     toolbar.addAction(saveAction);
     toolbar.addAction(finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, window, loadSlot));
 
@@ -123,23 +122,6 @@ void EntityView::restore(QString group, QSettings *settings) {
     }
 }
 
-bool selectEditColumn(QModelIndex &index) {
-    auto columnCount = index.model()->columnCount();
-    while (index.column() < columnCount) {
-        if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
-        index = index.sibling(index.row(), index.column()+1);
-    }
-    return false;
-}
-
-void EntityView::startEdit(int rowIndex) {
-    auto index = sortModel.index(rowIndex, 0);
-    if (selectEditColumn(index)) {
-        itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-        itemView->edit(index);
-    }
-}
-
 bool EntityView::confirmLoadData(QString loadingMessage) {
     if (dialog::confirmDiscardChanges(window, model)) {
         itemView->setEnabled(false); // TODO save/restore selection
@@ -154,49 +136,9 @@ void EntityView::enableUi() {
     itemView->setEnabled(true);
 }
 
-QAction *EntityView::addAction(const QString text) {
-    auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this, SLOT(addRow()));
-    connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
-    connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
-    return addAction;
-}
-
-QAction *EntityView::deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete) {
-    auto action = finances::iconAction(finances::Trash, text, QKeySequence::Delete, this, SLOT(queueDeletes()));
-    auto setEnabled = [=, this]() {
-        auto indexes = sortModel.mapSelectionToSource(itemView->selectionModel()->selection()).indexes();
-        bool enabled = !indexes.empty();
-        for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= enableDelete(*i);
-        action->setEnabled(enabled);
-    };
-    setEnabled();
-    connect(itemView->selectionModel(), &QItemSelectionModel::selectionChanged, this, setEnabled);
-    return action;
-}
-
-QAction *EntityView::undoAction() {
-    auto undoAction = finances::iconAction(finances::Undo, tr("Undo"), QKeySequence::Undo, this, SLOT(undoChanges()));
-    return undoAction;
-}
-
 void EntityView::dataChanged() {
     saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
     window->setWindowModified(model->hasUnsavedChanges());
-}
-
-void EntityView::addRow() {
-    int rowIndex = sortModel.mapFromSource(model->index(model->queueAdd(), 0)).row();
-    startEdit(rowIndex);
-}
-
-void EntityView::queueDeletes() {
-    auto selection = sortModel.mapSelectionToSource(itemView->selectionModel()->selection());
-    for (auto i : selection.indexes()) model->queueDelete(i);
-}
-
-void EntityView::undoChanges() {
-    auto selection = sortModel.mapSelectionToSource(itemView->selectionModel()->selection());
-    for (auto i : selection.indexes()) model->undoChange(i);
 }
 
 void EntityView::showValidation(const QModelIndex &index) {

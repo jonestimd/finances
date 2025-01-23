@@ -81,41 +81,55 @@ namespace finances {
         return label;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, QObject *parent) {
-        auto action = new QAction(parent);
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip) {
         action->setText(text);
-        action->setToolTip(text);
+        action->setToolTip(tooltip);
         action->setIcon(qIcon(icon));
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence shortcut, QObject *parent) {
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
         QString tooltip(text);
         if (!shortcut.isEmpty()) tooltip.append(" (").append(shortcut.toString()).append(")");
-        auto action = iconAction(icon, tooltip, parent);
+        initAction(action, icon, text, tooltip);
         action->setShortcut(shortcut);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QString shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString &text, QObject *parent) {
+        return initAction(new QAction(parent), icon, text, text);
+    }
+
+    QAction *iconAction(FontIcon icon, const QString &text, const QKeySequence &shortcut, QObject *parent) {
+        return initAction(new QAction(parent), icon, text, shortcut);
+    }
+
+    QAction *iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         if (receiver && slot) QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(const char *iconFile, const QString text, QObject *parent) {
+    QAction *iconAction(const char *iconFile, const QString &text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
         action->setIcon(QIcon(iconFile));
+        return action;
+    }
+
+    QAction *iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot) {
+        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
+        action->setCheckable(true);
+        if (receiver && slot) QObject::connect(action, SIGNAL(toggled(bool)), receiver, slot);
         return action;
     }
 
@@ -148,12 +162,5 @@ namespace finances {
             auto styles = readStyles(":/styles/minimal-light.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
-    }
-
-    QAction *iconToggle(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot) {
-        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
-        action->setCheckable(true);
-        if (receiver && slot) QObject::connect(action, SIGNAL(toggled(bool)), receiver, slot);
-        return action;
     }
 }
