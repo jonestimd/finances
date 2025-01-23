@@ -19,15 +19,6 @@ void settings::saveWindowState(const char *group, QWidget *widget, EntityView *e
     if (entityView) entityView->saveSizes(group, settings);
 }
 
-int columnIndex(QAbstractItemModel *model, const QString name) {
-    auto count = model->columnCount();
-    for (int i = 0; i < count; ++i) {
-        auto header = model->headerData(i, Qt::Horizontal, Qt::DisplayRole);
-        if (header == name) return i;
-    }
-    return -1;
-}
-
 void settings::restoreWindowState(QString group, QWidget *widget, QSize defaultSize, EntityView *entityView) {
     auto settings = appSettings();
 
