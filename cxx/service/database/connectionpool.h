@@ -19,9 +19,9 @@ class ConnectionPool {
     const char *const schema;
     const char *const user;
     const char *const password;
-    QThreadStorage<QString> nameStore;
-    QMutex poolMutex;
-    int openConnections;
+    QThreadStorage<QString> nameStore{};
+    QMutex poolMutex{};
+    int openConnections{0};
 
     QSqlDatabase acquire();
 
