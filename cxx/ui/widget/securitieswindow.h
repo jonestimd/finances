@@ -14,7 +14,6 @@ class SecuritiesWindow : public StatusWindow {
     QTableView *itemView{new QTableView(this)};
     QAction *hideZeroAction{finances::iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
     EntityView tableSort;
-    const int sharesColumn;
 
 public:
     SecuritiesWindow(DataStore *dataStore);

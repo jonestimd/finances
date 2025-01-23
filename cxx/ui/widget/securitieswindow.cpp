@@ -15,7 +15,6 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
     , model{dataStore->securityStore, this}
     , tableSort{this, &model, itemView, &statusBar, tr("Securities"), tr("Name"), SLOT(saveSecurities()), SLOT(loadSecurities()),
                 QList{hideZeroAction}}
-    , sharesColumn{model.columnIndex(tr("Shares"))}
 {
     setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Securities[*]").arg(dataStore->connectionName()));
@@ -63,6 +62,7 @@ void SecuritiesWindow::keyPressEvent(QKeyEvent *event) {
 }
 
 bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
-    auto value = sourceIndex.siblingAtColumn(sharesColumn).data(finances::SortRole);
-    return value.isNull() || value.toDouble() > 0;
+    auto row = model.getRow(sourceIndex);
+    auto shares = row->shares;
+    return shares.isNull() || shares.value<QDecNumber>().toDouble() > 0;
 }

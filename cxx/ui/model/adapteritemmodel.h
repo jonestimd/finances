@@ -9,13 +9,11 @@ concept Copyable = requires(Row &t){
     { new Row(t) } -> std::convertible_to<Row*>;
 };
 
-class AdapterItemModel : public QAbstractItemModel
-{
+class AdapterItemModel : public QAbstractItemModel {
     Q_OBJECT
+
 public:
     explicit AdapterItemModel(QObject *parent = nullptr);
-
-    virtual int columnIndex(const QString name) const = 0;
 
     virtual bool hasUnsavedChanges() const = 0;
     virtual void clearChanges() = 0;

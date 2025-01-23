@@ -54,12 +54,13 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
-
-    itemView->selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
 }
 
-int EntityView::columnIndex(const QString name) const {
-    return model->columnIndex(name);
+int EntityView::columnIndex(const QString &name) const {
+    for (int col = 0; col < model->columnCount(); ++col) {
+        if (model->headerData(col, Qt::Horizontal) == name) return col;
+    }
+    return -1;
 }
 
 QModelIndex EntityView::selectedIndex() {
@@ -104,7 +105,6 @@ void EntityView::saveSizes(QString group, QSettings *settings) {
 }
 
 void EntityView::restore(QString group, QSettings *settings) {
-    auto model = itemView->model();
     auto sortColumn = settings->value(group + "/sort.column", defaultSort).toString();
     if (!sortColumn.isEmpty()) {
         auto sortOrder = settings->value(group + "/sort.order", 0).toInt();
@@ -113,7 +113,7 @@ void EntityView::restore(QString group, QSettings *settings) {
     }
     for (int section = 0; section < viewHeader->count(); ++section) {
         bool ok;
-        auto name = model->headerData(section, Qt::Horizontal, Qt::DisplayRole).toString();
+        auto name = model->headerData(section, Qt::Horizontal).toString();
         QString column = group + ".columns/" + name;
         auto width = settings->value(column + ".width").toInt(&ok);
         if (ok) viewHeader->resizeSection(section, width);

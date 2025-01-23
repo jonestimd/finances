@@ -41,7 +41,7 @@ public:
                const QString filterLabel, const QString defaultSort,
                const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
 
-    int columnIndex(const QString name) const;
+    int columnIndex(const QString &name) const;
 
     QModelIndex selectedIndex();
 

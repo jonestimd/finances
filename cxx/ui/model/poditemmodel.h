@@ -7,8 +7,7 @@
 #include "columnadapter.h"
 
 template<Copyable Row>
-class PodItemModel : public AdapterItemModel
-{
+class PodItemModel : public AdapterItemModel {
 protected:
     const QList<ColumnAdapter<Row>*> columns;
     QHash<const QModelIndex, QVariant> changes; // TODO const values
@@ -153,13 +152,6 @@ public:
             emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
             revalidateRow(index);
         }
-    }
-
-    int columnIndex(const QString name) const override {
-        for (int col = 0; col < columns.length(); ++col) {
-            if (columns[col]->title == name) return col;
-        }
-        return -1;
     }
 
     virtual bool hasUnsavedChanges() const override {
