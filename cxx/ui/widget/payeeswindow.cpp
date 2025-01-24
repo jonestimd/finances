@@ -33,7 +33,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     if (store->load(this)) model.setRows(store->ids());
     else statusBar.addMessage(tr(LOADING_PAYEES));
 
-    tableSort.setColumnResize({0});
+    finances::setColumnResize(tableSort.viewHeader);
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &tableSort);
 }

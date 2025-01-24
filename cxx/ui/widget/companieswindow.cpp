@@ -26,7 +26,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     layout.setSpacing(0);
     layout.setContentsMargins(0, 0, 0, 0);
 
-    tableSort.setColumnResize({0});
+    finances::setColumnResize(tableSort.viewHeader);
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
 }

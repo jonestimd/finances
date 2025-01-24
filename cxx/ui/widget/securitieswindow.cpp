@@ -25,7 +25,7 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
     if (store->load(this)) model.setRows(store->ids());
     else statusBar.addMessage(tr(LOADING_SECURITIES));
 
-    tableSort.enableColumnResize();
+    finances::setColumnResize(tableSort.viewHeader);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &tableSort);
 }
 

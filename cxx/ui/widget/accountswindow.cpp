@@ -40,7 +40,7 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
     else statusBar.addMessage(tr(LOADING_ACCOUNTS));
     if (!companyStore->load(this)) statusBar.addMessage(tr(LOADING_COMPANIES));
 
-    tableSort.enableColumnResize();
+    finances::setColumnResize(tableSort.viewHeader);
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &tableSort);
 }

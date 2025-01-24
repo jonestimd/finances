@@ -133,6 +133,14 @@ namespace finances {
         return action;
     }
 
+    void setColumnResize(QHeaderView *viewHeader) {
+        if (viewHeader->count() > 2) viewHeader->setStretchLastSection(true);
+        else {
+            viewHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
+            viewHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+        }
+    }
+
     App::App(int &argc, char **argv)
         : QApplication(argc, argv),
         userStyleSheet{""},

@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QColor>
 #include <QFont>
+#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QSettings>
@@ -72,6 +73,8 @@ namespace finances {
     QAction* iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
     QAction* iconAction(const char *iconFile, const QString &text, QObject *parent = nullptr);
     QAction* iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
+
+    void setColumnResize(QHeaderView *viewHeader);
 
     class App : public QApplication {
         Q_OBJECT

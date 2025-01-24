@@ -60,17 +60,6 @@ QModelIndex EntityView::selectedIndex() {
     return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
 }
 
-void EntityView::enableColumnResize() {
-    viewHeader->setStretchLastSection(true);
-}
-
-void EntityView::setColumnResize(const std::vector<int> stretchColumns) {
-    viewHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    for (int i : stretchColumns) {
-        viewHeader->setSectionResizeMode(i, QHeaderView::Stretch);
-    }
-}
-
 bool EntityView::focusFilter(QKeyEvent *event) {
     if (event->matches(QKeySequence::Find) && !filterInput->hasFocus()) {
         filterInput->setFocus();

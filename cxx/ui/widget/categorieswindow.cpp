@@ -40,7 +40,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     if (store->load(this)) model.setRows(store->ids());
     else statusBar.addMessage(tr(LOADING_CATEGORIES));
 
-    tableSort.enableColumnResize();
+    finances::setColumnResize(tableSort.viewHeader);
 
     settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
 }

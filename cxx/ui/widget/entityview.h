@@ -43,10 +43,6 @@ public:
 
     QModelIndex selectedIndex();
 
-    void enableColumnResize();
-
-    void setColumnResize(const std::vector<int> stretchColumns);
-
     bool focusFilter(QKeyEvent *event);
 
     bool confirmLoadData(QString loadingMessage);
