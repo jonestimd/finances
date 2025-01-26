@@ -4,7 +4,7 @@
 #include "service/model/company.h"
 #include "service/companyservice.h"
 #include "podtablemodel.h"
-#include "ui/model/datastore.h"
+#include "ui/model/companystore.h"
 
 class CompanyTableModel : public PodTableModel<Company, CompanyService> {
     Q_OBJECT
