@@ -22,7 +22,7 @@ public:
     ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, ValidatorFactory *factory = nullptr)
         : title{title}, field{field}, isEditable{isEditable}, validatorFactory{factory} {}
 
-    ~ColumnAdapter() {
+    virtual ~ColumnAdapter() {
         if (validatorFactory && validatorFactory->multiRow) delete validatorFactory;
     }
 
