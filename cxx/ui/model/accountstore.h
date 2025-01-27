@@ -5,6 +5,8 @@
 #include "entitystore.h"
 #include "service/servicecontext.h"
 
+class AccountTableModel;
+
 class AccountStore : public EntityStore<Account, AccountService> {
 public:
     CompanyStore *const companyStore;
@@ -12,9 +14,10 @@ public:
     AccountStore(ServiceContext *services);
     ~AccountStore();
 
-    void update(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
+    void update(QWidget *source, AccountTableModel *model);
 
 protected:
+    void update(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
     using EntityStore::update;
 };
 

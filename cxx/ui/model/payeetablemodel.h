@@ -7,7 +7,7 @@
 
 class PayeeTableModel : public PodTableModel<Payee, PayeeService> {
 public:
-    explicit PayeeTableModel(PayeeStore *payeeStore, QObject *parent = nullptr);
+    explicit PayeeTableModel(PayeeStore *payeeStore);
 };
 
 #endif // PAYEETABLEMODEL_H

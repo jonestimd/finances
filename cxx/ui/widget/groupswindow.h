@@ -1,30 +1,24 @@
 #ifndef GROUPSWINDOW_H
 #define GROUPSWINDOW_H
 
-#include "entityview.h"
-#include "statuswindow.h"
+#include "appwindow.h"
 #include "ui/model/datastore.h"
 #include "ui/model/grouptablemodel.h"
 
-class GroupsWindow : public StatusWindow {
+class GroupsWindow : public AppWindow {
     Q_OBJECT
     GroupStore *store;
-    GroupTableModel model;
-    QTableView *itemView{new QTableView(this)};
-    EntityView tableSort;
 
 public:
     GroupsWindow(DataStore *dataStore);
 
-public Q_SLOTS:
-    void loadGroups();
-    void saveGroups();
-    void setGroups(const QList<qlonglong> groupIds);
+    GroupTableModel *model();
 
-    // QWidget interface
-protected:
-    void closeEvent(QCloseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
+    Q_INVOKABLE void loadData() override;
+    Q_INVOKABLE void saveData() override;
+
+public Q_SLOTS:
+    void setGroups(const QList<qlonglong> groupIds);
 };
 
 #endif // GROUPSWINDOW_H

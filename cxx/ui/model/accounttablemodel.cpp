@@ -30,7 +30,7 @@ protected:
     }
 };
 
-AccountTableModel::AccountTableModel(AccountStore *store, QObject *parent, AddCompany addCompany)
+AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
     : PodTableModel<Account, AccountService>{
         store,
         QList<ColumnAdapter<Account>*>{
@@ -43,7 +43,6 @@ AccountTableModel::AccountTableModel(AccountStore *store, QObject *parent, AddCo
             new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
             new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance, false),
         },
-        parent,
     }
 {}
 

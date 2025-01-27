@@ -1,6 +1,5 @@
 #include "categorieswindow.h"
 #include "entityselectiondialog.h"
-#include "dialog.h"
 #include "settings.h"
 #include <QtSql>
 #include <QtWidgets>
@@ -11,58 +10,51 @@
 #define CATEGORY_SETTINGS "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : StatusWindow()
+    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new QTreeView(), CATEGORY_SETTINGS}
     , store{dataStore->categoryStore}
-    , model{dataStore, this}
-    , tableSort{this, &model, itemView, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
+    , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
+    , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
     , getName{[this](const NamedEntity* entity) {
         return store->displayName(entity->id.toLongLong());
     }}
 {
-    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
 
-    addToolBar(&tableSort.toolbar);
     // TODO disable with pending changes
-    moveAction = finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()));
-    moveAction->setEnabled(false);
-    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], moveAction);
+    entityView.insertAction(2, moveAction);
+    entityView.insertAction(3, mergeAction);
 
-    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()));
-    mergeAction->setEnabled(false);
-    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[3], mergeAction);
-
-    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
-    if (store->load(this)) model.setRows(store->ids());
-    else statusBar.addMessage(tr(LOADING_CATEGORIES));
+    if (store->load(this)) model()->setRows(store->ids());
+    else disableUi(tr(LOADING_CATEGORIES));
 
-    finances::setColumnResize(tableSort.viewHeader);
-
-    settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
+    settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &entityView);
 }
 
-void CategoriesWindow::loadCategories() {
-    if (tableSort.confirmLoadData(tr(LOADING_CATEGORIES))) store->load(this, true);
+CategoryTableModel *CategoriesWindow::model() {
+    return static_cast<CategoryTableModel*>(entityView.model);
 }
 
-void CategoriesWindow::saveCategories() {
+void CategoriesWindow::loadData() {
+    if (entityView.confirmLoadData(tr(LOADING_CATEGORIES))) store->load(this, true);
+}
+
+void CategoriesWindow::saveData() {
     disableUi(tr(SAVING_CATEGORIES));
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    store->update(this, model());
 }
 
 void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
-    model.setRows(categoryIds);
-    statusBar.removeMessage(tr(LOADING_CATEGORIES));
-    statusBar.removeMessage(tr(SAVING_CATEGORIES));
-    itemView->setEnabled(true);
+    model()->setRows(categoryIds);
+    entityView.enableUi();
 }
 
 void CategoriesWindow::reparent() {
-    auto category = model.getRow(tableSort.selectedIndex());
+    auto category = model()->getRow(entityView.selectedIndex());
     auto name = category->name.toString();
     QList<const NamedEntity*> options;
     QHash<qlonglong, QString> disabledOptions;
@@ -88,7 +80,7 @@ void CategoriesWindow::reparent() {
 }
 
 void CategoriesWindow::merge() {
-    auto category = model.getRow(tableSort.selectedIndex());
+    auto category = model()->getRow(entityView.selectedIndex());
     QList<const NamedEntity*> options;
     for (auto id : store->ids()) {
         auto option = store->value(id);
@@ -107,15 +99,6 @@ void CategoriesWindow::merge() {
 }
 
 void CategoriesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
-    moveAction->setEnabled(model.movable(tableSort.selectedIndex()));
-    mergeAction->setEnabled(tableSort.selectedIndex().isValid());
-}
-
-void CategoriesWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(CATEGORY_SETTINGS, this, &tableSort);
-}
-
-void CategoriesWindow::keyPressEvent(QKeyEvent *event) {
-    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
+    moveAction->setEnabled(model()->movable(entityView.selectedIndex()));
+    mergeAction->setEnabled(entityView.selectedIndex().isValid());
 }

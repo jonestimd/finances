@@ -3,22 +3,18 @@
 
 #include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
+#include "appwindow.h"
 #include "categorieswindow.h"
 #include "companieswindow.h"
-#include "entityview.h"
 #include "groupswindow.h"
 #include "payeeswindow.h"
 #include "securitieswindow.h"
-#include "statuswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
-class AccountsWindow : public StatusWindow {
+class AccountsWindow : public AppWindow {
     Q_OBJECT
     DataStore *dataStore;
-    AccountTableModel model;
-    QTableView *itemView{new QTableView(this)};
-    EntityView tableSort;
     CompaniesWindow *companiesDialog{};
     PayeesWindow *payeesWindow{};
     CategoriesWindow *categoriesWindow{};
@@ -29,9 +25,12 @@ public:
     AccountsWindow(DataStore *dataStore);
     ~AccountsWindow();
 
+    AccountTableModel *model();
+
+    void loadData() override;
+    void saveData() override;
+
 public Q_SLOTS:
-    void loadAccounts();
-    void saveAccounts();
     void setCompanies(const QList<qlonglong> companyIds);
     void setAccounts(const QList<qlonglong> accountIds);
     void showCompanies();
@@ -39,11 +38,6 @@ public Q_SLOTS:
     void showCategories();
     void showGroups();
     void showSecurities();
-
-    // QWidget interface
-protected:
-    void closeEvent(QCloseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
 
 private:
     void addCompany(const QString &name);

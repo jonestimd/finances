@@ -68,6 +68,11 @@ public:
         });
     }
 
+    template<class Model>
+    void update(QWidget *source, Model *model) {
+        update(source, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes());
+    }
+
 protected:
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
         for (auto updated : updates) {

@@ -10,44 +10,36 @@
 #include <QTreeView>
 #include <ui/model/sortfilterproxymodel.h>
 
-// TODO - break up?
-//   - save/restore
-//   - actions (toolbar?)
 class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
-    StatusBar *const statusBar;
-
-    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
-               StatusBar *statusBar, const QString filterLabel, const QString defaultSort,
-               const char *saveSlot, const char *loadSlot, QList<QAction*> actions);
 
 public:
+    StatusBar statusBar{};
     QHeaderView *const viewHeader;
-    AdapterItemModel *const model; // TODO move to window save/restore class?
+    AdapterItemModel *const model;
     QAbstractItemView *const itemView;
     SortFilterProxyModel sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
     QAction *const saveAction;
-    const QString defaultSort;
 
-    EntityView(QWidget *window, AdapterItemModel *model, QTableView *itemView, StatusBar *statusBar,
-               const QString filterLabel, const QString defaultSort,
-               const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
+    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
+    EntityView(QWidget *window, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
 
-    EntityView(QWidget *window, AdapterItemModel *model, QTreeView *itemView, StatusBar *statusBar,
-               const QString filterLabel, const QString defaultSort,
-               const char *saveSlot, const char *loadSlot, QList<QAction*> actions = QList<QAction*>{});
+    void addActions(const QList<QAction*> &actions);
+    void insertAction(qsizetype index, QAction* action);
 
     QModelIndex selectedIndex();
 
     bool focusFilter(QKeyEvent *event);
 
     bool confirmLoadData(QString loadingMessage);
+    void confirmClose(QCloseEvent *event, const char *settingsGroup);
 
     void enableUi();
+    void disableUi(const QString &message);
 
 public Q_SLOTS:
     void dataChanged();

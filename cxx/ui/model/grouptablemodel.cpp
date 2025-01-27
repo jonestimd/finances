@@ -5,7 +5,7 @@
 
 #define GROUP_NAME_COLUMN 0
 
-GroupTableModel::GroupTableModel(GroupStore *groupStore, QObject *parent)
+GroupTableModel::GroupTableModel(GroupStore *groupStore)
     : PodTableModel<TransactionGroup, GroupService>{
         groupStore,
         QList<ColumnAdapter<TransactionGroup>*>{
@@ -13,6 +13,5 @@ GroupTableModel::GroupTableModel(GroupStore *groupStore, QObject *parent)
             new ColumnAdapter<TransactionGroup>(tr("Description"), &TransactionGroup::description),
             new NumberColumnAdapter<TransactionGroup>(tr("Transactions"), &TransactionGroup::transactions),
         },
-        parent,
     }
 {}

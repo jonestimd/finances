@@ -16,7 +16,7 @@ protected:
     int childCount(const QModelIndex &parent) const override;
 
 public:
-    explicit CategoryTableModel(DataStore *datastore, QObject *parent);
+    explicit CategoryTableModel(DataStore *datastore);
 
     void setRows(QList<qlonglong> categoryIds);
     const Category* getRow(const QModelIndex &index) const override;

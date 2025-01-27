@@ -1,5 +1,6 @@
 target_sources(finances
   PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/appwindow.h ${CMAKE_CURRENT_LIST_DIR}/appwindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accountswindow.h ${CMAKE_CURRENT_LIST_DIR}/accountswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.h ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companieswindow.h ${CMAKE_CURRENT_LIST_DIR}/companieswindow.cpp
@@ -15,6 +16,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/securitieswindow.h ${CMAKE_CURRENT_LIST_DIR}/securitieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/settings.h ${CMAKE_CURRENT_LIST_DIR}/settings.cpp
     ${CMAKE_CURRENT_LIST_DIR}/statusbar.h ${CMAKE_CURRENT_LIST_DIR}/statusbar.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/statuswindow.h ${CMAKE_CURRENT_LIST_DIR}/statuswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.h ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.cpp
 )

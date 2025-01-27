@@ -133,6 +133,28 @@ namespace finances {
         return action;
     }
 
+    class InvokableAction : public QAction {
+    public:
+        InvokableAction(QWidget *window, const char *invokable, finances::FontIcon icon, const QString &text,
+                        const QKeySequence &shortcut, bool enabled = true)
+            : QAction{window}
+        {
+            initAction(this, icon, text, shortcut);
+            setEnabled(enabled);
+            connect(this, &QAction::triggered, [=]() {
+                QMetaObject::invokeMethod(window, invokable);
+            });
+        }
+    };
+
+    QAction *saveAction(QWidget *window, const char *invokable) {
+        return new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+    }
+
+    QAction *reloadAction(QWidget *window, const char *invokable) {
+        return new InvokableAction(window, invokable, Refresh, QObject::tr("Reload"), QKeySequence::Refresh);
+    }
+
     void setColumnResize(QHeaderView *viewHeader) {
         if (viewHeader->count() > 2) viewHeader->setStretchLastSection(true);
         else {

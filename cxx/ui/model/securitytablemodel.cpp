@@ -11,7 +11,7 @@
 
 #define SECURITY_NAME_COLUMN 0
 
-SecurityTableModel::SecurityTableModel(SecurityStore *store, QObject *parent)
+SecurityTableModel::SecurityTableModel(SecurityStore *store)
     : PodTableModel{
         store,
         QList<ColumnAdapter<Security>*>{
@@ -24,6 +24,5 @@ SecurityTableModel::SecurityTableModel(SecurityStore *store, QObject *parent)
             new AmountColumnAdapter<Security>(tr("Cost Basis"), &Security::costBasis, securityDollarAmount, false),
             new AmountColumnAdapter<Security>(tr("Dividends"), &Security::dividends, securityDollarAmount, false),
         },
-        parent,
     }
 {}

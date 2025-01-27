@@ -23,7 +23,7 @@ protected:
     }
 };
 
-CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
+CategoryTableModel::CategoryTableModel(DataStore *ds)
     : PodItemModel<Category> {
         QList<ColumnAdapter<Category>*>{
             new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
@@ -33,7 +33,6 @@ CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
             new ColumnAdapter<Category>(tr("Income"), &Category::income),
             new ColumnAdapter<Category>(tr("Security"), &Category::security),
         },
-        parent,
     }
     , store{ds->categoryStore}
 {}

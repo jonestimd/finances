@@ -1,5 +1,4 @@
 #include "groupswindow.h"
-#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
@@ -8,45 +7,33 @@
 #define SETTINGS_GROUP "groups"
 
 GroupsWindow::GroupsWindow(DataStore *dataStore)
-    : StatusWindow{}
+    : AppWindow{tr("Groups"), new GroupTableModel(dataStore->groupStore), new QTableView(), SETTINGS_GROUP}
     , store{dataStore->groupStore}
-    , model{dataStore->groupStore, this}
-    , tableSort{this, &model, itemView, &statusBar, tr("Groups"), tr("Name"), SLOT(saveGroups()), SLOT(loadGroups())}
 {
-    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Groups[*]").arg(dataStore->connectionName()));
-    addToolBar(&tableSort.toolbar);
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setGroups(QList<qlonglong>)));
 
-    if (store->load(this)) model.setRows(store->ids());
-    else statusBar.addMessage(tr(LOADING_GROUPS));
+    if (store->load(this)) model()->setRows(store->ids());
+    else disableUi(tr(LOADING_GROUPS));
 
-    finances::setColumnResize(tableSort.viewHeader);
-    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
 
-void GroupsWindow::loadGroups() {
-    if (tableSort.confirmLoadData(tr(LOADING_GROUPS))) store->load(this, true);
+GroupTableModel *GroupsWindow::model() {
+    return static_cast<GroupTableModel*>(entityView.model);
 }
 
-void GroupsWindow::saveGroups() {
+void GroupsWindow::loadData() {
+    if (entityView.confirmLoadData(tr(LOADING_GROUPS))) store->load(this, true);
+}
+
+void GroupsWindow::saveData() {
     disableUi(tr(SAVING_GROUPS));
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    store->update(this, model()->unsavedChanges(), model()->unsavedAdds(), model()->unsavedDeletes());
 }
 
 void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
-    model.setRows(groupIds);
-    statusBar.removeMessage(tr(LOADING_GROUPS));
-    statusBar.removeMessage(tr(SAVING_GROUPS));
-    itemView->setEnabled(true);
-}
-
-void GroupsWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
-}
-
-void GroupsWindow::keyPressEvent(QKeyEvent *event) {
-    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
+    model()->setRows(groupIds);
+    entityView.enableUi();
 }

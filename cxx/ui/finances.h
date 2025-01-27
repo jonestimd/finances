@@ -74,6 +74,9 @@ namespace finances {
     QAction* iconAction(const char *iconFile, const QString &text, QObject *parent = nullptr);
     QAction* iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
 
+    QAction *saveAction(QWidget *window, const char *invokable = "saveData");
+    QAction *reloadAction(QWidget *window, const char *invokable = "loadData");
+
     void setColumnResize(QHeaderView *viewHeader);
 
     class App : public QApplication {

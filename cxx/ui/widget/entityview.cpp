@@ -2,14 +2,14 @@
 #include "dialog.h"
 #include "tableitemdelegate.h"
 #include "entityrowaction.h"
+#include "ui/widget/settings.h"
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QLayout>
 #include <QTableWidget>
 #include <QTimer>
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
-            StatusBar *statusBar, const QString entityName, const QString defaultSort,
-            const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
     , model{model}
@@ -17,34 +17,30 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     , itemView{itemView}
     , viewHeader{viewHeader}
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), &sortModel, window)}
-    , defaultSort{defaultSort}
     , toolbar{window}
-    , statusBar{statusBar}
-    , itemDelegate{window, statusBar}
-    , saveAction{finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, window, saveSlot, false)}
+    , itemDelegate{window, &statusBar}
+    , saveAction{finances::saveAction(window)}
 {
     sortModel.setSourceModel(model);
     sortModel.setSortRole(finances::SortRole);
     sortModel.setFilterKeyColumn(-1);
     sortModel.setSortCaseSensitivity(Qt::CaseInsensitive);
 
+    itemView->setProperty("sortingEnabled", true);
     itemView->setModel(&sortModel);
     itemView->setItemDelegate(&itemDelegate);
     itemView->setAlternatingRowColors(true);
+
+    viewHeader->setSectionsMovable(true);
+    viewHeader->setSortIndicatorShown(true);
+    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 
     toolbar.setMovable(false);
     toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, model, itemView, this));
     toolbar.addAction(new DeleteRowAction(entityName, &sortModel, model, itemView, this));
     toolbar.addAction(new UndoChangeAction(&sortModel, model, itemView, this));
     toolbar.addAction(saveAction);
-    toolbar.addAction(finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, window, loadSlot));
-
-    if (!actions.isEmpty()) {
-        toolbar.addSeparator();
-        for (auto action : actions) {
-            toolbar.addAction(action);
-        }
-    }
+    toolbar.addAction(finances::reloadAction(window));
     toolbar.addWidget(filterInput);
 
     connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
@@ -54,6 +50,22 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
+
+    finances::setColumnResize(viewHeader);
+}
+
+void EntityView::addActions(const QList<QAction *> &actions) {
+    if (!actions.isEmpty()) {
+        auto filterAction = toolbar.actions().last();
+        toolbar.insertSeparator(filterAction);
+        for (auto action : actions) {
+            toolbar.insertAction(filterAction, action);
+        }
+    }
+}
+
+void EntityView::insertAction(qsizetype index, QAction *action) {
+    toolbar.insertAction(toolbar.actions().at(index), action);
 }
 
 QModelIndex EntityView::selectedIndex() {
@@ -71,15 +83,25 @@ bool EntityView::focusFilter(QKeyEvent *event) {
 bool EntityView::confirmLoadData(QString loadingMessage) {
     if (dialog::confirmDiscardChanges(window, model)) {
         itemView->setEnabled(false); // TODO save/restore selection
-        statusBar->addMessage(loadingMessage);
+        statusBar.addMessage(loadingMessage);
         return true;
     }
     return false;
 }
 
+void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
+    if (!dialog::confirmDiscardChanges(window, model)) event->ignore();
+    else settings::saveWindowState(settingsGroup, window, model, viewHeader);
+}
+
 void EntityView::enableUi() {
-    statusBar->clear();
+    statusBar.clear();
     itemView->setEnabled(true);
+}
+
+void EntityView::disableUi(const QString &message) {
+    statusBar.addMessage(message);
+    itemView->setEnabled(false);
 }
 
 void EntityView::dataChanged() {
@@ -91,33 +113,13 @@ void EntityView::showValidation(const QModelIndex &index) {
     // make sure index is in selection
     if (!itemView->selectionModel()->hasSelection()) itemView->selectionModel()->select(index, QItemSelectionModel::Select);
     auto message = index.data(finances::ValidationMessageRole);
-    if (!message.isNull()) statusBar->showMessage(message.toString());
-    else statusBar->clearMessage();
+    if (!message.isNull()) statusBar.showMessage(message.toString());
+    else statusBar.clearMessage();
 }
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, StatusBar *statusBar, const QString filterLabel,
-                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, view, view->horizontalHeader(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, const QString &entityName)
+    : EntityView(window, model, view, view->horizontalHeader(), entityName)
 {
     view->resizeColumnsToContents();
-    view->setSortingEnabled(true);
     // view->verticalHeader()->setDefaultSectionSize(5); // minimize row height
-
-    viewHeader->setSectionsMovable(true);
-    viewHeader->setSortIndicatorShown(true);
-    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
-}
-
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTreeView *view, StatusBar *statusBar, const QString filterLabel,
-                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, view, view->header(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
-{
-    using enum QAbstractItemView::EditTrigger;
-    view->setSortingEnabled(true);
-    view->setSelectionBehavior(QAbstractItemView::SelectItems);
-    view->setEditTriggers(AllEditTriggers ^ CurrentChanged);
-
-    viewHeader->setSectionsMovable(true);
-    viewHeader->setSortIndicatorShown(true);
-    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 }
