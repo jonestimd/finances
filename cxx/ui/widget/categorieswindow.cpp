@@ -1,6 +1,7 @@
 #include "categorieswindow.h"
 #include "entityselectiondialog.h"
 #include "settings.h"
+#include "treeview.h"
 #include <QtSql>
 #include <QtWidgets>
 #include <QtConcurrent>
@@ -10,7 +11,7 @@
 #define CATEGORY_SETTINGS "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new QTreeView(), CATEGORY_SETTINGS}
+    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView(), CATEGORY_SETTINGS}
     , store{dataStore->categoryStore}
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}

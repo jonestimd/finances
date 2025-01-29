@@ -1,6 +1,6 @@
 QTableView,
 QTreeView {
-    accent-color: rgb(255, 0, 0)
+    accent-color: rgb(255, 0, 0);
 }
 
 QTableView QLineEdit[acceptableInput="false"],
