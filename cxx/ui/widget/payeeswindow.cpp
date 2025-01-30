@@ -1,9 +1,6 @@
 #include "payeeswindow.h"
 #include "settings.h"
 #include "entityselectiondialog.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
 #include <ui/model/comboboxmodel.h>
 
 #define LOADING_PAYEES "Loading payees..."

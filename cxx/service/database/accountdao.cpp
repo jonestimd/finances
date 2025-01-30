@@ -1,8 +1,6 @@
 #include "accountdao.h"
 #include "mapping.h"
 
-#include <QtSql>
-
 static const auto getAccountsSql = R"(
 with balance as (
   select tx.account_id, sum(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions

@@ -42,7 +42,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     auto result = EntityDao::add(db, securities, user);
     QSqlQuery query(db);
     query.prepare(insertSecurityQuery);
-    for (auto security : result) {
+    for (auto security : std::as_const(result)) {
         query.bindValue(":id", security->id);
         query.bindValue(":type", security->securityType);
         exec(query, "insert security");
@@ -50,7 +50,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     return result;
 }
 
-void SecurityDao::remove(QSqlDatabase &db, QList<const Security*> securities) {
+void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securities) {
     EntityDao::remove(db, securities);
     QSqlQuery query(db);
     query.prepare("delete from asset where id = :id");

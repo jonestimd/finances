@@ -141,7 +141,7 @@ namespace finances {
         {
             initAction(this, icon, text, shortcut);
             setEnabled(enabled);
-            connect(this, &QAction::triggered, [=]() {
+            connect(this, &QAction::triggered, window, [=]() {
                 QMetaObject::invokeMethod(window, invokable);
             });
         }

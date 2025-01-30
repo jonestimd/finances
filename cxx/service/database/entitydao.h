@@ -2,8 +2,7 @@
 #define ENTITY_DAO_H
 
 #include "sql.h"
-#include <QtSql/QSqlDatabase>
-#include <QtSql>
+#include <QSqlDatabase>
 
 template<class Entity>
 class EntityDao {
@@ -62,7 +61,7 @@ public:
         return load(query);
     }
 
-    virtual QList<const Entity*> update(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
+    virtual QList<const Entity*> update(QSqlDatabase &db, const QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;
         result.reserve(entities.length());
@@ -79,7 +78,7 @@ public:
         return result;
     }
 
-    virtual QList<const Entity*> add(QSqlDatabase &db, QList<Entity*> entities, const QString &user) {
+    virtual QList<const Entity*> add(QSqlDatabase &db, const QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;
         result.reserve(entities.length());
@@ -95,7 +94,7 @@ public:
         return result;
     }
 
-    virtual void remove(QSqlDatabase &db, QList<const Entity*> entities) {
+    virtual void remove(QSqlDatabase &db, const QList<const Entity*> entities) {
         QSqlQuery query(db);
         query.prepare(deleteSql);
         for (auto entity : entities) {

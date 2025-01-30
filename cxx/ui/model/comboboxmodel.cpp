@@ -55,7 +55,7 @@ QValidator::State ComboBoxModel::Validator::validate(QString &input, int &pos) c
 void ComboBoxModel::Validator::fixup(QString &input) const {
     for (auto option : model->options) {
         auto name = model->getName(option);
-        if (name.toLower().contains(input.toLower())) {
+        if (name.contains(input, Qt::CaseInsensitive)) {
             input = name;
             return;
         }

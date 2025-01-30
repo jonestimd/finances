@@ -32,7 +32,7 @@ bool CategoryStore::isAncestor(qlonglong categoryId, const QVariant parentId) co
 bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
     auto category = value(categoryId);
     auto lowerName = name.toString().toLower();
-    for (auto childId : category->childIds) {
+    for (const auto &childId : category->childIds) {
         if (value(childId.toLongLong())->name.toString().toLower() == lowerName) return true;
     }
     return false;

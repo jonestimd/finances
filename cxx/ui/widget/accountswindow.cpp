@@ -1,8 +1,5 @@
 #include "accountswindow.h"
 #include "settings.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
 
 #define LOADING_ACCOUNTS "Loading accounts..."
 #define SAVING_ACCOUNTS "Saving accounts..."

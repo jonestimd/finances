@@ -2,8 +2,6 @@
 #include "mapping.h"
 #include "sql.h"
 
-#include <QtSql>
-
 static const auto getCategoriesSql = R"(
 with summary as (
   select td.tx_category_id, count(distinct td.tx_id) transactions, count(*) details

@@ -65,8 +65,8 @@ void DeleteRowAction::selectionChanged() {
 }
 
 void DeleteRowAction::doAction() {
-    auto selection = sortModel->mapSelectionToSource(selectionModel->selection());
-    for (auto i : selection.indexes()) model->queueDelete(i);
+    auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
+    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model->queueDelete(*i);
 }
 
 UndoChangeAction::UndoChangeAction(SortFilterProxyModel *sortModel, AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent)
@@ -75,6 +75,6 @@ UndoChangeAction::UndoChangeAction(SortFilterProxyModel *sortModel, AdapterItemM
 {}
 
 void UndoChangeAction::doAction() {
-    auto selection = sortModel->mapSelectionToSource(selectionModel->selection());
-    for (auto i : selection.indexes()) model->undoChange(i);
+    auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
+    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model->undoChange(*i);
 }

@@ -1,5 +1,6 @@
 #include "background.h"
 #include "../widget/dialog.h"
+#include <QThreadPool>
 
 bool handleError(QWidget *source, Runnable task) {
     try {

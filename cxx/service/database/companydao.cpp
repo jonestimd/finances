@@ -1,5 +1,4 @@
 #include "companydao.h"
-#include <QtSql>
 
 static const auto getCompaniesSql = R"(
 select c.*, count(a.id) accounts

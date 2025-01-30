@@ -56,7 +56,7 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
 
 void EntityView::addActions(const QList<QAction *> &actions) {
     if (!actions.isEmpty()) {
-        auto filterAction = toolbar.actions().last();
+        auto filterAction = toolbar.actions().constLast();
         toolbar.insertSeparator(filterAction);
         for (auto action : actions) {
             toolbar.insertAction(filterAction, action);

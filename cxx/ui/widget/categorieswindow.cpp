@@ -2,9 +2,6 @@
 #include "entityselectiondialog.h"
 #include "settings.h"
 #include "treeview.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
 
 #define LOADING_CATEGORIES "Loading categories..."
 #define SAVING_CATEGORIES "Saving categories..."
@@ -61,7 +58,7 @@ void CategoriesWindow::reparent() {
     QHash<qlonglong, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
-        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString()).arg(name);
+        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);
         if (option != category && !store->isAncestor(id, category->id)) {
             options.append(option);
             if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.toLongLong(), message);

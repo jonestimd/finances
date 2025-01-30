@@ -13,7 +13,7 @@ void SortFilterProxyModel::clearFilters() {
 }
 
 bool SortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
-    for (auto accept : acceptFunctions) {
+    for (const auto &accept : acceptFunctions) {
         if (!accept(sourceModel()->index(sourceRow, 0, sourceParent))) return false;
     }
     return QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);
