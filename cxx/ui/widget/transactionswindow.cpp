@@ -1,10 +1,25 @@
+#include "accountsmenu.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
+#include <QMenu>
+#include <QMenuBar>
 
 #define TRANSACTION_SETTINGS "transactions"
+#define HIDE_CLOSED_ACCOUNTS "hideClosedAccounts"
 #define CLEARED_WIDTH 30
+
+namespace transactionwindow {
+    QFrame *separator() {
+        QFrame *frame = new QFrame();
+        frame->setProperty("separator", "true");
+        frame->setFrameStyle(QFrame::VLine | QFrame::Raised);
+        return frame;
+    }
+}
+
+using namespace transactionwindow;
 
 TransactionsWindow::TransactionsWindow(DataStore *dataStore, qlonglong accountId)
     : AppWindow{tr("Transaction"), new TransactionTableModel(dataStore), new TreeView(), TRANSACTION_SETTINGS}
@@ -12,7 +27,18 @@ TransactionsWindow::TransactionsWindow(DataStore *dataStore, qlonglong accountId
     , accountStore{dataStore->accountStore}
 {
     setWindowTitle(QString("%1 - %2[*]").arg(dataStore->connectionName(), accountStore->qualifiedName(accountId, ':')));
-    addToolBar(&entityView.toolbar);
+    QMenuBar *menuBar = new QMenuBar();
+    menuBar->addMenu(new AccountsMenu(dataStore->accountStore));
+    QHBoxLayout *layout = new QHBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(menuBar, 0, Qt::AlignCenter);
+    layout->addWidget(separator());
+    layout->addWidget(&entityView.toolbar, 1);
+    QFrame *frame = new QFrame();
+    frame->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    frame->setLineWidth(2);
+    frame->setLayout(layout);
+    setMenuWidget(frame);
 
     connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));

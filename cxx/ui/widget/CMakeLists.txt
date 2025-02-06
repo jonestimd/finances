@@ -1,6 +1,7 @@
 target_sources(finances
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/appwindow.h ${CMAKE_CURRENT_LIST_DIR}/appwindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/accountsmenu.h ${CMAKE_CURRENT_LIST_DIR}/accountsmenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accountswindow.h ${CMAKE_CURRENT_LIST_DIR}/accountswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.h ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companieswindow.h ${CMAKE_CURRENT_LIST_DIR}/companieswindow.cpp
