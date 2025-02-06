@@ -1,10 +1,9 @@
 #include "settings.h"
-#include "../finances.h"
 #include <QHeaderView>
 
-QSettings *appSettings() {
-    return static_cast<finances::App*>(QApplication::instance())->settings;
-}
+#define APP_NAME "finances"
+
+Q_GLOBAL_STATIC(QSettings, appSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, APP_NAME);
 
 void settings::saveSizes(QSettings *settings, const QString &group, QAbstractItemModel *model, QHeaderView *viewHeader) {
     settings->beginGroup(QString(group).append(".columns"));
@@ -83,4 +82,16 @@ void settings::restoreWindowState(const QString &group, QWidget *widget, QSize d
     auto model = entityView ? entityView->model : nullptr;
     auto viewHeader = entityView ? entityView->viewHeader : nullptr;
     restoreWindowState(group, widget, defaultSize, model, viewHeader);
+}
+
+ConnectionSettings settings::connectionSettings(const QString &name) {
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection");
+    return ConnectionSettings{
+        settings.value(name + "/type").toString(),
+        settings.value(name + "/host").toString(),
+        settings.value(name + "/port").toInt(),
+        settings.value(name + "/schema").toString(),
+        settings.value(name + "/user").toString(),
+        settings.value(name + "/password").toString(),
+    };
 }

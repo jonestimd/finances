@@ -1,14 +1,12 @@
 #include "service/servicecontext.h"
 #include "ui/model/datastore.h"
 #include "ui/widget/accountswindow.h"
+#include "ui/widget/settings.h"
 
 #include <QApplication>
 #include <QDecNumber.hh>
 #include <QStyle>
 #include <QStyleHints>
-
-#define DB_NAME "finances_test"
-#define DB_USER DB_NAME
 
 // to load styles use --stylesheet finances.qss
 int main(int argc, char *argv[])
@@ -21,7 +19,7 @@ int main(int argc, char *argv[])
         [](const EnumValue *value) -> QString { return value ? value->name : ""; }
     );
 
-    ConnectionPool connectionPool("QMYSQL", "hydra", 3306, DB_NAME, DB_USER, DB_USER);
+    ConnectionPool connectionPool(settings::connectionSettings());
     ServiceContext serviceContext(&connectionPool);
     DataStore dataStore(&serviceContext);
 

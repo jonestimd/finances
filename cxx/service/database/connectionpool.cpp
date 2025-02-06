@@ -3,22 +3,26 @@
 #include <QtDebug>
 
 #include "connectionpool.h"
-#define DB_NAME "finances_test"
 
-QString makeName(const QString &dbType, const QString &host, const QString &schema) {
+QString ConnectionSettings::makeName() const {
     return QString("%1:%2:%3").arg(dbType, host, schema);
 }
 
-ConnectionPool::ConnectionPool(
-    const char *const dbType,
-    const char *const host,
-    const int port,
-    const char *const schema,
-    const char *const user,
-    const char *const password)
-    : dbType{dbType}, host{host}, port{port}, schema{schema}, user{user}, password{password}
-    , name{makeName(dbType, host, schema)}
-    , displayName{QString("%1:%2").arg(host, schema)}
+QString ConnectionSettings::displayName() const {
+    return QString("%1:%2").arg(host, schema);
+}
+
+bool ConnectionSettings::openDatabase(QSqlDatabase &db) const {
+    db.setHostName(host);
+    db.setPort(port);
+    db.setDatabaseName(schema);
+    return db.open(user, password);
+}
+
+ConnectionPool::ConnectionPool(const ConnectionSettings &settings)
+    : settings{settings}
+    , name{settings.makeName()}
+    , displayName{settings.displayName()}
 {}
 
 QSqlDatabase ConnectionPool::acquire() {
@@ -26,13 +30,10 @@ QSqlDatabase ConnectionPool::acquire() {
     if (dbName.isNull()) {
         QMutexLocker locker(&poolMutex);
         dbName = QString("%1(%2)").arg(name).arg(openConnections++);
-        auto db = QSqlDatabase::addDatabase(dbType, dbName);
+        auto db = QSqlDatabase::addDatabase(settings.dbType, dbName);
         if (!db.isOpen()) {
-            db.setHostName(host);
-            db.setPort(port);
-            db.setDatabaseName(schema);
             db.setNumericalPrecisionPolicy(QSql::HighPrecision);
-            if (!db.open(user, password)) {
+            if (!settings.openDatabase(db)) {
                 qCritical() << "ConnectionPool:" << dbName << db.lastError().text();
                 throw QObject::tr("Failed to connect to the database.");
             }

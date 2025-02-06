@@ -92,8 +92,6 @@ namespace finances {
         Q_OBJECT
         QString userStyleSheet;
     public:
-        QSettings *const settings;
-
         App(int &argc, char **argv);
         ~App();
 

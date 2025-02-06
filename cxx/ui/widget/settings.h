@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include "entityview.h"
+#include "service/database/connectionpool.h"
 #include <QWidget>
 
 namespace settings {
@@ -16,6 +17,8 @@ namespace settings {
     void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, QAbstractItemModel *model, QHeaderView *viewHeader);
 
     void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, EntityView *entityView= nullptr);
+
+    ConnectionSettings connectionSettings(const QString &name = "default");
 }
 
 #endif // SETTINGS_H

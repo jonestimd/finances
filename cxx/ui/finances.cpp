@@ -222,9 +222,8 @@ namespace finances {
     };
 
     App::App(int &argc, char **argv)
-        : QApplication(argc, argv),
-        userStyleSheet{""},
-        settings{new QSettings(QSettings::IniFormat, QSettings::UserScope, "finances", "finances", this)}
+        : QApplication(argc, argv)
+        , userStyleSheet{""}
     {
         setStyle(new AppStyle()); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         setWindowIcon(QIcon(":/images/finances.svg"));
