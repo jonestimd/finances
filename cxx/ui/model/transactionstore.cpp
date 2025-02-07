@@ -9,7 +9,7 @@ TransactionStore::TransactionStore(ServiceContext *serviceContext)
 
 bool TransactionStore::load(EntityView *view, qlonglong accountId, bool reload) {
     if (reload || !loadedAccounts.contains(accountId)) {
-        return EntityStore<Transaction, TransactionService, qlonglong>::load(view, tr(LOADING_TRANSACTIONS), accountId, reload);
+        return EntityStore<Transaction, TransactionService, qlonglong>::load(view, tr(LOADING_TRANSACTIONS), accountId, true);
     }
     return false;
 }

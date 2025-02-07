@@ -1,6 +1,6 @@
 #include "service/servicecontext.h"
 #include "ui/model/datastore.h"
-#include "ui/widget/accountswindow.h"
+#include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 
 #include <QApplication>
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     ServiceContext serviceContext(&connectionPool);
     DataStore dataStore(&serviceContext);
 
-    AccountsWindow accountsWindow(&dataStore);
-    accountsWindow.show();
+    UiContext uiContext{&dataStore};
+    uiContext.start();
     return app.exec();
 }

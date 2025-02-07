@@ -19,6 +19,10 @@ namespace settings {
     void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, EntityView *entityView= nullptr);
 
     ConnectionSettings connectionSettings(const QString &name = "default");
+
+    QVariant lastViewedAccount(const QString &connectionName = "default");
+
+    void setLastViewedAccount(const QVariant &id, const QString &connectionName = "default");
 }
 
 #endif // SETTINGS_H

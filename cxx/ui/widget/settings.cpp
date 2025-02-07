@@ -84,14 +84,24 @@ void settings::restoreWindowState(const QString &group, QWidget *widget, QSize d
     restoreWindowState(group, widget, defaultSize, model, viewHeader);
 }
 
+Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection")
+
 ConnectionSettings settings::connectionSettings(const QString &name) {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection");
     return ConnectionSettings{
-        settings.value(name + "/type").toString(),
-        settings.value(name + "/host").toString(),
-        settings.value(name + "/port").toInt(),
-        settings.value(name + "/schema").toString(),
-        settings.value(name + "/user").toString(),
-        settings.value(name + "/password").toString(),
+        dbSettings->value(name + "/type").toString(),
+        dbSettings->value(name + "/host").toString(),
+        dbSettings->value(name + "/port").toInt(),
+        dbSettings->value(name + "/schema").toString(),
+        dbSettings->value(name + "/user").toString(),
+        dbSettings->value(name + "/password").toString(),
     };
+}
+
+QVariant settings::lastViewedAccount(const QString &connectionName) {
+    return dbSettings->value(connectionName + "/last.viewed.account");
+}
+
+void settings::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
+    dbSettings->setValue(connectionName + "/last.viewed.account", id);
+    dbSettings->sync();
 }

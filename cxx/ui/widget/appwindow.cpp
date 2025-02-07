@@ -8,7 +8,6 @@ AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QAbstra
     addToolBar(&entityView.toolbar);
     setCentralWidget(itemView);
     setStatusBar(&entityView.statusBar);
-    model->setParent(this);
 }
 
 AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTableView *itemView, const char *settingsGroup)

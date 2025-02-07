@@ -42,6 +42,7 @@ namespace finances {
         Checked = 0xe834,
         Filter = 0xe152,
         HideSource = 0xf023,
+        LibraryBooks = 0xe02f,
         Merge = 0xeb98,
         MergeType = 0xe252, // merge category
         MoveItem = 0xf1ff,

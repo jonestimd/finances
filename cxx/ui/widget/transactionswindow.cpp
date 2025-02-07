@@ -21,14 +21,23 @@ namespace transactionwindow {
 
 using namespace transactionwindow;
 
-TransactionsWindow::TransactionsWindow(DataStore *dataStore, qlonglong accountId)
-    : AppWindow{tr("Transaction"), new TransactionTableModel(dataStore), new TreeView(), TRANSACTION_SETTINGS}
-    , store{dataStore->transactionStore}
-    , accountStore{dataStore->accountStore}
+TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model)
+    : AppWindow{tr("Transaction"), model, new TreeView(), TRANSACTION_SETTINGS}
+    , connectionName{context->dataStore->connectionName()}
+    , store{context->dataStore->transactionStore}
+    , accountStore{context->dataStore->accountStore}
 {
-    setWindowTitle(QString("%1 - %2[*]").arg(dataStore->connectionName(), accountStore->qualifiedName(accountId, ':')));
+    setWindowTitle(QString("%1 - Transactions").arg(connectionName));
+    setAttribute(Qt::WA_DeleteOnClose, true);
+    entityView.addActions({
+        context->accountsAction(),
+        context->payeesAction(),
+        context->categoriesAction(),
+        context->groupsAction(),
+        context->securitiesAction(),
+    });
     QMenuBar *menuBar = new QMenuBar();
-    menuBar->addMenu(new AccountsMenu(dataStore->accountStore));
+    menuBar->addMenu(new AccountsMenu(context));
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
@@ -40,14 +49,17 @@ TransactionsWindow::TransactionsWindow(DataStore *dataStore, qlonglong accountId
     frame->setLayout(layout);
     setMenuWidget(frame);
 
-    connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
+    connect(context->dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    if (accountStore->contains(model->accountId)) accountsLoaded();
+    if (entityView.model->rowCount() > 0) treeView()->expandAll();
 
     settings::restoreWindowState(TRANSACTION_SETTINGS, this, QSize{800, 600}, &entityView);
 
-    dataStore->accountStore->load(&entityView);
-    dataStore->accountStore->companyStore.load(&entityView, tr(LOADING_COMPANIES));
+    accountStore->load(&entityView);
+    accountStore->companyStore.load(&entityView, tr(LOADING_COMPANIES));
+    auto dataStore = context->dataStore;
     dataStore->categoryStore->load(&entityView, tr(LOADING_CATEGORIES));
     dataStore->groupStore->load(&entityView, tr(LOADING_GROUPS));
     dataStore->payeeStore->load(&entityView, tr(LOADING_PAYEES));
@@ -55,38 +67,28 @@ TransactionsWindow::TransactionsWindow(DataStore *dataStore, qlonglong accountId
 
     entityView.sortModel.setRecursiveFilteringEnabled(true);
     entityView.sortModel.setAutoAcceptChildRows(true);
-    entityView.viewHeader->setSectionResizeMode(model()->clearedColumn, QHeaderView::Fixed);
-    entityView.viewHeader->resizeSection(model()->clearedColumn, CLEARED_WIDTH);
+    entityView.viewHeader->setSectionResizeMode(model->clearedColumn, QHeaderView::Fixed);
+    entityView.viewHeader->resizeSection(model->clearedColumn, CLEARED_WIDTH);
 
     TreeView *view = static_cast<TreeView*>(entityView.itemView);
     view->setChildInheritsBackground(true);
     // view->setItemsExpandable(false);
     // view->setRootIsDecorated(false);
 
-    showAccount(accountId);
+    auto accountId = model->accountId;
+    if (store->load(&entityView, accountId)) model->setRows(store->transactionIds(accountId));
 }
 
 TransactionTableModel *TransactionsWindow::model() {
     return static_cast<TransactionTableModel*>(entityView.model);
 }
 
-void TransactionsWindow::showAccount(qlonglong accountId) {
-    model()->setAccountId(accountId);
-    if (store->load(&entityView, accountId)) model()->setRows(store->transactionIds(accountId));
-}
-
 void TransactionsWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, model()->accountId(), true);
+    if (entityView.confirmLoadData()) store->load(&entityView, model()->accountId, true);
 }
 
 void TransactionsWindow::saveData() {
     // TODO
-}
-
-void TransactionsWindow::accountLoaded(qlonglong accountId) {
-    if (accountId == model()->accountId()) {
-        model()->setRows(store->transactionIds(accountId));
-    }
 }
 
 void TransactionsWindow::modelReset() {
@@ -100,6 +102,10 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
             view->expand(entityView.sortModel.index(row, 0));
         }
     }
+}
+
+void TransactionsWindow::accountsLoaded() {
+    setWindowTitle(QString("%1 - %2[*]").arg(connectionName, accountStore->qualifiedName(model()->accountId, ':')));
 }
 
 TreeView *TransactionsWindow::treeView() {

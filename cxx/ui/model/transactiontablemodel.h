@@ -6,9 +6,9 @@
 #include "ui/model/datastore.h"
 
 class TransactionTableModel : public PodItemModel<Transaction> {
+    Q_OBJECT
     const QList<ColumnAdapter<TransactionDetail>*> detailColumns;
     const TransactionStore *const store;
-    qlonglong accountId_{-1};
     QHash<qlonglong, QVariant> balances{};
 
 public:
@@ -16,8 +16,9 @@ public:
     const int securityColumn;
     const int clearedColumn;
     const int subtotalColumn;
+    const qlonglong accountId;
 
-    explicit TransactionTableModel(DataStore *dataStore);
+    explicit TransactionTableModel(DataStore *dataStore, qlonglong accountId);
     ~TransactionTableModel();
 
 protected:
@@ -25,8 +26,6 @@ protected:
     int childCount(const QModelIndex &index) const override;
 
 public:
-    qlonglong accountId() const;
-    void setAccountId(qlonglong accountId);
     void setRows(QList<qlonglong> transactionIds);
 
     QVariant balance(const QVariant &transactionId) const;
@@ -41,6 +40,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 private:
+    Q_SLOT void accountLoaded(qlonglong accountId);
     bool isBoldColumn(int column) const;
     static QFont boldFont();
 };

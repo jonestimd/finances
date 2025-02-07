@@ -141,7 +141,7 @@ namespace transactiontablemodel {
 
 using namespace transactiontablemodel;
 
-TransactionTableModel::TransactionTableModel(DataStore *dataStore)
+TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
     : PodItemModel{{
         new TxDateColumnAdapter{tr("Date")},
         new ColumnAdapter<Transaction>(tr("Ref #"), &Transaction::referenceNumber),
@@ -167,27 +167,21 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore)
     , securityColumn{columnIndex(tr(SECURITY_TITLE))}
     , clearedColumn{columnIndex(tr(CLEARED_TITLE))}
     , subtotalColumn{columnIndex(tr(SUBTOTAL_TITLE))}
-{}
+    , accountId{accountId}
+{
+    connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
+}
 
 TransactionTableModel::~TransactionTableModel() {
     qDeleteAll(detailColumns);
 }
 
 QList<qlonglong> TransactionTableModel::transactionIds() const {
-    return store->transactionIds(accountId_);
+    return store->transactionIds(accountId);
 }
 
 int TransactionTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->detailIds.length() : transactionIds().count();
-}
-
-qlonglong TransactionTableModel::accountId() const {
-    return accountId_;
-}
-
-void TransactionTableModel::setAccountId(qlonglong accountId) {
-    this->accountId_ = accountId;
-    setRows(store->transactionIds(accountId));
 }
 
 void TransactionTableModel::setRows(QList<qlonglong> transactionIds) {
@@ -231,7 +225,7 @@ QModelIndex TransactionTableModel::parent(const QModelIndex &child) const {
 }
 
 int TransactionTableModel::rowCount(const QModelIndex &parent) const {
-    if (accountId_ < 0 || parent.parent().isValid()) return 0;
+    if (parent.parent().isValid()) return 0;
     if (parent.isValid()) return childCount(parent);
     return transactionIds().count();
 }
@@ -262,6 +256,10 @@ QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientat
         return value.toString().append('\n').append(detailColumns.at(section)->title);
     }
     return value;
+}
+
+void TransactionTableModel::accountLoaded(qlonglong accountId) {
+    if (accountId == this->accountId) setRows(store->transactionIds(accountId));
 }
 
 bool TransactionTableModel::isBoldColumn(int column) const {

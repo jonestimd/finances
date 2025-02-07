@@ -18,7 +18,7 @@ class EntityView : public QObject {
 public:
     StatusBar statusBar{};
     QHeaderView *const viewHeader;
-    AdapterItemModel *const model;
+    AdapterItemModel *const model; // TODO get from sortModel
     QAbstractItemView *const itemView;
     SortFilterProxyModel sortModel;
     FilterInput *const filterInput;

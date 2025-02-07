@@ -1,28 +1,30 @@
 #include "accountswindow.h"
 #include "settings.h"
 #include "statusmessage.h"
+#include "ui/uicontext.h"
 
 #define SETTINGS_GROUP "accounts"
 
 using namespace std::placeholders;
 using namespace finances;
 
-AccountsWindow::AccountsWindow(DataStore *dataStore)
+AccountsWindow::AccountsWindow(UiContext *context)
     : AppWindow{
         tr("Account"),
-        new AccountTableModel(dataStore->accountStore, std::bind(&AccountsWindow::addCompany, this, _1)),
+        new AccountTableModel(context->dataStore->accountStore, std::bind(&AccountsWindow::addCompany, this, _1)),
         new QTableView(),
         SETTINGS_GROUP
     }
-    , dataStore{dataStore}
+    , context{context}
+    , dataStore{context->dataStore}
     , showAccount{iconAction(FontIcon::Table, tr("Transactions"), tr("alt+t", "transactions"), this, SLOT(showTransactions()), false)}
 {
     entityView.addActions({
         iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
-        iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
-        iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
-        iconAction(FontIcon::Workspaces, tr("Groups"), tr("alt+g", "groups"), this, SLOT(showGroups())),
-        iconAction(FontIcon::AreaChart, tr("Securities"), tr("alt+s", "securities"), this, SLOT(showSecurities())),
+        context->payeesAction(),
+        context->categoriesAction(),
+        context->groupsAction(),
+        context->securitiesAction(),
         showAccount,
     });
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
@@ -43,10 +45,6 @@ AccountsWindow::AccountsWindow(DataStore *dataStore)
 
 AccountsWindow::~AccountsWindow() {
     if (companiesDialog) delete companiesDialog;
-    if (payeesWindow) delete payeesWindow;
-    if (categoriesWindow) delete categoriesWindow;
-    if (groupsWindow) delete groupsWindow;
-    if (securitiesWindow) delete securitiesWindow;
     if (transactionsWindow) delete transactionsWindow;
 }
 
@@ -82,34 +80,10 @@ void AccountsWindow::showCompanies() {
     companiesDialog->show();
 }
 
-void AccountsWindow::showPayees() {
-    if (!payeesWindow) payeesWindow = new PayeesWindow(dataStore);
-    payeesWindow->show();
-}
-
-void AccountsWindow::showCategories() {
-    if (!categoriesWindow) categoriesWindow = new CategoriesWindow(dataStore);
-    categoriesWindow->show();
-}
-
-void AccountsWindow::showGroups() {
-    if (!groupsWindow) groupsWindow = new GroupsWindow(dataStore);
-    groupsWindow->show();
-}
-
-void AccountsWindow::showSecurities() {
-    if (!securitiesWindow) securitiesWindow = new SecuritiesWindow(dataStore);
-    securitiesWindow->show();
-}
-
 void AccountsWindow::showTransactions() {
     if (entityView.selectedIndex().isValid()) {
         auto accountId = model()->getRow(entityView.selectedIndex())->id.toLongLong();
-        if (!transactionsWindow) {
-            transactionsWindow = new TransactionsWindow(dataStore, accountId);
-            transactionsWindow->show();
-        }
-        // else transactionsWindow->l
+        context->showTransactions(accountId);
     }
 }
 

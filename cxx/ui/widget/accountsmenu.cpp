@@ -10,14 +10,30 @@ namespace accountsmenu {
     };
 
     Q_GLOBAL_STATIC(HideClosedAction, hideClosedAction);
+
+    class AccountAction : public QAction {
+    public:
+        AccountAction(UiContext *context, const Account *account) {
+            setText(account->name.toString());
+            connect(this, &QAction::triggered, this, [=]() {
+                context->showTransactions(account->id.toLongLong());
+            });
+        }
+    };
 }
 using namespace accountsmenu;
 
-AccountsMenu::AccountsMenu(AccountStore *store)
+AccountsMenu::AccountsMenu(UiContext *context)
     : QMenu(tr("&Accounts"))
-    , store{store}
+    , context{context}
+    , accountsAction{context->accountsAction()}
 {
-    accountsLoaded(hideClosedAction->isChecked());
+    connect(store(), SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
+    updateMenu();
+}
+
+AccountStore *AccountsMenu::store() {
+    return context->dataStore->accountStore;
 }
 
 QAction *AccountsMenu::insertionPoint(QMenu *menu, const QString &text) {
@@ -32,34 +48,33 @@ QAction *AccountsMenu::insertionPoint(QMenu *menu, const QString &text) {
 
 void AccountsMenu::insertByName(QMenu *menu, QAction *action) {
     auto next = insertionPoint(menu, action->text());
-    if (next) menu->insertAction(next, action);
-    else menu->addAction(action);
+    menu->insertAction(next, action);
 }
 
 void AccountsMenu::insertByName(QMenu *menu, QMenu *submenu) {
     auto next = insertionPoint(menu, submenu->title());
-    if (next) menu->insertMenu(next, submenu);
-    else menu->addMenu(submenu);
+    menu->insertMenu(next, submenu);
 }
 
-void AccountsMenu::accountsLoaded(bool hideClosed) {
+void AccountsMenu::updateMenu() {
+    auto hideClosed = hideClosedAction->isChecked();
     clear();
-    connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(accountsLoaded(bool)));
+    connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
     QHash<qlonglong, QMenu*> companyMenus{};
-    for (auto account : store->values()) {
+    for (auto account : store()->values()) {
         if (hideClosed && account->closed.toBool()) continue;
         if (account->companyId.isNull()) {
-            insertByName(this, new QAction(account->name.toString()));
+            insertByName(this, new AccountAction(context, account));
         }
         else {
             QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
             if (!companyMenu) {
-                auto company = store->companyStore.value(account->companyId);
+                auto company = store()->companyStore.value(account->companyId);
                 companyMenu = new QMenu(company->name.toString());
                 companyMenus.insert(company->id.toLongLong(), companyMenu);
                 insertByName(this, companyMenu);
             }
-            insertByName(companyMenu, new QAction(account->name.toString()));
+            insertByName(companyMenu, new AccountAction(context, account));
         }
     }
     for (auto menu : companyMenus) {
@@ -70,8 +85,8 @@ void AccountsMenu::accountsLoaded(bool hideClosed) {
             removeAction(menu->menuAction());
         }
     }
-    auto first = actions().constFirst();
+    auto first = isEmpty() ? nullptr : actions().constFirst();
     insertAction(first, hideClosedAction);
-    insertAction(first, new QAction(tr("&Organize Accounts")));
+    insertAction(first, accountsAction);
     insertSeparator(first);
 }

@@ -4,28 +4,23 @@
 #include "../model/datastore.h"
 #include "../model/accounttablemodel.h"
 #include "appwindow.h"
-#include "categorieswindow.h"
 #include "companieswindow.h"
-#include "groupswindow.h"
-#include "payeeswindow.h"
-#include "securitieswindow.h"
 #include "transactionswindow.h"
 #include <QMainWindow>
 #include <QTableView>
 
+class UiContext;
+
 class AccountsWindow : public AppWindow {
     Q_OBJECT
-    DataStore *dataStore;
+    UiContext *const context;
+    DataStore *const dataStore;
     CompaniesWindow *companiesDialog{};
-    PayeesWindow *payeesWindow{};
-    CategoriesWindow *categoriesWindow{};
-    GroupsWindow *groupsWindow{};
-    SecuritiesWindow *securitiesWindow{};
     TransactionsWindow *transactionsWindow{};
     QAction *showAccount;
 
 public:
-    AccountsWindow(DataStore *dataStore);
+    AccountsWindow(UiContext *context);
     ~AccountsWindow();
 
     AccountTableModel *model();
@@ -37,10 +32,6 @@ public Q_SLOTS:
     void setCompanies(const QList<qlonglong> companyIds);
     void setAccounts(const QList<qlonglong> accountIds);
     void showCompanies();
-    void showPayees();
-    void showCategories();
-    void showGroups();
-    void showSecurities();
     void showTransactions();
     void selectionChanged();
 

@@ -92,6 +92,7 @@ namespace finances {
 
     QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
         QString tooltip(text);
+        tooltip.remove('&');
         if (!shortcut.isEmpty()) tooltip.append(" (").append(shortcut.toString()).append(")");
         initAction(action, icon, text, tooltip);
         action->setShortcut(shortcut);
