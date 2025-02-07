@@ -53,7 +53,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (accountStore->contains(model->accountId)) accountsLoaded();
-    if (entityView.model->rowCount() > 0) treeView()->expandAll();
+    if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
     settings::restoreWindowState(TRANSACTION_SETTINGS, this, QSize{800, 600}, &entityView);
 
@@ -80,7 +80,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 }
 
 TransactionTableModel *TransactionsWindow::model() {
-    return static_cast<TransactionTableModel*>(entityView.model);
+    return entityView.model<TransactionTableModel>();
 }
 
 void TransactionsWindow::loadData() {

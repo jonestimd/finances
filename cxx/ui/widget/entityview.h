@@ -18,7 +18,6 @@ class EntityView : public QObject {
 public:
     StatusBar statusBar{};
     QHeaderView *const viewHeader;
-    AdapterItemModel *const model; // TODO get from sortModel
     QAbstractItemView *const itemView;
     SortFilterProxyModel sortModel;
     FilterInput *const filterInput;
@@ -27,6 +26,11 @@ public:
 
     EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
     EntityView(QWidget *window, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
+
+    template<class T = AdapterItemModel>
+    T *model() const {
+        return static_cast<T*>(sortModel.sourceModel());
+    }
 
     void addActions(const QList<QAction*> &actions);
     void insertAction(qsizetype index, QAction* action);

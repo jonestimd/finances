@@ -12,7 +12,6 @@
 EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
-    , model{model}
     , sortModel{window}
     , itemView{itemView}
     , viewHeader{viewHeader}
@@ -84,12 +83,12 @@ bool EntityView::focusFilter(QKeyEvent *event) {
 }
 
 bool EntityView::confirmLoadData() {
-    return dialog::confirmDiscardChanges(window, model);
+    return dialog::confirmDiscardChanges(window, model());
 }
 
 void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
-    if (!dialog::confirmDiscardChanges(window, model)) event->ignore();
-    else settings::saveWindowState(settingsGroup, window, model, viewHeader);
+    if (!dialog::confirmDiscardChanges(window, model())) event->ignore();
+    else settings::saveWindowState(settingsGroup, window, model(), viewHeader);
 }
 
 void EntityView::enableUi() {
@@ -108,8 +107,8 @@ void EntityView::removeMessage(const QString &message) {
 }
 
 void EntityView::dataChanged() {
-    saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
-    window->setWindowModified(model->hasUnsavedChanges());
+    saveAction->setEnabled(model()->hasUnsavedChanges() && model()->isValid());
+    window->setWindowModified(model()->hasUnsavedChanges());
 }
 
 void EntityView::showValidation(const QModelIndex &index) {

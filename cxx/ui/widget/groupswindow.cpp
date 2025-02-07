@@ -19,7 +19,7 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
 }
 
 GroupTableModel *GroupsWindow::model() {
-    return static_cast<GroupTableModel*>(entityView.model);
+    return entityView.model<GroupTableModel>();
 }
 
 void GroupsWindow::loadData() {

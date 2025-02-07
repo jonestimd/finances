@@ -30,7 +30,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 }
 
 CategoryTableModel *CategoriesWindow::model() {
-    return static_cast<CategoryTableModel*>(entityView.model);
+    return entityView.model<CategoryTableModel>();
 }
 
 void CategoriesWindow::loadData() {

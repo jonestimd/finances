@@ -26,7 +26,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 }
 
 PayeeTableModel *PayeesWindow::model() const {
-    return static_cast<PayeeTableModel*>(entityView.model);
+    return entityView.model<PayeeTableModel>();
 }
 
 void PayeesWindow::loadData() {

@@ -22,7 +22,7 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
 }
 
 SecurityTableModel *SecuritiesWindow::model() const {
-    return static_cast<SecurityTableModel*>(entityView.model);
+    return entityView.model<SecurityTableModel>();
 }
 
 void SecuritiesWindow::loadData() {

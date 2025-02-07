@@ -37,7 +37,7 @@ void settings::saveWindowState(const QString &group, QWidget *widget, QAbstractI
 }
 
 void settings::saveWindowState(const char *group, QWidget *widget, EntityView *entityView) {
-    auto model = entityView ? entityView->model : nullptr;
+    auto model = entityView ? entityView->model() : nullptr;
     auto viewHeader = entityView ? entityView->viewHeader : nullptr;
     saveWindowState(group, widget, model, viewHeader);
 }
@@ -79,7 +79,7 @@ void settings::restoreWindowState(const QString &group, QWidget *widget, QSize d
 }
 
 void settings::restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, EntityView *entityView) {
-    auto model = entityView ? entityView->model : nullptr;
+    auto model = entityView ? entityView->model() : nullptr;
     auto viewHeader = entityView ? entityView->viewHeader : nullptr;
     restoreWindowState(group, widget, defaultSize, model, viewHeader);
 }

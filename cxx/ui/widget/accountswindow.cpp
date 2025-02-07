@@ -49,7 +49,7 @@ AccountsWindow::~AccountsWindow() {
 }
 
 AccountTableModel *AccountsWindow::model() {
-    return static_cast<AccountTableModel*>(entityView.model);
+    return entityView.model<AccountTableModel>();
 }
 
 void AccountsWindow::loadData() {
