@@ -1,11 +1,17 @@
 #include "accountsmenu.h"
+#include "ui/widget/settings.h"
 
 namespace accountsmenu {
+#   define HIDE_CLOSED_SETTING "hide.closed.accounts"
+
     class HideClosedAction : public QAction {
     public:
         HideClosedAction() : QAction{tr("&Hide Closed Accounts")} {
             setCheckable(true);
-            // setChecked(hide); // TODO load from settings
+            setChecked(settings::getValue(HIDE_CLOSED_SETTING).toBool());
+            connect(this, &QAction::triggered, this, [this]() {
+                settings::saveValue(HIDE_CLOSED_SETTING, isChecked());
+            });
         }
     };
 

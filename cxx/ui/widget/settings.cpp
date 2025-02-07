@@ -84,6 +84,14 @@ void settings::restoreWindowState(const QString &group, QWidget *widget, QSize d
     restoreWindowState(group, widget, defaultSize, model, viewHeader);
 }
 
+void settings::saveValue(const char *name, const QVariant &value) {
+    appSettings->setValue(name, value);
+}
+
+QVariant settings::getValue(const char *name, const QVariant &defaultValue) {
+    return appSettings->value(name, defaultValue);
+}
+
 Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection")
 
 ConnectionSettings settings::connectionSettings(const QString &name) {
