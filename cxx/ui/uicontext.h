@@ -54,6 +54,11 @@ public:
     QAction *securitiesAction();
 
     void showTransactions(qlonglong accountId);
+    TransactionTableModel *transactionsModel(qlonglong accountId);
+    /**
+     * @brief transactionsModelRemoved Signals that a window is not longer using a model.
+     */
+    void transactionsModelRemoved(TransactionTableModel* model);
 
     Q_SLOT void transactionsWindowClosed(QObject *object);
 };

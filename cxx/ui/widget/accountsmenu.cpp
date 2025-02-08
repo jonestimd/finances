@@ -1,5 +1,6 @@
 #include "accountsmenu.h"
 #include "ui/widget/settings.h"
+#include "ui/uicontext.h"
 
 namespace accountsmenu {
 #   define HIDE_CLOSED_SETTING "hide.closed.accounts"
@@ -19,27 +20,24 @@ namespace accountsmenu {
 
     class AccountAction : public QAction {
     public:
-        AccountAction(UiContext *context, const Account *account) {
+        AccountAction(TransactionsWindow *window, const Account *account) {
             setText(account->name.toString());
             connect(this, &QAction::triggered, this, [=]() {
-                context->showTransactions(account->id.toLongLong());
+                window->showAccount(account->id.toLongLong());
             });
         }
     };
 }
 using namespace accountsmenu;
 
-AccountsMenu::AccountsMenu(UiContext *context)
+AccountsMenu::AccountsMenu(TransactionsWindow *window, UiContext *context)
     : QMenu(tr("&Accounts"))
-    , context{context}
+    , window{window}
+    , store{context->dataStore->accountStore}
     , accountsAction{context->accountsAction()}
 {
-    connect(store(), SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
+    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
     updateMenu();
-}
-
-AccountStore *AccountsMenu::store() {
-    return context->dataStore->accountStore;
 }
 
 QAction *AccountsMenu::insertionPoint(QMenu *menu, const QString &text) {
@@ -67,20 +65,20 @@ void AccountsMenu::updateMenu() {
     clear();
     connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
     QHash<qlonglong, QMenu*> companyMenus{};
-    for (auto account : store()->values()) {
+    for (auto account : store->values()) {
         if (hideClosed && account->closed.toBool()) continue;
         if (account->companyId.isNull()) {
-            insertByName(this, new AccountAction(context, account));
+            insertByName(this, new AccountAction(window, account));
         }
         else {
             QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
             if (!companyMenu) {
-                auto company = store()->companyStore.value(account->companyId);
+                auto company = store->companyStore.value(account->companyId);
                 companyMenu = new QMenu(company->name.toString());
                 companyMenus.insert(company->id.toLongLong(), companyMenu);
                 insertByName(this, companyMenu);
             }
-            insertByName(companyMenu, new AccountAction(context, account));
+            insertByName(companyMenu, new AccountAction(window, account));
         }
     }
     for (auto menu : companyMenus) {

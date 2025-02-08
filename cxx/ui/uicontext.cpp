@@ -45,23 +45,32 @@ QAction *UiContext::securitiesAction() {
 }
 
 void UiContext::showTransactions(qlonglong accountId) {
-    auto model = transactionModels.value(accountId);
-    if (!model) {
-        model = new TransactionTableModel(dataStore, accountId);
-        transactionModels.insert(accountId, model);
-    }
+    auto model = transactionsModel(accountId);
     auto transactionsWindow = new TransactionsWindow(this, model);
     transactionsWindows.append(transactionsWindow);
     transactionsWindow->show();
     connect(transactionsWindow, SIGNAL(destroyed(QObject*)), this, SLOT(transactionsWindowClosed(QObject*)));
 }
 
-void UiContext::transactionsWindowClosed(QObject *object) {
-    auto model = static_cast<TransactionsWindow*>(object)->model();
-    settings::setLastViewedAccount(model->accountId);
-    transactionsWindows.removeAll(object);
+TransactionTableModel *UiContext::transactionsModel(qlonglong accountId) {
+    auto model = transactionModels.value(accountId);
+    if (!model) {
+        model = new TransactionTableModel(dataStore, accountId);
+        transactionModels.insert(accountId, model);
+    }
+    return model;
+}
+
+void UiContext::transactionsModelRemoved(TransactionTableModel *model) {
     for (auto window : std::as_const(transactionsWindows)) {
         if (window->model() == model) return;
     }
     delete transactionModels.take(model->accountId);
+}
+
+void UiContext::transactionsWindowClosed(QObject *object) {
+    auto model = static_cast<TransactionsWindow*>(object)->model();
+    settings::setLastViewedAccount(model->accountId);
+    transactionsWindows.removeAll(object);
+    transactionsModelRemoved(model);
 }

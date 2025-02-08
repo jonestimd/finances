@@ -11,14 +11,14 @@ class UiContext;
 
 class TransactionsWindow : public AppWindow {
     Q_OBJECT
-    const QString connectionName;
-    TransactionStore *store;
-    AccountStore *accountStore;
+    UiContext *const context;
 
 public:
     TransactionsWindow(UiContext *context, TransactionTableModel *model);
 
     TransactionTableModel *model();
+
+    void showAccount(qlonglong accountId);
 
     void loadData() override;
     void saveData() override;
@@ -28,6 +28,12 @@ public Q_SLOTS:
     void expandRow(const QModelIndex &parent, int first, int last);
 
 private:
+    TransactionStore *store();
+    AccountStore *accountStore();
+    QString connectionName();
+
+    void initializeData();
+
     Q_SLOT void accountsLoaded();
     inline TreeView *treeView();
 };

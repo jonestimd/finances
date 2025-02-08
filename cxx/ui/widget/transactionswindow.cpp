@@ -1,6 +1,7 @@
 #include "accountsmenu.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
+#include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 #include <QMenu>
@@ -23,11 +24,9 @@ using namespace transactionwindow;
 
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model)
     : AppWindow{tr("Transaction"), model, new TreeView(), TRANSACTION_SETTINGS}
-    , connectionName{context->dataStore->connectionName()}
-    , store{context->dataStore->transactionStore}
-    , accountStore{context->dataStore->accountStore}
+    , context{context}
 {
-    setWindowTitle(QString("%1 - Transactions").arg(connectionName));
+    setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
     entityView.addActions({
         context->accountsAction(),
@@ -37,7 +36,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->securitiesAction(),
     });
     QMenuBar *menuBar = new QMenuBar();
-    menuBar->addMenu(new AccountsMenu(context));
+    menuBar->addMenu(new AccountsMenu(this, context));
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
@@ -52,13 +51,12 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(context->dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-    if (accountStore->contains(model->accountId)) accountsLoaded();
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
     settings::restoreWindowState(TRANSACTION_SETTINGS, this, QSize{800, 600}, &entityView);
 
-    accountStore->load(&entityView);
-    accountStore->companyStore.load(&entityView, tr(LOADING_COMPANIES));
+    accountStore()->load(&entityView);
+    accountStore()->companyStore.load(&entityView, tr(LOADING_COMPANIES));
     auto dataStore = context->dataStore;
     dataStore->categoryStore->load(&entityView, tr(LOADING_CATEGORIES));
     dataStore->groupStore->load(&entityView, tr(LOADING_GROUPS));
@@ -75,16 +73,25 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     // view->setItemsExpandable(false);
     // view->setRootIsDecorated(false);
 
-    auto accountId = model->accountId;
-    if (store->load(&entityView, accountId)) model->setRows(store->transactionIds(accountId));
+    initializeData();
 }
 
 TransactionTableModel *TransactionsWindow::model() {
     return entityView.model<TransactionTableModel>();
 }
 
+void TransactionsWindow::showAccount(qlonglong accountId) {
+    if (entityView.confirmLoadData()) {
+        auto oldModel = model();
+        oldModel->clearChanges();
+        entityView.sortModel.setSourceModel(context->transactionsModel(accountId));
+        context->transactionsModelRemoved(oldModel);
+        initializeData();
+    }
+}
+
 void TransactionsWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, model()->accountId, true);
+    if (entityView.confirmLoadData()) store()->load(&entityView, model()->accountId, true);
 }
 
 void TransactionsWindow::saveData() {
@@ -104,8 +111,26 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     }
 }
 
+TransactionStore *TransactionsWindow::store() {
+    return context->dataStore->transactionStore;
+}
+
+AccountStore *TransactionsWindow::accountStore() {
+    return context->dataStore->accountStore;
+}
+
+QString TransactionsWindow::connectionName() {
+    return context->dataStore->connectionName();
+}
+
+void TransactionsWindow::initializeData() {
+    auto accountId = model()->accountId;
+    if (store()->load(&entityView, accountId)) model()->setRows(store()->transactionIds(accountId));
+    if (accountStore()->contains(model()->accountId)) accountsLoaded();
+}
+
 void TransactionsWindow::accountsLoaded() {
-    setWindowTitle(QString("%1 - %2[*]").arg(connectionName, accountStore->qualifiedName(model()->accountId, ':')));
+    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
 }
 
 TreeView *TransactionsWindow::treeView() {
