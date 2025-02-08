@@ -4,7 +4,7 @@
 UiContext::UiContext(DataStore *dataStore, QObject *parent)
     : QObject{parent}
     , dataStore{dataStore}
-    , accountsAction_(finances::LibraryBooks, tr("&Organize Accounts"), tr("alt+o", "accounts"), this)
+    , accountsAction_(finances::LibraryBooks, tr("Organize Accounts"), tr("alt+o", "accounts"), this)
     , payeesAction_(finances::Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
     , categoriesAction_(finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
     , groupsAction_(finances::Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)

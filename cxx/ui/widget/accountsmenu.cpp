@@ -7,7 +7,7 @@ namespace accountsmenu {
 
     class HideClosedAction : public QAction {
     public:
-        HideClosedAction() : QAction{tr("&Hide Closed Accounts")} {
+        HideClosedAction() : QAction{tr("Hide Closed Accounts")} {
             setCheckable(true);
             setChecked(settings::getValue(HIDE_CLOSED_SETTING).toBool());
             connect(this, &QAction::triggered, this, [this]() {
@@ -21,7 +21,7 @@ namespace accountsmenu {
     class AccountAction : public QAction {
     public:
         AccountAction(TransactionsWindow *window, const Account *account) {
-            setText(account->name.toString());
+            setText(account->name.toString().replace('&', "&&"));
             connect(this, &QAction::triggered, this, [=]() {
                 window->showAccount(account->id.toLongLong());
             });
@@ -69,12 +69,11 @@ void AccountsMenu::updateMenu() {
         if (hideClosed && account->closed.toBool()) continue;
         if (account->companyId.isNull()) {
             insertByName(this, new AccountAction(window, account));
-        }
-        else {
+        } else {
             QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
             if (!companyMenu) {
                 auto company = store->companyStore.value(account->companyId);
-                companyMenu = new QMenu(company->name.toString());
+                companyMenu = new QMenu(company->name.toString().replace('&', "&&"));
                 companyMenus.insert(company->id.toLongLong(), companyMenu);
                 insertByName(this, companyMenu);
             }
@@ -87,10 +86,44 @@ void AccountsMenu::updateMenu() {
             action->setText(menu->title() + " \u25b8 " + action->text());
             insertAction(menu->menuAction(), action);
             removeAction(menu->menuAction());
+        } else {
+            QList<QChar> mnemonics{};
+            const auto &actions = menu->actions();
+            for (auto action : actions) {
+                QString text = action->text();
+                for (auto i = 0; i < text.length(); i++) {
+                    if (!mnemonics.contains(text.at(i).toLower())) {
+                        mnemonics.append(text.at(i).toLower());
+                        action->setText(text.insert(i, '&'));
+                        break;
+                    }
+                }
+            }
         }
     }
     auto first = isEmpty() ? nullptr : actions().constFirst();
     insertAction(first, hideClosedAction);
     insertAction(first, accountsAction);
     insertSeparator(first);
+}
+
+void AccountsMenu::keyPressEvent(QKeyEvent *event) {
+    QMenu::keyPressEvent(event);
+    if (!event->isAccepted()) {
+        searchBuffer += event->text();
+        searchBufferTimer.start(1000, this);
+        const QList<QAction*> &items = actions();
+        for (int i = 2, end = items.count(); i < end; i++) {
+            if (items.at(i)->text().startsWith(searchBuffer, Qt::CaseInsensitive)) {
+                setActiveAction(items.at(i));
+                event->accept();
+                break;
+            }
+        }
+    }
+}
+
+void AccountsMenu::timerEvent(QTimerEvent *event) {
+    if (event->timerId() == searchBufferTimer.timerId()) searchBuffer.clear();
+    else QMenu::timerEvent(event);
 }

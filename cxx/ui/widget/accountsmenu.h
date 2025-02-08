@@ -3,6 +3,7 @@
 
 #include "ui/model/accountstore.h"
 #include "transactionswindow.h"
+#include <QBasicTimer>
 #include <QMenu>
 
 class HideClosedAction;
@@ -12,6 +13,8 @@ class AccountsMenu : public QMenu {
     TransactionsWindow *const window;
     AccountStore *const store;
     QAction *const accountsAction;
+    QString searchBuffer;
+    QBasicTimer searchBufferTimer;
 
 public:
     AccountsMenu(TransactionsWindow *window, UiContext *context);
@@ -23,6 +26,10 @@ private:
 
 private Q_SLOTS:
     void updateMenu();
+
+protected:
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void timerEvent(QTimerEvent *event) override;
 };
 
 #endif // ACCOUNTSMENU_H
