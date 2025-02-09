@@ -28,6 +28,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
+    entityView.addActions({finances::iconAction(finances::NewWindow, tr("New Window"), tr("alt+n"), this, SLOT(newWindow()))});
     entityView.addActions({
         context->accountsAction(),
         context->payeesAction(),
@@ -131,6 +132,10 @@ void TransactionsWindow::initializeData() {
 
 void TransactionsWindow::accountsLoaded() {
     setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
+}
+
+void TransactionsWindow::newWindow() {
+    context->showTransactions(model()->accountId);
 }
 
 TreeView *TransactionsWindow::treeView() {

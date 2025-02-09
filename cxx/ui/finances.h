@@ -48,6 +48,8 @@ namespace finances {
         MoveItem = 0xf1ff,
         MoveDown = 0xeb61,
         MoveUp = 0xeb64,
+        NewWindow = 0xf710,
+        OpenInNew = 0xe89e,
         Person = 0xe7fd,
         Refresh = 0xe5d5,
         Save = 0xe161,

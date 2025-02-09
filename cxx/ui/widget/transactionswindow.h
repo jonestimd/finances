@@ -34,8 +34,11 @@ private:
 
     void initializeData();
 
-    Q_SLOT void accountsLoaded();
     inline TreeView *treeView();
+
+private Q_SLOTS:
+    void accountsLoaded();
+    void newWindow();
 };
 
 #endif // TRANSACTIONSWINDOW_H

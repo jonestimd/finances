@@ -1,5 +1,32 @@
 #include "uicontext.h"
 #include "ui/widget/settings.h"
+#include <QAbstractEventDispatcher>
+#include <QThread>
+
+class WindowMover : public QObject {
+    TransactionsWindow *const window;
+    const QList<TransactionsWindow*> &windows;
+    int waitCount{0};
+
+public:
+    QMetaObject::Connection connection;
+
+    WindowMover(TransactionsWindow *window, const QList<TransactionsWindow*> &windows)
+        : window{window}
+        , windows{windows}
+    {}
+
+    void exposeWindow() {
+        if (window->frameGeometry() != window->geometry() || waitCount++ == 10) { // wait till window is decorated
+            for (const auto w : windows) {
+                if (w != window && w->frameGeometry() == window->frameGeometry()) {
+                    window->move(window->pos() + QPoint{10, 10});
+                }
+            }
+            deleteLater();
+        }
+    }
+};
 
 UiContext::UiContext(DataStore *dataStore, QObject *parent)
     : QObject{parent}
@@ -8,7 +35,7 @@ UiContext::UiContext(DataStore *dataStore, QObject *parent)
     , payeesAction_(finances::Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
     , categoriesAction_(finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
     , groupsAction_(finances::Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
-    , securitiesAction_(finances::AreaChart, tr("Categories"), tr("alt+s", "securities"), dataStore)
+    , securitiesAction_(finances::AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
 {}
 
 UiContext::~UiContext() {
@@ -44,12 +71,18 @@ QAction *UiContext::securitiesAction() {
     return &securitiesAction_;
 }
 
-void UiContext::showTransactions(qlonglong accountId) {
+TransactionsWindow *UiContext::showTransactions(qlonglong accountId) {
     auto model = transactionsModel(accountId);
-    auto transactionsWindow = new TransactionsWindow(this, model);
-    transactionsWindows.append(transactionsWindow);
-    transactionsWindow->show();
-    connect(transactionsWindow, SIGNAL(destroyed(QObject*)), this, SLOT(transactionsWindowClosed(QObject*)));
+    auto window = new TransactionsWindow(this, model);
+    window->show();
+    if (!transactionsWindows.isEmpty()) {
+        auto mover = new WindowMover(window, transactionsWindows);
+        auto dispatcher = QThread::currentThread()->eventDispatcher();
+        mover->connection = connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, mover, &WindowMover::exposeWindow);
+    }
+    transactionsWindows.append(window);
+    connect(window, SIGNAL(destroyed(QObject*)), this, SLOT(transactionsWindowClosed(QObject*)));
+    return window;
 }
 
 TransactionTableModel *UiContext::transactionsModel(qlonglong accountId) {
