@@ -184,7 +184,7 @@ int TransactionTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->detailIds.length() : transactionIds().count();
 }
 
-void TransactionTableModel::setRows(QList<qlonglong> transactionIds) {
+void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     beginResetModel();
     clearChanges();
     balances.clear();

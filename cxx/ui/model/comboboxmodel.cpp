@@ -12,7 +12,7 @@ ComboBoxModel::ComboBoxModel(const QList<const NamedEntity*> values, GetName get
         auto lname1 = name1.toLower(), lname2 = name2.toLower();
         return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
     };
-    std::sort(options.begin(), options.end(), less);
+    std::stable_sort(options.begin(), options.end(), less);
 }
 
 void ComboBoxModel::addOption(const QString &name) {

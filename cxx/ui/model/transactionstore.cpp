@@ -28,15 +28,15 @@ QDecNumber TransactionStore::amount(QVariant transactionId) const {
     return total;
 }
 
-void TransactionStore::setValues(qlonglong accountId, QHash<qlonglong, const Transaction *> values) {
+void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, const Transaction*> values) {
     loadedAccounts.append(accountId);
     EntityStore::setValues(accountId, values);
     detailStore.load(accountId);
     QList<qlonglong> accountTxIds{};
-    for (auto tx : std::as_const(values)) {
+    for (auto [id, tx] : values.asKeyValueRange()) {
         if (tx->accountId.toLongLong() == accountId) accountTxIds.append(tx->id.toLongLong());
     }
-    std::sort(accountTxIds.begin(), accountTxIds.end(), [=, this](qlonglong id1, qlonglong id2) {
+    std::stable_sort(accountTxIds.begin(), accountTxIds.end(), [=, this](qlonglong id1, qlonglong id2) -> bool {
         auto tx1 = value(id1);
         auto tx2 = value(id2);
         return tx1 && tx2 && tx1->date.toDate() < tx2->date.toDate() || id1 < id2;

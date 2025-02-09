@@ -98,7 +98,7 @@ protected:
         for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
     }
 
-    virtual void setValues(GetAllArgs... args, QHash<qlonglong, const T*> values) {
+    virtual void setValues(GetAllArgs... args, const QHash<qlonglong, const T*> values) {
         for (auto [id, entity] : values.asKeyValueRange()) {
             auto oldEntity = byId.take(id);
             byId.insert(id, entity);

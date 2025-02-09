@@ -26,7 +26,7 @@ protected:
     int childCount(const QModelIndex &index) const override;
 
 public:
-    void setRows(QList<qlonglong> transactionIds);
+    void setRows(const QList<qlonglong> transactionIds);
 
     QVariant balance(const QVariant &transactionId) const;
 

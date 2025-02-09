@@ -26,7 +26,7 @@ Q_SIGNALS:
     void accountLoaded(qlonglong id);
 
 protected:
-    void setValues(qlonglong accountId, QHash<qlonglong, const Transaction*> values) override;
+    void setValues(qlonglong accountId, const QHash<qlonglong, const Transaction*> values) override;
 };
 
 #endif // TRANSACTIONSTORE_H
