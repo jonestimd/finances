@@ -25,6 +25,9 @@ public Q_SLOTS:
 
 private:
     bool nonZeroShares(const QModelIndex &sourceIndex) const;
+
+protected:
+    const char *settingsGroup() const override;
 };
 
 #endif // SECURITIESWINDOW_H

@@ -24,5 +24,8 @@ public Q_SLOTS:
     void setPayees(const QList<qlonglong> payeeIds);
     void merge();
     void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+
+protected:
+    const char *settingsGroup() const override;
 };
 #endif // PAYEESWINDOW_H

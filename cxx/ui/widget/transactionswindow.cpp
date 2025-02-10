@@ -8,6 +8,8 @@
 #include <QMenuBar>
 
 #define TRANSACTION_SETTINGS "transactions"
+#define SECURITY_TRANSACTION_SETTINGS "security." TRANSACTION_SETTINGS
+#define SETTINGS_GROUP(security) (security ? SECURITY_TRANSACTION_SETTINGS : TRANSACTION_SETTINGS)
 #define HIDE_CLOSED_ACCOUNTS "hideClosedAccounts"
 #define CLEARED_WIDTH 30
 
@@ -23,7 +25,7 @@ namespace transactionwindow {
 using namespace transactionwindow;
 
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model)
-    : AppWindow{tr("Transaction"), model, new TreeView(), TRANSACTION_SETTINGS}
+    : AppWindow{tr("Transaction"), model, new TreeView()}
     , context{context}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
@@ -54,7 +56,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
-    settings::restoreWindowState(TRANSACTION_SETTINGS, this, QSize{800, 600}, &entityView);
+    entityView.viewHeader->setSectionHidden(model->securityColumn, !security());
+    settings::restoreWindowState(SETTINGS_GROUP(security()), this, QSize{800, 600}, &entityView);
 
     accountStore()->load(&entityView);
     accountStore()->companyStore.load(&entityView, tr(LOADING_COMPANIES));
@@ -77,7 +80,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     initializeData();
 }
 
-TransactionTableModel *TransactionsWindow::model() {
+TransactionTableModel *TransactionsWindow::model() const {
     return entityView.model<TransactionTableModel>();
 }
 
@@ -112,15 +115,15 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     }
 }
 
-TransactionStore *TransactionsWindow::store() {
+TransactionStore *TransactionsWindow::store() const {
     return context->dataStore->transactionStore;
 }
 
-AccountStore *TransactionsWindow::accountStore() {
+AccountStore *TransactionsWindow::accountStore() const {
     return context->dataStore->accountStore;
 }
 
-QString TransactionsWindow::connectionName() {
+QString TransactionsWindow::connectionName() const {
     return context->dataStore->connectionName();
 }
 
@@ -132,12 +135,27 @@ void TransactionsWindow::initializeData() {
 
 void TransactionsWindow::accountsLoaded() {
     setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
+    auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
+    if (hidden == security()) {
+        settings::saveWindowState(SETTINGS_GROUP(!hidden), this, &entityView);
+        entityView.viewHeader->setSectionHidden(model()->securityColumn, !hidden);
+        settings::restoreWindowState(SETTINGS_GROUP(hidden), this, QSize{800, 600}, &entityView);
+    }
 }
 
 void TransactionsWindow::newWindow() {
     context->showTransactions(model()->accountId);
 }
 
-TreeView *TransactionsWindow::treeView() {
+const char *TransactionsWindow::settingsGroup() const {
+    return SETTINGS_GROUP(security());
+}
+
+TreeView *TransactionsWindow::treeView() const {
     return static_cast<TreeView*>(entityView.itemView);
+}
+
+bool TransactionsWindow::security() const {
+    auto account = accountStore()->value(model()->accountId);
+    return account && account->security();
 }

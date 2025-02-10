@@ -20,7 +20,7 @@ public:
 
     const QList<qlonglong> transactionIds(qlonglong accountId) const;
 
-    QDecNumber amount(QVariant transactionId) const;
+    QDecNumber amount(const QVariant &transactionId) const;
 
 Q_SIGNALS:
     void accountLoaded(qlonglong id);

@@ -6,7 +6,7 @@
 #define SETTINGS_GROUP "groups"
 
 GroupsWindow::GroupsWindow(DataStore *dataStore)
-    : AppWindow{tr("Groups"), new GroupTableModel(dataStore->groupStore), new QTableView(), SETTINGS_GROUP}
+    : AppWindow{tr("Groups"), new GroupTableModel(dataStore->groupStore), new QTableView()}
     , store{dataStore->groupStore}
 {
     setWindowTitle(tr("%1 - Groups[*]").arg(dataStore->connectionName()));
@@ -34,5 +34,9 @@ void GroupsWindow::saveData() {
 void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
     model()->setRows(groupIds);
     entityView.enableUi();
+}
+
+const char *GroupsWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }
 

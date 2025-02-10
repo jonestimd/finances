@@ -21,6 +21,7 @@ public:
     Account();
     Account(const QSqlRecord &record);
 
+    bool security() const;
     bool deletable() const;
 };
 

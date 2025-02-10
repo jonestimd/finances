@@ -18,7 +18,7 @@ const QList<qlonglong> TransactionStore::transactionIds(qlonglong accountId) con
     return idsByAccountId.value(accountId);
 }
 
-QDecNumber TransactionStore::amount(QVariant transactionId) const {
+QDecNumber TransactionStore::amount(const QVariant &transactionId) const {
     QDecNumber total(0);
     auto tx = value(transactionId);
     for (const QVariant &detailId : tx->detailIds) {

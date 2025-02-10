@@ -19,6 +19,9 @@ public:
 
 public Q_SLOTS:
     void setGroups(const QList<qlonglong> groupIds);
+
+protected:
+    const char *settingsGroup() const override;
 };
 
 #endif // GROUPSWINDOW_H

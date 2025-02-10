@@ -1,8 +1,7 @@
 #include "appwindow.h"
 
-AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const char *settingsGroup)
+AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader)
     : QMainWindow{}
-    , settingsGroup{settingsGroup}
     , entityView{this, model, itemView, viewHeader, entityName}
 {
     addToolBar(&entityView.toolbar);
@@ -10,15 +9,15 @@ AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QAbstra
     setStatusBar(&entityView.statusBar);
 }
 
-AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTableView *itemView, const char *settingsGroup)
-    : AppWindow{entityName, model, itemView, itemView->horizontalHeader(), settingsGroup}
+AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTableView *itemView)
+    : AppWindow{entityName, model, itemView, itemView->horizontalHeader()}
 {
     itemView->resizeColumnsToContents();
     // itemView->verticalHeader()->setDefaultSectionSize(5); // minimize row height
 }
 
-AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTreeView *itemView, const char *settingsGroup)
-    : AppWindow{entityName, model, itemView, itemView->header(), settingsGroup}
+AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTreeView *itemView)
+    : AppWindow{entityName, model, itemView, itemView->header()}
 {
     using enum QAbstractItemView::EditTrigger;
     itemView->setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -30,7 +29,7 @@ void AppWindow::enableUi() {
 }
 
 void AppWindow::closeEvent(QCloseEvent *event) {
-    entityView.confirmClose(event, settingsGroup);
+    entityView.confirmClose(event, settingsGroup());
 }
 
 void AppWindow::keyPressEvent(QKeyEvent *event) {

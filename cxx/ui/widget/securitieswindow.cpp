@@ -8,7 +8,7 @@
 using namespace std::placeholders;
 
 SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
-    : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView(), SETTINGS_GROUP}
+    : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView()}
     , store{dataStore->securityStore}
 {
     entityView.addActions({hideZeroAction});
@@ -50,4 +50,8 @@ bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
     auto row = model()->getRow(sourceIndex);
     auto shares = row->shares;
     return shares.isNull() || shares.value<QDecNumber>().toDouble() > 0;
+}
+
+const char *SecuritiesWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }

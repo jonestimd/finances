@@ -17,6 +17,10 @@ Account::Account(const QSqlRecord &record)
     , currency{record.field("currency").value()}
 {}
 
+bool Account::security() const {
+    return AccountType::values.value(type.toString())->security;
+}
+
 bool Account::deletable() const {
     return transactions.toInt() == 0;
 }

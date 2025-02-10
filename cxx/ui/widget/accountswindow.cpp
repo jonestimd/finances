@@ -12,8 +12,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
     : AppWindow{
         tr("Account"),
         new AccountTableModel(context->dataStore->accountStore, std::bind(&AccountsWindow::addCompany, this, _1)),
-        new QTableView(),
-        SETTINGS_GROUP
+        new QTableView()
     }
     , context{context}
     , dataStore{context->dataStore}
@@ -104,4 +103,8 @@ void AccountsWindow::newCompany(const Company *company) {
     entityView.removeMessage(tr(SAVING_COMPANY));
     // entityView.itemView->setEnabled(true);
     entityView.itemView->setFocus(Qt::ActiveWindowFocusReason);
+}
+
+const char *AccountsWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }

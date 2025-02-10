@@ -16,7 +16,7 @@ class TransactionsWindow : public AppWindow {
 public:
     TransactionsWindow(UiContext *context, TransactionTableModel *model);
 
-    TransactionTableModel *model();
+    TransactionTableModel *model() const;
 
     void showAccount(qlonglong accountId);
 
@@ -28,17 +28,21 @@ public Q_SLOTS:
     void expandRow(const QModelIndex &parent, int first, int last);
 
 private:
-    TransactionStore *store();
-    AccountStore *accountStore();
-    QString connectionName();
+    TransactionStore *store() const;
+    AccountStore *accountStore() const;
+    QString connectionName() const;
 
     void initializeData();
 
-    inline TreeView *treeView();
+    inline TreeView *treeView() const;
+    bool security() const;
 
 private Q_SLOTS:
     void accountsLoaded();
     void newWindow();
+
+protected:
+    const char *settingsGroup() const override;
 };
 
 #endif // TRANSACTIONSWINDOW_H

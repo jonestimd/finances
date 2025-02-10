@@ -4,10 +4,10 @@
 #include "treeview.h"
 #include "statusmessage.h"
 
-#define CATEGORY_SETTINGS "categories"
+#define SETTINGS_GROUP "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView(), CATEGORY_SETTINGS}
+    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView()}
     , store{dataStore->categoryStore}
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
@@ -26,7 +26,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 
     if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
-    settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &entityView);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{600, 500}, &entityView);
 }
 
 CategoryTableModel *CategoriesWindow::model() {
@@ -95,4 +95,8 @@ void CategoriesWindow::merge() {
 void CategoriesWindow::selectionChanged() {
     moveAction->setEnabled(model()->movable(entityView.selectedIndex()));
     mergeAction->setEnabled(entityView.selectedIndex().isValid());
+}
+
+const char *CategoriesWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }
