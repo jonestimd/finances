@@ -169,7 +169,8 @@ namespace finances {
     class AppStyle : public QProxyStyle {
     public:
         void drawControl(ControlElement element, const QStyleOption *opt, QPainter *p, const QWidget *w) const override {
-            if (element == CE_HeaderSection) {
+            if (element == CE_Header) qDebug("header");
+            else if (element == CE_HeaderSection) {
                 auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
                 if (headerOpt->text.contains('\n')) {
                     auto lines = headerOpt->text.split('\n');
@@ -186,13 +187,12 @@ namespace finances {
                     p->restore();
                     return;
                 }
-            }
-            else if (element == CE_HeaderLabel) {
+            } else if (element == CE_HeaderLabel) {
                 auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
                 if (headerOpt->text.contains('\n')) {
                     auto lines = headerOpt->text.split('\n');
                     QStyleOptionHeader option(*headerOpt);
-                    auto height = opt->rect.height()/2 + opt->rect.top();
+                    auto height = opt->rect.height()/lines.length() + opt->rect.top();
                     option.rect.setBottom(height - option.rect.top() - 1);
                     p->save();
                     for (const auto &line : std::as_const(lines)) {
@@ -219,6 +219,21 @@ namespace finances {
                 }
             }
             return QProxyStyle::sizeFromContents(ct, opt, contentsSize, w);
+        }
+
+        void drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPainter *p, const QWidget *w) const override {
+            if (pe == PE_IndicatorHeaderArrow) {
+                auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
+                auto lines = headerOpt->text.count('\n')+1;
+                if (lines > 1) {
+                    QStyleOptionHeader option(*headerOpt);
+                    auto height = opt->rect.height()/(lines) + opt->rect.top();
+                    option.rect.setBottom(height);
+                    QProxyStyle::drawPrimitive(pe, &option, p, w);
+                    return;
+                }
+            }
+            QProxyStyle::drawPrimitive(pe, opt, p, w);
         }
     };
 
