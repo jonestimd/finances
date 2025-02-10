@@ -3,18 +3,21 @@
 #include <QAbstractItemView>
 
 EntityRowAction::EntityRowAction(finances::FontIcon icon, const QString &text, const QKeySequence &shortcut,
-    SortFilterProxyModel *sortModel, AdapterItemModel *model, QObject *parent)
+    SortFilterProxyModel *sortModel, QObject *parent)
     : QAction{parent}
     , sortModel{sortModel}
-    , model{model}
 {
     finances::initAction(this, icon, text, shortcut);
     connect(this, SIGNAL(triggered(bool)), this, SLOT(doAction()));
 }
 
+AdapterItemModel *EntityRowAction::model() const {
+    return static_cast<AdapterItemModel*>(sortModel->sourceModel());
+}
+
 AddRowAction::AddRowAction(const QString &entityName, TableItemDelegate *itemDelegate,
-    SortFilterProxyModel *sortModel, AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent)
-    : EntityRowAction{finances::AddCircle, tr("Add %1").arg(entityName), QKeySequence::New, sortModel, model, parent}
+    SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent)
+    : EntityRowAction{finances::AddCircle, tr("Add %1").arg(entityName), QKeySequence::New, sortModel, parent}
     , itemDelegate{itemDelegate}
     , itemView{itemView}
 {
@@ -40,41 +43,41 @@ inline bool selectEditColumn(QModelIndex &index) {
 }
 
 void AddRowAction::doAction() {
-    auto rowIndex = model->queueAdd();
-    auto index = sortModel->mapFromSource(model->index(rowIndex, 0)).siblingAtColumn(0);
+    auto rowIndex = model()->queueAdd();
+    auto index = sortModel->mapFromSource(model()->index(rowIndex, 0)).siblingAtColumn(0);
     if (selectEditColumn(index)) {
         itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
         itemView->edit(index);
     }
 }
 
-DeleteRowAction::DeleteRowAction(const QString &entityName, SortFilterProxyModel *sortModel, AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent)
-    : EntityRowAction{finances::Trash, tr("Delete %1").arg(entityName), QKeySequence::Delete, sortModel, model, parent}
+DeleteRowAction::DeleteRowAction(const QString &entityName, SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent)
+    : EntityRowAction{finances::Trash, tr("Delete %1").arg(entityName), QKeySequence::Delete, sortModel, parent}
     , selectionModel{itemView->selectionModel()}
 {
     connect(selectionModel, SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(selectionChanged()));
-    connect(model, SIGNAL(modelReset()), this, SLOT(selectionChanged()));
+    connect(sortModel, SIGNAL(modelReset()), this, SLOT(selectionChanged()));
     selectionChanged();
 }
 
 void DeleteRowAction::selectionChanged() {
     auto indexes = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
     bool enabled = !indexes.empty();
-    for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= model->enableDelete(*i);
+    for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= model()->enableDelete(*i);
     setEnabled(enabled);
 }
 
 void DeleteRowAction::doAction() {
     auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
-    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model->queueDelete(*i);
+    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model()->queueDelete(*i);
 }
 
-UndoChangeAction::UndoChangeAction(SortFilterProxyModel *sortModel, AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent)
-    : EntityRowAction(finances::Undo, tr("Undo"), QKeySequence::Undo, sortModel, model, parent)
+UndoChangeAction::UndoChangeAction(SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent)
+    : EntityRowAction(finances::Undo, tr("Undo"), QKeySequence::Undo, sortModel, parent)
     , selectionModel{itemView->selectionModel()}
 {}
 
 void UndoChangeAction::doAction() {
     auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
-    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model->undoChange(*i);
+    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model()->undoChange(*i);
 }

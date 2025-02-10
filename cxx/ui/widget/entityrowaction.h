@@ -12,14 +12,14 @@ class EntityRowAction : public QAction {
     Q_OBJECT
 protected:
     SortFilterProxyModel *const sortModel;
-    AdapterItemModel *const model;
 
 public:
     explicit EntityRowAction(finances::FontIcon icon, const QString &text, const QKeySequence &shortcut,
-                             SortFilterProxyModel *sortModel, AdapterItemModel *model, QObject *parent);
+                             SortFilterProxyModel *sortModel, QObject *parent);
 
-protected Q_SLOTS:
-    virtual void doAction() = 0;
+protected:
+    AdapterItemModel *model() const;
+    Q_SLOT virtual void doAction() = 0;
 };
 
 class AddRowAction : public EntityRowAction {
@@ -29,7 +29,7 @@ class AddRowAction : public EntityRowAction {
 
 public:
     explicit AddRowAction(const QString &entityName, TableItemDelegate *itemDelegate, SortFilterProxyModel *sortModel,
-                          AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent);
+                          QAbstractItemView *itemView, QObject *parent);
 
 private Q_SLOTS:
     void openEditor();
@@ -44,8 +44,7 @@ class DeleteRowAction : public EntityRowAction {
     QItemSelectionModel *const selectionModel;
 
 public:
-    explicit DeleteRowAction(const QString &entityName, SortFilterProxyModel *sortModel, AdapterItemModel *model,
-                             QAbstractItemView *itemView, QObject *parent);
+    explicit DeleteRowAction(const QString &entityName, SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent);
 
 private Q_SLOTS:
     void selectionChanged();
@@ -59,7 +58,7 @@ class UndoChangeAction : public EntityRowAction {
     QItemSelectionModel *const selectionModel;
 
 public:
-    explicit UndoChangeAction(SortFilterProxyModel *sortModel, AdapterItemModel *model, QAbstractItemView *itemView, QObject *parent);
+    explicit UndoChangeAction(SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent);
 
 protected:
     virtual void doAction() override;

@@ -35,17 +35,17 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 
     toolbar.setMovable(false);
-    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, model, itemView, this));
-    toolbar.addAction(new DeleteRowAction(entityName, &sortModel, model, itemView, this));
-    toolbar.addAction(new UndoChangeAction(&sortModel, model, itemView, this));
+    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, itemView, this));
+    toolbar.addAction(new DeleteRowAction(entityName, &sortModel, itemView, this));
+    toolbar.addAction(new UndoChangeAction(&sortModel, itemView, this));
     toolbar.addAction(saveAction);
     toolbar.addAction(finances::reloadAction(window));
     toolbar.addWidget(filterInput);
 
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(modelReset()), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(modelReset()), this, SLOT(dataChanged()));
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
