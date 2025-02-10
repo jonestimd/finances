@@ -8,7 +8,7 @@ DataStore::DataStore(ServiceContext *services)
     , categoryStore{new CategoryStore(&services->categoryService)}
     , groupStore{new GroupStore{&services->groupService}}
     , securityStore{new SecurityStore{&services->securityService}}
-    , transactionStore{new TransactionStore{services}}
+    , transactionStore{new TransactionStore{services, categoryStore}}
 {}
 
 DataStore::~DataStore() {

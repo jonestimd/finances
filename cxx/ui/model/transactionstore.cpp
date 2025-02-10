@@ -2,8 +2,9 @@
 #include "ui/widget/statusmessage.h"
 #include <QDate>
 
-TransactionStore::TransactionStore(ServiceContext *serviceContext)
+TransactionStore::TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore)
     : EntityStore{&serviceContext->transationService}
+    , categoryStore{categoryStore}
     , detailStore{&serviceContext->transationDetailService}
 {}
 
@@ -23,6 +24,10 @@ QDecNumber TransactionStore::amount(const QVariant &transactionId) const {
     auto tx = value(transactionId);
     for (const QVariant &detailId : tx->detailIds) {
         auto detail = detailStore.value(detailId);
+        if (!detail->categoryId.isNull()) {
+            auto category = categoryStore->value(detail->categoryId);
+            if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
+        }
         total += detail->amount.value<QDecNumber>();
     }
     return total;
@@ -37,9 +42,9 @@ void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, con
         if (tx->accountId.toLongLong() == accountId) accountTxIds.append(tx->id.toLongLong());
     }
     std::stable_sort(accountTxIds.begin(), accountTxIds.end(), [=, this](qlonglong id1, qlonglong id2) -> bool {
-        auto tx1 = value(id1);
-        auto tx2 = value(id2);
-        return tx1 && tx2 && tx1->date.toDate() < tx2->date.toDate() || id1 < id2;
+        auto d1 = value(id1)->date.toDate();
+        auto d2 = value(id2)->date.toDate();
+        return d1 == d2 ? id1 < id2 :  d1 < d2;
     });
     idsByAccountId[accountId] = accountTxIds;
     emit accountLoaded(accountId);

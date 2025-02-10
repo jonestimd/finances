@@ -1,6 +1,7 @@
 #ifndef TRANSACTIONSTORE_H
 #define TRANSACTIONSTORE_H
 
+#include "categorystore.h"
 #include "entitystore.h"
 #include "transactiondetailstore.h"
 #include "service/model/transaction.h"
@@ -8,13 +9,14 @@
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, qlonglong> {
     Q_OBJECT
+    CategoryStore *const categoryStore;
     QList<qlonglong> loadedAccounts{};
     QHash<qlonglong, QList<qlonglong>> idsByAccountId{};
 
 public:
     TransactionDetailStore detailStore;
 
-    TransactionStore(ServiceContext *serviceContext);
+    TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore);
 
     bool load(EntityView *view, qlonglong accountId, bool reload = false);
 
