@@ -1,6 +1,7 @@
 #include "accountsmenu.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
+#include "ui/model/formats.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
@@ -51,6 +52,9 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     frame->setLayout(layout);
     setMenuWidget(frame);
 
+    entityView.statusBar.addPermanentWidget(clearedBalance);
+    connect(model, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
+
     connect(context->dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
@@ -88,8 +92,10 @@ void TransactionsWindow::showAccount(qlonglong accountId) {
     if (entityView.confirmLoadData()) {
         auto oldModel = model();
         oldModel->clearChanges();
+        disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
         entityView.sortModel.setSourceModel(context->transactionsModel(accountId));
         context->transactionsModelRemoved(oldModel);
+        connect(model(), SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
         initializeData();
     }
 }
@@ -129,7 +135,10 @@ QString TransactionsWindow::connectionName() const {
 
 void TransactionsWindow::initializeData() {
     auto accountId = model()->accountId;
-    if (store()->load(&entityView, accountId)) model()->setRows(store()->transactionIds(accountId));
+    if (store()->load(&entityView, accountId)) {
+        model()->setRows(store()->transactionIds(accountId));
+        clearedBalanceChanged(model()->clearedBalance());
+    }
     if (accountStore()->contains(model()->accountId)) accountsLoaded();
 }
 
@@ -145,6 +154,10 @@ void TransactionsWindow::accountsLoaded() {
 
 void TransactionsWindow::newWindow() {
     context->showTransactions(model()->accountId);
+}
+
+void TransactionsWindow::clearedBalanceChanged(const QDecNumber &balance) {
+    clearedBalance->setText(tr("<b>Cleared Balance:</b> %1").arg(dollarFormat(balance)));
 }
 
 const char *TransactionsWindow::settingsGroup() const {

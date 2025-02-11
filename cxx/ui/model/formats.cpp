@@ -4,7 +4,10 @@
 #include <QRegularExpression>
 
 QString moneyFormat(const QVariant &amount) {
-    QDecNumber value = amount.value<QDecNumber>();
+    return moneyFormat(amount.value<QDecNumber>());
+}
+
+QString moneyFormat(const QDecNumber &value) {
     auto exponent = value.data()->exponent;
     QString result = value.toString();
     if (exponent == 0) result += ".00";
@@ -13,6 +16,10 @@ QString moneyFormat(const QVariant &amount) {
 }
 
 QString dollarFormat(const QVariant &amount) {
+    return moneyFormat(amount).prepend("$");
+}
+
+QString dollarFormat(const QDecNumber &amount) {
     return moneyFormat(amount).prepend("$");
 }
 

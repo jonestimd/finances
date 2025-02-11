@@ -188,16 +188,24 @@ void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     beginResetModel();
     clearChanges();
     balances.clear();
+    clearedBalance_ = 0;
     QDecNumber balance{0};
     for (auto id : transactionIds) {
-        balance += store->amount(id);
+        auto amount = store->amount(id);
+        balance += amount;
         balances.insert(id, QVariant::fromValue(balance));
+        if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
     }
     endResetModel();
+    emit clearedBalanceChanged(clearedBalance_);
 }
 
 QVariant TransactionTableModel::balance(const QVariant &transactionId) const {
     return balances.value(transactionId.toLongLong());
+}
+
+QDecNumber TransactionTableModel::clearedBalance() const {
+    return clearedBalance_;
 }
 
 QModelIndex TransactionTableModel::index(int row, int column, const QModelIndex &parent) const {
@@ -247,6 +255,29 @@ QVariant TransactionTableModel::data(const QModelIndex &index, int role) const {
     }
     if (role == Qt::FontRole && isBoldColumn(index.column())) return boldFont();
     return PodItemModel::data(index, role);
+}
+
+bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    if (index.parent().isValid()) {
+        if (role == Qt::EditRole && index.column() == subtotalColumn) {
+            if (data(index.parent().siblingAtColumn(clearedColumn), Qt::DisplayRole).toBool()) {
+                auto oldValue = data(index, Qt::DisplayRole);
+                if (value != oldValue) {
+                    // TODO update cleared balance
+                }
+            }
+        }
+        return false;
+    }
+    if (role == Qt::EditRole && index.column() == clearedColumn) {
+        if (value != data(index, Qt::DisplayRole)) {
+            auto amount = data(index.siblingAtColumn(subtotalColumn), Qt::EditRole).value<QDecNumber>();
+            if (value.toBool()) clearedBalance_ += amount;
+            else clearedBalance_ -= amount;
+            emit clearedBalanceChanged(clearedBalance_);
+        }
+    }
+    return PodItemModel::setData(index, value, role);
 }
 
 QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientation, int role) const {

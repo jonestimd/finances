@@ -12,6 +12,7 @@ class UiContext;
 class TransactionsWindow : public AppWindow {
     Q_OBJECT
     UiContext *const context;
+    QLabel *const clearedBalance{new QLabel()};
 
 public:
     TransactionsWindow(UiContext *context, TransactionTableModel *model);
@@ -40,6 +41,7 @@ private:
 private Q_SLOTS:
     void accountsLoaded();
     void newWindow();
+    void clearedBalanceChanged(const QDecNumber &balance);
 
 protected:
     const char *settingsGroup() const override;
