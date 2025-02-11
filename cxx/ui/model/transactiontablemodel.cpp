@@ -38,7 +38,7 @@ namespace transactiontablemodel {
 
     class TxDateColumnAdapter : public FormatColumnAdapter<Transaction> {
     public:
-        TxDateColumnAdapter(const QString &title) : FormatColumnAdapter{title, &Transaction::date, dateFormat, false} {}
+        TxDateColumnAdapter(const QString &title) : FormatColumnAdapter{title, &Transaction::date, dateFormat, true} {}
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (role == finances::SortRole) {
@@ -278,6 +278,14 @@ bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &va
         }
     }
     return PodItemModel::setData(index, value, role);
+}
+
+Qt::ItemFlags TransactionTableModel::flags(const QModelIndex &index) const {
+    if (index.parent().isValid()) {
+        // return detailColumns[index.column()]->flags()
+        return AdapterItemModel::flags(index);
+    }
+    return PodItemModel::flags(index);
 }
 
 QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientation, int role) const {

@@ -1,10 +1,12 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
 #include "../validation/validatorfactory.h"
+#include "dateedit.h"
 #include "enumcombobox.h"
 #include "qcombobox.h"
 #include "relationeditor.h"
 #include <QCompleter>
+#include <QDateEdit>
 #include <QItemEditorFactory>
 #include <QPainter>
 #include <ui/model/comboboxmodel.h>
@@ -76,6 +78,8 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
     } else if (data.canConvert<const EnumValue*>()) {
         auto options = index.data(finances::OptionsRole).value<QHash<QString, const EnumValue*>>();
         editor = new EnumComboBox(options, parent);
+    } else if (data.metaType().id() == QMetaType::QDate) {
+        editor= new DateEdit(parent);
     } else {
         editor = QStyledItemDelegate::createEditor(parent, option, index);
         auto lineEdit = qobject_cast<QLineEdit*>(editor);

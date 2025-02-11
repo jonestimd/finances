@@ -23,7 +23,8 @@ QTreeView::item:selected {
 }
 
 QTableView QLineEdit,
-QTreeView QLineEdit {
+QTreeView QLineEdit,
+QTreeView QDateEdit {
     background: #ffffffff;
     selection-color: #ff000000;
     selection-background-color: rgb(0, 212, 232);

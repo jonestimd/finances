@@ -78,8 +78,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 
     TreeView *view = static_cast<TreeView*>(entityView.itemView);
     view->setChildInheritsBackground(true);
-    // view->setItemsExpandable(false);
-    // view->setRootIsDecorated(false);
+    view->setItemsExpandable(false);
+    view->setRootIsDecorated(false);
 
     initializeData();
 }
