@@ -3,4 +3,5 @@
 /out/
 /.cache/
 /CMakeCache.txt
+/CMakeLists.txt.user
 .*.swp
