@@ -16,7 +16,7 @@ protected:
      * \brief newRows map of parent index to added children
      */
     QHash<const QModelIndex, QList<Row*>> newRows;
-    QList<const Row*> pendingDeletes;
+    QList<QModelIndex> pendingDeletes; // TODO const values?
 
     QList<Row*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
         return newRows.value(parent, QList<Row*>());
@@ -134,29 +134,32 @@ public:
     }
 
     void queueDelete(const QModelIndex &index) override {
-        auto savedChildCount = childCount(index.parent());
-        if (newRows.contains(index.parent()) && index.row() >= savedChildCount) {
-            beginRemoveRows(index.parent(), index.row(), index.row());
-            delete newRows[index.parent()].takeAt(index.row() - savedChildCount);
-            if (newRows[index.parent()].isEmpty()) newRows.remove(index.parent());
+        auto parent = index.parent();
+        auto indexRow = index.row();
+        auto deleteIndex = index.siblingAtColumn(0);
+        auto savedChildCount = childCount(parent);
+        if (newRows.contains(parent) && indexRow >= savedChildCount) {
+            beginRemoveRows(parent, indexRow, indexRow);
+            delete newRows[parent].takeAt(indexRow - savedChildCount);
+            if (newRows[parent].isEmpty()) newRows.remove(parent);
             QHash<QModelIndex, QString> updateErrors;
             for (auto [key, value] : errors.asKeyValueRange()) {
-                if (key.parent() != index.parent() || key.row() < index.row()) updateErrors.insert(key, value);
-                else if (key.row() > index.row()) updateErrors.insert(key.siblingAtRow(key.row()-1), value);
+                if (key.parent() != parent || key.row() < indexRow) updateErrors.insert(key, value);
+                else if (key.row() > indexRow) updateErrors.insert(key.siblingAtRow(key.row()-1), value);
             }
             errors.clear();
             errors.insert(updateErrors);
             endRemoveRows();
             removeStaleErrors();
         }
-        else if (!pendingDeletes.contains(getRow(index))) {
-            pendingDeletes.append(getRow(index));
+        else if (!pendingDeletes.contains(deleteIndex)) {
+            pendingDeletes.append(deleteIndex);
             rowChanged(index);
         }
     }
 
     void undoChange(const QModelIndex &index) override {
-        if (pendingDeletes.removeAll(getRow(index)) > 0) rowChanged(index);
+        if (pendingDeletes.removeAll(index.siblingAtColumn(0)) > 0) rowChanged(index);
         else if (changes.contains(index)) {
             changes.remove(index);
             emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
@@ -185,7 +188,7 @@ public:
     const QList<Row*> unsavedChanges() { // TODO override in category model to handle parent change
         QHash<const QList<int>, Row*> changeRows;
         for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
-            if (pendingDeletes.contains(getRow(i.key()))) continue;
+            if (pendingDeletes.contains(i.key().siblingAtColumn(0))) continue;
             Row *updated;
             auto indexes = rowIndexes(i.key());
             if (changeRows.contains(indexes)) updated = changeRows[indexes];
@@ -199,7 +202,9 @@ public:
     }
 
     const QList<const Row*> unsavedDeletes() const {
-        return pendingDeletes;
+        QList<const Row*> deletes{};
+        for (auto i : pendingDeletes) deletes.append(getRow(i));
+        return deletes;
     }
 
     virtual void clearChanges() override {
@@ -231,7 +236,7 @@ public:
             if (errors.contains(index)) return errors[index];
             break;
         case finances::UnsavedRole:
-            if (pendingDeletes.contains(getRow(index))) return finances::Delete;
+            if (pendingDeletes.contains(index.siblingAtColumn(0))) return finances::Delete;
             if (index.row() >= childCount(index.parent()) || changes.contains(index)) return finances::AddUpdate;
         }
         return value_(index, role);
@@ -239,7 +244,7 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
         if (!index.isValid()) return Qt::NoItemFlags;
-        bool pendingDelete = pendingDeletes.contains(getRow(index));
+        bool pendingDelete = pendingDeletes.contains(index.siblingAtColumn(0));
         return AdapterItemModel::flags(index) | columns[index.column()]->flags(getRow(index), !pendingDelete);
     }
 
