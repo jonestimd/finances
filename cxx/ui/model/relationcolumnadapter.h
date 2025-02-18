@@ -19,8 +19,8 @@ class RelationColumnAdapter : public ColumnAdapter<T> {
     CreateValue createValue;
 
 public:
-    RelationColumnAdapter(QString title, QVariant T::*field, const Store *store, CreateValue createValue = nullptr,
-                          ValidatorFactory *validatorFactory = nullptr)
+    RelationColumnAdapter(const QString &title, QVariant T::*field, const Store *store,
+                          CreateValue createValue = nullptr, ValidatorFactory *validatorFactory = nullptr)
         : ColumnAdapter<T>(title, field, true, validatorFactory)
         , store{store}
         , createValue{createValue} {}

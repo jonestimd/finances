@@ -11,11 +11,12 @@
 #define SECURITY_TITLE "Security"
 #define CLEARED_TITLE "🮱"
 #define SUBTOTAL_TITLE "Subtotal"
+#define BALANCE_TITLE "Balance"
 
-#define INTERNAL_TX_ID(storeId) (storeId << 2 | 1)
-#define INTERNAL_DETAIL_ID(storeId) (storeId << 2)
-#define IS_TX_ID(internalId) (internalId & 1)
-#define STORE_ID(internalId) ((qlonglong)(internalId >> 2))
+#define CHILD_INDEX_ID(parent) (parent.row() + 1)
+#define PARENT_INDEX_ID (quintptr(0))
+#define HAS_TX_ROW(child) (child.internalId())
+#define TX_ROW(child) (child.internalId() - 1)
 
 namespace transactiontablemodel {
     QString txAmountFormat(const Transaction *row, const QVariant &amount) {
@@ -23,16 +24,28 @@ namespace transactiontablemodel {
     }
 
     class TxAmountColumnAdapter : public AmountColumnAdapter<Transaction> {
-        TransactionStore *const store;
+        TransactionTableModel *const model;
 
     public:
-        TxAmountColumnAdapter(QString title, TransactionStore *store)
+        TxAmountColumnAdapter(QString title, TransactionTableModel *model)
             : AmountColumnAdapter(title, &Transaction::id, dollarFormat, false)
-            , store{store}
+            , model{model}
         {}
 
-        virtual QVariant fieldValue(const Transaction *row) const override {
-            return QVariant::fromValue(store->amount(row->id));
+        QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
+            switch (role) {
+            case Qt::DisplayRole:
+            case Qt::EditRole:
+            case finances::SortRole:
+            case finances::TextHighlightRole:
+                QDecNumber total{0};
+                auto detailCount = model->rowCount(index);
+                for (int i = 0; i < detailCount; i++) {
+                    total += model->data(this->model->index(i, index.column(), index), Qt::EditRole).value<QDecNumber>();
+                }
+                return AmountColumnAdapter::value(row, index, QVariant::fromValue(total), role);
+            }
+            return AmountColumnAdapter::value(row, index, current, role);
         }
     };
 
@@ -72,71 +85,6 @@ namespace transactiontablemodel {
             return QVariant{};
         }
     };
-
-    class TransactionTypeColumnAdapter : public ColumnAdapter<TransactionDetail> {
-        DataStore *const dataStore;
-        // TransactionTableModel *const model;
-
-    public:
-        TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore)
-            : ColumnAdapter(title, &TransactionDetail::categoryId, false)
-            , dataStore{dataStore}
-        {}
-
-        QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override {
-            // value is TransactionTypeId
-            QVariant value = ColumnAdapter::value(row, index, getId(current), Qt::DisplayRole);
-            switch (role) {
-            case Qt::DisplayRole:
-                if (current.isValid() && current.isNull()) return "";
-                if (value.isValid() && !value.isNull()) {
-                    const auto typeId = value.value<TransactionTypeId>();
-                    if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id, ':'); // .prepend("\u279c ");
-                    if (typeId.id.isValid()) return dataStore->categoryStore->displayName(typeId.id.toLongLong());
-                }
-                break;
-            case Qt::EditRole: // TODO
-                break;
-            case finances::OptionsRole: // TODO
-                break;
-            case Qt::DecorationRole:
-                if (value.isValid() && value.value<TransactionTypeId>().transfer) return finances::ArrowRight;
-                return finances::None;
-            }
-            return QVariant{};
-        }
-
-        QVariant fieldValue(const TransactionDetail *row) const override {
-            if (!row->relatedDetailId.isNull()) {
-                auto rd = dataStore->transactionStore->detailStore.value(row->relatedDetailId);
-                auto rx = dataStore->transactionStore->value(rd->transactionId);
-                return QVariant::fromValue(TransactionTypeId(true, rx->accountId));
-            }
-            return QVariant::fromValue(TransactionTypeId(false, ColumnAdapter::fieldValue(row)));
-        }
-
-        void setValue(TransactionDetail *row, QVariant value) const override {
-            auto typeId = value.value<TransactionTypeId>();
-            if (typeId.transfer) {
-                // TODO create related detail and tx?
-            }
-            else if (typeId.id.isValid()) ColumnAdapter::setValue(row, typeId.id);
-        }
-
-    private:
-        QVariant getId(const QVariant &row) const {
-            auto tt = row.value<const TransactionType*>();
-            return tt ? QVariant::fromValue(TransactionTypeId(tt)) : QVariant{};
-        }
-    };
-
-    class EmptyColumnAdapter : public ColumnAdapter<TransactionDetail> {
-    public:
-        EmptyColumnAdapter() : ColumnAdapter{"", nullptr, false} {}
-        QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override {
-            return QVariant{};
-        };
-    };
 }
 
 using namespace transactiontablemodel;
@@ -148,17 +96,18 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
         new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
         new ColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
-        new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), dataStore->transactionStore),
+        new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
         new ColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
-        new BalanceColumnAdapter(tr("Balance"), this),
+        new BalanceColumnAdapter(tr(BALANCE_TITLE), this),
     }}
+    , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore)}
     , detailColumns{
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
         new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
-        new TransactionTypeColumnAdapter(tr("Category"), dataStore),
+        transactionTypeAdapter,
         new ColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
-        new AmountColumnAdapter<TransactionDetail>(tr("Shares"), &TransactionDetail::assetQuantity, securityShares, true),
-        new AmountColumnAdapter<TransactionDetail>(tr("Amount"), &TransactionDetail::amount, dollarFormat, true),
+        new SharesColumnAdapter(tr("Shares"), this),
+        new DetailAmountColumnAdapter(tr("Amount")),
         new EmptyColumnAdapter(),
         new EmptyColumnAdapter(),
     }
@@ -167,6 +116,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     , securityColumn{columnIndex(tr(SECURITY_TITLE))}
     , clearedColumn{columnIndex(tr(CLEARED_TITLE))}
     , subtotalColumn{columnIndex(tr(SUBTOTAL_TITLE))}
+    , balanceColumn{columnIndex(tr(BALANCE_TITLE))}
     , accountId{accountId}
 {
     connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
@@ -180,8 +130,39 @@ QList<qlonglong> TransactionTableModel::transactionIds() const {
     return store->transactionIds(accountId);
 }
 
+QVariant TransactionTableModel::value(const QModelIndex &index, int role, QVariant current = QVariant{}) const {
+    if (index.parent().isValid()) {
+        return detailColumns.at(index.column())->value(getDetail(index), index, current, role);
+    }
+    return PodItemModel::value(index, role, current);
+}
+
+void TransactionTableModel::setValue(const QModelIndex &index, const QVariant &value) {
+    if (index.parent().isValid()) {
+        auto detailModel = newDetails.values(index.parent().row()).at(index.row() - childCount(index.parent()));
+        auto column = detailColumns.at(index.column());
+        if (column == transactionTypeAdapter) transactionTypeAdapter->setValue(detailModel, value);
+        else column->setValue(detailModel->detail, value);
+    }
+    else PodItemModel::setValue(index, value);
+}
+
 int TransactionTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->detailIds.length() : transactionIds().count();
+}
+
+void TransactionTableModel::updateBalances(int fromRow, const QDecNumber &delta) {
+    const auto ids = transactionIds().sliced(fromRow);
+    for (auto id : ids) {
+        auto balance = balances.value(id).value<QDecNumber>();
+        balances.insert(id, QVariant::fromValue(balance + delta));
+    }
+    emit dataChanged(index(fromRow, balanceColumn), index(rowCount()-1, balanceColumn));
+}
+
+void TransactionTableModel::updateClearedBalance(const QDecNumber &delta) {
+    clearedBalance_ += delta;
+    emit clearedBalanceChanged(clearedBalance_);
 }
 
 void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
@@ -210,32 +191,21 @@ QDecNumber TransactionTableModel::clearedBalance() const {
 
 QModelIndex TransactionTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (hasIndex(row, column, parent)) {
-        if (parent.isValid()) {
-            auto txId = STORE_ID(parent.internalId());
-            auto tx = store->value(txId);
-            auto detailId = tx->detailIds.at(row).toLongLong();
-            return createIndex(row, column, INTERNAL_DETAIL_ID(detailId));
-        }
-        auto txId = transactionIds().at(row);
-        return createIndex(row, column, INTERNAL_TX_ID(txId));
+        if (parent.isValid()) return createIndex(row, column, CHILD_INDEX_ID(parent));
+        return createIndex(row, column, PARENT_INDEX_ID);
     }
     return QModelIndex{};
 }
 
 QModelIndex TransactionTableModel::parent(const QModelIndex &child) const {
-    if (child.isValid() && !IS_TX_ID(child.internalId())) {
-        auto detail = store->detailStore.value(STORE_ID(child.internalId()));
-        auto txId = detail->transactionId.toLongLong();
-        auto row = transactionIds().indexOf(txId);
-        return createIndex(row, 0, INTERNAL_TX_ID(txId));
-    }
+    if (child.isValid() && HAS_TX_ROW(child)) return createIndex(TX_ROW(child), 0, quintptr(0));
     return QModelIndex{};
 }
 
 int TransactionTableModel::rowCount(const QModelIndex &parent) const {
     if (parent.parent().isValid()) return 0;
-    if (parent.isValid()) return childCount(parent);
-    return transactionIds().count();
+    if (parent.isValid()) return childCount(parent) + newDetails.values(parent.row()).length();
+    return transactionIds().count() + newRows.value(parent).length();
 }
 
 const Transaction *TransactionTableModel::getRow(const QModelIndex &index) const {
@@ -243,38 +213,46 @@ const Transaction *TransactionTableModel::getRow(const QModelIndex &index) const
     return store->value(id);
 }
 
+const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &index) const {
+    auto txDetailIds = getRow(index.parent())->detailIds;
+    if (index.row() < txDetailIds.length()) {
+        return store->detailStore.value(txDetailIds.at(index.row()));
+    }
+    return newDetails.values(index.parent().row()).at(index.row()-txDetailIds.length())->detail;
+}
+
+AbstractColumnAdapter *TransactionTableModel::adapter(const QModelIndex &index) const {
+    if (index.parent().isValid()) return detailColumns.at(index.column());
+    return PodItemModel::adapter(index);
+}
+
 QVariant TransactionTableModel::data(const QModelIndex &index, int role) const {
     if (index.parent().isValid()) {
-        auto detailId = getRow(index.parent())->detailIds.at(index.row());
-        auto detail = store->detailStore.value(detailId.toLongLong());
-        auto value = detailColumns[index.column()]->value(detail, index, QVariant{}, role);
         if (role == finances::TextHighlightRole) {
+            auto value = this->value(index, role, changes.value(index));
             return value.value<finances::TextHighlight>() + finances::Dimmed;
         }
-        return value;
     }
-    if (role == Qt::FontRole && isBoldColumn(index.column())) return boldFont();
+    else if (role == Qt::FontRole && isBoldColumn(index.column())) return boldFont();
     return PodItemModel::data(index, role);
 }
 
 bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    if (index.parent().isValid()) {
-        if (role == Qt::EditRole && index.column() == subtotalColumn) {
-            if (data(index.parent().siblingAtColumn(clearedColumn), Qt::DisplayRole).toBool()) {
-                auto oldValue = data(index, Qt::DisplayRole);
-                if (value != oldValue) {
-                    // TODO update cleared balance
-                }
+    if (role == Qt::EditRole) {
+        if (index.parent().isValid()) {
+            auto parsed = detailColumns.at(index.column())->parseValue(value);
+            if (index.column() == subtotalColumn) {
+                auto delta = parsed.value<QDecNumber>() - data(index, Qt::EditRole).value<QDecNumber>();
+                updateBalances(index.parent().row(), delta);
+                if (data(index.parent().siblingAtColumn(clearedColumn)).toBool()) updateClearedBalance(delta);
+                auto changeIndex = index.parent().siblingAtColumn(subtotalColumn);
+                emit dataChanged(changeIndex, changeIndex);
             }
-        }
-        return false;
-    }
-    if (role == Qt::EditRole && index.column() == clearedColumn) {
-        if (value != data(index, Qt::DisplayRole)) {
-            auto amount = data(index.siblingAtColumn(subtotalColumn), Qt::EditRole).value<QDecNumber>();
-            if (value.toBool()) clearedBalance_ += amount;
-            else clearedBalance_ -= amount;
-            emit clearedBalanceChanged(clearedBalance_);
+        } else if (index.column() == clearedColumn) {
+            if (value != data(index, Qt::DisplayRole)) {
+                auto amount = data(index.siblingAtColumn(subtotalColumn), Qt::EditRole).value<QDecNumber>();
+                updateClearedBalance(value.toBool() ? amount : amount.minus());
+            }
         }
     }
     return PodItemModel::setData(index, value, role);
@@ -282,8 +260,8 @@ bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &va
 
 Qt::ItemFlags TransactionTableModel::flags(const QModelIndex &index) const {
     if (index.parent().isValid()) {
-        // return detailColumns[index.column()]->flags()
-        return AdapterItemModel::flags(index);
+        bool pendingDelete = pendingDeletes.contains(index.siblingAtColumn(0));
+        return AdapterItemModel::flags(index) | detailColumns[index.column()]->flags(getDetail(index), !pendingDelete);
     }
     return PodItemModel::flags(index);
 }
@@ -291,7 +269,7 @@ Qt::ItemFlags TransactionTableModel::flags(const QModelIndex &index) const {
 QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (section == clearedColumn && role == Qt::TextAlignmentRole) return Qt::AlignCenter;
     auto value = PodItemModel::headerData(section, orientation, role);
-    if (orientation == Qt::Orientation::Horizontal && role == Qt::DisplayRole) {
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return value.toString().append('\n').append(detailColumns.at(section)->title);
     }
     return value;
@@ -309,4 +287,16 @@ QFont TransactionTableModel::boldFont() {
     QFont font(qApp->font());
     font.setBold(true);
     return font;
+}
+
+void TransactionTableModel::undoChange(const QModelIndex &index) {
+    auto oldValue = index.data(Qt::EditRole);
+    PodItemModel::undoChange(index);
+    if (index.parent().isValid() && index.column() == subtotalColumn) {
+        auto parent = index.parent().siblingAtColumn(subtotalColumn);
+        auto delta = index.data(Qt::EditRole).value<QDecNumber>() - oldValue.value<QDecNumber>();
+        updateBalances(parent.row(), delta);
+        if (parent.siblingAtColumn(clearedColumn).data().toBool()) updateClearedBalance(delta);
+        emit dataChanged(parent, parent, QList<int>{Qt::DisplayRole});
+    }
 }

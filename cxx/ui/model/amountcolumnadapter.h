@@ -13,8 +13,8 @@ class AmountColumnAdapter : public NumberColumnAdapter<T> {
 public:
     const FormatterType formatter;
 
-    AmountColumnAdapter(QString title, QVariant T::* field, FormatterType formatter, bool editable)
-        : NumberColumnAdapter<T>(title, field, editable), formatter{formatter} {}
+    AmountColumnAdapter(QString title, QVariant T::* field, FormatterType formatter, bool editable, ValidatorFactory *factory = nullptr)
+        : NumberColumnAdapter<T>(title, field, editable, factory), formatter{formatter} {}
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         QVariant value = NumberColumnAdapter<T>::value(row, index, current, role);
@@ -23,6 +23,13 @@ public:
         if (role == finances::TextHighlightRole) {
             QVariant amount = NumberColumnAdapter<T>::value(row, index, current, Qt::DisplayRole);
             if (amount.value<QDecNumber>().isNegative()) return finances::Accent;
+        }
+        return value;
+    }
+
+    QVariant parseValue(const QVariant &value) override {
+        if (value.metaType().id() == QMetaType::QString) {
+            return QVariant::fromValue(QDecNumber(value.toByteArray().constData()));
         }
         return value;
     }

@@ -5,11 +5,11 @@
 #include <QValidator>
 
 class TrimmedValidatorFactory : public ValidatorFactory {
-    Q_OBJECT
 public:
     TrimmedValidatorFactory();
 
     const QString isValid(const QModelIndex &index, QString &value) const override;
+    const QString isValid(const QModelIndex &index, QString &value, GetTitle getTitle) const;
 
     void fixup(QString &) const override;
 };

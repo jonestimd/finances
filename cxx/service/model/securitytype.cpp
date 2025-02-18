@@ -6,7 +6,7 @@ SecurityType::SecurityType(const char *code, const QString name)
     values.insert(code, this);
 }
 
-QHash<QString, const SecurityType*> SecurityType::values;
+QHash<const QString, const SecurityType*> SecurityType::values;
 
 const SecurityType SecurityType::bond("Bond", tr("Bond"));
 const SecurityType SecurityType::moneyMarket("Money Market", tr("Money Market"));

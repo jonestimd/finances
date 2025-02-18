@@ -5,8 +5,6 @@
 
 #define SETTINGS_GROUP "securities"
 
-using namespace std::placeholders;
-
 SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
     : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView()}
     , store{dataStore->securityStore}
@@ -41,7 +39,7 @@ void SecuritiesWindow::setSecurities(const QList<qlonglong> ids) {
 
 void SecuritiesWindow::toggleZeroShares(bool hide) {
     if (hide) {
-        entityView.sortModel.addFilter(std::bind(&SecuritiesWindow::nonZeroShares, this, _1));
+        entityView.sortModel.addFilter(std::bind_front(&SecuritiesWindow::nonZeroShares, this));
     }
     else entityView.sortModel.clearFilters();
 }

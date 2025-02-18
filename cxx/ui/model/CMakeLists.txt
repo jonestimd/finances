@@ -6,11 +6,12 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/background.h ${CMAKE_CURRENT_LIST_DIR}/background.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorystore.h ${CMAKE_CURRENT_LIST_DIR}/categorystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/columnadapter.h
+    ${CMAKE_CURRENT_LIST_DIR}/columnadapter.h ${CMAKE_CURRENT_LIST_DIR}/columnadapter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/comboboxmodel.h ${CMAKE_CURRENT_LIST_DIR}/comboboxmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companystore.h ${CMAKE_CURRENT_LIST_DIR}/companystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/companytablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/datastore.h ${CMAKE_CURRENT_LIST_DIR}/datastore.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detailcolumnadapter.h ${CMAKE_CURRENT_LIST_DIR}/detailcolumnadapter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entitystore.h ${CMAKE_CURRENT_LIST_DIR}/entitystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/formats.h ${CMAKE_CURRENT_LIST_DIR}/formats.cpp
     ${CMAKE_CURRENT_LIST_DIR}/grouptablemodel.h ${CMAKE_CURRENT_LIST_DIR}/grouptablemodel.cpp

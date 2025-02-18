@@ -16,11 +16,11 @@ public:
     typedef std::function<bool(const T*, const V*)> IsCompatible;
 
 private:
-    QHash<QString, const V*> *values;
+    QHash<const QString, const V*> *values;
     IsCompatible isCompatible;
 
 public:
-    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, const V*> *values,
+    EnumColumnAdapter(QString title, QVariant T::*field, QHash<const QString, const V*> *values,
                       ValidatorFactory *factory, bool editable = true, IsCompatible isCompatible = nullptr)
         : ColumnAdapter<T>(title, field, editable, factory), values{values}, isCompatible{isCompatible} {}
 

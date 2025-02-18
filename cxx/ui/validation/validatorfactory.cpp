@@ -28,7 +28,7 @@ void ValidationStatus::fixup(QString &text) const {
     factory->fixup(text);
 }
 
-ValidatorFactory::ValidatorFactory(bool multiRow): multiRow{multiRow} {}
+ValidatorFactory::ValidatorFactory(bool multiRow, bool global): multiRow{multiRow}, global{global} {}
 
 void ValidatorFactory::initialize(QAbstractItemModel *model) {}
 
@@ -40,7 +40,7 @@ const ValidatorFactory::Factory ValidatorFactory::factory(const QModelIndex &ind
 
 void ValidatorFactory::fixup(QString &) const {}
 
-QList<QModelIndex> ValidatorFactory::revalidate(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const {
+QModelIndexList ValidatorFactory::revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const {
     QList<QModelIndex> changes;
     if (multiRow) {
         QModelIndex i = index;
@@ -58,6 +58,6 @@ QList<QModelIndex> ValidatorFactory::revalidate(QHash<QModelIndex, QString> &err
     return changes;
 }
 
-QString ValidatorFactory::formatMessage(const QString format, const QModelIndex &index) {
-    return format.arg(index.model()->headerData(index.column(), Qt::Horizontal).toString());
+const QString ValidatorFactory::columnHeader(const QModelIndex &index) {
+    return index.model()->headerData(index.column(), Qt::Horizontal).toString();
 }

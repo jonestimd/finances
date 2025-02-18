@@ -21,6 +21,7 @@ public:
     bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) override;
 
     Q_SIGNAL void openEditor(QWidget *editor) const;
+
 };
 
 #endif // TABLEITEMDELEGATE_H

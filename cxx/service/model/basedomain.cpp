@@ -1,4 +1,5 @@
 #include "basedomain.h"
+#include "category.h"
 #include <QDate>
 #include <QSqlField>
 
@@ -28,6 +29,15 @@ TransactionType::TransactionType(bool transfer, const QSqlRecord &record, const 
     : NamedEntity{record, nameColumn}
     , transfer{transfer}
 {}
+
+const TransactionType *TransactionType::get(const QVariant &value) {
+    return value.isValid() ? static_cast<const TransactionType*>(value.value<const NamedEntity*>()) : nullptr;
+}
+
+const Category *TransactionType::getCategory(const QVariant &value) {
+    auto entity = get(value);
+    return entity && !entity->transfer ? static_cast<const Category*>(entity) : nullptr;
+}
 
 TransactionTypeId::TransactionTypeId(bool transfer, QVariant id) : transfer{transfer}, id{id} {}
 

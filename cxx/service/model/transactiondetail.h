@@ -18,4 +18,10 @@ public:
     TransactionDetail(const QSqlRecord &record);
 };
 
+struct TransactionDetailUpdate {
+    TransactionDetail *detail;
+    QVariant transferAccountId{};
+    QVariant categoryId{};
+};
+
 #endif // TRANSACTIONDETAIL_H

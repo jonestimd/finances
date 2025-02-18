@@ -5,13 +5,12 @@
 
 #define SETTINGS_GROUP "accounts"
 
-using namespace std::placeholders;
 using namespace finances;
 
 AccountsWindow::AccountsWindow(UiContext *context)
     : AppWindow{
         tr("Account"),
-        new AccountTableModel(context->dataStore->accountStore, std::bind(&AccountsWindow::addCompany, this, _1)),
+        new AccountTableModel(context->dataStore->accountStore, std::bind_front(&AccountsWindow::addCompany, this)),
         new QTableView()
     }
     , context{context}

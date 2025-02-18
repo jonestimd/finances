@@ -11,7 +11,8 @@ const QString UniqueValidatorFactory::isValid(const QModelIndex &index, QString 
     auto message = requiredValidatorFactory->isValid(index, value);
     if (!message.isEmpty()) return message;
     auto rows = values.values(rowValues(value, index));
-    return rows.length() > 1 || !rows.isEmpty() && !rows.contains(index.row()) ? formatMessage(tr("%1 must be unique"), index) : nullptr;
+    return rows.length() > 1 || !rows.isEmpty() && !rows.contains(index.row())
+               ? tr("%1 must be unique").arg(columnHeader(index)) : nullptr;
 }
 
 void UniqueValidatorFactory::initialize(QAbstractItemModel *model) {

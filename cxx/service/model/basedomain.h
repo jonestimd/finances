@@ -29,12 +29,17 @@ public:
 Q_DECLARE_METATYPE(const NamedEntity*)
 // static const int namedEntityTypeId = qRegisterMetaType<NamedEntity>();
 
+class Category;
+
 class TransactionType : public NamedEntity {
 public:
     const bool transfer;
 
     TransactionType(bool transfer);
     TransactionType(bool transfer, const QSqlRecord &record, const char *nameColumn = "name");
+
+    static const TransactionType *get(const QVariant &value);
+    static const Category *getCategory(const QVariant &value);
 };
 
 Q_DECLARE_METATYPE(const TransactionType*)
