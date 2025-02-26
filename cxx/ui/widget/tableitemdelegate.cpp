@@ -11,6 +11,8 @@
 #include <QPainter>
 #include <ui/model/comboboxmodel.h>
 
+#define ICON_WIDTH 15
+
 TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
     : QStyledItemDelegate{parent}, statusBar{statusBar}
 {}
@@ -53,6 +55,11 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     if (!decoration.isNull()) {
         auto icon = decoration.value<finances::FontIcon>();
         option->icon = finances::materialIcon(icon, option->widget->palette().text().color());
+    }
+    if (!index.data(finances::ValidationMessageRole).toString().isEmpty()) {
+        if (option->displayAlignment & Qt::AlignTrailing) {
+            option->rect.adjust(0, 0, -ICON_WIDTH, 0);
+        }
     }
 }
 
