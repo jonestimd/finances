@@ -30,8 +30,13 @@ void AccountStore::update(QWidget *source, QList<Account *> updates, const QList
 
 QString AccountStore::qualifiedName(const QVariant &accountId, QChar delimiter) const {
     auto account = value(accountId.toLongLong());
-    auto name = account->name.toString();
-    if (account->companyId.isNull()) return name;
-    auto company = companyStore.value(account->companyId.toLongLong());
-    return company->name.toString().append(delimiter).append(name);
+    if (account) {
+        auto name = account->name.toString();
+        if (account->companyId.isNull()) return name;
+        auto company = companyStore.value(account->companyId.toLongLong());
+        if (company) return company->name.toString().append(delimiter).append(name);
+        else qWarning("qualifiedName: company not loaded");
+    }
+    else qWarning("qualifiedName: account not loaded");
+    return accountId.toString();
 }

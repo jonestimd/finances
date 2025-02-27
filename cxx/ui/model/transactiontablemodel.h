@@ -30,7 +30,7 @@ public:
     ~TransactionTableModel();
 
 protected:
-    QList<qlonglong> transactionIds() const;
+    const QList<qlonglong> transactionIds() const;
 
     QVariant value(const QModelIndex &index, int role, QVariant current) const override;
     void setValue(const QModelIndex &index, const QVariant &value) override;
@@ -40,6 +40,7 @@ protected:
     QList<TransactionDetailUpdate*> pendingDetails(const QModelIndex &parent) const;
 
     void updateBalances(int fromRow, const QDecNumber &delta);
+    Q_SLOT void updateBalances();
     void updateClearedBalance(const QDecNumber &delta);
 
 public:

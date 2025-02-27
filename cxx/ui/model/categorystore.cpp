@@ -11,11 +11,15 @@ QString CategoryStore::displayName(qlonglong categoryId) const {
 }
 
 QString CategoryStore::displayName(const Category *category) const {
-    auto name = category->name.toString();
-    if (category->parentId.isValid()) {
-        return displayName(category->parentId.toLongLong()) + "\u25ba" + name;
+    if (category) {
+        auto name = category->name.toString();
+        if (category->parentId.isValid()) {
+            return displayName(category->parentId.toLongLong()) + "\u25ba" + name;
+        }
+        return name;
     }
-    return name;
+    else qWarning("displayName: category not loaded");
+    return "";
 }
 
 bool CategoryStore::movable(qlonglong categoryId) const {

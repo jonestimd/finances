@@ -120,13 +120,14 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     , accountId{accountId}
 {
     connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
+    connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
 }
 
 TransactionTableModel::~TransactionTableModel() {
     qDeleteAll(detailColumns);
 }
 
-QList<qlonglong> TransactionTableModel::transactionIds() const {
+const QList<qlonglong> TransactionTableModel::transactionIds() const {
     return store->transactionIds(accountId);
 }
 
@@ -160,6 +161,20 @@ void TransactionTableModel::updateBalances(int fromRow, const QDecNumber &delta)
     emit dataChanged(index(fromRow, balanceColumn), index(rowCount()-1, balanceColumn));
 }
 
+void TransactionTableModel::updateBalances() {
+    balances.clear();
+    clearedBalance_ = 0;
+    QDecNumber balance{0};
+    for (auto id : transactionIds()) {
+        auto amount = store->amount(id);
+        balance += amount;
+        balances.insert(id, QVariant::fromValue(balance));
+        if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
+    }
+    emit dataChanged(index(0, balanceColumn), index(rowCount()-1, balanceColumn));
+    emit clearedBalanceChanged(clearedBalance_);
+}
+
 void TransactionTableModel::updateClearedBalance(const QDecNumber &delta) {
     clearedBalance_ += delta;
     emit clearedBalanceChanged(clearedBalance_);
@@ -168,15 +183,7 @@ void TransactionTableModel::updateClearedBalance(const QDecNumber &delta) {
 void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     beginResetModel();
     clearChanges();
-    balances.clear();
-    clearedBalance_ = 0;
-    QDecNumber balance{0};
-    for (auto id : transactionIds) {
-        auto amount = store->amount(id);
-        balance += amount;
-        balances.insert(id, QVariant::fromValue(balance));
-        if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
-    }
+    updateBalances();
     endResetModel();
     emit clearedBalanceChanged(clearedBalance_);
 }

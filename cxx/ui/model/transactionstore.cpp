@@ -26,7 +26,8 @@ QDecNumber TransactionStore::amount(const QVariant &transactionId) const {
         auto detail = detailStore.value(detailId);
         if (!detail->categoryId.isNull()) {
             auto category = categoryStore->value(detail->categoryId);
-            if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
+            if (!category) qWarning("amount: category not loaded");
+            else if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
         }
         total += detail->amount.value<QDecNumber>();
     }
