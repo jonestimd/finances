@@ -16,6 +16,7 @@ class TransactionsWindow : public AppWindow {
 
 public:
     TransactionsWindow(UiContext *context, TransactionTableModel *model);
+    ~TransactionsWindow();
 
     TransactionTableModel *model() const;
 

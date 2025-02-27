@@ -17,6 +17,7 @@ class CategoriesWindow : public AppWindow {
 
 public:
     CategoriesWindow(DataStore *dataStore);
+    ~CategoriesWindow();
 
     CategoryTableModel *model();
 

@@ -25,6 +25,10 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
 
+PayeesWindow::~PayeesWindow() {
+    delete model();
+}
+
 PayeeTableModel *PayeesWindow::model() const {
     return entityView.model<PayeeTableModel>();
 }

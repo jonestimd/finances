@@ -16,7 +16,6 @@ class AccountsWindow : public AppWindow {
     UiContext *const context;
     DataStore *const dataStore;
     CompaniesWindow *companiesDialog{};
-    TransactionsWindow *transactionsWindow{};
     QAction *showAccount;
 
 public:

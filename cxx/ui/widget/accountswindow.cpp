@@ -42,8 +42,8 @@ AccountsWindow::AccountsWindow(UiContext *context)
 }
 
 AccountsWindow::~AccountsWindow() {
+    delete model();
     if (companiesDialog) delete companiesDialog;
-    if (transactionsWindow) delete transactionsWindow;
 }
 
 AccountTableModel *AccountsWindow::model() {

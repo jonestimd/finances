@@ -81,7 +81,6 @@ TransactionsWindow *UiContext::showTransactions(qlonglong accountId) {
         mover->connection = connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, mover, &WindowMover::exposeWindow);
     }
     transactionsWindows.append(window);
-    connect(window, SIGNAL(destroyed(QObject*)), this, SLOT(transactionsWindowClosed(QObject*)));
     return window;
 }
 
@@ -101,9 +100,7 @@ void UiContext::transactionsModelRemoved(TransactionTableModel *model) {
     delete transactionModels.take(model->accountId);
 }
 
-void UiContext::transactionsWindowClosed(QObject *object) {
-    auto model = static_cast<TransactionsWindow*>(object)->model();
-    settings::setLastViewedAccount(model->accountId);
-    transactionsWindows.removeAll(object);
-    transactionsModelRemoved(model);
+void UiContext::transactionsWindowClosed(TransactionsWindow *window) {
+    transactionsWindows.removeAll(window);
+    transactionsModelRemoved(window->model());
 }

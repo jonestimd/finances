@@ -20,7 +20,9 @@ namespace accountsmenu {
 
     class AccountAction : public QAction {
     public:
-        AccountAction(TransactionsWindow *window, const Account *account) {
+        AccountAction(AccountsMenu *menu, TransactionsWindow *window, const Account *account)
+            : QAction(menu)
+        {
             setText(account->name.toString().replace('&', "&&"));
             connect(this, &QAction::triggered, this, [=]() {
                 window->showAccount(account->id.toLongLong());
@@ -31,12 +33,13 @@ namespace accountsmenu {
 using namespace accountsmenu;
 
 AccountsMenu::AccountsMenu(TransactionsWindow *window, UiContext *context)
-    : QMenu(tr("&Accounts"))
+    : QMenu(tr("&Accounts"), window)
     , window{window}
     , store{context->dataStore->accountStore}
     , accountsAction{context->accountsAction()}
 {
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
+    connect(&store->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
     updateMenu();
 }
 
@@ -68,16 +71,18 @@ void AccountsMenu::updateMenu() {
     for (auto account : store->values()) {
         if (hideClosed && account->closed.toBool()) continue;
         if (account->companyId.isNull()) {
-            insertByName(this, new AccountAction(window, account));
+            insertByName(this, new AccountAction(this, window, account));
         } else {
             QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
             if (!companyMenu) {
                 auto company = store->companyStore.value(account->companyId);
-                companyMenu = new QMenu(company->name.toString().replace('&', "&&"));
-                companyMenus.insert(company->id.toLongLong(), companyMenu);
-                insertByName(this, companyMenu);
+                if (company) {
+                    companyMenu = new QMenu(company->name.toString().replace('&', "&&"), this);
+                    companyMenus.insert(company->id.toLongLong(), companyMenu);
+                    insertByName(this, companyMenu);
+                }
             }
-            insertByName(companyMenu, new AccountAction(window, account));
+            if (companyMenu) insertByName(companyMenu, new AccountAction(this, window, account));
         }
     }
     for (auto menu : companyMenus) {

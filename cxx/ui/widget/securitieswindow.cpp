@@ -19,6 +19,10 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
 
+SecuritiesWindow::~SecuritiesWindow() {
+    delete model();
+}
+
 SecurityTableModel *SecuritiesWindow::model() const {
     return entityView.model<SecurityTableModel>();
 }

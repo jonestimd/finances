@@ -13,6 +13,7 @@ class SecuritiesWindow : public AppWindow {
 
 public:
     SecuritiesWindow(DataStore *dataStore);
+    ~SecuritiesWindow();
 
     SecurityTableModel *model() const;
 

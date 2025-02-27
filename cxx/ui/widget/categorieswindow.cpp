@@ -29,6 +29,10 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{600, 500}, &entityView);
 }
 
+CategoriesWindow::~CategoriesWindow() {
+    delete model();
+}
+
 CategoryTableModel *CategoriesWindow::model() {
     return entityView.model<CategoryTableModel>();
 }

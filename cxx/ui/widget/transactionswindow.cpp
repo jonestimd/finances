@@ -84,6 +84,11 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     initializeData();
 }
 
+TransactionsWindow::~TransactionsWindow() {
+    settings::setLastViewedAccount(model()->accountId);
+    context->transactionsWindowClosed(this);
+}
+
 TransactionTableModel *TransactionsWindow::model() const {
     return entityView.model<TransactionTableModel>();
 }

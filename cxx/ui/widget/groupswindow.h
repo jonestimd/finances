@@ -11,6 +11,7 @@ class GroupsWindow : public AppWindow {
 
 public:
     GroupsWindow(DataStore *dataStore);
+    ~GroupsWindow();
 
     GroupTableModel *model();
 

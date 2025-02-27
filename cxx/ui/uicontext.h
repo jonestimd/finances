@@ -60,7 +60,7 @@ public:
      */
     void transactionsModelRemoved(TransactionTableModel* model);
 
-    Q_SLOT void transactionsWindowClosed(QObject *object);
+    void transactionsWindowClosed(TransactionsWindow *window);
 };
 
 #endif // UICONTEXT_H

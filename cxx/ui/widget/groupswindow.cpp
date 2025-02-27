@@ -18,6 +18,10 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
 
+GroupsWindow::~GroupsWindow() {
+    delete model();
+}
+
 GroupTableModel *GroupsWindow::model() {
     return entityView.model<GroupTableModel>();
 }

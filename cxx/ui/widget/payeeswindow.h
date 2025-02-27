@@ -14,6 +14,7 @@ class PayeesWindow : public AppWindow {
 
 public:
     PayeesWindow(DataStore *dataStore);
+    ~PayeesWindow();
 
     PayeeTableModel *model() const;
 
