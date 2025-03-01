@@ -76,7 +76,7 @@ QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &pa
             auto rowId = rootIds.value(row);
             return createIndex(row, column, store->value(rowId));
         }
-        auto category = newRows[parent][row - rootIds.length()];
+        auto category = newRows.value(parent).at(row - rootIds.length());
         return createIndex(row, column, category);
     }
     return QModelIndex{};

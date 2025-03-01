@@ -43,11 +43,14 @@ inline bool selectEditColumn(QModelIndex &index) {
 }
 
 void AddRowAction::doAction() {
-    auto rowIndex = model()->queueAdd();
-    auto index = sortModel->mapFromSource(model()->index(rowIndex, 0)).siblingAtColumn(0);
-    if (selectEditColumn(index)) {
-        itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-        itemView->edit(index);
+    auto selectedIndex = sortModel->mapToSource(itemView->selectionModel()->currentIndex());
+    auto rowIndex = model()->queueAdd(selectedIndex);
+    if (rowIndex.isValid()) {
+        auto index = sortModel->mapFromSource(rowIndex).siblingAtColumn(0);
+        if (index.isValid() && selectEditColumn(index)) {
+            itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+            itemView->edit(index);
+        }
     }
 }
 

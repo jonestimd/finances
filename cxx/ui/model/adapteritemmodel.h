@@ -30,7 +30,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 public Q_SLOTS:
-    virtual int queueAdd(const QModelIndex &parent = QModelIndex{}) = 0;
+    virtual QModelIndex queueAdd(const QModelIndex &selectedIndex = QModelIndex{}) = 0;
     virtual void queueDelete(const QModelIndex &index);
     virtual void undoChange(const QModelIndex &index);
 
@@ -38,6 +38,7 @@ protected:
     virtual AbstractColumnAdapter *adapter(const QModelIndex &index) const = 0;
 
     virtual bool isPendingAdd(const QModelIndex &index) const = 0;
+    virtual bool isPendingDelete(const QModelIndex &index) const;
 
     virtual QVariant value(const QModelIndex &index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const = 0;
     virtual void setValue(const QModelIndex &index, const QVariant &value) = 0;

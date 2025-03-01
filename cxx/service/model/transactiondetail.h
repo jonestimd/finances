@@ -14,14 +14,19 @@ public:
     QVariant assetQuantity;
     QVariant memo;
 
+    TransactionDetail();
     TransactionDetail(const QVariant &transactionId);
     TransactionDetail(const QSqlRecord &record);
+
+    bool isEmpty() const;
 };
 
 struct TransactionDetailUpdate {
     TransactionDetail *detail;
     QVariant transferAccountId{};
-    QVariant categoryId{};
+
+    TransactionDetailUpdate(const QVariant &transactionId = QVariant{});
+    TransactionDetailUpdate(TransactionDetail *detail);
 };
 
 #endif // TRANSACTIONDETAIL_H

@@ -140,7 +140,7 @@ QVariant TransactionTableModel::value(const QModelIndex &index, int role, QVaria
 
 void TransactionTableModel::setValue(const QModelIndex &index, const QVariant &value) {
     if (index.parent().isValid()) {
-        auto detailModel = newDetails.values(index.parent().row()).at(index.row() - childCount(index.parent()));
+        auto detailModel = pendingDetails(index.parent()).at(index.row() - childCount(index.parent()));
         auto column = detailColumns.at(index.column());
         if (column == transactionTypeAdapter) transactionTypeAdapter->setValue(detailModel, value);
         else column->setValue(detailModel->detail, value);
@@ -150,6 +150,10 @@ void TransactionTableModel::setValue(const QModelIndex &index, const QVariant &v
 
 int TransactionTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->detailIds.length() : transactionIds().count();
+}
+
+const QList<TransactionDetailUpdate*> TransactionTableModel::pendingDetails(const QModelIndex &parent) const {
+    return newDetails.value(parent.row(), QList<TransactionDetailUpdate*>());
 }
 
 void TransactionTableModel::updateBalances(int fromRow, const QDecNumber &delta) {
@@ -211,7 +215,7 @@ QModelIndex TransactionTableModel::parent(const QModelIndex &child) const {
 
 int TransactionTableModel::rowCount(const QModelIndex &parent) const {
     if (parent.parent().isValid()) return 0;
-    if (parent.isValid()) return childCount(parent) + newDetails.values(parent.row()).length();
+    if (parent.isValid()) return childCount(parent) + pendingDetails(parent).length();
     return transactionIds().count() + newRows.value(parent).length();
 }
 
@@ -225,7 +229,7 @@ const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &ind
     if (index.row() < txDetailIds.length()) {
         return store->detailStore.value(txDetailIds.at(index.row()));
     }
-    return newDetails.values(index.parent().row()).at(index.row()-txDetailIds.length())->detail;
+    return newDetails[index.parent().row()].at(index.row()-txDetailIds.length())->detail;
 }
 
 AbstractColumnAdapter *TransactionTableModel::adapter(const QModelIndex &index) const {
@@ -233,9 +237,14 @@ AbstractColumnAdapter *TransactionTableModel::adapter(const QModelIndex &index) 
     return PodItemModel::adapter(index);
 }
 
+bool TransactionTableModel::isPendingDelete(const QModelIndex &index) const {
+    return PodItemModel::isPendingDelete(index) || index.parent().isValid() && PodItemModel::isPendingDelete(index.parent());
+}
+
 QVariant TransactionTableModel::data(const QModelIndex &index, int role) const {
     if (index.parent().isValid()) {
-        if (role == finances::TextHighlightRole) {
+        switch (role) {
+        case finances::TextHighlightRole:
             auto value = this->value(index, role, changes.value(index));
             return value.value<finances::TextHighlight>() + finances::Dimmed;
         }
@@ -282,8 +291,20 @@ QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientat
     return value;
 }
 
+bool TransactionTableModel::hasUnsavedChanges() const {
+    return !newDetails.isEmpty() || PodItemModel::hasUnsavedChanges();
+}
+
 void TransactionTableModel::accountLoaded(qlonglong accountId) {
     if (accountId == this->accountId) setRows(store->transactionIds(accountId));
+}
+
+int TransactionTableModel::pendingDeleteCount(const QModelIndex &parent) const {
+    int count = 0;
+    for (int r = 0; r < childCount(parent); r++) {
+        if (isPendingDelete(index(r, 0, parent))) count++;
+    }
+    return count;
 }
 
 bool TransactionTableModel::isBoldColumn(int column) const {
@@ -296,8 +317,44 @@ QFont TransactionTableModel::boldFont() {
     return font;
 }
 
+QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {
+    auto parent = selectedIndex.parent().isValid() ? selectedIndex.parent() : selectedIndex;
+    if (parent.isValid() && parent.model() == this) {
+        auto rowIndex = rowCount(parent);
+        beginInsertRows(parent, rowIndex, rowIndex);
+        if (!newDetails.contains(parent.row())) newDetails.insert(parent.row(), QList<TransactionDetailUpdate*>());
+        newDetails[parent.row()].append(new TransactionDetailUpdate(getRow(parent)->id));
+        validateRow(rowIndex, parent);
+        endInsertRows();
+        return index(rowIndex, 0, parent);
+    }
+    return QModelIndex{};
+}
+
+void TransactionTableModel::queueDelete(const QModelIndex &index) {
+    auto parent = index.parent();
+    if (parent.isValid()) {
+        if (isPendingAdd(index)) {
+            auto indexRow = index.row();
+            beginRemoveRows(parent, indexRow, indexRow);
+            delete newDetails[parent.row()].takeAt(indexRow - childCount(parent));
+            if (newDetails[parent.row()].isEmpty()) newDetails.remove(parent.row());
+            endRemoveRows();
+            adjustErrorIndexes(indexRow, parent, -1);
+            removeStaleErrors();
+        } else if (!isPendingDelete(parent) && rowCount(parent) - pendingDeleteCount(parent) == 1) {
+            queueDelete(parent);
+        } else PodItemModel::queueDelete(index);
+    } else {
+        PodItemModel::queueDelete(index);
+        pendingDeletes.removeIf([index](const QModelIndex &i) { return i.parent() == index; });
+        rowsChanged(0, rowCount(index)-1, index);
+    }
+}
+
 void TransactionTableModel::undoChange(const QModelIndex &index) {
     auto oldValue = index.data(Qt::EditRole);
+    auto undoDelete = !index.parent().isValid() && isPendingDelete(index);
     PodItemModel::undoChange(index);
     if (index.parent().isValid() && index.column() == subtotalColumn) {
         auto parent = index.parent().siblingAtColumn(subtotalColumn);
@@ -306,4 +363,5 @@ void TransactionTableModel::undoChange(const QModelIndex &index) {
         if (parent.siblingAtColumn(clearedColumn).data().toBool()) updateClearedBalance(delta);
         emit dataChanged(parent, parent, QList<int>{Qt::DisplayRole});
     }
+    if (undoDelete) rowsChanged(0, rowCount(index)-1, index);
 }

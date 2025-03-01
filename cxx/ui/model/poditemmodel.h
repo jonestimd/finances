@@ -15,7 +15,7 @@ protected:
      */
     QHash<const QModelIndex, QList<Row*>> newRows;
 
-    QList<Row*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
+    const QList<Row*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
         return newRows.value(parent, QList<Row*>());
     }
 
@@ -35,7 +35,7 @@ protected:
 
     void setValue(const QModelIndex &index, const QVariant &value) override {
         auto rowIndex = index.row() - childCount(index.parent());
-        setValue(newRows[index.parent()][rowIndex], index.column(), value);
+        setValue(newRows[index.parent()].at(rowIndex), index.column(), value);
     }
 
     int columnIndex(const QString &title) const {
@@ -64,7 +64,8 @@ public:
 
     virtual const Row *getRow(const QModelIndex &index) const = 0;
 
-    int queueAdd(const QModelIndex &parent) override {
+    QModelIndex queueAdd(const QModelIndex &selectedIndex) override {
+        auto parent = selectedIndex.parent();
         auto rowIndex = rowCount(parent);
         beginInsertRows(parent, rowIndex, rowIndex);
         Row *row = new Row;
@@ -72,7 +73,7 @@ public:
         newRows[parent].append(row);
         validateRow(rowIndex, parent);
         endInsertRows();
-        return rowIndex;
+        return index(rowIndex, 0, parent);
     }
 
     bool enableDelete(const QModelIndex &index) const override {
@@ -82,13 +83,12 @@ public:
     void queueDelete(const QModelIndex &index) override {
         auto parent = index.parent();
         auto indexRow = index.row();
-        auto deleteIndex = index.siblingAtColumn(0);
         if (isPendingAdd(index)) {
             beginRemoveRows(parent, indexRow, indexRow);
             delete newRows[parent].takeAt(indexRow - childCount(parent));
             if (newRows[parent].isEmpty()) newRows.remove(parent);
-            adjustErrorIndexes(indexRow, parent, -1);
             endRemoveRows();
+            adjustErrorIndexes(indexRow, parent, -1);
             removeStaleErrors();
         }
         else AdapterItemModel::queueDelete(index);

@@ -3,6 +3,8 @@
 #include "service/database/sql.h"
 #include <QSqlField>
 
+TransactionDetail::TransactionDetail() {}
+
 TransactionDetail::TransactionDetail(const QVariant &transactionId) : transactionId{transactionId} {}
 
 TransactionDetail::TransactionDetail(const QSqlRecord &record)
@@ -16,3 +18,18 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , assetQuantity{decimalValue(record, "asset_quantity")}
     , memo{sql::getValue(record, "memo")}
 {}
+
+bool TransactionDetail::isEmpty() const {
+    return categoryId.isNull()
+           && relatedDetailId.isNull()
+           && groupId.isNull()
+           && exchangeAssetId.isNull()
+           && assetQuantity.isNull()
+           && memo.isNull();
+}
+
+TransactionDetailUpdate::TransactionDetailUpdate(const QVariant &transactionId)
+    : TransactionDetailUpdate(new TransactionDetail(transactionId))
+{}
+
+TransactionDetailUpdate::TransactionDetailUpdate(TransactionDetail *detail) : detail{detail} {}

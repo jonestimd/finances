@@ -1,6 +1,7 @@
 #include "detailvalidator.h"
 #include "service/model/basedomain.h"
 #include "service/model/category.h"
+#include "ui/model/transactiontablemodel.h"
 #include <QDecNumber.hh>
 
 namespace detailvalidator {
@@ -57,4 +58,14 @@ bool SharesValidatorFactory::isTransfer(const QModelIndex &index) const {
         return tt && tt->transfer;
     }
     return false;
+}
+
+DetailAmountValidatorFactory::DetailAmountValidatorFactory()
+    : NumberValidatorFactory{std::bind_front(&DetailAmountValidatorFactory::isRequired, this), 2, getDetailTitle}
+{}
+
+bool DetailAmountValidatorFactory::isRequired(const QModelIndex &index) const {
+    auto model = static_cast<const TransactionTableModel*>(index.model());
+    auto detail = model->getDetail(index);
+    return !detail->id.isNull() || !detail->isEmpty();
 }

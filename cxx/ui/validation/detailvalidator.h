@@ -22,4 +22,11 @@ private:
     bool isTransfer(const QModelIndex &index) const;
 };
 
+class DetailAmountValidatorFactory : public NumberValidatorFactory {
+public:
+    DetailAmountValidatorFactory();
+
+    bool isRequired(const QModelIndex &index) const;
+};
+
 #endif // DETAILVALIDATOR_H

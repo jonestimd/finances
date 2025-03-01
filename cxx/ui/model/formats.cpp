@@ -16,6 +16,7 @@ QString moneyFormat(const QDecNumber &value) {
 }
 
 QString dollarFormat(const QVariant &amount) {
+    if (amount.isNull()) return "";
     return moneyFormat(amount).prepend("$");
 }
 

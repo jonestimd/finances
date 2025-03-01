@@ -10,7 +10,7 @@ class TransactionTableModel : public PodItemModel<Transaction> {
     Q_OBJECT
     TransactionTypeColumnAdapter *const transactionTypeAdapter;
     const TransactionStore *const store;
-    QMultiHash<int, TransactionDetailUpdate*> newDetails{};
+    QHash<int, QList<TransactionDetailUpdate*>> newDetails{};
     QHash<qlonglong, QVariant> balances{};
     QDecNumber clearedBalance_{0};
 
@@ -37,7 +37,7 @@ protected:
 
     int childCount(const QModelIndex &index) const override;
 
-    QList<TransactionDetailUpdate*> pendingDetails(const QModelIndex &parent) const;
+    const QList<TransactionDetailUpdate*> pendingDetails(const QModelIndex &parent) const;
 
     void updateBalances(int fromRow, const QDecNumber &delta);
     Q_SLOT void updateBalances();
@@ -58,13 +58,15 @@ public:
 
     AbstractColumnAdapter *adapter(const QModelIndex &index) const override;
 
+    bool isPendingDelete(const QModelIndex &index) const override;
+
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-    // bool hasUnsavedChanges() const override;
+    bool hasUnsavedChanges() const override;
     // void clearChanges() override;
     // bool enableDelete(const QModelIndex &index) const override;
 
@@ -75,6 +77,8 @@ public:
 private:
     Q_SLOT void accountLoaded(qlonglong accountId);
 
+    int pendingDeleteCount(const QModelIndex &parent) const;
+
     bool isBoldColumn(int column) const;
     static QFont boldFont();
 
@@ -82,8 +86,8 @@ Q_SIGNALS:
     void clearedBalanceChanged(const QDecNumber &clearedBalance);
 
 public Q_SLOTS:
-    // int queueAdd(const QModelIndex &parent) override;
-    // void queueDelete(const QModelIndex &index) override;
+    QModelIndex queueAdd(const QModelIndex &parent) override;
+    void queueDelete(const QModelIndex &index) override;
     void undoChange(const QModelIndex &index) override;
 };
 

@@ -64,7 +64,7 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
 void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
-            auto account = children[i];
+            auto account = children.at(i);
             if (!companyIds.contains(account->companyId.toLongLong())) {
                 setData(index(rowIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }

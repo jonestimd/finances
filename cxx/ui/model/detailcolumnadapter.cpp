@@ -2,7 +2,6 @@
 #include "transactiontablemodel.h"
 #include "ui/model/formats.h"
 #include "ui/validation/detailvalidator.h"
-#include "ui/validation/numeric.h"
 
 // TransactionTypeColumnAdapter //
 
@@ -50,31 +49,31 @@ QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) 
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant value) const {
     qCritical() << "setting value on detail instead of detail model";
-    auto typeId = value.value<TransactionTypeId>();
-    if (typeId.transfer) {
-        if (row->relatedDetailId.isValid()) {
-            auto rd = dataStore->transactionStore->detailStore.value(row->relatedDetailId);
-            auto rx = new Transaction(*dataStore->transactionStore->value(rd->transactionId));
-            if (rx->detailIds.length() > 1) qWarning("moving multi-detail tx: %lld", rx->id.toLongLong());
-            rx->accountId = typeId.id;
-            // TODO where to put rx?
-        }
-        // TODO create related detail and tx?
-    } else if (typeId.id.isValid()) {
-        ColumnAdapter::setValue(row, typeId.id);
-        // TODO remove related detail
-    } else {
-        // TODO remove category & related detail
-    }
+    // auto typeId = value.value<TransactionTypeId>();
+    // if (typeId.transfer) {
+    //     if (row->relatedDetailId.isValid()) {
+    //         auto rd = dataStore->transactionStore->detailStore.value(row->relatedDetailId);
+    //         auto rx = new Transaction(*dataStore->transactionStore->value(rd->transactionId));
+    //         if (rx->detailIds.length() > 1) qWarning("moving multi-detail tx: %lld", rx->id.toLongLong());
+    //         rx->accountId = typeId.id;
+    //         // TODO where to put rx?
+    //     }
+    //     // TODO create related detail and tx?
+    // } else if (typeId.id.isValid()) {
+    //     ColumnAdapter::setValue(row, typeId.id);
+    //     // TODO remove related detail
+    // } else {
+    //     // TODO remove category & related detail
+    // }
 }
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetailUpdate *model, QVariant value) const {
     auto typeId = value.value<TransactionTypeId>();
     if (typeId.transfer) {
         model->transferAccountId = typeId.id;
-        model->categoryId = QVariant{};
+        model->detail->categoryId = QVariant{};
     } else {
-        model->categoryId = typeId.id;
+        model->detail->categoryId = typeId.id;
         model->transferAccountId = QVariant{};
     }
 }
@@ -107,8 +106,7 @@ SharesColumnAdapter::SharesColumnAdapter(const QString &title, const Transaction
 // DetailAmountColumnAdapter //
 
 DetailAmountColumnAdapter::DetailAmountColumnAdapter(const QString &title)
-    : AmountColumnAdapter{title, &TransactionDetail::amount, dollarFormat, true,
-        new NumberValidatorFactory(2, true, detailvalidator::getDetailTitle)}
+    : AmountColumnAdapter{title, &TransactionDetail::amount, dollarFormat, true, new DetailAmountValidatorFactory()}
 {}
 
 // EmptyColumnAdapter //

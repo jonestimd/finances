@@ -25,7 +25,7 @@ QVariant AdapterItemModel::data(const QModelIndex &index, int role) const {
     case finances::ValidationMessageRole:
         return errors.contains(index) ? errors.value(index) : QVariant{};
     case finances::UnsavedRole:
-        if (pendingDeletes.contains(index.siblingAtColumn(0))) return finances::Delete;
+        if (isPendingDelete(index)) return finances::Delete;
         if (isPendingAdd(index) || changes.contains(index)) return finances::AddUpdate;
         return QVariant{};
     }
@@ -69,9 +69,8 @@ QVariant AdapterItemModel::headerData(int section, Qt::Orientation orientation, 
 }
 
 void AdapterItemModel::queueDelete(const QModelIndex &index) {
-    auto deleteIndex = index.siblingAtColumn(0);
-    if (!pendingDeletes.contains(deleteIndex)) {
-        pendingDeletes.append(deleteIndex);
+    if (!isPendingDelete(index)) {
+        pendingDeletes.append(index.siblingAtColumn(0));
         rowChanged(index);
     }
 }
@@ -83,6 +82,10 @@ void AdapterItemModel::undoChange(const QModelIndex &index) {
         emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
         revalidateRow(index);
     }
+}
+
+bool AdapterItemModel::isPendingDelete(const QModelIndex &index) const {
+    return pendingDeletes.contains(index.siblingAtColumn(0));
 }
 
 void AdapterItemModel::rowsChanged(int from, int to, const QModelIndex &parent) {
