@@ -1,4 +1,5 @@
 #include "transactionstore.h"
+#include "transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
 #include <QDate>
 
@@ -13,6 +14,20 @@ bool TransactionStore::load(EntityView *view, qlonglong accountId, bool reload) 
         return EntityStore<Transaction, TransactionService, qlonglong>::load(view, tr(LOADING_TRANSACTIONS), accountId, true);
     }
     return false;
+}
+
+void TransactionStore::update(QWidget *source, TransactionTableModel *model) {
+    doInBackground(source, [=, this]() {
+        auto deletes = model->unsavedDeletes();
+        auto detailDeletes = model->unsavedDetailDeletes();
+        TransactionUpdate changes{model->unsavedChanges(), model->unsavedAdds(), deletes,
+                                  model->unsavedDetailChanges(), model->unsavedDetailAdds(), detailDeletes};
+        auto updateData = service->update(changes, user);
+        update(updateData.transactions, deletes);
+        updateDetails(updateData.details, detailDeletes, deletes);
+        emit valuesLoaded(ids());
+        emit detailStore.valuesLoaded(detailStore.ids());
+    });
 }
 
 const QList<qlonglong> TransactionStore::transactionIds(qlonglong accountId) const {
@@ -49,4 +64,19 @@ void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, con
     });
     idsByAccountId[accountId] = accountTxIds;
     emit accountLoaded(accountId);
+}
+
+void TransactionStore::updateDetails(const QList<const TransactionDetail*> &updates, const QList<const TransactionDetail*> deletes, const QList<const Transaction*> txDeletes) {
+    QList<const Transaction*> txUpdates{};
+    for (auto detail : deletes) {
+        if (contains(detail->transactionId)) {
+            auto transaction = value(detail->transactionId);
+            auto txUpdate = new Transaction(*transaction);
+            txUpdate->detailIds.removeAll(detail->id);
+            txUpdates.append(txUpdate);
+        }
+    }
+    // TODO update transfer accounts
+    update(txUpdates, txDeletes);
+    detailStore.update(updates, deletes, txDeletes);
 }

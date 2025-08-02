@@ -6,6 +6,8 @@
 #include "adapteritemmodel.h"
 #include "columnadapter.h"
 
+#define ROOT_ROW_TYPE 0
+
 template<Copyable Row>
 class PodItemModel : public AdapterItemModel {
 protected:
@@ -98,7 +100,7 @@ public:
         return !newRows.isEmpty() || AdapterItemModel::hasUnsavedChanges();
     }
 
-    const QList<Row*> unsavedAdds() const {
+    QList<Row*> unsavedAdds() const {
         QList<Row*> rows;
         for (const auto &children : newRows) {
             for (auto row : children) {
@@ -108,25 +110,36 @@ public:
         return rows;
     }
 
-    const QList<Row*> unsavedChanges() {
+    /**
+     * @brief rowType For a table with multiple row types, `rowType` indicates which row
+     * type is at `index`.
+     * @return an `int` indicating the row type (defaults to 0).
+     */
+    virtual int rowType(const QModelIndex &index) const {
+        return ROOT_ROW_TYPE;
+    }
+
+    virtual QList<Row*> unsavedChanges() {
         QHash<const QList<int>, Row*> changeRows;
-        for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
-            if (pendingDeletes.contains(i.key().siblingAtColumn(0))) continue;
+        for (auto [index, value] : changes.asKeyValueRange()) {
+            if (isPendingDelete(index) || rowType(index) != ROOT_ROW_TYPE) continue;
             Row *updated;
-            auto indexes = rowIndexes(i.key());
+            auto indexes = rowIndexes(index);
             if (changeRows.contains(indexes)) updated = changeRows[indexes];
             else {
-                updated = new Row(*getRow(i.key()));
+                updated = new Row(*getRow(index));
                 changeRows[indexes] = updated;
             }
-            setValue(updated, i.key().column(), i.value());
+            setValue(updated, index.column(), value);
         }
         return changeRows.values();
     }
 
-    const QList<const Row*> unsavedDeletes() const {
+    virtual QList<const Row*> unsavedDeletes() const {
         QList<const Row*> deletes{};
-        for (auto i : pendingDeletes) deletes.append(getRow(i));
+        for (auto i : pendingDeletes) {
+            if (rowType(i) == ROOT_ROW_TYPE) deletes.append(getRow(i));
+        }
         return deletes;
     }
 

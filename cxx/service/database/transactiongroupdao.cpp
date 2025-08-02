@@ -1,4 +1,16 @@
 #include "transactiongroupdao.h"
+#include "dbdialect.h"
+
+static const auto createTableQuery = R"(
+create table tx_group (
+    id %1,
+    change_date timestamp not null default current_timestamp,
+    change_user varchar(50) not null,
+    version bigint not null,
+    description text,
+    name varchar(50) not null,
+    constraint tx_group_ak unique (name)
+))";
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -25,6 +37,10 @@ static const auto deleteQuery = "delete from tx_group where id = :id";
 TransactionGroupDao::TransactionGroupDao()
     : NamedEntityDao<TransactionGroup>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionGroupDao",
                                        QObject::tr("Groups have been modified.  Please reload and try again.")} {}
+
+void TransactionGroupDao::createTable(const QSqlDatabase &db) {
+    sql::exec(db, dbDialect::createTableSql(db, createTableQuery), className, "createTable");
+}
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {
     NamedEntityDao::bindUpdateValues(query, entity);

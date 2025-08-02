@@ -8,6 +8,8 @@
 class CompanyDao : public NamedEntityDao<Company> {
 public:
     CompanyDao();
+
+    void createTable(QSqlDatabase &db);
 };
 
 static CompanyDao companyDao;

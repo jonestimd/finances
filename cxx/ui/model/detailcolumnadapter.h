@@ -21,10 +21,9 @@ public:
     QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
     QVariant fieldValue(const TransactionDetail *row) const override;
 
-    void setValue(TransactionDetailUpdate *model, QVariant value) const;
+    void setValue(TransactionDetail *model, QVariant value) const override;
 
 private:
-    void setValue(TransactionDetail *row, QVariant value) const override;
 
     QVariant getId(const QVariant &value) const;
 

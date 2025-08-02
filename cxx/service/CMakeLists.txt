@@ -14,3 +14,5 @@ target_sources(finances
 
 add_subdirectory(model/)
 add_subdirectory(database/)
+
+add_subdirectory(tests/)

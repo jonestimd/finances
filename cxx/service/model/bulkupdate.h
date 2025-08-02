@@ -17,7 +17,7 @@ struct BulkUpdate {
         , adds{adds}
         , deletes{deletes} {}
 
-    void onError() {
+    virtual void onError() {
         for (auto entity : updates) delete entity;
         for (auto entity : adds) delete entity;
     }

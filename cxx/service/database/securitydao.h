@@ -8,6 +8,8 @@ class SecurityDao : public NamedEntityDao<Security> {
 public:
     SecurityDao();
 
+    void createTable(const QSqlDatabase &db);
+
     virtual QList<const Security*> add(QSqlDatabase &db, QList<Security*> securities, const QString &user) override;
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;
 

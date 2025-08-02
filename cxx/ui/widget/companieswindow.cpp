@@ -43,7 +43,7 @@ void CompaniesWindow::loadData() {
 void CompaniesWindow::saveData() {
     entityView.disableUi(tr("Saving companies..."));
     itemView->setEnabled(false);
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    store->update(this, &model);
 }
 
 void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {

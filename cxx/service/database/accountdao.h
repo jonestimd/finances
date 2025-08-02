@@ -9,6 +9,8 @@ class AccountDao : public NamedEntityDao<Account> {
 public:
     AccountDao();
 
+    void createTable(const QSqlDatabase &db);
+
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;

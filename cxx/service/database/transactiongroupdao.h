@@ -8,6 +8,8 @@ class TransactionGroupDao : public NamedEntityDao<TransactionGroup> {
 public:
     TransactionGroupDao();
 
+    void createTable(const QSqlDatabase &db);
+
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, TransactionGroup *entity) override;

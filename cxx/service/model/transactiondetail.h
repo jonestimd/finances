@@ -14,19 +14,24 @@ public:
     QVariant assetQuantity;
     QVariant memo;
 
+    QVariant transferAccountId;
+
     TransactionDetail();
     TransactionDetail(const QVariant &transactionId);
     TransactionDetail(const QSqlRecord &record);
 
     bool isEmpty() const;
+
+    TransactionDetail *newTransfer(const QVariant &transferAccountId, const QVariant &transactionId = QVariant{}) const;
 };
 
-struct TransactionDetailUpdate {
-    TransactionDetail *detail;
-    QVariant transferAccountId{};
+class Transaction;
 
-    TransactionDetailUpdate(const QVariant &transactionId = QVariant{});
-    TransactionDetailUpdate(TransactionDetail *detail);
+class PendingDetail : public TransactionDetail {
+public:
+    const Transaction* const transaction;
+
+    PendingDetail(const Transaction* const tx);
 };
 
 #endif // TRANSACTIONDETAIL_H

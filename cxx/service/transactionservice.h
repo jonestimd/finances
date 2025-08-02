@@ -9,6 +9,8 @@ public:
     TransactionService(ConnectionPool *pool);
 
     QHash<qlonglong, const Transaction*> getAll(qlonglong accountId);
+
+    const TransactionsData update(TransactionUpdate &changes, const QString &user);
 };
 
 #endif // TRANSACTIONSERVICE_H

@@ -10,8 +10,6 @@ TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title,
     , dataStore{dataStore}
 {}
 
-static int count(0);
-
 QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
     QVariant value = ColumnAdapter::value(row, index, getId(current), Qt::DisplayRole);
     const auto typeId = value.value<TransactionTypeId>();
@@ -48,33 +46,18 @@ QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) 
 }
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant value) const {
-    qCritical() << "setting value on detail instead of detail model";
-    // auto typeId = value.value<TransactionTypeId>();
-    // if (typeId.transfer) {
-    //     if (row->relatedDetailId.isValid()) {
-    //         auto rd = dataStore->transactionStore->detailStore.value(row->relatedDetailId);
-    //         auto rx = new Transaction(*dataStore->transactionStore->value(rd->transactionId));
-    //         if (rx->detailIds.length() > 1) qWarning("moving multi-detail tx: %lld", rx->id.toLongLong());
-    //         rx->accountId = typeId.id;
-    //         // TODO where to put rx?
-    //     }
-    //     // TODO create related detail and tx?
-    // } else if (typeId.id.isValid()) {
-    //     ColumnAdapter::setValue(row, typeId.id);
-    //     // TODO remove related detail
-    // } else {
-    //     // TODO remove category & related detail
-    // }
-}
-
-void TransactionTypeColumnAdapter::setValue(TransactionDetailUpdate *model, QVariant value) const {
-    auto typeId = value.value<TransactionTypeId>();
-    if (typeId.transfer) {
-        model->transferAccountId = typeId.id;
-        model->detail->categoryId = QVariant{};
+    if (value.isValid()) {
+        auto typeId = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
+        if (typeId->transfer) {
+            row->transferAccountId = typeId->id;
+            row->categoryId = QVariant{};
+        } else {
+            row->categoryId = typeId->id;
+            row->transferAccountId = QVariant{};
+        }
     } else {
-        model->detail->categoryId = typeId.id;
-        model->transferAccountId = QVariant{};
+        row->categoryId = QVariant{};
+        row->transferAccountId = QVariant{};
     }
 }
 

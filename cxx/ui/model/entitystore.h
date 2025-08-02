@@ -23,6 +23,17 @@ Q_SIGNALS:
     void valuesLoaded(QList<qlonglong> ids);
 };
 
+/**
+ * @brief Template for a class that stores database entities (rows).
+ * @details The `EntityStore` assumes ownership of the database entities and is responsible
+ * for deleting them.
+ * @tparam T The class that represents a row in the database table.
+ * @tparam Service the class that provides access to the database table.
+ * The class must provide the following methods:
+ *   - `getAll`: retrieves entities from the database
+ *   - `update`: saves changes to the database
+ * @tparam GetAllArgs Types for the arguments used to retrieve data for a UI view (usually empty).
+ */
 template<typename T, class Service, typename... GetAllArgs>
 class EntityStore : public AbstractEntityStore {
     QHash<qlonglong, const T*> byId{};
@@ -74,6 +85,9 @@ public:
         return false;
     }
 
+    /**
+     * @brief update Call service to persist changes and update stored entities.
+     */
     void update(QWidget *source, const QList<T*> updates, const QList<T*> adds, const QList<const T*> deletes) {
         doInBackground(source, [=, this]() {
             auto changes = BulkUpdate{updates, adds, deletes};
@@ -88,6 +102,11 @@ public:
     }
 
 protected:
+    /**
+     * @brief update Update entities with persisted changes from service.
+     * @param updates Added/updated entities.  Replaced entities are deleted.
+     * @param deletes Entities that have been removed from database.
+     */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
         for (auto updated : updates) {
             auto id = updated->id.toLongLong();
@@ -98,6 +117,10 @@ protected:
         for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
     }
 
+    /**
+     * @brief setValues Add/replace entities in the store.
+     * @details Replaced entities are deleted.
+     */
     virtual void setValues(GetAllArgs... args, const QHash<qlonglong, const T*> values) {
         for (auto [id, entity] : values.asKeyValueRange()) {
             auto oldEntity = byId.take(id);

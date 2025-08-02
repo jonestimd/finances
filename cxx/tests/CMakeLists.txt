@@ -1,6 +1,5 @@
-qt_add_executable(testdecimal
-    testdecimal.cpp
-)
+qt_add_executable(testdecimal testdecimal.cpp)
+
 add_dependencies(testdecimal qdecimal)
 
 set_target_properties(testdecimal PROPERTIES
@@ -35,3 +34,5 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_testdecimal})
+
+add_test(NAME testdecimal COMMAND testdecimal)

@@ -8,6 +8,8 @@
 class PayeeDao : public NamedEntityDao<Payee> {
 public:
     PayeeDao();
+
+    void createTable(const QSqlDatabase &db);
 };
 
 static PayeeDao payeeDao;

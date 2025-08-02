@@ -33,3 +33,10 @@ cmake --build out -v
 ```
 
 The compiled executable will be at `out/finances`.
+
+### Running tests with CTest
+
+```sh
+cd build/Desktop_Qt_6_7_2-Debug/cxx
+ctest
+```

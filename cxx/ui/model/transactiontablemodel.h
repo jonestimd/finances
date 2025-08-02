@@ -10,7 +10,9 @@ class TransactionTableModel : public PodItemModel<Transaction> {
     Q_OBJECT
     TransactionTypeColumnAdapter *const transactionTypeAdapter;
     const TransactionStore *const store;
-    QHash<int, QList<TransactionDetailUpdate*>> newDetails{};
+
+    QHash<int, QList<TransactionDetail*>> newDetails{};
+
     QHash<qlonglong, QVariant> balances{};
     QDecNumber clearedBalance_{0};
 
@@ -34,10 +36,11 @@ protected:
 
     QVariant value(const QModelIndex &index, int role, QVariant current) const override;
     void setValue(const QModelIndex &index, const QVariant &value) override;
+    void setDetailValue(TransactionDetail* detail, int columnIndex, const QVariant &value);
 
     int childCount(const QModelIndex &index) const override;
 
-    const QList<TransactionDetailUpdate*> pendingDetails(const QModelIndex &parent) const;
+    const QList<TransactionDetail*> pendingDetails(const QModelIndex &parent) const;
 
     void updateBalances(int fromRow, const QDecNumber &delta);
     Q_SLOT void updateBalances();
@@ -52,6 +55,8 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &child) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+
+    virtual int rowType(const QModelIndex &index) const override;
 
     const Transaction *getRow(const QModelIndex &index) const override;
     const TransactionDetail *getDetail(const QModelIndex &index) const;
@@ -70,9 +75,9 @@ public:
     // void clearChanges() override;
     // bool enableDelete(const QModelIndex &index) const override;
 
-    const QList<TransactionDetailUpdate*> unsavedDetailAdds() const;
-    const QList<TransactionDetailUpdate*> unsavedDetailChanges() const;
-    const QList<const TransactionDetail*> unsavedDetailDeletes() const;
+    QMultiHash<const Transaction*, TransactionDetail*> unsavedDetailAdds() const;
+    QList<TransactionDetail*> unsavedDetailChanges();
+    QList<const TransactionDetail*> unsavedDetailDeletes() const;
 
 private:
     Q_SLOT void accountLoaded(qlonglong accountId);

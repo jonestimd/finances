@@ -22,6 +22,9 @@ protected:
     Q_SLOT virtual void doAction() = 0;
 };
 
+/**
+ * @brief The AddRowAction class provides an action for adding a row to an entity table.
+ */
 class AddRowAction : public EntityRowAction {
     Q_OBJECT
     TableItemDelegate *const itemDelegate;
@@ -39,6 +42,10 @@ protected:
     virtual void doAction() override;
 };
 
+/**
+ * @brief The DeleteRowAction class provides an action for deleting an unsaved row or
+ * queueing the delete of a saved row in an entity table.
+ */
 class DeleteRowAction : public EntityRowAction {
     Q_OBJECT
     QItemSelectionModel *const selectionModel;
@@ -53,6 +60,9 @@ protected:
     virtual void doAction() override;
 };
 
+/**
+ * @brief The UndoChangeAction class provides an action for undoing changes to a cell in an entity table.
+ */
 class UndoChangeAction : public EntityRowAction {
     Q_OBJECT
     QItemSelectionModel *const selectionModel;

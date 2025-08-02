@@ -12,7 +12,10 @@ public:
 
     void load(qlonglong accountId);
 
+    void update(const QList<const TransactionDetail*> &updates, const QList<const TransactionDetail*> deletes, const QList<const Transaction*> txDeletes);
+
 protected:
+    using EntityStore::update;
     void setValues(qlonglong accountId, QHash<qlonglong, const TransactionDetail*> values) override;
 };
 

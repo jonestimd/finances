@@ -1,4 +1,15 @@
 #include "payeedao.h"
+#include "dbdialect.h"
+
+static const auto createTableQuery = R"(
+create table payee (
+    id %1,
+    name varchar(200) not null,
+    change_date timestamp not null default current_timestamp,
+    change_user varchar(50) not null,
+    version bigint not null,
+    constraint payee_ak unique (name)
+))";
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -25,4 +36,8 @@ PayeeDao::PayeeDao()
     : NamedEntityDao<Payee>{getAllQuery, updateQuery, insertQuery, deleteQuery, "PayeeDao",
                             QObject::tr("Payees have been modified.  Please reload and try again.")}
 {}
+
+void PayeeDao::createTable(const QSqlDatabase &db) {
+    sql::exec(db, dbDialect::createTableSql(db, createTableQuery), className, "createTable");
+}
 

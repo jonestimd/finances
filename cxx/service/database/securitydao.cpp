@@ -1,4 +1,24 @@
 #include "securitydao.h"
+#include "dbdialect.h"
+
+static const char* const createTableQueries[]{R"(
+CREATE TABLE asset (
+    id %1,
+    name varchar(100) not null,
+    type varchar(31) not null,
+    scale integer not null,
+    symbol varchar(10) default null,
+    change_date timestamp not null default current_timestamp,
+    change_user varchar(50) not null,
+    version bigint not null,
+    constraint asset_ak unique (name, type)
+))", R"(
+create table security (
+    type varchar(25) not null,
+    asset_id bigint not null,
+    constraint security_pkey primary key (asset_id),
+    constraint security_asset_fk foreign key (asset_id) references asset (id)
+))"};
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -38,6 +58,11 @@ SecurityDao::SecurityDao()
     : NamedEntityDao<Security>{getAllQuery, updateQuery , insertQuery, deleteQuery, "SecurityDao",
                                QObject::tr("Securities have been modified.  Please reload and try again")} {}
 
+void SecurityDao::createTable(const QSqlDatabase &db) {
+    sql::exec(db, dbDialect::createTableSql(db, createTableQueries[0]), className, "createTable.asset");
+    sql::exec(db, createTableQueries[1], className, "createTable.security");
+}
+
 QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> securities, const QString &user) {
     auto result = EntityDao::add(db, securities, user);
     QSqlQuery query(db);
@@ -45,7 +70,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     for (auto security : std::as_const(result)) {
         query.bindValue(":id", security->id);
         query.bindValue(":type", security->securityType);
-        exec(query, "insert security");
+        SQL_EXEC(query, "insert security");
     }
     return result;
 }
@@ -56,7 +81,7 @@ void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securiti
     query.prepare("delete from asset where id = :id");
     for (auto security : securities) {
         query.bindValue(":id", security->id);
-        exec(query, "remove asset");
+        SQL_EXEC(query, "remove asset");
     }
 }
 

@@ -15,6 +15,13 @@ public:
     BaseDomain(const QSqlRecord &record);
 };
 
+template<class T>
+QVariantList getEntityIds(const QList<T*> items) {
+    QVariantList ids{};
+    for (auto item : items) ids.append(item->id);
+    return ids;
+}
+
 class NamedEntity : public BaseDomain {
 public:
     QVariant name;

@@ -17,6 +17,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , amount{decimalValue(record, "amount")}
     , assetQuantity{decimalValue(record, "asset_quantity")}
     , memo{sql::getValue(record, "memo")}
+    , transferAccountId{sql::getValue(record, "transfer_account_id")}
 {}
 
 bool TransactionDetail::isEmpty() const {
@@ -28,8 +29,17 @@ bool TransactionDetail::isEmpty() const {
            && memo.isNull();
 }
 
-TransactionDetailUpdate::TransactionDetailUpdate(const QVariant &transactionId)
-    : TransactionDetailUpdate(new TransactionDetail(transactionId))
-{}
+TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
+    auto relatedDetail = new TransactionDetail(*this);
+    relatedDetail->relatedDetailId = id;
+    relatedDetail->transactionId = transactionId;
+    relatedDetail->amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
+    if (!relatedDetail->assetQuantity.isNull()) {
+        relatedDetail->assetQuantity = QVariant::fromValue(QDecNumber().copyNegate(assetQuantity.value<QDecNumber>()));
+    }
+    relatedDetail->transferAccountId = transferAccountId;
+    return relatedDetail;
+}
 
-TransactionDetailUpdate::TransactionDetailUpdate(TransactionDetail *detail) : detail{detail} {}
+PendingDetail::PendingDetail(const Transaction* const tx)
+    : transaction{tx} {}

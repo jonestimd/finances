@@ -33,3 +33,5 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_test_comboboxmodel})
+
+add_test(NAME test_comboboxmodel COMMAND test_comboboxmodel)

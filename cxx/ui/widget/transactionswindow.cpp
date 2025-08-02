@@ -55,7 +55,9 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     entityView.statusBar.addPermanentWidget(clearedBalance);
     connect(model, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
 
-    connect(context->dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
+    auto dataStore = context->dataStore;
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
+    connect(dataStore->transactionStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(transactionsLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -65,7 +67,6 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 
     accountStore()->load(&entityView);
     accountStore()->companyStore.load(&entityView, tr(LOADING_COMPANIES));
-    auto dataStore = context->dataStore;
     dataStore->categoryStore->load(&entityView, tr(LOADING_CATEGORIES));
     dataStore->groupStore->load(&entityView, tr(LOADING_GROUPS));
     dataStore->payeeStore->load(&entityView, tr(LOADING_PAYEES));
@@ -110,7 +111,8 @@ void TransactionsWindow::loadData() {
 }
 
 void TransactionsWindow::saveData() {
-    // TODO
+    entityView.disableUi(tr(SAVING_TRANSACTIONS));
+    store()->update(this, model());
 }
 
 void TransactionsWindow::modelReset() {
@@ -155,6 +157,11 @@ void TransactionsWindow::accountsLoaded() {
         entityView.viewHeader->setSectionHidden(model()->securityColumn, !hidden);
         settings::restoreWindowState(SETTINGS_GROUP(hidden), this, QSize{800, 600}, &entityView);
     }
+}
+
+void TransactionsWindow::transactionsLoaded() {
+    model()->setRows(context->dataStore->transactionStore->transactionIds(model()->accountId));
+    entityView.removeMessage(SAVING_TRANSACTIONS);
 }
 
 void TransactionsWindow::newWindow() {

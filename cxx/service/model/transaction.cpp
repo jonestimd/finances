@@ -22,3 +22,33 @@ Transaction::Transaction(const QSqlRecord &record)
 bool Transaction::deletable() const {
     return true;
 }
+
+Transaction *Transaction::newTransfer(const QVariant &accountId) const {
+    auto relatedTransaction = new Transaction(*this);
+    relatedTransaction->accountId = accountId;
+    return relatedTransaction;
+}
+
+TransactionUpdate::TransactionUpdate(
+    const QList<Transaction*> updates,
+    const QList<Transaction*> adds,
+    QList<const Transaction*> deletes,
+    const QList<TransactionDetail*> detailUpdates,
+    QMultiHash<const Transaction*, TransactionDetail*>  detailAdds,
+    QList<const TransactionDetail*> detailDeletes)
+    : BulkUpdate<Transaction>{updates, adds, deletes}
+    , detailUpdates{detailUpdates}
+    , detailAdds{detailAdds}
+    , detailDeletes{detailDeletes}
+{}
+
+void TransactionUpdate::onError() {
+    BulkUpdate::onError();
+    for (auto entity : std::as_const(detailUpdates)) delete entity;
+    for (auto entity : std::as_const(detailAdds)) delete entity;
+}
+
+TransactionsData::TransactionsData(QList<const Transaction*> transactions, QList<const TransactionDetail*> details)
+    : transactions{transactions}
+    , details{details}
+{}

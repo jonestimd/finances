@@ -28,6 +28,7 @@ public:
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex &parent, int first, int last);
+    // TODO transactions/details loaded
 
 private:
     TransactionStore *store() const;
@@ -41,6 +42,7 @@ private:
 
 private Q_SLOTS:
     void accountsLoaded();
+    void transactionsLoaded();
     void newWindow();
     void clearedBalanceChanged(const QDecNumber &balance);
 
