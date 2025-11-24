@@ -1,2 +1,5 @@
 # /bin/sh
-exec java -jar /opt/finances/finances-${version}.jar "\$@"
+JAVA_EXEC=\$(update-alternatives --list java|grep "java-8")
+
+exec \${JAVA_EXEC:-java} -jar /opt/finances/finances-${version}.jar "\$@"
+

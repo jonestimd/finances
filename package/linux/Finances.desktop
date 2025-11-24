@@ -2,7 +2,7 @@
 Comment[en_US]=
 Comment=
 Categories=Application;Office;
-Exec=java -jar /opt/finances/finances-${version}.jar
+Exec=/usr/bin/finances
 GenericName[en_US]=
 GenericName=
 Icon=/opt/finances/finances.png
