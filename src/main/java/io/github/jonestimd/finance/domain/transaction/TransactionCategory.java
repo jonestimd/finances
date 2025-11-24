@@ -87,7 +87,7 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
     @Column(name = "amount_type", nullable = false) @Type(type = "io.github.jonestimd.hibernate.EnumUserType",
             parameters = {@Parameter(name = "enumClass", value = "io.github.jonestimd.finance.domain.transaction.AmountType")})
     private AmountType amountType = AmountType.DEBIT_DEPOSIT;
-    @Lob @Column(name = "description")
+    @Lob @Type(type = "org.hibernate.type.TextType") @Column(name = "description")
     private String description;
     @OneToMany(mappedBy = "key.parent")
     private List<TransactionCategory> children;

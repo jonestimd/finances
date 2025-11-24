@@ -82,7 +82,7 @@ public class Account extends BaseDomain<Long> implements TransactionType {
     private String number;
     @Column(name = "closed", nullable = false, length=1) @Type(type = "yes_no")
     private boolean closed;
-    @Lob @Column(name = "description")
+    @Lob @Type(type = "org.hibernate.type.TextType") @Column(name = "description")
     private String description;
 
     public Account() {}

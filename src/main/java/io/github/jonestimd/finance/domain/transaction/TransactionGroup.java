@@ -35,6 +35,7 @@ import javax.persistence.UniqueConstraint;
 import com.google.common.base.Function;
 import io.github.jonestimd.finance.domain.BaseDomain;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 @Entity @Table(name="tx_group", uniqueConstraints={@UniqueConstraint(name = "tx_group_ak", columnNames={"name"})})
 @SequenceGenerator(name="id_generator", sequenceName="tx_group_id_seq")
@@ -55,7 +56,7 @@ public class TransactionGroup extends BaseDomain<Long> implements Comparable<Tra
     private Long id;
     @Column(name="name", nullable=false, length=50)
     private String name;
-    @Lob @Column(name="description")
+    @Lob @Type(type = "org.hibernate.type.TextType") @Column(name="description")
     private String description;
 
     public TransactionGroup() {}
