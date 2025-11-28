@@ -98,7 +98,7 @@
         join account on sa.account_id = account.id
         join asset security on sa.security_id = security.id
         &joinSecurity;
-        having shares != 0
+        where shares != 0
     </sql-query>
     <sql-query name="security.getSummary">
         <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
