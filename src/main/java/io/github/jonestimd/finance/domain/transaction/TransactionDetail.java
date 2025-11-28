@@ -40,7 +40,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -57,13 +56,13 @@ import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 import static io.github.jonestimd.collection.BigDecimals.sum;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "tx_detail", uniqueConstraints = @UniqueConstraint(name = "related_detail_uk", columnNames = "related_detail_id"))
-@SequenceGenerator(name = "id_generator", sequenceName = "tx_detail_id_seq")
 @NamedQueries({
     @NamedQuery(name = TransactionDetail.FIND_ORPHAN_TRANSFERS,
         query = "select td from TransactionDetail td join td.relatedDetail rd where rd.relatedDetail.id is null"),
@@ -127,8 +126,11 @@ public class TransactionDetail extends BaseDomain<Long> {
     public static final String ASSET_QUANTITY = "assetQuantity";
     public static final String DATE_ACQUIRED = "dateAcquired";
 
-    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="tx_detail_id_generator")
+    @GenericGenerator(name = "tx_detail_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "tx_detail_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @ManyToOne(optional=false) @JoinColumn(name="tx_id", nullable=false, foreignKey = @ForeignKey(name = "tx_detail_tx_fk"))
     @Cascade({CascadeType.SAVE_UPDATE, CascadeType.MERGE})

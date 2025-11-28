@@ -46,7 +46,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -57,10 +56,10 @@ import io.github.jonestimd.finance.domain.asset.Security;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
 @Entity @Table(name="tx") @Inheritance(strategy=InheritanceType.JOINED)
-@SequenceGenerator(name="id_generator", sequenceName="tx_id_seq")
 @NamedQueries({
     @NamedQuery(name = Transaction.REPLACE_PAYEE_QUERY, query =
         "update Transaction set payee.id = :newPayeeId where payee.id in (:oldPayeeIds)"),
@@ -80,8 +79,11 @@ public class Transaction extends BaseDomain<Long> {
     public static final String AMOUNT = "amount";
     public static final String SECURITY = "security";
 
-    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="tx_id_generator")
+    @GenericGenerator(name = "tx_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "tx_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @ManyToOne(optional=false) @JoinColumn(name="account_id", foreignKey = @ForeignKey(name="tx_account_fk"))
     private Account account;

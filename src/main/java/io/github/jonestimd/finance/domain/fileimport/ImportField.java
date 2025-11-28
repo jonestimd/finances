@@ -41,7 +41,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OrderColumn;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.google.common.base.Joiner;
@@ -51,15 +50,18 @@ import io.github.jonestimd.finance.domain.account.Account;
 import io.github.jonestimd.finance.domain.transaction.TransactionCategory;
 import io.github.jonestimd.finance.domain.transaction.TransactionDetail;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "import_field")
-@SequenceGenerator(name = "id_generator", sequenceName = "import_field_id_seq")
 public class ImportField implements UniqueId<Long>, Cloneable {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "import_field_id_generator")
+    @GenericGenerator(name = "import_field_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "import_field_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     @Column(name = "id", nullable = false)
     private Long id;
     @ElementCollection(fetch = FetchType.EAGER)

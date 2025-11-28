@@ -26,20 +26,22 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "import_page_region",
        uniqueConstraints = { @UniqueConstraint(name = "import_page_region_ak", columnNames = {"import_file_id", "name"}) })
-@SequenceGenerator(name = "id_generator", sequenceName = "import_page_region_id_seq")
 public class PageRegion implements Cloneable {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "import_page_region_id_generator")
+    @GenericGenerator(name = "import_page_region_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "import_page_region_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     @Column(name = "id", nullable = false)
     private Long id;
     @Column(name = "name", nullable = false, length = 250)

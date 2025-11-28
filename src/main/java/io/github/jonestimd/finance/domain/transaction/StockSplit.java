@@ -37,7 +37,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -47,6 +46,7 @@ import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @NamedQueries({
     @NamedQuery(name = "stockSplit.findBySecurityAndDate",
@@ -54,10 +54,12 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "stock_split", uniqueConstraints = @UniqueConstraint(name = "stock_split_ak", columnNames = {"date", "security_id"}))
-@SequenceGenerator(name = "id_generator", sequenceName = "stock_split_id_seq")
 public class StockSplit extends BaseDomain<Long> {
-    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "stock_split_id_generator")
+    @GenericGenerator(name = "stock_split_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "stock_split_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @ManyToOne(optional = false) @JoinColumn(foreignKey = @ForeignKey(name = "stock_split_security_fk"))
     private Security security;

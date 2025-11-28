@@ -35,7 +35,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
@@ -44,10 +43,10 @@ import io.github.jonestimd.finance.domain.asset.Security;
 import io.github.jonestimd.finance.domain.asset.SplitRatio;
 import io.github.jonestimd.lang.Comparables;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "security_lot")
-@SequenceGenerator(name = "id_generator", sequenceName = "security_lot_id_seq")
 @NamedQueries({
     @NamedQuery(name = SecurityLot.FIND_BY_SALE_ID,
         query = "select distinct lot from SecurityLot lot join fetch lot.purchase p join fetch p.saleLots where lot.sale.id = :saleId"),
@@ -62,8 +61,11 @@ public class SecurityLot extends BaseDomain<Long> {
     public static final String ADJUSTED_SHARES = "adjustedShares";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "security_lot_id_generator")
+    @GenericGenerator(name = "security_lot_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "security_log_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @ManyToOne
     @JoinColumn(name = "purchase_tx_detail_id", foreignKey = @ForeignKey(name = "security_lot_purchase_tx_fk"))

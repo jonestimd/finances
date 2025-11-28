@@ -29,24 +29,26 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "asset", uniqueConstraints = { @UniqueConstraint(name = "asset_ak", columnNames = {"name", "type"}) })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "type")
-@SequenceGenerator(name = "id_generator", sequenceName = "asset_id_seq")
 public abstract class Asset extends BaseDomain<Long> implements Comparable<Asset> {
     public static final String NAME = "name";
     public static final String SYMBOL = "symbol";
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "asset_id_generator")
+    @GenericGenerator(name = "asset_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "asset_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @Column(name = "name", length = 100, nullable = false)
     private String name;

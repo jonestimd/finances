@@ -35,7 +35,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
@@ -53,7 +52,6 @@ import org.hibernate.annotations.Type;
 @Table(name = "account", uniqueConstraints = {
     @UniqueConstraint(name = "account_ak", columnNames = {"name", "company_id"})
 })
-@SequenceGenerator(name = "id_generator", sequenceName = "account_id_seq")
 @NamedQuery(name="account.removeFromCompany",query="update Account set company = null where company in (:companies)")
 public class Account extends BaseDomain<Long> implements TransactionType {
     public static final String SUMMARY_QUERY = "account.getSummaries";
@@ -64,8 +62,11 @@ public class Account extends BaseDomain<Long> implements TransactionType {
     public static final String NUMBER = "number";
     public static final String CLOSED = "closed";
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "account_id_generator")
+    @GenericGenerator(name = "account_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "account_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @ManyToOne(fetch=FetchType.EAGER, optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "account_currency_fk"))

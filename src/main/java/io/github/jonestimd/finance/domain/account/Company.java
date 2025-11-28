@@ -32,22 +32,24 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.NaturalId;
+import org.hibernate.annotations.Parameter;
 
 @Entity @Table(name = "company", uniqueConstraints = @UniqueConstraint(name = "company_ak", columnNames = "name"))
-@SequenceGenerator(name = "id_generator", sequenceName = "company_id_seq")
 public class Company extends BaseDomain<Long> implements Comparable<Company> {
     public static final String NAME = "name";
     public static final String ACCOUNTS = "accounts";
 
-    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="company_id_generator")
+    @GenericGenerator(name = "company_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "company_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @Column(nullable=false, length=100) @NaturalId(mutable=true)
     private String name;

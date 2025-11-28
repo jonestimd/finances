@@ -36,7 +36,6 @@ import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -54,7 +53,6 @@ import static io.github.jonestimd.finance.domain.transaction.SecurityAction.*;
 @Entity
 @Table(name = "tx_category",
        uniqueConstraints = @UniqueConstraint(name = "tx_category_key", columnNames = {"parent_id", "code"}))
-@SequenceGenerator(name = "id_generator", sequenceName = "tx_category_id_seq")
 @NamedQueries({
     @NamedQuery(name = TransactionCategory.SUMMARY_QUERY, query =
         "select category, (select count(distinct td.transaction) from TransactionDetail td where td.category = category) as useCount " +
@@ -77,8 +75,11 @@ public class TransactionCategory extends BaseDomain<Long> implements Transaction
     public static final List<String> LOCKED_ACTION_CODES = Collections.unmodifiableList(Streams.map(LOCKED_ACTIONS, SecurityAction::code));
 
     private CategoryKey key = new CategoryKey();
-    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "tx_category_id_generator")
+    @GenericGenerator(name = "tx_category_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "tx_category_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @Column(name = "income", nullable = false, length=1) @Type(type = "yes_no")
     private boolean income;

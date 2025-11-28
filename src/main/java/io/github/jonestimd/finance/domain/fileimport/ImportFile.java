@@ -54,7 +54,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -71,6 +70,7 @@ import io.github.jonestimd.finance.file.ImportContext;
 import io.github.jonestimd.finance.file.MultiDetailImportContext;
 import io.github.jonestimd.finance.file.SingleDetailImportContext;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
 import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
@@ -78,13 +78,15 @@ import static io.github.jonestimd.finance.domain.fileimport.ImportCategory.*;
 @Entity
 @Table(name = "import_file", uniqueConstraints = {@UniqueConstraint(name = "import_file_ak", columnNames = {"name"})})
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@SequenceGenerator(name = "id_generator", sequenceName = "import_file_id_seq")
 @NamedQuery(name = ImportFile.FIND_ONE_BY_NAME, query = "from ImportFile where name = :name")
 public class ImportFile implements UniqueId<Long>, Cloneable {
     public static final String FIND_ONE_BY_NAME = "ImportFile.findOneByName";
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "import_file_id_generator")
+    @GenericGenerator(name = "import_file_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "import_file_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     @Column(name = "id", nullable = false)
     private Long id;
     @Column(name = "name", nullable = false, length = 250)

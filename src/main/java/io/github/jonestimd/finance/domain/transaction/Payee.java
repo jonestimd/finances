@@ -27,17 +27,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import io.github.jonestimd.finance.domain.BaseDomain;
 import io.github.jonestimd.finance.domain.UniqueName;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "payee", uniqueConstraints = @UniqueConstraint(name = "payee_ak", columnNames = "name"))
-@SequenceGenerator(name = "id_generator", sequenceName = "payee_id_seq")
 @NamedQuery(name = Payee.SUMMARY_QUERY, query = "select payee," +
         " (select count(*) from Transaction t where t.payee = payee) as useCount," +
         " (select max(date) from Transaction t where t.payee = payee) as latestTransaction from Payee payee")
@@ -45,8 +44,11 @@ public class Payee extends BaseDomain<Long> implements UniqueName, Comparable<Pa
     public static final String SUMMARY_QUERY = "payee.getSummaries";
     public static final String NAME = "name";
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy = GenerationType.AUTO, generator = "payee_id_generator")
+    @GenericGenerator(name = "payee_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "payee_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @Column(name = "name", length = 200, nullable = false)
     private String name;

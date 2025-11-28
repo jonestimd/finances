@@ -28,17 +28,16 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import com.google.common.base.Function;
 import io.github.jonestimd.finance.domain.BaseDomain;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 
 @Entity @Table(name="tx_group", uniqueConstraints={@UniqueConstraint(name = "tx_group_ak", columnNames={"name"})})
-@SequenceGenerator(name="id_generator", sequenceName="tx_group_id_seq")
 @NamedQuery(name = TransactionGroup.SUMMARY_QUERY,
     query = "select g, (select count(distinct td.transaction) from TransactionDetail td where td.group = g) as useCount from TransactionGroup g")
 public class TransactionGroup extends BaseDomain<Long> implements Comparable<TransactionGroup> {
@@ -51,8 +50,11 @@ public class TransactionGroup extends BaseDomain<Long> implements Comparable<Tra
         }
     };
 
-    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="id_generator")
-    @GenericGenerator(name = "id_generator", strategy = "native")
+    @Id @GeneratedValue(strategy=GenerationType.AUTO, generator="tx_group_id_generator")
+    @GenericGenerator(name = "tx_group_id_generator", strategy = "native", parameters = {
+            @Parameter(name = "sequence_name", value = "tx_group_id_seq"),
+            @Parameter(name = "allocation_size", value = "1")
+    })
     private Long id;
     @Column(name="name", nullable=false, length=50)
     private String name;
