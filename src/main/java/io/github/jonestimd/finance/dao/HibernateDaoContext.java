@@ -182,7 +182,7 @@ public class HibernateDaoContext implements DaoRepository {
         String last = "";
         for (String line : script.split("\\n")) {
             if (line.startsWith("create table") || line.startsWith("alter table")) lines.add(line);
-            else if (line.trim().startsWith("create function")) last = line;
+            else if (line.trim().matches("^create (view|function).*")) last = line;
             else {
                 last += "\n" + line;
                 if (line.trim().equals(";")) lines.add(last);
