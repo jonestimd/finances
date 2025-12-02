@@ -63,7 +63,7 @@ public class SecurityLot extends BaseDomain<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "security_lot_id_generator")
     @GenericGenerator(name = "security_lot_id_generator", strategy = "native", parameters = {
-            @Parameter(name = "sequence_name", value = "security_log_id_seq"),
+            @Parameter(name = "sequence_name", value = "security_lot_id_seq"),
             @Parameter(name = "allocation_size", value = "1")
     })
     private Long id;
