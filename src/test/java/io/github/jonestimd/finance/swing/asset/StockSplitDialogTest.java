@@ -56,7 +56,7 @@ public class StockSplitDialogTest extends SwingRobotTest {
     @Test
     public void saveCallsSaveSplits() throws Exception {
         SecuritySummary summary = new SecuritySummary(security, 1, BigDecimal.ONE);
-        when(assetOperations.saveSplits(any(Security.class))).thenReturn(singletonList(summary));
+        when(assetOperations.saveSplits(any(Security.class))).thenReturn(summary);
         showDialog();
         robot.finder().findByType(StockSplitDialog.class).requestFocus();
         robot.pressAndReleaseKey(KeyEvent.VK_N, KeyEvent.CTRL_MASK);

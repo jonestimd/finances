@@ -134,21 +134,20 @@ public class SecurityDaoImplTest extends TransactionalTestFixture {
     }
 
     @Test
-    public void getSecuritySummaryByAccount() throws Exception {
+    public void getSecuritySummary() throws Exception {
         Transaction buy = createSecurityTransaction(BigDecimal.TEN, "-123.45");
         buy.addDetails(new TransactionDetail(null, BigDecimal.ONE.negate(), null, null));
         Transaction dividend = createSecurityTransaction(null, "150.00");
 
-        List<SecuritySummary> securities = securityDao.getSecuritySummaryByAccount(buy.getSecurity().getId());
+        SecuritySummary security = securityDao.getSecuritySummary(buy.getSecurity().getId());
 
-        assertThat(securities).hasSize(1);
-        assertThat(securities.get(0).getAccount()).isEqualTo(buy.getAccount());
-        assertThat(securities.get(0).getSecurity()).isEqualTo(buy.getSecurity());
-        assertThat(securities.get(0).getShares()).isEqualByComparingTo(buy.getAssetQuantity());
-        assertThat(securities.get(0).getCostBasis()).isEqualByComparingTo(buy.getDetails().get(0).getAmount().negate());
-        assertThat(securities.get(0).getDividends()).isEqualTo(dividend.getAmount());
-        assertThat(securities.get(0).getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
-        assertThat(securities.get(0).getTransactionCount()).isEqualTo(2);
+        assertThat(security.getSecurity()).isEqualTo(buy.getSecurity());
+        assertThat(security.getAccount()).isNull();
+        assertThat(security.getShares()).isEqualByComparingTo(buy.getAssetQuantity());
+        assertThat(security.getCostBasis()).isEqualByComparingTo(buy.getDetails().get(0).getAmount().negate());
+        assertThat(security.getDividends()).isEqualTo(dividend.getAmount());
+        assertThat(security.getFirstAcquired().getTime()).isEqualTo(DateUtils.truncate(buy.getDate(), Calendar.DAY_OF_MONTH).getTime());
+        assertThat(security.getTransactionCount()).isEqualTo(2);
     }
 
     private Transaction createSecurityTransaction(BigDecimal shares, String amount) {

@@ -102,10 +102,10 @@ public class AssetOperationsImpl implements AssetOperations {
     }
 
     @Override
-    public List<SecuritySummary> saveSplits(Security security) {
+    public SecuritySummary saveSplits(Security security) {
         Security persisted = securityDao.get(security.getId());
         persisted.updateSplits(security.getSplits());
-        return securityDao.getSecuritySummaryByAccount(security.getId());
+        return securityDao.getSecuritySummary(security.getId());
     }
 
     @Cacheable

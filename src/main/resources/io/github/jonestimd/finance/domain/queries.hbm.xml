@@ -26,20 +26,20 @@
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd" [
     <!ENTITY joinSecurity "join security security_1_ on security.id = security_1_.asset_id">
     <!ENTITY adjustedShares "adjust_shares(t.security_id, t.date, td.asset_quantity)">
-    <!ENTITY securitySummary "t.security_id, count(distinct t.id) useCount
-        , sum(coalesce(&adjustedShares;, 0)) shares
-        , min(t.date) firstAcquired
-        , sum(case when td.asset_quantity > 0
-              then abs(td.amount)*(td.asset_quantity-coalesce(sl.purchase_shares,0))/td.asset_quantity
-              else 0 end) costBasis
-        , sum(case when td.asset_quantity is null and td.amount > 0 then td.amount else 0 end) dividends
-        from tx t
-        join tx_detail td on t.id = td.tx_id
-        left join (
-            select purchase_tx_detail_id, sum(purchase_shares) purchase_shares from security_lot
-            group by purchase_tx_detail_id
-        ) sl on td.id = sl.purchase_tx_detail_id
-        where t.security_id is not null">
+    <!ENTITY securitySummaries "with summary as (
+            select security_id
+                 , sum(use_count) use_count
+                 , sum(shares) shares
+                 , min(first_acquired) first_acquired
+                 , sum(cost_basis) cost_basis
+                 , sum(dividends) dividends
+            from account_security
+            group by security_id
+        )
+        select {security.*}, coalesce(summary.use_count, 0) useCount, coalesce(summary.shares, 0) shares
+             , summary.first_acquired firstAcquired, summary.cost_basis costBasis, summary.dividends
+        from asset security &joinSecurity;
+        left join summary on summary.security_id = security.id">
 ]>
 <hibernate-mapping>
     <sql-query name="account.getSummaries">
@@ -67,20 +67,7 @@
         <return-scalar column="firstAcquired" type="java.util.Date"/>
         <return-scalar column="costBasis" type="java.math.BigDecimal"/>
         <return-scalar column="dividends" type="java.math.BigDecimal"/><!-- TODO include commission in cost basis -->
-        with summary as (
-            select security_id
-                 , sum(use_count) use_count
-                 , sum(shares) shares
-                 , min(first_acquired) first_acquired
-                 , sum(cost_basis) cost_basis
-                 , sum(dividends) dividends
-            from account_security
-            group by security_id
-        )
-        select {security.*}, coalesce(summary.use_count, 0) useCount, coalesce(summary.shares, 0) shares
-             , summary.first_acquired firstAcquired, summary.cost_basis costBasis, summary.dividends
-        from asset security &joinSecurity;
-        left join summary on summary.security_id = security.id
+        &securitySummaries;
     </sql-query>
     <sql-query name="security.getSummariesByAccount">
         <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
@@ -101,7 +88,6 @@
         where shares != 0
     </sql-query>
     <sql-query name="security.getSummary">
-        <return alias="account" class="io.github.jonestimd.finance.domain.account.Account"/>
         <return alias="security" class="io.github.jonestimd.finance.domain.asset.Security"/>
         <return-scalar column="useCount" type="long"/>
         <return-scalar column="shares" type="java.math.BigDecimal"/>
@@ -109,15 +95,7 @@
         <return-scalar column="costBasis" type="java.math.BigDecimal"/>
         <return-scalar column="dividends" type="java.math.BigDecimal"/>
         <synchronize table="stock_split"/>
-        select {security.*}, summary.useCount, summary.shares, {account.*}, summary.firstAcquired, summary.costBasis, summary.dividends
-        from (
-            select t.account_id, &securitySummary;
-            group by t.account_id, t.security_id
-            having sum(coalesce(&adjustedShares;, 0)) != 0
-        ) summary
-        join account on summary.account_id = account.id
-        join asset security on summary.security_id = security.id
-        &joinSecurity;
+        &securitySummaries;
         where security.id = ?
     </sql-query>
     <sql-query name="security.getAccountSummary">

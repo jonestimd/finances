@@ -97,7 +97,7 @@ public class StockSplitDialog extends MessageDialog {
         }
     }
 
-    private class SaveAction extends BackgroundAction<List<SecuritySummary>> {
+    private class SaveAction extends BackgroundAction<SecuritySummary> {
         public SaveAction() {
             super(StockSplitDialog.this, LABELS.get(), "stockSplit.action.save");
         }
@@ -108,15 +108,15 @@ public class StockSplitDialog extends MessageDialog {
         }
 
         @Override
-        public List<SecuritySummary> performTask() {
+        public SecuritySummary performTask() {
             security.getSplits().removeAll(tableModel.getPendingDeletes());
             security.getSplits().addAll(tableModel.getPendingAdds());
             return assetOperations.saveSplits(security);
         }
 
         @Override
-        public void updateUI(List<SecuritySummary> result) {
-            security = result.get(0).getSecurity();
+        public void updateUI(SecuritySummary result) {
+            security = result.getSecurity();
             tableModel.setBeans(security.getSplits());
             domainEventPublisher.publishEvent(new SecuritySummaryEvent(StockSplitDialog.this, EventType.REPLACED, result));
         }

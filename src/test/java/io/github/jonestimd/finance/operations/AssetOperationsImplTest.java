@@ -166,8 +166,8 @@ public class AssetOperationsImplTest {
         persisted.setSplits(new ArrayList<>());
         Security updated = new SecurityBuilder().nextId().splits(parseDate("2000-01-01"), parseDate("2005-01-01")).get();
         when(securityDao.get(updated.getId())).thenReturn(persisted);
-        List<SecuritySummary> result = singletonList(new SecuritySummary());
-        when(securityDao.getSecuritySummaryByAccount(updated.getId())).thenReturn(result);
+        SecuritySummary result = new SecuritySummary();
+        when(securityDao.getSecuritySummary(updated.getId())).thenReturn(result);
 
         assertThat(assetOperations.saveSplits(updated)).isSameAs(result);
 

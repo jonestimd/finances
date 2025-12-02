@@ -52,7 +52,7 @@ public interface AssetOperations {
 
     <T extends Iterable<Security>> T saveAll(T securities);
 
-    List<SecuritySummary> saveSplits(Security security);
+    SecuritySummary saveSplits(Security security);
 
     @Cacheable
     Security findOrCreate(String name);

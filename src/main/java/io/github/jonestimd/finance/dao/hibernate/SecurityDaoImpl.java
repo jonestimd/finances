@@ -86,11 +86,10 @@ public class SecurityDaoImpl extends HibernateDao<Security, Long> implements Sec
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public List<SecuritySummary> getSecuritySummaryByAccount(Long securityId) {
-        return (List<SecuritySummary>) getSession().getNamedQuery(Security.SECURITY_SUMMARY)
+    public SecuritySummary getSecuritySummary(Long securityId) {
+        return (SecuritySummary)getSession().getNamedQuery(Security.SECURITY_SUMMARY)
                 .setParameter(1, securityId)
-                .setResultTransformer(ACCOUNT_SUMMARIES_TRANSFORMER)
-                .list();
+                .setResultTransformer(SUMMARY_TRANSFORMER)
+                .getSingleResult();
     }
 }
