@@ -9,14 +9,17 @@ with detail_summary as (
   select tx_id, json_arrayagg(id) detail_ids
   from tx_detail
   group by tx_id
+), tx_data as (
+  select distinct tx.*
+  from tx
+  join tx_detail td on td.tx_id = tx.id
+  left join tx_detail rd on rd.id = td.related_detail_id
+  left join tx rx on rx.id = rd.tx_id
+  where :accountId in (tx.account_id, rx.account_id)
 )
-select distinct tx.*, ds.detail_ids
-from tx
-join tx_detail td on td.tx_id = tx.id
-join detail_summary ds on ds.tx_id = tx.id
-left join tx_detail rd on rd.id = td.related_detail_id
-left join tx rx on rx.id = rd.tx_id
-where :account_id in (tx.account_id, rx.account_id))";
+select tx.*, ds.detail_ids
+from tx_data tx
+join detail_summary ds on ds.tx_id = tx.id)";
 
 static const auto setPayeeQuery = R"(update tx
 set payee_id = :payeeId, change_user = :user, change_date = current_timestamp, version = version + 1
@@ -29,7 +32,7 @@ TransactionDao::TransactionDao()
 QHash<qlonglong, const Transaction*> TransactionDao::getAll(const QSqlDatabase &db, qlonglong accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountQuery);
-    query.bindValue(":account_id", accountId);
+    query.bindValue(":accountId", accountId);
     sql::exec(query, DAO_NAME, "getByAccount");
     return load(query);
 }
