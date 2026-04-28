@@ -24,42 +24,47 @@ target_include_directories(dbtestcase PRIVATE
     ${CMAKE_HOME_DIRECTORY}/cxx
 )
 
-qt_add_executable(test_transactionservice test_transactionservice.cpp ../transactionservice.cpp)
+function(add_service_test name)
+    set(exec_name "test_${name}")
+    qt_add_executable(${exec_name} ${exec_name}.cpp ../${name}.cpp ${ARGN})
+    add_dependencies(${exec_name} qdecimal dbtestcase)
 
-add_dependencies(test_transactionservice qdecimal dbtestcase)
+    set_target_properties(${exec_name} PROPERTIES
+        AUTOMOC ON
+        WIN32_EXECUTABLE TRUE
+        MACOSX_BUNDLE TRUE
+    )
 
-set_target_properties(test_transactionservice PROPERTIES
-    AUTOMOC ON
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
-)
+    target_include_directories(${exec_name} PRIVATE
+        ${SOURCE_DIR}/src
+        ${SOURCE_DIR}/decnumber
+        ${CMAKE_HOME_DIRECTORY}/cxx
+    )
 
-target_include_directories(test_transactionservice PRIVATE
-    ${SOURCE_DIR}/src
-    ${SOURCE_DIR}/decnumber
-    ${CMAKE_HOME_DIRECTORY}/cxx
-)
+    target_link_libraries(${exec_name} PRIVATE
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Sql
+        Qt${QT_VERSION_MAJOR}::Test
+        ${BINARY_DIR}/src/libqdecimal.a
+        ${BINARY_DIR}/decnumber/libdecnumber.a
+        dbtestcase
+    )
 
-target_link_libraries(test_transactionservice PRIVATE
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Sql
-    Qt${QT_VERSION_MAJOR}::Test
-    ${BINARY_DIR}/src/libqdecimal.a
-    ${BINARY_DIR}/decnumber/libdecnumber.a
-    dbtestcase
-)
+    # install(TARGETS ${exec_name}
+    #     BUNDLE  DESTINATION .
+    #     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    #     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    # )
 
-install(TARGETS test_transactionservice
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+    # qt_generate_deploy_app_script(
+    #     TARGET ${exec_name}
+    #     OUTPUT_SCRIPT deploy_${exec_name}
+    #     NO_UNSUPPORTED_PLATFORM_ERROR
+    # )
+    # install(SCRIPT ${deploy_${exec_name}})
 
-qt_generate_deploy_app_script(
-    TARGET test_transactionservice
-    OUTPUT_SCRIPT deploy_test_transactionservice
-    NO_UNSUPPORTED_PLATFORM_ERROR
-)
-install(SCRIPT ${deploy_test_transactionservice})
+    add_test(NAME ${exec_name} COMMAND ${exec_name})
+endfunction()
 
-add_test(NAME test_transactionservice COMMAND test_transactionservice)
+add_service_test(transactionservice)
+add_service_test(categoryservice)

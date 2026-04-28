@@ -126,6 +126,13 @@ private slots:
         }
     }
 
+    void getByAccount_queriesByAccountId() {
+        QFETCH_GLOBAL(TransactionService*, service);
+        QFETCH_GLOBAL(QVariant, accountId);
+
+        service->getAll(accountId.toLongLong());
+    }
+
     void update_addsNewTransaction() {
         QFETCH_GLOBAL(TransactionService*, service);
         Transaction tx = unsavedTransaction();

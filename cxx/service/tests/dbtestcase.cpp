@@ -8,6 +8,7 @@
 #include "service/database/transactiondao.h"
 #include "service/database/transactiondetaildao.h"
 #include <QFile>
+#include <QtTest/qtestcase.h>
 
 #define SQLITE_DRIVER "QSQLITE"
 #define PSQL_DRIVER "QPSQL"
@@ -104,6 +105,17 @@ QVariant DbTestCase::addPayee(QString driver, const QString &name) {
     payee.name = name;
     payeeDao.add(conn.db, QList{&payee}, TEST_USER);
     return payee.id;
+}
+
+Category *DbTestCase::addCategory(const QString &driver, const QString &name, Category *parent) {
+    Connection conn(connectionPool(driver));
+    auto testName = QTest::currentTestFunction();
+    Category *category = new Category;
+    category->name = QString("%0:%1").arg(testName, name);
+    category->parentId = parent ? parent->id : QVariant{};
+    categoryDao.add(conn.db, {category}, TEST_USER);
+    if (parent) parent->childIds.append(category->id);
+    return category;
 }
 
 void DbTestCase::addConnection(QString name, const ConnectionSettings &settings) {

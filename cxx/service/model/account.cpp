@@ -3,7 +3,7 @@
 #include "service/database/sql.h"
 #include <QSqlField>
 
-Account::Account() : Account(QSqlRecord{}) {}
+Account::Account() : TransactionType{true} {}
 
 Account::Account(const QSqlRecord &record)
     : TransactionType(true, record)

@@ -15,9 +15,11 @@ create table tx_category (
     code varchar(50) not null,
     security character(1) not null,
     parent_id bigint,
-    constraint tx_category_ak unique (parent_id, code),
+    constraint tx_category_ak unique %0,
     constraint tx_type_parent_fk foreign key (parent_id) references tx_category (id)
 ))";
+
+static const auto uniqueIndexQuery = "create unique index unique_category on tx_category (coalesce(parent_id, -1), code)";
 
 static const auto getCategoriesSql = R"(
 with summary as (
@@ -54,14 +56,21 @@ where id = :id and version = :version)";
 
 static const auto setParentsSql = R"(update tx_category
 set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
-where parent_id = :oldParentId and id member of (:ids))";
+where parent_id = :oldParentId)";
+
+static const char *uniqueConstraint(const QSqlDatabase &db) {
+    if (db.driverName() == "QPSQL") return "nulls not distinct (parent_id, code)";
+    return "(parent_id, code)";
+}
 
 CategoryDao::CategoryDao()
     : NamedEntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
                                QObject::tr("Categories have been modified.  Please reload and try again.")} {}
 
 void CategoryDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, dbDialect::createTableSql(db, createTableQuery), className, "createTable");
+    QString sql = QString{createTableQuery}.arg(uniqueConstraint(db));
+    sql::exec(db, dbDialect::createTableSql(db, sql), className, "createTable");
+    if (db.driverName() == "QSQLITE") sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
 QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
@@ -86,7 +95,6 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
         query.bindValue(":user", user);
         query.bindValue(":parentId", destinationId);
         query.bindValue(":oldParentId", category->id);
-        SQL_BIND_LIST(query, ":ids", category->childIds);
         SQL_EXEC(query, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
     }

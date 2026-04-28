@@ -1,8 +1,9 @@
 #ifndef DB_TEST_CASE_H
 #define DB_TEST_CASE_H
 
-#include "../database/connectionpool.h"
-#include <qvariant.h>
+#include <QVariant>
+#include "service/database/connectionpool.h"
+#include "service/model/category.h"
 
 #define TEST_USER "test"
 
@@ -21,6 +22,7 @@ public:
     QVariant addCompany(QString driver, const QString &name);
     QVariant addAccount(QString driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
     QVariant addPayee(QString driver, const QString &name);
+    Category *addCategory(const QString &driver, const QString &name, Category *parent = nullptr);
 
 private:
     void addConnection(QString name, const ConnectionSettings &settings);

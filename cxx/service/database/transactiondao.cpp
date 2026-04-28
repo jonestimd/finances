@@ -87,7 +87,7 @@ void TransactionDao::createTable(const QSqlDatabase &db) {
 
 QHash<qlonglong, const Transaction*> TransactionDao::getAll(const QSqlDatabase &db, qlonglong accountId) {
     QSqlQuery query(db);
-    query.prepare(getByAccountQuery);
+    query.prepare(dbDialect::replaceJsonArrayAgg(db, getByAccountQuery));
     query.bindValue(":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);

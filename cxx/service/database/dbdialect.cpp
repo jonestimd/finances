@@ -1,5 +1,6 @@
 #include <QSqlQuery>
 #include <QSqlDriver>
+#include <QRegularExpression>
 #include "dbdialect.h"
 #include "sql.h"
 
@@ -21,10 +22,17 @@ namespace dbDialect {
 
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, QVariantList ids, const char *idColumn) {
         QSqlQuery query{db};
-        QString sql{getAllSql};
+        QString sql = replaceJsonArrayAgg(db, getAllSql);
         sql += "\nwhere " + inList(db, idColumn, ":ids");
         query.prepare(sql);
         SQL_BIND_LIST(query, ":ids", ids);
         return query;
+    }
+
+    static const QRegularExpression jsonArrayAggRe{"\\bjson_arrayagg\\b"};
+
+    QString replaceJsonArrayAgg(const QSqlDatabase &db, QString sql) {
+        if (db.driverName() == "QSQLITE") sql.replace(jsonArrayAggRe, "json_group_array");
+        return sql;
     }
 }

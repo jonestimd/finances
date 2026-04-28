@@ -3,7 +3,7 @@
 #include "../database/sql.h"
 #include <QSqlField>
 
-Category::Category() : Category(QSqlRecord{}) {}
+Category::Category() : TransactionType{false} {}
 
 Category::Category(const QSqlRecord &record)
     : TransactionType(false, record, "code")
