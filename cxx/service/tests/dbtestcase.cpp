@@ -12,6 +12,7 @@
 
 #define SQLITE_DRIVER "QSQLITE"
 #define PSQL_DRIVER "QPSQL"
+#define MYSQL_DRIVER "QMYSQL"
 
 Q_LOGGING_CATEGORY(sqlLogger, "sql")
 
@@ -47,6 +48,18 @@ DbTestCase::DbTestCase() {
             auto user = props[3];
             auto password = props[4];
             addConnection(PSQL_DRIVER, {PSQL_DRIVER, host, port, schema, user, password});
+        }
+    }
+    auto mysqlConnection = qgetenv("TEST_MYSQL_CONNECTION");
+    if (!mysqlConnection.isEmpty()) {
+        auto props = mysqlConnection.split('|');
+        if (props.length() >= 5) {
+            auto host = props[0];
+            auto port = props[1].toInt();
+            auto schema = props[2];
+            auto user = props[3];
+            auto password = props[4];
+            addConnection(MYSQL_DRIVER, {MYSQL_DRIVER, host, port, schema, user, password});
         }
     }
 }

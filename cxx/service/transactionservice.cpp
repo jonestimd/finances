@@ -109,6 +109,9 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
         if (!changes.updates.isEmpty()) transactionDao.update(conn.db, changes.updates, user);
         if (!changes.detailUpdates.isEmpty()) {
             auto relatedIds = transactionDetailDao.getRelatedDetailIds(conn.db, changes.detailUpdates);
+            for (auto detail: changes.detailUpdates) {
+                if (detail->transferAccountId.isNull()) detail->relatedDetailId = QVariant{};
+            }
             session.add(transactionDetailDao.update(conn.db, changes.detailUpdates, user));
             for (auto detail : changes.detailUpdates) {
                 auto [accountId, relatedDetailId] = relatedIds.value(detail->id.toLongLong());

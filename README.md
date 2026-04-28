@@ -62,6 +62,8 @@ ctest
 
 #### Test environment variables
 
+**NOTE**: For MySQL using IPv4, use `127.0.0.1` instead of `localhost` for *host*.
+
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto">
 <pre>
 TEST_PSQL_CONNECTION=<em>host</em>|<em>port</em>|<em>schema</em>|<em>user</em>|<em>password</em>

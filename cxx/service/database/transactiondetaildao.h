@@ -30,6 +30,9 @@ public:
     
     QHash<qlonglong, RelatedDetailIds> getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates);
 
+    using EntityDao<TransactionDetail>::remove;
+    virtual void remove(QSqlDatabase &db, const QList<const TransactionDetail*> entities) override;
+
 protected:
     virtual void bindInsertValues(QSqlQuery &query, TransactionDetail *entity) override;
     virtual void bindUpdateValues(QSqlQuery &query, TransactionDetail *entity) override;

@@ -16,13 +16,6 @@
 
 #define GET_DETAILS(txDetails) std::get<1>(txDetails)
 
-template<class T>
-QVariantList getIds(QList<T*> items) {
-    QVariantList ids{};
-    for (auto item : items) ids.append(item->id);
-    return ids;
-}
-
 class TestTransactionService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
@@ -68,7 +61,7 @@ class TestTransactionService : public QObject {
             details.append(detail);
         }
         transactionDetailDao.add(conn.db, details, TEST_USER);
-        tx->detailIds = getIds(details);
+        tx->detailIds = getEntityIds(details);
         this->transactions.append(tx);
         for (auto detail : std::as_const(details)) this->details.append(detail);
         return TxDetails{tx, details};
@@ -78,11 +71,14 @@ class TestTransactionService : public QObject {
         const char *transferAmount = amounts.at(0);
         QString relatedAmount = transferAmount[0] == '-' ? QString(transferAmount[1]) : QString(transferAmount).prepend('-');
         QFETCH_GLOBAL(QString, driver);
+        QFETCH_GLOBAL(QVariant, accountId);
         QFETCH_GLOBAL(QVariant, altAccountId);
         auto tx = saveTransaction(amounts);
         auto relatedTx = saveTransaction(altAccountId, QList{relatedAmount.toLocal8Bit().constData()});
         auto detail = GET_DETAILS(tx).at(0);
+        detail->transferAccountId = altAccountId;
         auto relatedDetail = GET_DETAILS(relatedTx).at(0);
+        relatedDetail->transferAccountId = accountId;
         detail->relatedDetailId = relatedDetail->id;
         relatedDetail->relatedDetailId = detail->id;
 
@@ -146,7 +142,7 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.transactions.size(), 1);
-        auto detailIds = getIds(changes.detailAdds.values());
+        auto detailIds = getEntityIds(changes.detailAdds.values());
         QCOMPARE(result.transactions.at(0)->detailIds, detailIds);
         QCOMPARE(result.details.size(), 2);
         QVERIFY(!tx.id.isNull());
@@ -199,7 +195,7 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.transactions.size(), 1);
-        auto detailIds = getIds(details);
+        auto detailIds = getEntityIds(details);
         detailIds.append(newDetail.id);
         QCOMPARE(result.transactions.at(0)->detailIds, detailIds);
         auto updatedTx = loadTransaction(tx->id);
@@ -211,7 +207,6 @@ private slots:
     }
 
     void update_updatesTransferAmount() {
-        QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(TransactionService*, service);
         auto transfer = saveTransfer({"1.00", "2.00"});
         auto [tx, details] = transfer.at(0);
@@ -266,6 +261,8 @@ private slots:
 
         QCOMPARE(loadTransaction(relatedTx->id), nullptr);
         QCOMPARE(loadDetail(relatedDetails.at(0)->id), nullptr);
+        QCOMPARE(result.details.at(0)->relatedDetailId, QVariant{});
+        QVERIFY(loadDetail(details.at(0)->id) != nullptr);
     }
 
     void update_deletesTransactionAndDetails() {

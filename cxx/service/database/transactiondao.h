@@ -18,7 +18,7 @@ public:
 
     void removeEmpty(const QSqlDatabase &db);
     
-    Transaction* addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user);
+    Transaction *addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user);
 
 protected:
     virtual void bindInsertValues(QSqlQuery &query, Transaction *transaction) override;

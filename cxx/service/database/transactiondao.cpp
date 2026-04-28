@@ -41,9 +41,9 @@ select tx.*, ds.detail_ids
 from tx_data tx
 join detail_summary ds on ds.tx_id = tx.id)";
 
-static const auto getAllQuery = R"(
-select *
-from tx)";
+static const auto getAllQuery = "select * from tx";
+
+static const auto getOneQuery = "select * from tx where id = :id";
 
 static const auto insertQuery = R"(
 insert into tx (account_id, date, reference_number, memo, payee_id, security_id, cleared, version, change_user, change_date)
@@ -54,8 +54,7 @@ insert into tx (account_id, date, memo, payee_id, security_id, cleared, version,
 select :accountId, rx.date, rx.memo, rx.payee_id, rx.security_id, 'N', 0, :user, current_timestamp
 from tx_detail rd
 join tx rx on rd.tx_id = rx.id
-where rd.id = :detailId
-returning *)";
+where rd.id = :detailId)";
 
 static const auto updateQuery = R"(
 update tx
@@ -117,7 +116,12 @@ Transaction *TransactionDao::addRelatedTransaction(QSqlDatabase &db, Transaction
     SQL_BIND_VALUE(query, ":detailId", detail->id);
     SQL_BIND_VALUE(query, ":accountId", detail->transferAccountId);
     sql::exec(query, className, "addRelatedTransaction");
-    if (!query.next()) throw QString("failed to insert transaction");
+    if (query.numRowsAffected() != 1) throw QString("failed to insert transaction");
+    auto relatedId = query.lastInsertId();
+    query.prepare(getOneQuery);
+    SQL_BIND_VALUE(query, ":id", relatedId);
+    sql::exec(query, className, "getRelatedTransaction");
+    if (!query.next()) throw QString("failed to load new transaction");
     return new Transaction(query.record());
 }
 

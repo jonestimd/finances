@@ -7,6 +7,14 @@
 
 #define TEST_USER "test"
 
+#define SKIP_FOR(...) \
+QFETCH_GLOBAL(QString, driver); \
+    if (QStringList{__VA_ARGS__}.contains(driver)) QSKIP("wrong driver");
+
+#define RUN_FOR(...) \
+QFETCH_GLOBAL(QString, driver); \
+    if (!QStringList{__VA_ARGS__}.contains(driver)) QSKIP("wrong driver");
+
 class DbTestCase {
     QHash<QString, ConnectionPool*> connectionPools{};
 
