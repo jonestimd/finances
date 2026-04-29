@@ -13,8 +13,8 @@
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
-    file.open(QFile::ReadOnly);
-    return QString(file.readAll());
+    if (file.open(QFile::ReadOnly)) return QString(file.readAll());
+    return "";
 }
 
 namespace finances {
@@ -54,7 +54,7 @@ namespace finances {
             painter->save();
             painter->setPen(textColor);
             painter->setFont(font);
-            painter->drawText(rect, Qt::AlignCenter, QChar{icon});
+            painter->drawText(rect, Qt::AlignCenter, QChar{uint(icon)});
             painter->restore();
         }
 
@@ -79,7 +79,7 @@ namespace finances {
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
         auto label = new QLabel(parent);
         label->setFont(iconFont->font(label->font().pointSize() * 2));
-        label->setText(QChar{icon});
+        label->setText(QChar{uint(icon)});
         return label;
     }
 
@@ -242,7 +242,7 @@ namespace finances {
         , userStyleSheet{""}
     {
         setStyle(new AppStyle()); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-        setWindowIcon(QIcon(":/images/finances.svg"));
+        setWindowIcon(QIcon(":/images/finances.svg")); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         auto styleFile = styleSheet();
         if (!styleFile.isEmpty()) userStyleSheet = readStyles(styleFile.replace(0, 8, ""));
         updateStyleSheet(styleHints()->colorScheme());

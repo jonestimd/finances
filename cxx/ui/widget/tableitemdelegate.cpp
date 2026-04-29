@@ -48,7 +48,7 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     QVariant value = index.data();
     if (value.typeId() == QMetaType::Bool) {
         option->font = finances::iconFont->font();
-        option->text = QChar(value.toBool() ? finances::Checked : finances::Unchecked);
+        option->text = QChar(uint(value.toBool() ? finances::Checked : finances::Unchecked));
         option->displayAlignment = Qt::AlignCenter;
     }
     auto decoration = index.data(Qt::DecorationRole);
