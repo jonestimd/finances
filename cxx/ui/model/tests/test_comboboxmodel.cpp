@@ -1,4 +1,5 @@
 #include <QTest>
+#include "ui/finances.h"
 #include "../comboboxmodel.h"
 
 class TestComboBoxModel: public QObject {
@@ -23,8 +24,8 @@ void TestComboBoxModel::sortsOptions() {
     QStringList ids;
     QStringList names;
     for (auto i = 0; i < model.rowCount(QModelIndex{}); i++) {
-        ids.append(model.index(i, 0).data().toString());
-        names.append(model.index(i, 1).data().toString());
+        ids.append(model.index(i, 0).data(finances::EntityIdRole).toString());
+        names.append(model.index(i, 0).data().toString());
     }
     QCOMPARE(ids.join(","), "1,4,3,2");
     QCOMPARE(names.join(","), "aaa,Bbb,bbb,zzz");
