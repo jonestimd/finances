@@ -29,4 +29,4 @@ void TestDecimal::isValid() {
 }
 
 QTEST_MAIN(TestDecimal)
-#include "testdecimal.moc"
+#include "test_decimal.moc"

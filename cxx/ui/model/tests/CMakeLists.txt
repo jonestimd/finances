@@ -3,6 +3,9 @@ qt_add_executable(test_comboboxmodel
     ${CMAKE_HOME_DIRECTORY}/cxx/ui/model/comboboxmodel.cpp
     ${CMAKE_HOME_DIRECTORY}/cxx/service/model/basedomain.cpp
 )
+set_target_properties(test_comboboxmodel PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
+)
 
 set_target_properties(test_comboboxmodel PROPERTIES
     AUTOMOC ON
