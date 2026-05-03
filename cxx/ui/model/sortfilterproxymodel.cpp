@@ -3,13 +3,15 @@
 SortFilterProxyModel::SortFilterProxyModel(QObject *parent) : QSortFilterProxyModel{parent} {}
 
 void SortFilterProxyModel::addFilter(AcceptRow acceptFunction) {
+    beginFilterChange();
     acceptFunctions.append(acceptFunction);
-    invalidateRowsFilter();
+    endFilterChange(Direction::Columns);
 }
 
 void SortFilterProxyModel::clearFilters() {
+    beginFilterChange();
     acceptFunctions.clear();
-    invalidateRowsFilter();
+    endFilterChange(Direction::Columns);
 }
 
 bool SortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
