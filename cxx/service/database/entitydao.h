@@ -34,6 +34,10 @@ protected:
 
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
 
+    virtual QString getLoadAllQuery(QSqlDatabase &db) {
+        return getAllSql;
+    }
+
     EntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql, const char *className,
               const QString staleDataMessage, const char *idColumn = "id")
         : getAllSql{getAllSql}
@@ -47,7 +51,7 @@ protected:
 public:
     virtual QHash<qlonglong, const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
-        query.prepare(getAllSql);
+        query.prepare(getLoadAllQuery(db));
         SQL_EXEC(query, "getAll");
         return load(query);
     }
@@ -116,8 +120,9 @@ public:
 template<class Entity>
 class NamedEntityDao : public EntityDao<Entity> {
 public:
-    NamedEntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql, const char *className, const QString staleDataMessage)
-        : EntityDao<Entity>(getAllSql, updateSql, insertSql, deleteSql, className, staleDataMessage) {}
+    NamedEntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql,
+                   const char *className, const QString staleDataMessage, const char *idColumn = "id")
+        : EntityDao<Entity>(getAllSql, updateSql, insertSql, deleteSql, className, staleDataMessage, idColumn) {}
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) override {
         EntityDao<Entity>::bindUpdateValues(query, entity);

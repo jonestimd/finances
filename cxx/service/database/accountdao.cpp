@@ -2,37 +2,43 @@
 #include "mapping.h"
 #include "dbdialect.h"
 
-static const auto createTableQuery = R"(
-create table account (
-    id %1,
-    company_id bigint,
-    currency_id bigint not null,
-    type varchar(25) not null,
-    name varchar(100) not null,
-    description text,
-    account_no varchar(25),
-    closed character(1) not null,
-    change_date timestamp not null default current_timestamp,
-    change_user varchar(50) not null,
-    version bigint not null,
-    constraint account_ak unique (name, company_id),
-    constraint account_company_fk foreign key (company_id) references company (id),
-    constraint account_currency_fk foreign key (currency_id) references asset (id)
-))";
+#define CREATE_TABLE_QUERY(idtype) \
+    "create table account (\n" \
+    "    id " idtype ",\n" \
+    "    company_id bigint,\n" \
+    "    currency_id bigint not null,\n" \
+    "    type varchar(25) not null,\n" \
+    "    name varchar(100) not null,\n" \
+    "    description text,\n" \
+    "    account_no varchar(25),\n" \
+    "    closed character(1) not null,\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    constraint account_ak unique (name, company_id),\n" \
+    "    constraint account_company_fk foreign key (company_id) references company (id),\n" \
+    "    constraint account_currency_fk foreign key (currency_id) references asset (id)\n" \
+    ")"
 
-static const auto getAccountsSql = R"(
-with balance as (
-  select tx.account_id, sum(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions
-  from tx
-  join tx_detail td on tx.id = td.tx_id
-  left join tx_category tc on td.tx_category_id = tc.id
-  group by tx.account_id
-)
-select a.*, coalesce(b.transactions, 0) transactions, b.*, cur.symbol currency
-from account a
-join asset cur on a.currency_id = cur.id
-left join balance b on a.id = b.account_id
-order by a.name)";
+static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
+static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
+static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
+
+#define GET_ALL_QUERY(sum) \
+    "with balance as (\n" \
+    "  select tx.account_id, " sum "(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions\n" \
+    "  from tx\n" \
+    "  join tx_detail td on tx.id = td.tx_id\n" \
+    "  left join tx_category tc on td.tx_category_id = tc.id\n" \
+    "  group by tx.account_id\n" \
+    ")\n" \
+    "select a.*, coalesce(b.transactions, 0) transactions, b.*, cur.symbol currency\n" \
+    "from account a\n" \
+    "join asset cur on a.currency_id = cur.id\n" \
+    "left join balance b on a.id = b.account_id"
+
+static const auto getAccountsSql = GET_ALL_QUERY("sum");
+static const auto sqliteGetAccountsSql = GET_ALL_QUERY(SQLITE_SUM);
 
 static const auto updateAccountSql = R"(
 update account
@@ -51,10 +57,16 @@ static const auto deleteAccountSql = "delete from account where id = :id";
 
 AccountDao::AccountDao()
     : NamedEntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
-                              QObject::tr("Accounts have been modified.  Please reload and try again.")} {}
+                              QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"} {}
 
 void AccountDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, dbDialect::createTableSql(db, createTableQuery), className, "createTable");
+    const char *createTableSql = SELECT_QUERY(db, CreateTableSql);
+    sql::exec(db, createTableSql, className, "createTable");
+}
+
+QString AccountDao::getLoadAllQuery(QSqlDatabase &db) {
+    if (IS_SQLITE(db)) return sqliteGetAccountsSql;
+    return NamedEntityDao::getLoadAllQuery(db);
 }
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {

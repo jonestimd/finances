@@ -3,7 +3,6 @@ list(FILTER DATABASE_SOURCES INCLUDE REGEX ".*/database/.*")
 
 get_target_property(MODEL_SOURCES finances SOURCES)
 list(FILTER MODEL_SOURCES INCLUDE REGEX ".*/model/.*")
-message(NOTICE ${MODEL_SOURCES})
 
 qt_add_library(dbtestcase OBJECT
     dbtestcase.h dbtestcase.cpp
@@ -16,18 +15,20 @@ target_link_libraries(dbtestcase PRIVATE
     Qt${QT_VERSION_MAJOR}::Sql
     ${BINARY_DIR}/src/libqdecimal.a
     ${BINARY_DIR}/decnumber/libdecnumber.a
+    ${QT_SQLITE_OBJ_FILE}
 )
 
 target_include_directories(dbtestcase PRIVATE
-    ${SOURCE_DIR}/src
-    ${SOURCE_DIR}/decnumber
-    ${CMAKE_HOME_DIRECTORY}/cxx
+    $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
 )
 
 function(add_service_test name)
     set(exec_name "test_${name}")
     qt_add_executable(${exec_name} ${exec_name}.cpp ../${name}.cpp ${ARGN})
-    add_dependencies(${exec_name} qdecimal dbtestcase)
+    add_dependencies(${exec_name} qdecimal dbtestcase decimal.so)
+    set_target_properties(${exec_name} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
+    )
 
     set_target_properties(${exec_name} PROPERTIES
         AUTOMOC ON
@@ -36,9 +37,7 @@ function(add_service_test name)
     )
 
     target_include_directories(${exec_name} PRIVATE
-        ${SOURCE_DIR}/src
-        ${SOURCE_DIR}/decnumber
-        ${CMAKE_HOME_DIRECTORY}/cxx
+        $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
     )
 
     target_link_libraries(${exec_name} PRIVATE
@@ -63,8 +62,9 @@ function(add_service_test name)
     # )
     # install(SCRIPT ${deploy_${exec_name}})
 
-    add_test(NAME ${exec_name} COMMAND ${exec_name})
+    add_test(NAME ${exec_name} COMMAND LD_LIBRARY_PATH="${SQLITE_EXTENSION_DIR}" ${exec_name})
 endfunction()
 
 add_service_test(transactionservice)
 add_service_test(categoryservice)
+add_service_test(accountservice)

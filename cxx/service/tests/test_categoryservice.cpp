@@ -6,6 +6,20 @@ class TestCategoryService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
 
+    QList<const Category*> categories{};
+
+    Category *addCategory(const QString &driver, const QString &name, Category *parent = nullptr) {
+        Connection conn(dbTestCase.connectionPool(driver));
+        auto testName = QTest::currentTestFunction();
+        Category *category = new Category;
+        category->name = QString("%0:%1").arg(testName, name);
+        category->parentId = parent ? parent->id : QVariant{};
+        categoryDao.add(conn.db, {category}, TEST_USER);
+        if (parent) parent->childIds.append(category->id);
+        this->categories.append(category);
+        return category;
+    }
+
 private slots:
     void initTestCase_data() {
         dbTestCase.createDatabases();
@@ -20,8 +34,8 @@ private slots:
     void setParent_returnsOldParent() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(CategoryService*, service);
-        auto parent = dbTestCase.addCategory(driver, "parent");
-        auto child = dbTestCase.addCategory(driver, "child", parent);
+        auto parent = addCategory(driver, "parent");
+        auto child = addCategory(driver, "child", parent);
 
         auto result = service->setParent(child, QVariant{}, TEST_USER);
 
@@ -34,9 +48,9 @@ private slots:
     void setParent_returnsOldAndNewParents() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(CategoryService*, service);
-        auto parent = dbTestCase.addCategory(driver, "parent");
-        auto child = dbTestCase.addCategory(driver, "child", parent);
-        auto newParent = dbTestCase.addCategory(driver, "new parent");
+        auto parent = addCategory(driver, "parent");
+        auto child = addCategory(driver, "child", parent);
+        auto newParent = addCategory(driver, "new parent");
 
         auto result = service->setParent(child, newParent->id, TEST_USER);
 
@@ -51,10 +65,10 @@ private slots:
     void merge_updatesChildren() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(CategoryService*, service);
-        auto parent = dbTestCase.addCategory(driver, "parent");
-        auto child = dbTestCase.addCategory(driver, "child", parent);
-        auto toMerge = dbTestCase.addCategory(driver, "other parent");
-        auto otherChild = dbTestCase.addCategory(driver, "other child", toMerge);
+        auto parent = addCategory(driver, "parent");
+        auto child = addCategory(driver, "child", parent);
+        auto toMerge = addCategory(driver, "other parent");
+        auto otherChild = addCategory(driver, "other child", toMerge);
 
         auto result = service->merge(toMerge, parent->id, TEST_USER);
 
@@ -64,6 +78,11 @@ private slots:
         QCOMPARE(result.value(otherChild->id.toLongLong())->parentId, parent->id);
         QVariantList childIds{child->id, otherChild->id};
         QCOMPARE(result.value(parent->id.toLongLong())->childIds, childIds);
+    }
+
+    void cleanup() {
+        for (auto category : std::as_const(categories)) delete category;
+        categories.clear();
     }
 };
 

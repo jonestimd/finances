@@ -120,15 +120,53 @@ QVariant DbTestCase::addPayee(QString driver, const QString &name) {
     return payee.id;
 }
 
-Category *DbTestCase::addCategory(const QString &driver, const QString &name, Category *parent) {
+Transaction DbTestCase::unsavedTransaction(QDate date) {
+    QFETCH_GLOBAL(QVariant, accountId);
+    return unsavedTransaction(accountId, date);
+}
+
+Transaction DbTestCase::unsavedTransaction(QVariant accountId, QDate date) {
+    QFETCH_GLOBAL(QVariant, payeeId);
+    Transaction tx{accountId};
+    tx.payeeId = payeeId;
+    tx.date = date;
+    return tx;
+}
+
+TransactionDetail DbTestCase::unsavedDetail(const char *amount) {
+    TransactionDetail detail{};
+    detail.amount = DECIMAL_VARIANT(amount);
+    return detail;
+}
+
+void DbTestCase::cleanup() {
+    for (auto tx : std::as_const(transactions)) delete tx;
+    transactions.clear();
+    for (auto detail : std::as_const(details)) delete detail;
+    details.clear();
+}
+
+DbTestCase::TxDetails DbTestCase::saveTransaction(QVariant accountId, QList<const char *> detailAmounts) {
+    QFETCH_GLOBAL(QString, driver);
+    Transaction *tx = new Transaction(unsavedTransaction(accountId));
     Connection conn(connectionPool(driver));
-    auto testName = QTest::currentTestFunction();
-    Category *category = new Category;
-    category->name = QString("%0:%1").arg(testName, name);
-    category->parentId = parent ? parent->id : QVariant{};
-    categoryDao.add(conn.db, {category}, TEST_USER);
-    if (parent) parent->childIds.append(category->id);
-    return category;
+    transactionDao.add(conn.db, QList<Transaction*>{tx}, TEST_USER);
+    QList<TransactionDetail*> details{};
+    for (auto &amount : detailAmounts) {
+        TransactionDetail *detail = new TransactionDetail(unsavedDetail(amount));
+        detail->transactionId = tx->id;
+        details.append(detail);
+    }
+    transactionDetailDao.add(conn.db, details, TEST_USER);
+    tx->detailIds = getEntityIds(details);
+    this->transactions.append(tx);
+    for (auto detail : std::as_const(details)) this->details.append(detail);
+    return TxDetails{tx, details};
+}
+
+DbTestCase::TxDetails DbTestCase::saveTransaction(QList<const char *> detailAmounts) {
+    QFETCH_GLOBAL(QVariant, accountId);
+    return saveTransaction(accountId, detailAmounts);
 }
 
 void DbTestCase::addConnection(QString name, const ConnectionSettings &settings) {

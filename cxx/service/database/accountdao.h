@@ -11,6 +11,9 @@ public:
 
     void createTable(const QSqlDatabase &db);
 
+    using NamedEntityDao::getAll;
+    virtual QString getLoadAllQuery(QSqlDatabase &db) override;
+
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;
