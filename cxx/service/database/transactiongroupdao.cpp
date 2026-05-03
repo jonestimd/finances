@@ -1,16 +1,20 @@
 #include "transactiongroupdao.h"
 #include "dbdialect.h"
 
-static const auto createTableQuery = R"(
-create table tx_group (
-    id %1,
-    change_date timestamp not null default current_timestamp,
-    change_user varchar(50) not null,
-    version bigint not null,
-    description text,
-    name varchar(50) not null,
-    constraint tx_group_ak unique (name)
-))";
+#define CREATE_TABLE_QUERY(idtype) \
+    "create table tx_group (\n" \
+    "    id " idtype ",\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    description text,\n" \
+    "    name varchar(50) not null,\n" \
+    "    constraint tx_group_ak unique (name)\n" \
+    ")"
+
+static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
+static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
+static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -39,7 +43,7 @@ TransactionGroupDao::TransactionGroupDao()
                                        QObject::tr("Groups have been modified.  Please reload and try again.")} {}
 
 void TransactionGroupDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, dbDialect::createTableSql(db, createTableQuery), className, "createTable");
+    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
 }
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {

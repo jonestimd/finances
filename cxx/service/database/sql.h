@@ -16,8 +16,6 @@ Q_DECLARE_LOGGING_CATEGORY(sqlLogger)
     sql::bindList(query, name, values); \
     qCDebug(sqlLogger) << "-" << (name) << "=" << (values);
 
-#define SQL_EXEC(query, queryName) sql::exec(query, className, queryName)
-
 namespace sql {
     QVariant getValue(QSqlRecord record, const char *name, QVariant defaultValue = {});
 

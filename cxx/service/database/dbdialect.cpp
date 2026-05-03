@@ -9,12 +9,6 @@ namespace dbDialect {
     static const auto sqliteIdType = "integer not null primary key";
     static const auto mysqlIdType = "bigint not null primary key auto_increment";
 
-    QString createTableSql(const QSqlDatabase &db, QString sqlTemplate) {
-        if (IS_PG(db)) return sqlTemplate.arg(pgIdType);
-        if (IS_SQLITE(db)) return sqlTemplate.arg(sqliteIdType);
-        return sqlTemplate.arg(mysqlIdType);
-    }
-
     QString inList(const QSqlDatabase &db, const char *column, const char *placeholder) {
         if (IS_SQLITE(db)) return QString("%0 in (select value from json_each(%1))").arg(column, placeholder);
         else if (IS_PG(db)) return QString("to_jsonb(%0) <@ %1 ").arg(column, placeholder);
@@ -23,17 +17,10 @@ namespace dbDialect {
 
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, QVariantList ids, const char *idColumn) {
         QSqlQuery query{db};
-        QString sql = replaceJsonArrayAgg(db, getAllSql);
+        QString sql = getAllSql;
         sql += "\nwhere " + inList(db, idColumn, ":ids");
         query.prepare(sql);
         SQL_BIND_LIST(query, ":ids", ids);
         return query;
-    }
-
-    static const QRegularExpression jsonArrayAggRe{"\\bjson_arrayagg\\b"};
-
-    QString replaceJsonArrayAgg(const QSqlDatabase &db, QString sql) {
-        if (IS_SQLITE(db)) sql.replace(jsonArrayAggRe, SQLITE_JSON_ARRAY_AGG);
-        return sql;
     }
 }

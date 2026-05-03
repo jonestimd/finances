@@ -1,24 +1,30 @@
 #include "securitydao.h"
 #include "dbdialect.h"
 
-static const char* const createTableQueries[]{R"(
-CREATE TABLE asset (
-    id %1,
-    name varchar(100) not null,
-    type varchar(31) not null,
-    scale integer not null,
-    symbol varchar(10) default null,
-    change_date timestamp not null default current_timestamp,
-    change_user varchar(50) not null,
-    version bigint not null,
-    constraint asset_ak unique (name, type)
-))", R"(
+#define CREATE_ASSET_TABLE_QUERY(idtype) \
+    "create table asset (\n" \
+    "    id " idtype ",\n" \
+    "    name varchar(100) not null,\n" \
+    "    type varchar(31) not null,\n" \
+    "    scale integer not null,\n" \
+    "    symbol varchar(10) default null,\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    constraint asset_ak unique (name, type)\n" \
+    ")"
+
+static const auto pgCreateAssetTableSql = CREATE_ASSET_TABLE_QUERY(PG_ID_TYPE);
+static const auto mysqlCreateAssetTableSql = CREATE_ASSET_TABLE_QUERY(MYSQL_ID_TYPE);
+static const auto sqliteCreateAssetTableSql = CREATE_ASSET_TABLE_QUERY(SQLITE_ID_TYPE);
+
+static const auto createTableSql = R"(
 create table security (
     type varchar(25) not null,
     asset_id bigint not null,
     constraint security_pkey primary key (asset_id),
     constraint security_asset_fk foreign key (asset_id) references asset (id)
-))"};
+))";
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -59,8 +65,8 @@ SecurityDao::SecurityDao()
                                QObject::tr("Securities have been modified.  Please reload and try again")} {}
 
 void SecurityDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, dbDialect::createTableSql(db, createTableQueries[0]), className, "createTable.asset");
-    sql::exec(db, createTableQueries[1], className, "createTable.security");
+    sql::exec(db, SELECT_QUERY(db, CreateAssetTableSql), className, "createTable.asset");
+    sql::exec(db, createTableSql, className, "createTable.security");
 }
 
 QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> securities, const QString &user) {
@@ -70,7 +76,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     for (auto security : std::as_const(result)) {
         query.bindValue(":id", security->id);
         query.bindValue(":type", security->securityType);
-        SQL_EXEC(query, "insert security");
+        sql::exec(query, className, "insert security");
     }
     return result;
 }
@@ -81,7 +87,7 @@ void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securiti
     query.prepare("delete from asset where id = :id");
     for (auto security : securities) {
         query.bindValue(":id", security->id);
-        SQL_EXEC(query, "remove asset");
+        sql::exec(query, className, "remove asset");
     }
 }
 

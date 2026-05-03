@@ -3,39 +3,46 @@
 #include "dbdialect.h"
 #include "sql.h"
 
-static const auto createTableQuery = R"(
-create table tx_category (
-    id %1,
-    change_date timestamp not null default current_timestamp,
-    change_user varchar(50) not null,
-    version bigint not null,
-    amount_type varchar(255) not null,
-    description text,
-    income character(1) not null,
-    code varchar(50) not null,
-    security character(1) not null,
-    parent_id bigint,
-    constraint tx_category_ak unique %0,
-    constraint tx_type_parent_fk foreign key (parent_id) references tx_category (id)
-))";
+#define CREATE_TABLE_QUERY(idtype, uniqueNulls) \
+    "create table tx_category (\n" \
+    "    id " idtype ",\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    amount_type varchar(255) not null,\n" \
+    "    description text,\n" \
+    "    income character(1) not null,\n" \
+    "    code varchar(50) not null,\n" \
+    "    security character(1) not null,\n" \
+    "    parent_id bigint,\n" \
+    "    constraint tx_category_ak unique " uniqueNulls "(parent_id, code),\n" \
+    "    constraint tx_type_parent_fk foreign key (parent_id) references tx_category (id)\n" \
+    ")"
+
+static const auto pgCreateTableQuery = CREATE_TABLE_QUERY(PG_ID_TYPE, "nulls not distinct ");
+static const auto mysqlCreateTableQuery = CREATE_TABLE_QUERY(MYSQL_ID_TYPE, "");
+static const auto sqliteCreateTableQuery = CREATE_TABLE_QUERY(SQLITE_ID_TYPE, "");
 
 static const auto uniqueIndexQuery = "create unique index unique_category on tx_category (coalesce(parent_id, -1), code)";
 
-static const auto getCategoriesSql = R"(
-with summary as (
-  select td.tx_category_id, count(distinct td.tx_id) transactions, count(*) details
-  from tx_detail td
-  group by td.tx_category_id
-), children as (
-  select parent_id, json_arrayagg(id) child_ids
-  from tx_category
-  where parent_id is not null
-  group by parent_id
-)
-select c.*, coalesce(s.transactions, 0) transactions, coalesce(s.details, 0) details, ch.child_ids
-from tx_category c
-left join summary s on c.id = s.tx_category_id
-left join children ch on c.id = ch.parent_id)";
+#define GET_CATEGORIES_QUERY(jsonArrayAgg) \
+    "with summary as (\n" \
+    "  select td.tx_category_id, count(distinct td.tx_id) transactions, count(*) details\n" \
+    "  from tx_detail td\n" \
+    "  group by td.tx_category_id\n" \
+    "), children as (\n" \
+    "  select parent_id, " jsonArrayAgg "(id) child_ids\n" \
+    "  from tx_category\n" \
+    "  where parent_id is not null\n" \
+    "  group by parent_id\n" \
+    ")\n" \
+    "select c.*, coalesce(s.transactions, 0) transactions, coalesce(s.details, 0) details, ch.child_ids\n" \
+    "from tx_category c\n" \
+    "left join summary s on c.id = s.tx_category_id\n" \
+    "left join children ch on c.id = ch.parent_id"
+
+static const auto getCategoriesSql = GET_CATEGORIES_QUERY(DEFAULT_JSON_ARRAY_AGG);
+static const auto sqliteGetCategoriesSql = GET_CATEGORIES_QUERY(SQLITE_JSON_ARRAY_AGG);
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -68,9 +75,8 @@ CategoryDao::CategoryDao()
                                QObject::tr("Categories have been modified.  Please reload and try again.")} {}
 
 void CategoryDao::createTable(const QSqlDatabase &db) {
-    QString sql = QString{createTableQuery}.arg(uniqueConstraint(db));
-    sql::exec(db, dbDialect::createTableSql(db, sql), className, "createTable");
-    if (db.driverName() == "QSQLITE") sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
+    sql::exec(db, SELECT_QUERY(db, CreateTableQuery), className, "createTable");
+    if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
 QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
@@ -83,7 +89,7 @@ QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const
     query.bindValue(":id", category->id);
     query.bindValue(":version", category->version);
     query.bindValue(":parentId", parentId);
-    SQL_EXEC(query, "setParent");
+    sql::exec(query, className, "setParent");
     if (query.numRowsAffected() < 1) throw staleDataMessage;
     return get(db, ids);
 }
@@ -95,9 +101,14 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
         query.bindValue(":user", user);
         query.bindValue(":parentId", destinationId);
         query.bindValue(":oldParentId", category->id);
-        SQL_EXEC(query, "setParents");
+        sql::exec(query, className, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
     }
+}
+
+const char *CategoryDao::getLoadAllQuery(QSqlDatabase &db) const {
+    if (IS_SQLITE(db)) return sqliteGetCategoriesSql;
+    return NamedEntityDao::getLoadAllQuery(db);
 }
 
 void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {

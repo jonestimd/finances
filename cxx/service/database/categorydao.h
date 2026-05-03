@@ -16,6 +16,7 @@ public:
     void moveChildren(QSqlDatabase &db, const Category* category, const QVariant destinationId, const QString user);
 
 protected:
+    virtual const char *getLoadAllQuery(QSqlDatabase &db) const override;
     virtual void bindUpdateValues(QSqlQuery &query, Category *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Category *entity) override;
 };

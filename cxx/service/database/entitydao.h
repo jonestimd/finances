@@ -34,7 +34,7 @@ protected:
 
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
 
-    virtual QString getLoadAllQuery(QSqlDatabase &db) {
+    virtual const char *getLoadAllQuery(QSqlDatabase &db) const {
         return getAllSql;
     }
 
@@ -52,13 +52,13 @@ public:
     virtual QHash<qlonglong, const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         query.prepare(getLoadAllQuery(db));
-        SQL_EXEC(query, "getAll");
+        sql::exec(query, className, "getAll");
         return load(query);
     }
 
     QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
-        QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
-        SQL_EXEC(query, "getByIds");
+        QSqlQuery query = dbDialect::prepareGetByIds(db, getLoadAllQuery(db), ids, idColumn);
+        sql::exec(query, className, "getByIds");
         return load(query);
     }
 
@@ -71,7 +71,7 @@ public:
         SQL_BIND_VALUE(query, ":user", user);
         for (auto entity : entities) {
             bindUpdateValues(query, entity);
-            SQL_EXEC(query, "update");
+            sql::exec(query, className, "update");
             if (query.numRowsAffected() < 1) throw staleDataMessage;
             entity->version = entity->version.toInt() + 1;
             entity->changeUser = user;
@@ -89,7 +89,7 @@ public:
         SQL_BIND_VALUE(query, ":user", user);
         for (auto entity : entities) {
             bindInsertValues(query, entity);
-            SQL_EXEC(query, "insert");
+            sql::exec(query, className, "insert");
             entity->id = query.lastInsertId();
             entity->changeUser = user;
             result.append(entity);
@@ -102,7 +102,7 @@ public:
         query.prepare(deleteSql);
         qCInfo(sqlLogger, deleteSql);
         SQL_BIND_VALUE(query, ":id", id);
-        SQL_EXEC(query, "remove");
+        sql::exec(query, className, "remove");
     }
 
     virtual void remove(QSqlDatabase &db, const QList<const Entity*> entities) {
@@ -111,7 +111,7 @@ public:
         qCInfo(sqlLogger, deleteSql);
         for (auto entity : entities) {
             SQL_BIND_VALUE(query, ":id", entity->id);
-            SQL_EXEC(query, "remove");
+            sql::exec(query, className, "remove");
             // TODO check version
         }
     }

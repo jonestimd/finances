@@ -12,6 +12,8 @@
 #define MYSQL_IN_LIST(column, placeholder) #column " member of (" #placeholder ")"
 #define SQLITE_IN_LIST(column, placeholder) #column " in (select value from json_each(" #placeholder "))"
 
+#define DEFAULT_JSON_ARRAY_AGG "json_arrayagg"
+
 #define SQLITE_SUM "decimal_sum"
 #define SQLITE_JSON_ARRAY_AGG "json_group_array"
 
@@ -27,11 +29,7 @@
     (IS_PG(db)) ? pg##SqlVarSuffix : ((IS_MYSQL(db)) ? mysql##SqlVarSuffix : sqlite##SqlVarSuffix)
 
 namespace dbDialect {
-    QString createTableSql(const QSqlDatabase &db, QString sqlTemplate);
-
     QString inList(const QSqlDatabase &db, const char *column, const char *placeholder);
-
-    QString replaceJsonArrayAgg(const QSqlDatabase &db, QString sql);
 
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, QVariantList ids, const char *idColumn);
 };

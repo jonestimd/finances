@@ -12,7 +12,7 @@ public:
     void createTable(const QSqlDatabase &db);
 
     using NamedEntityDao::getAll;
-    virtual QString getLoadAllQuery(QSqlDatabase &db) override;
+    virtual const char *getLoadAllQuery(QSqlDatabase &db) const override;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;

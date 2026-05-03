@@ -60,11 +60,10 @@ AccountDao::AccountDao()
                               QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"} {}
 
 void AccountDao::createTable(const QSqlDatabase &db) {
-    const char *createTableSql = SELECT_QUERY(db, CreateTableSql);
-    sql::exec(db, createTableSql, className, "createTable");
+    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
 }
 
-QString AccountDao::getLoadAllQuery(QSqlDatabase &db) {
+const char *AccountDao::getLoadAllQuery(QSqlDatabase &db) const {
     if (IS_SQLITE(db)) return sqliteGetAccountsSql;
     return NamedEntityDao::getLoadAllQuery(db);
 }
