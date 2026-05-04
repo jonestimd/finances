@@ -28,6 +28,10 @@ ConnectionPool::ConnectionPool(const ConnectionSettings &settings)
     , displayName{settings.displayName()}
 {}
 
+const QString &ConnectionPool::dbType() const {
+    return settings.dbType;
+}
+
 QSqlDatabase ConnectionPool::acquire() {
     QString dbName = nameStore.localData();
     if (dbName.isNull()) {

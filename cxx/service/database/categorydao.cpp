@@ -25,7 +25,7 @@ static const auto sqliteCreateTableQuery = CREATE_TABLE_QUERY(SQLITE_ID_TYPE, ""
 
 static const auto uniqueIndexQuery = "create unique index unique_category on tx_category (coalesce(parent_id, -1), code)";
 
-#define GET_CATEGORIES_QUERY(jsonArrayAgg) \
+#define GET_ALL_QUERY(jsonArrayAgg) \
     "with summary as (\n" \
     "  select td.tx_category_id, count(distinct td.tx_id) transactions, count(*) details\n" \
     "  from tx_detail td\n" \
@@ -41,8 +41,8 @@ static const auto uniqueIndexQuery = "create unique index unique_category on tx_
     "left join summary s on c.id = s.tx_category_id\n" \
     "left join children ch on c.id = ch.parent_id"
 
-static const auto getCategoriesSql = GET_CATEGORIES_QUERY(DEFAULT_JSON_ARRAY_AGG);
-static const auto sqliteGetCategoriesSql = GET_CATEGORIES_QUERY(SQLITE_JSON_ARRAY_AGG);
+static const auto getCategoriesSql = GET_ALL_QUERY(DEFAULT_JSON_ARRAY_AGG);
+static const auto sqliteGetCategoriesSql = GET_ALL_QUERY(SQLITE_JSON_ARRAY_AGG);
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -57,25 +57,37 @@ values (:name, :parentId, :description, :amountType, :income, :security, 0, :use
 
 static const auto deleteCategorySql = "delete from tx_category where id = :id";
 
-static const auto setParentSql = R"(update tx_category
+static const auto setParentSql = R"(
+update tx_category
 set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
-static const auto setParentsSql = R"(update tx_category
+static const auto setParentsSql = R"(
+update tx_category
 set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
 where parent_id = :oldParentId)";
 
-static const char *uniqueConstraint(const QSqlDatabase &db) {
-    if (db.driverName() == "QPSQL") return "nulls not distinct (parent_id, code)";
-    return "(parent_id, code)";
-}
+static const DaoQueries pgMysqlQueries{
+    .getAllSql = GET_ALL_QUERY(DEFAULT_JSON_ARRAY_AGG),
+    .updateSql = updateCategorySql,
+    .insertSql = insertCategorySql,
+    .deleteSql = deleteCategorySql,
+};
+static const DaoQueries sqliteQueries{
+    .getAllSql = GET_ALL_QUERY(SQLITE_JSON_ARRAY_AGG),
+    .updateSql = updateCategorySql,
+    .insertSql = insertCategorySql,
+    .deleteSql = deleteCategorySql,
+};
 
-CategoryDao::CategoryDao()
-    : NamedEntityDao<Category>{getCategoriesSql, updateCategorySql, insertCategorySql, deleteCategorySql, "CategoryDao",
-                               QObject::tr("Categories have been modified.  Please reload and try again.")} {}
+CategoryDao::CategoryDao(const QString &dbType)
+    : NamedEntityDao<Category>{dbType == SQLITE_DRIVER ? sqliteQueries : pgMysqlQueries, "CategoryDao",
+                               QObject::tr("Categories have been modified.  Please reload and try again.")}
+    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableQuery)}
+{}
 
-void CategoryDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateTableQuery), className, "createTable");
+void CategoryDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createTableSql, className, "createTable");
     if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
@@ -94,7 +106,7 @@ QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const
     return get(db, ids);
 }
 
-void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const QVariant destinationId, const QString user) {
+void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const QVariant destinationId, const QString user) const {
     if (!category->childIds.isEmpty()) {
         QSqlQuery query(db);
         query.prepare(setParentsSql);
@@ -104,11 +116,6 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
         sql::exec(query, className, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
     }
-}
-
-const char *CategoryDao::getLoadAllQuery(QSqlDatabase &db) const {
-    if (IS_SQLITE(db)) return sqliteGetCategoriesSql;
-    return NamedEntityDao::getLoadAllQuery(db);
 }
 
 void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {

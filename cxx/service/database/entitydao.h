@@ -6,6 +6,13 @@
 #include <QSqlDatabase>
 #include <QLoggingCategory>
 
+typedef struct {
+    const char *const getAllSql;
+    const char *const updateSql;
+    const char *const insertSql;
+    const char *const deleteSql;
+} DaoQueries;
+
 template<class Entity>
 class EntityDao {
     const char *const getAllSql;
@@ -34,30 +41,26 @@ protected:
 
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
 
-    virtual const char *getLoadAllQuery(QSqlDatabase &db) const {
-        return getAllSql;
-    }
-
-    EntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql, const char *className,
-              const QString staleDataMessage, const char *idColumn = "id")
-        : getAllSql{getAllSql}
-        , updateSql{updateSql}
-        , insertSql{insertSql}
-        , deleteSql{deleteSql}
+    EntityDao(const DaoQueries &queries, const char *className, const QString staleDataMessage, const char *idColumn = "id")
+        : getAllSql{queries.getAllSql}
+        , updateSql{queries.updateSql}
+        , insertSql{queries.insertSql}
+        , deleteSql{queries.deleteSql}
         , className{className}
         , staleDataMessage{staleDataMessage}
-        , idColumn{idColumn}    {}
+        , idColumn{idColumn}
+    {}
 
 public:
     virtual QHash<qlonglong, const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
-        query.prepare(getLoadAllQuery(db));
+        query.prepare(getAllSql);
         sql::exec(query, className, "getAll");
         return load(query);
     }
 
     QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
-        QSqlQuery query = dbDialect::prepareGetByIds(db, getLoadAllQuery(db), ids, idColumn);
+        QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
         return load(query);
     }
@@ -123,6 +126,9 @@ public:
     NamedEntityDao(const char *getAllSql, const char *updateSql, const char *insertSql, const char *deleteSql,
                    const char *className, const QString staleDataMessage, const char *idColumn = "id")
         : EntityDao<Entity>(getAllSql, updateSql, insertSql, deleteSql, className, staleDataMessage, idColumn) {}
+
+    NamedEntityDao(const DaoQueries &queries, const char *className, const QString staleDataMessage, const char *idColumn = "id")
+        : EntityDao<Entity>(queries, className, staleDataMessage, idColumn) {}
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) override {
         EntityDao<Entity>::bindUpdateValues(query, entity);

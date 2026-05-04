@@ -3,12 +3,14 @@
 
 #include "database/connectionpool.h"
 #include "database/categorydao.h"
+#include "database/transactiondetaildao.h"
 #include "entityservice.h"
 
-class CategoryService : public EntityService<Category, CategoryDao>
-{
+class CategoryService : public EntityService<Category, CategoryDao> {
+    TransactionDetailDao &detailDao;
+
 public:
-    CategoryService(ConnectionPool *connectionPool);
+    CategoryService(ConnectionPool *connectionPool, CategoryDao &dao, TransactionDetailDao &detailDao);
 
     virtual QList<const Category*> update(BulkUpdate<Category> &changes, const QString &user) override;
 

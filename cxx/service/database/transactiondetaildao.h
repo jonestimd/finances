@@ -13,10 +13,16 @@ struct RelatedDetailIds {
 };
 
 class TransactionDetailDao : public EntityDao<TransactionDetail> {
-public:
-    TransactionDetailDao();
+    const char *createTableSql;
+    const char *deleteByTransactionSql;
+    const char *deleteByIdsSql;
+    const char *updateTransferAmountSql;
+    const char *getRelatedIdsSql;
 
-    void createTable(const QSqlDatabase &db);
+public:
+    TransactionDetailDao(const QString &dbType);
+
+    void createTable(const QSqlDatabase &db) const;
 
     QHash<qlonglong, const TransactionDetail*> getAll(const QSqlDatabase &db, const QVariant &accountId);
 
@@ -38,7 +44,5 @@ protected:
     virtual void bindUpdateValues(QSqlQuery &query, TransactionDetail *entity) override;
 
 };
-
-static TransactionDetailDao transactionDetailDao;
 
 #endif // TRANSACTIONDETAILDAO_H

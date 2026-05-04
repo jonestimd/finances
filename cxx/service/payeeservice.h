@@ -4,11 +4,13 @@
 #include "database/connectionpool.h"
 #include "entityservice.h"
 #include "database/payeedao.h"
+#include "database/transactiondao.h"
 
-class PayeeService : public EntityService<Payee, PayeeDao>
-{
+class PayeeService : public EntityService<Payee, PayeeDao> {
+    TransactionDao &transactionDao;
+
 public:
-    PayeeService(ConnectionPool *connectionPool);
+    PayeeService(ConnectionPool *connectionPool, PayeeDao &payeeDao, TransactionDao &transactionDao);
 
     // TODO return updated transactions?
     QHash<qlonglong, const Payee*> merge(const Payee *payee, const QVariant destinationId, const QString &user);

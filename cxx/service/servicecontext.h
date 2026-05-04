@@ -15,6 +15,15 @@
 class ServiceContext
 {
     ConnectionPool *pool;
+    CompanyDao companyDao;
+    AccountDao accountDao;
+    CategoryDao categoryDao;
+    TransactionGroupDao transactionGroupDao;
+    PayeeDao payeeDao;
+    SecurityDao securityDao;
+    TransactionDao transactionDao;
+    TransactionDetailDao transactionDetailDao;
+
 public:
     AccountService accountService;
     CompanyService companyService;

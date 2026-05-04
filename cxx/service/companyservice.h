@@ -5,10 +5,9 @@
 #include "entityservice.h"
 #include "database/companydao.h"
 
-class CompanyService : public EntityService<Company, CompanyDao>
-{
+class CompanyService : public EntityService<Company, CompanyDao> {
 public:
-    CompanyService(ConnectionPool *connectionPool);
+    CompanyService(ConnectionPool *connectionPool, CompanyDao &dao);
 };
 
 #endif // COMPANYSERVICE_H

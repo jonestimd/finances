@@ -49,8 +49,6 @@ static const auto pgGetByAccountSql = GET_BY_ACCOUNT_QUERY(DEFAULT_JSON_ARRAY_AG
 static const auto mysqlGetByAccountSql = pgGetByAccountSql;
 static const auto sqliteGetByAccountSql = GET_BY_ACCOUNT_QUERY(SQLITE_JSON_ARRAY_AGG);
 
-static const auto getAllQuery = "select * from tx";
-
 static const auto getOneQuery = "select * from tx where id = :id";
 
 static const auto insertQuery = R"(
@@ -71,8 +69,6 @@ set account_id = :accountId, date = :date, reference_number = :referenceNo, memo
     change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
-static const auto deleteQuery = "delete from tx where id = :id";
-
 static const auto deleteEmptyQuery = R"(
 delete from tx
 where not exists (select 1 from tx_detail where tx_id = tx.id))";
@@ -82,19 +78,28 @@ update tx
 set payee_id = :payeeId, change_user = :user, change_date = current_timestamp, version = version + 1
 where payee_id = :oldPayeeId)";
 
-TransactionDao::TransactionDao()
-    : EntityDao<Transaction>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionDao",
+static const DaoQueries daoQueries{
+    .getAllSql = "select * from tx",
+    .updateSql = updateQuery,
+    .insertSql = insertQuery,
+    .deleteSql =  "delete from tx where id = :id",
+};
+
+TransactionDao::TransactionDao(const QString &dbType)
+    : EntityDao<Transaction>{daoQueries, "TransactionDao",
                              QObject::tr("Transactions have been modified.  Please reload and try again.")}
+    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
+    , getByAccountSql{DB_TYPE_QUERY(dbType, GetByAccountSql)}
 {}
 
-void TransactionDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
+void TransactionDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createTableSql, className, "createTable");
     sql::exec(db, createPayeeIndexSql, className, "createPayeeIndex");
 }
 
 QHash<qlonglong, const Transaction*> TransactionDao::getAll(const QSqlDatabase &db, qlonglong accountId) {
     QSqlQuery query(db);
-    query.prepare(SELECT_QUERY(db, GetByAccountSql));
+    query.prepare(getByAccountSql);
     query.bindValue(":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);

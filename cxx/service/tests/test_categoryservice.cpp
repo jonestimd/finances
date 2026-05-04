@@ -14,7 +14,7 @@ class TestCategoryService : public QObject {
         Category *category = new Category;
         category->name = QString("%0:%1").arg(testName, name);
         category->parentId = parent ? parent->id : QVariant{};
-        categoryDao.add(conn.db, {category}, TEST_USER);
+        dbTestCase.categoryDao(driver).add(conn.db, {category}, TEST_USER);
         if (parent) parent->childIds.append(category->id);
         this->categories.append(category);
         return category;
@@ -26,7 +26,9 @@ private slots:
         QTest::addColumn<QString>("driver");
         QTest::addColumn<CategoryService*>("service");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
-            auto service = new CategoryService{dbTestCase.connectionPool(driver)};
+            auto &dao = dbTestCase.categoryDao(driver);
+            auto &detailDao = dbTestCase.detailDao(driver);
+            auto service = new CategoryService{dbTestCase.connectionPool(driver), dao, detailDao};
             QTest::newRow(driver.toLocal8Bit()) << driver << service;
         }
     }

@@ -37,9 +37,6 @@ static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
     "join asset cur on a.currency_id = cur.id\n" \
     "left join balance b on a.id = b.account_id"
 
-static const auto getAccountsSql = GET_ALL_QUERY("sum");
-static const auto sqliteGetAccountsSql = GET_ALL_QUERY(SQLITE_SUM);
-
 static const auto updateAccountSql = R"(
 update account
 set company_id = :companyId, name = :name, description = :description,
@@ -55,17 +52,27 @@ where c.type = 'Currency' and c.symbol = '$')";
 
 static const auto deleteAccountSql = "delete from account where id = :id";
 
-AccountDao::AccountDao()
-    : NamedEntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
-                              QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"} {}
+#define DAO_QUERIES(selectAll) \
+    .getAllSql = selectAll,\
+    .updateSql = updateAccountSql,\
+    .insertSql = insertAccountSql,\
+    .deleteSql = deleteAccountSql,
 
-void AccountDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
-}
+static const DaoQueries pgMysqlQueries{
+    DAO_QUERIES(GET_ALL_QUERY("sum"))
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(GET_ALL_QUERY(SQLITE_SUM))
+};
 
-const char *AccountDao::getLoadAllQuery(QSqlDatabase &db) const {
-    if (IS_SQLITE(db)) return sqliteGetAccountsSql;
-    return NamedEntityDao::getLoadAllQuery(db);
+AccountDao::AccountDao(const QString &dbType)
+    : NamedEntityDao<Account>{dbType == SQLITE_DRIVER ? sqliteQueries : pgMysqlQueries, "AccountDao",
+                              QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"}
+    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
+{}
+
+void AccountDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createTableSql, className, "createTable");
 }
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {

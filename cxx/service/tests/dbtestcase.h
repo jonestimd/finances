@@ -5,6 +5,14 @@
 #include <QVariant>
 #include "QDecNumber.hh" // IWYU pragma: keep
 #include "service/database/connectionpool.h"
+#include "service/database/accountdao.h"
+#include "service/database/companydao.h"
+#include "service/database/categorydao.h"
+#include "service/database/payeedao.h"
+#include "service/database/securitydao.h"
+#include "service/database/transactiondao.h"
+#include "service/database/transactiondetaildao.h"
+#include "service/database/transactiongroupdao.h"
 
 #define TEST_USER "test"
 
@@ -21,10 +29,28 @@ QFETCH_GLOBAL(QString, driver); \
 class Transaction;
 class TransactionDetail;
 
+struct Daos {
+    CompanyDao companyDao;
+    AccountDao accountDao;
+    CategoryDao categoryDao;
+    TransactionGroupDao transactionGroupDao;
+    PayeeDao payeeDao;
+    SecurityDao securityDao;
+    TransactionDao transactionDao;
+    TransactionDetailDao detailDao;
+
+    Daos(const QString &dbType);
+};
+
 class DbTestCase {
     QHash<QString, ConnectionPool*> connectionPools{};
 
+    Daos pgDaos;
+    Daos mysqlDaos;
+    Daos sqliteDaos;
+
 public:
+    QList<const Account*> accounts{};
     QList<const Transaction*> transactions{};
     QList<const TransactionDetail*> details{};
 
@@ -36,10 +62,22 @@ public:
 
     ConnectionPool *connectionPool(QString name);
 
+    CompanyDao &companyDao(const QString &driver);
+    AccountDao &accountDao(const QString &driver);
+    CategoryDao &categoryDao(const QString &driver);
+    PayeeDao &payeeDao(const QString &driver);
+    SecurityDao &securityDao(const QString &driver);
+    TransactionDao &transactionDao(const QString &driver);
+    TransactionDetailDao &detailDao(const QString &driver);
+
     void createDatabases();
 
     QVariant addCompany(QString driver, const QString &name);
-    QVariant addAccount(QString driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
+
+    Account *addAccount(QString driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
+
+    const Account *loadAccount(QString driver, const QVariant &id);
+
     QVariant addPayee(QString driver, const QString &name);
 
     Transaction unsavedTransaction(QDate date = QDate::currentDate());

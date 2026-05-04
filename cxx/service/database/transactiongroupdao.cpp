@@ -36,14 +36,21 @@ static const auto insertQuery = R"(
 insert into tx_group (name, description, version, change_user, change_date)
 values (:name, :description, 0, :user, current_timestamp))";
 
-static const auto deleteQuery = "delete from tx_group where id = :id";
+static const DaoQueries daoQueries{
+    .getAllSql = getAllQuery,
+    .updateSql = updateQuery,
+    .insertSql = insertQuery,
+    .deleteSql =  "delete from tx_group where id = :id",
+};
 
-TransactionGroupDao::TransactionGroupDao()
-    : NamedEntityDao<TransactionGroup>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionGroupDao",
-                                       QObject::tr("Groups have been modified.  Please reload and try again.")} {}
+TransactionGroupDao::TransactionGroupDao(const QString &dbType)
+    : NamedEntityDao<TransactionGroup>{daoQueries, "TransactionGroupDao",
+                                       QObject::tr("Groups have been modified.  Please reload and try again.")}
+    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
+{}
 
-void TransactionGroupDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
+void TransactionGroupDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createTableSql, className, "createTable");
 }
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {

@@ -5,16 +5,16 @@
 #include "service/model/transactiongroup.h"
 
 class TransactionGroupDao : public NamedEntityDao<TransactionGroup> {
-public:
-    TransactionGroupDao();
+    const char *createTableSql;
 
-    void createTable(const QSqlDatabase &db);
+public:
+    TransactionGroupDao(const QString &dbType);
+
+    void createTable(const QSqlDatabase &db) const;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, TransactionGroup *entity) override;
 };
-
-static TransactionGroupDao transactionGroupDao;
 
 #endif // TRANSACTIONGROUPDAO_H

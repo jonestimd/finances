@@ -1,7 +1,10 @@
 #include "payeeservice.h"
 #include "service/database/transactiondao.h"
 
-PayeeService::PayeeService(ConnectionPool *connectionPool) : EntityService{connectionPool, payeeDao} {}
+PayeeService::PayeeService(ConnectionPool *connectionPool, PayeeDao &payeeDao, TransactionDao &transactionDao)
+    : EntityService{connectionPool, payeeDao}
+    , transactionDao{transactionDao}
+{}
 
 QHash<qlonglong, const Payee*> PayeeService::merge(const Payee *payee, const QVariant destinationId, const QString &user) {
     return doInTransaction<QHash<qlonglong, const Payee*>>([=, this](QSqlDatabase &db) {

@@ -2,11 +2,14 @@
 #define TRANSACTIONSERVICE_H
 
 #include "entityservice.h"
-#include "service/database/transactiondao.h"
+#include "database/transactiondao.h"
+#include "database/transactiondetaildao.h"
 
 class TransactionService : EntityService<Transaction, TransactionDao> {
+    TransactionDetailDao &detailDao;
+
 public:
-    TransactionService(ConnectionPool *pool);
+    TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao);
 
     QHash<qlonglong, const Transaction*> getAll(qlonglong accountId);
 

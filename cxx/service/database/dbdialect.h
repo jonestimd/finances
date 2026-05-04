@@ -17,16 +17,20 @@
 #define SQLITE_SUM "decimal_sum"
 #define SQLITE_JSON_ARRAY_AGG "json_group_array"
 
-#define IS_PG(db) db.driverName() == "QPSQL"
-#define IS_MYSQL(db) db.driverName() == "QMYSQL"
-#define IS_SQLITE(db) db.driverName() == "QSQLITE"
+#define PG_DRIVER "QPSQL"
+#define MYSQL_DRIVER "QMYSQL"
+#define SQLITE_DRIVER "QSQLITE"
+
+#define IS_PG(db) db.driverName() == PG_DRIVER
+#define IS_MYSQL(db) db.driverName() == MYSQL_DRIVER
+#define IS_SQLITE(db) db.driverName() == SQLITE_DRIVER
 
 // Requires 3 query variables in scope with the passed suffix and the following prefixes:
 //  - pg
 //  - mysql
 //  - sqlite
-#define SELECT_QUERY(db, SqlVarSuffix) \
-    (IS_PG(db)) ? pg##SqlVarSuffix : ((IS_MYSQL(db)) ? mysql##SqlVarSuffix : sqlite##SqlVarSuffix)
+#define DB_TYPE_QUERY(type, SqlVarSuffix) \
+    (type == PG_DRIVER ? pg##SqlVarSuffix : type == MYSQL_DRIVER ? mysql##SqlVarSuffix : sqlite##SqlVarSuffix)
 
 namespace dbDialect {
     QString inList(const QSqlDatabase &db, const char *column, const char *placeholder);

@@ -8,29 +8,9 @@ class TestAccountService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
 
-    QList<const Account*> accounts{};
-
     QString getName(const char *accountName) {
         auto testName = QTest::currentTestFunction();
         return QString{"%0:%1"}.arg(testName, accountName);
-    }
-
-    Account *addAccount(QString driver, const char *name, const QString &type, const QVariant companyId = QVariant{}) {
-        auto conn = Connection(dbTestCase.connectionPool(driver));
-        Account *account = new Account;
-        account->name = getName(name);
-        account->type = type;
-        account->companyId = companyId;
-        accountDao.add(conn.db, QList{account}, TEST_USER);
-        this->accounts.append(account);
-        return account;
-    }
-
-    const Account *loadAccount(QString driver, const QVariant &id) {
-        auto conn = Connection(dbTestCase.connectionPool(driver));
-        auto rows = accountDao.get(conn.db, {id});
-        accounts.append(rows.values());
-        return rows.value(id.toLongLong());
     }
 
 private slots:
@@ -41,17 +21,20 @@ private slots:
         QTest::addColumn<QVariant>("companyId");
         QTest::addColumn<QVariant>("payeeId");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
-            auto service = new AccountService{dbTestCase.connectionPool(driver)};
+            auto &accountDao = dbTestCase.accountDao(driver);
+            auto &companyDao = dbTestCase.companyDao(driver);
+            auto service = new AccountService{dbTestCase.connectionPool(driver), accountDao, companyDao};
             auto companyId = dbTestCase.addCompany(driver, "company");
             auto payeeId = dbTestCase.addPayee(driver, "payee");
-            QTest::newRow(driver.toLocal8Bit()) << driver << service << companyId << payeeId;
+            QTest::newRow(driver.toLocal8Bit())
+                << driver << service << companyId << payeeId;
         }
     }
 
     void getAll_returnsTransactionSummary() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(AccountService*, service);
-        auto account = addAccount(driver, "account", "BANK");
+        auto account = dbTestCase.addAccount(driver, "account", "BANK");
         // for sqlite3: use amounts that will result in rounding errors if decimal extension is not loaded
         dbTestCase.saveTransaction(account->id, {"1.23"});
         dbTestCase.saveTransaction(account->id, {"2.34", "-5.00"});
@@ -66,7 +49,7 @@ private slots:
     void update_savesData() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(AccountService*, service);
-        auto account = addAccount(driver, "account", "BANK");
+        auto account = dbTestCase.addAccount(driver, "account", "BANK");
         account->name = "new name";
         account->description = "more info";
         account->accountNumber = "123-456";
@@ -76,7 +59,7 @@ private slots:
         QHash<qlonglong, const Company*> companies{};
         auto result = service->update(changes, TEST_USER, companies);
 
-        auto updated = loadAccount(driver, account->id);
+        auto updated = dbTestCase.loadAccount(driver, account->id);
         QCOMPARE(updated->name, account->name);
         QCOMPARE(updated->description, account->description);
         QCOMPARE(updated->accountNumber, account->accountNumber);
@@ -86,8 +69,7 @@ private slots:
     }
 
     void cleanup() {
-        for (auto account : std::as_const(accounts)) delete account ;
-        accounts.clear();
+        dbTestCase.cleanup();
     }
 };
 

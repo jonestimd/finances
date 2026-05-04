@@ -6,7 +6,7 @@
 
 class SecurityService : public EntityService<Security, SecurityDao> {
 public:
-    SecurityService(ConnectionPool *connectionPool);
+    SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao);
 };
 
 #endif // SECURITYSERVICE_H

@@ -26,46 +26,61 @@ create table security (
     constraint security_asset_fk foreign key (asset_id) references asset (id)
 ))";
 
-static const auto getAllQuery = R"(
-with summary as (
-    select security_id
-         , sum(use_count) transactions
-         , sum(shares) shares
-         , min(first_acquired) first_acquired
-         , sum(cost_basis) cost_basis
-         , sum(dividends) dividends
-    from account_security
-    group by security_id
-)
-select a.*, s.type security_type, coalesce(sum.transactions, 0) transactions
-     , coalesce(sum.shares, 0) shares, sum.first_acquired
-     , coalesce(sum.cost_basis) cost_basis
-     , coalesce(sum.dividends) dividends
-from asset a
-join security s on a.id = s.asset_id
-left join summary sum on a.id = sum.security_id)";
+#define GET_ALL_QUERY(sum) \
+    "with summary as (\n" \
+    "    select security_id\n" \
+    "         , " sum "(use_count) transactions\n" \
+    "         , " sum "(shares) shares\n" \
+    "         , min(first_acquired) first_acquired\n" \
+    "         , " sum "(cost_basis) cost_basis\n" \
+    "         , " sum "(dividends) dividends\n" \
+    "    from account_security\n" \
+    "    group by security_id\n" \
+    ")\n" \
+    "select a.*, s.type security_type, coalesce(sum.transactions, 0) transactions\n" \
+    "     , coalesce(sum.shares, 0) shares, sum.first_acquired\n" \
+    "     , coalesce(sum.cost_basis) cost_basis\n" \
+    "     , coalesce(sum.dividends) dividends\n" \
+    "from asset a\n" \
+    "join security s on a.id = s.asset_id\n" \
+    "left join summary sum on a.id = sum.security_id"
 
-static const auto updateQuery = R"(
+static const auto updateSecuritySql = R"(
 update asset a
 join security s on a.id = s.asset_id
 set a.name = :name, a.symbol = :symbol, s.type = :securityType,
     a.change_user = :user, a.change_date = current_timestamp, a.version = version + 1
 where a.id = :id and a.version = :version)";
 
-static const auto insertQuery = R"(
+static const auto insertSecuritySql = R"(
 insert into asset (type, name, symbol, scale, version, change_user, change_date)
 values (:type, :name, :symbol, :scale, 0, :user, current_timestamp))";
 
 static const auto insertSecurityQuery = "insert into security (asset_id, type) values (:id, :type)";
 
-static const auto deleteQuery = "delete from security where asset_id = :id";
+static const auto deleteSecuritySql = "delete from security where asset_id = :id";
 
-SecurityDao::SecurityDao()
-    : NamedEntityDao<Security>{getAllQuery, updateQuery , insertQuery, deleteQuery, "SecurityDao",
-                               QObject::tr("Securities have been modified.  Please reload and try again")} {}
+#define DAO_QUERIES(selectAll) \
+    .getAllSql = selectAll,\
+    .updateSql = updateSecuritySql,\
+    .insertSql = insertSecuritySql,\
+    .deleteSql = deleteSecuritySql,
 
-void SecurityDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateAssetTableSql), className, "createTable.asset");
+static const DaoQueries pgMysqlQueries{
+    DAO_QUERIES(GET_ALL_QUERY("sum"))
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(GET_ALL_QUERY(SQLITE_SUM))
+};
+
+SecurityDao::SecurityDao(const QString &dbType)
+    : NamedEntityDao<Security>{dbType == SQLITE_DRIVER ? sqliteQueries : pgMysqlQueries, "SecurityDao",
+                               QObject::tr("Securities have been modified.  Please reload and try again")}
+    , createAssetTableSql{DB_TYPE_QUERY(dbType, CreateAssetTableSql)}
+{}
+
+void SecurityDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createAssetTableSql, className, "createTable.asset");
     sql::exec(db, createTableSql, className, "createTable.security");
 }
 

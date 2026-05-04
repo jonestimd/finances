@@ -1,8 +1,10 @@
 #include "transactionservice.h"
 #include "database/transactiondetaildao.h"
 
-TransactionService::TransactionService(ConnectionPool *pool)
-    : EntityService{pool, transactionDao} {}
+TransactionService::TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao)
+    : EntityService{pool, transactionDao}
+    , detailDao{detailDao}
+{}
 
 QHash<qlonglong, const Transaction *> TransactionService::getAll(qlonglong accountId) {
     Connection conn(connectionPool);
@@ -63,19 +65,19 @@ struct UpdateSession {
     }
 };
 
-static void addTransfers(QSqlDatabase &db, QHash<TransactionDetail*, TxDetail> &detailTransfers, const QString &user, TransactionsData &updates) {
+static void addTransfers(QSqlDatabase &db, TransactionDao &dao, TransactionDetailDao &detailDao, QHash<TransactionDetail*, TxDetail> &detailTransfers, const QString &user, TransactionsData &updates) {
     if (!detailTransfers.isEmpty()) {
         QHash<Transaction*, TransactionDetail*> transfers{};
         for (auto [transaction, detail] : detailTransfers.values()) transfers.insert(transaction, detail);
-        updates.transactions.append(transactionDao.add(db, transfers.keys(), user));
+        updates.transactions.append(dao.add(db, transfers.keys(), user));
         QHash<TransactionDetail*, TransactionDetail*> detailPairs{};
         for (auto [detail, related] : detailTransfers.asKeyValueRange()) {
             detailPairs.insert(detail, related.detail);
             related.detail->relatedDetailId = detail->id;
             related.detail->transactionId = related.transaction->id;
         }
-        updates.details.append(transactionDetailDao.add(db, transfers.values(), user));
-        transactionDetailDao.setRelatedDetailIds(db, detailPairs);
+        updates.details.append(detailDao.add(db, transfers.values(), user));
+        detailDao.setRelatedDetailIds(db, detailPairs);
     }
 }
 
@@ -84,7 +86,7 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
     try {
         UpdateSession session{changes}; // TODO return related deletes
         if (!changes.adds.isEmpty()) {
-            transactionDao.add(conn.db, changes.adds, user);
+            dao.add(conn.db, changes.adds, user);
             session.add(changes.adds);
         }
 
@@ -98,45 +100,45 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
                     transfers.insert(detail, {relatedTransaction, relatedDetail});
                 }
             }
-            transactionDetailDao.add(conn.db, changes.detailAdds.values(), user);
+            detailDao.add(conn.db, changes.detailAdds.values(), user);
             session.add(changes.detailAdds.values());
             for (auto [transaction, detail] : changes.detailAdds.asKeyValueRange()) {
                 session.getTransaction(transaction)->detailIds.append(detail->id);
             }
-            addTransfers(conn.db, transfers, user, session.result);
+            addTransfers(conn.db, dao, detailDao, transfers, user, session.result);
         }
 
-        if (!changes.updates.isEmpty()) transactionDao.update(conn.db, changes.updates, user);
+        if (!changes.updates.isEmpty()) dao.update(conn.db, changes.updates, user);
         if (!changes.detailUpdates.isEmpty()) {
-            auto relatedIds = transactionDetailDao.getRelatedDetailIds(conn.db, changes.detailUpdates);
+            auto relatedIds = detailDao.getRelatedDetailIds(conn.db, changes.detailUpdates);
             for (auto detail: changes.detailUpdates) {
                 if (detail->transferAccountId.isNull()) detail->relatedDetailId = QVariant{};
             }
-            session.add(transactionDetailDao.update(conn.db, changes.detailUpdates, user));
+            session.add(detailDao.update(conn.db, changes.detailUpdates, user));
             for (auto detail : changes.detailUpdates) {
                 auto [accountId, relatedDetailId] = relatedIds.value(detail->id.toLongLong());
                 if (detail->transferAccountId.isNull()) {
                     if (!relatedDetailId.isNull()) {
-                        transactionDetailDao.remove(conn.db, relatedDetailId);
+                        detailDao.remove(conn.db, relatedDetailId);
                     }
                 }
                 else if (relatedDetailId.isNull()) {
-                    auto transaction = transactionDao.addRelatedTransaction(conn.db, detail, user);
+                    auto transaction = dao.addRelatedTransaction(conn.db, detail, user);
                     session.result.transactions.append(transaction);
                     auto relatedDetail = detail->newTransfer(accountId, transaction->id);
-                    session.result.details.append(transactionDetailDao.add(conn.db, {relatedDetail}, user));
+                    session.result.details.append(detailDao.add(conn.db, {relatedDetail}, user));
                     transaction->detailIds.append(relatedDetail->id);
-                    transactionDetailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail}});
+                    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail}});
                 }
             }
         }
 
         if (!changes.deletes.isEmpty()) {
-            transactionDetailDao.removeByTransaction(conn.db, changes.deletes);
-            transactionDao.remove(conn.db, changes.deletes);
+            detailDao.removeByTransaction(conn.db, changes.deletes);
+            dao.remove(conn.db, changes.deletes);
         }
-        if (!changes.detailDeletes.isEmpty()) transactionDetailDao.remove(conn.db, changes.detailDeletes);
-        transactionDao.removeEmpty(conn.db);
+        if (!changes.detailDeletes.isEmpty()) detailDao.remove(conn.db, changes.detailDeletes);
+        dao.removeEmpty(conn.db);
         return session.result;
     } catch(...) {
         conn.db.rollback();

@@ -5,10 +5,12 @@
 #include "service/model/security.h"
 
 class SecurityDao : public NamedEntityDao<Security> {
-public:
-    SecurityDao();
+    const char *createAssetTableSql;
 
-    void createTable(const QSqlDatabase &db);
+public:
+    SecurityDao(const QString &dbType);
+
+    void createTable(const QSqlDatabase &db) const;
 
     virtual QList<const Security*> add(QSqlDatabase &db, QList<Security*> securities, const QString &user) override;
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;
@@ -17,7 +19,5 @@ protected:
     virtual void bindUpdateValues(QSqlQuery &query, Security *security) override;
     virtual void bindInsertValues(QSqlQuery &query, Security *security) override;
 };
-
-static SecurityDao securityDao;
 
 #endif // SECURITYDAO_H

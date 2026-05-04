@@ -6,19 +6,18 @@
 #include <QtSql/QSqlDatabase>
 
 class AccountDao : public NamedEntityDao<Account> {
-public:
-    AccountDao();
+    const char *createTableSql;
 
-    void createTable(const QSqlDatabase &db);
+public:
+    AccountDao(const QString &dbType);
+
+    void createTable(const QSqlDatabase &db) const;
 
     using NamedEntityDao::getAll;
-    virtual const char *getLoadAllQuery(QSqlDatabase &db) const override;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;
 };
-
-static AccountDao accountDao;
 
 #endif // ACCOUNT_DAO_H

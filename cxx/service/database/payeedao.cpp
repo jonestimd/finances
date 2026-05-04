@@ -36,12 +36,20 @@ values (:name, 0, :user, current_timestamp))";
 
 static const auto deleteQuery = "delete from payee where id = :id";
 
-PayeeDao::PayeeDao()
-    : NamedEntityDao<Payee>{getAllQuery, updateQuery, insertQuery, deleteQuery, "PayeeDao",
+static const DaoQueries payeeQueries{
+    .getAllSql = getAllQuery,
+    .updateSql = updateQuery,
+    .insertSql = insertQuery,
+    .deleteSql = deleteQuery,
+};
+
+PayeeDao::PayeeDao(const QString &dbType)
+    : NamedEntityDao<Payee>{payeeQueries, "PayeeDao",
                             QObject::tr("Payees have been modified.  Please reload and try again.")}
+    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
 {}
 
-void PayeeDao::createTable(const QSqlDatabase &db) {
-    sql::exec(db, SELECT_QUERY(db, CreateTableSql), className, "createTable");
+void PayeeDao::createTable(const QSqlDatabase &db) const {
+    sql::exec(db, createTableSql, className, "createTable");
 }
 

@@ -6,12 +6,12 @@
 #include <QtSql/QSqlDatabase>
 
 class PayeeDao : public NamedEntityDao<Payee> {
+    const char *createTableSql;
+
 public:
-    PayeeDao();
+    PayeeDao(const QString &dbType);
 
-    void createTable(const QSqlDatabase &db);
+    void createTable(const QSqlDatabase &db) const;
 };
-
-static PayeeDao payeeDao;
 
 #endif // PAYEE_DAO_H

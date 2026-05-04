@@ -32,16 +32,17 @@ class TestTransactionService : public QObject {
         detail->relatedDetailId = relatedDetail->id;
         relatedDetail->relatedDetailId = detail->id;
 
+        auto &detailDao = dbTestCase.detailDao(driver);
         Connection conn(dbTestCase.connectionPool(driver));
-        transactionDetailDao.setRelatedDetailIds(conn.db, {{relatedDetail, detail}});
-        transactionDetailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail}});
+        detailDao.setRelatedDetailIds(conn.db, {{relatedDetail, detail}});
+        detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail}});
         return QList{tx, relatedTx};
     }
 
     const Transaction *loadTransaction(const QVariant id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
-        auto result = transactionDao.get(conn.db, QList{id});
+        auto result = dbTestCase.transactionDao(driver).get(conn.db, QList{id});
         dbTestCase.transactions.append(result.values());
         return result.value(id.toLongLong());
     }
@@ -49,7 +50,7 @@ class TestTransactionService : public QObject {
     const TransactionDetail *loadDetail(const QVariant id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
-        auto result = transactionDetailDao.get(conn.db, QList{id});
+        auto result = dbTestCase.detailDao(driver).get(conn.db, QList{id});
         dbTestCase.details.append(result.values());
         return result.value(id.toLongLong());
     }
@@ -63,10 +64,12 @@ private slots:
         QTest::addColumn<QVariant>("altAccountId");
         QTest::addColumn<QVariant>("payeeId");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
-            auto service = new TransactionService{dbTestCase.connectionPool(driver)};
+            auto &txDao = dbTestCase.transactionDao(driver);
+            auto &detailDao = dbTestCase.detailDao(driver);
+            auto service = new TransactionService{dbTestCase.connectionPool(driver), txDao, detailDao};
             auto companyId = dbTestCase.addCompany(driver, "Bank 1");
-            auto accountId = dbTestCase.addAccount(driver, "Account 1", "BANK", companyId);
-            auto altAccountId = dbTestCase.addAccount(driver, "Account 2", "BANK", companyId);
+            auto accountId = dbTestCase.addAccount(driver, "Account 1", "BANK", companyId)->id;
+            auto altAccountId = dbTestCase.addAccount(driver, "Account 2", "BANK", companyId)->id;
             auto payeeId = dbTestCase.addPayee(driver, "Payee 1");
             QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << altAccountId << payeeId;
         }

@@ -38,6 +38,8 @@ public:
     const QString displayName;
 
     ConnectionPool(const ConnectionSettings &settings);
+
+    const QString &dbType() const;
 };
 
 class Connection {
