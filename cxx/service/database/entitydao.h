@@ -7,6 +7,7 @@
 #include <QLoggingCategory>
 
 typedef struct {
+    const char *const createTableSql;
     const char *const getAllSql;
     const char *const updateSql;
     const char *const insertSql;
@@ -15,6 +16,7 @@ typedef struct {
 
 template<class Entity>
 class EntityDao {
+    const char *const createTableSql;
     const char *const getAllSql;
     const char *const updateSql;
     const char *const insertSql;
@@ -42,7 +44,8 @@ protected:
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
 
     EntityDao(const DaoQueries &queries, const char *className, const QString staleDataMessage, const char *idColumn = "id")
-        : getAllSql{queries.getAllSql}
+        : createTableSql{queries.createTableSql}
+        , getAllSql{queries.getAllSql}
         , updateSql{queries.updateSql}
         , insertSql{queries.insertSql}
         , deleteSql{queries.deleteSql}
@@ -52,6 +55,10 @@ protected:
     {}
 
 public:
+    virtual void createTable(const QSqlDatabase &db) const {
+        sql::exec(db, createTableSql, className, "createTable");
+    }
+
     virtual QHash<qlonglong, const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         query.prepare(getAllSql);

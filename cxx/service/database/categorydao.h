@@ -6,12 +6,10 @@
 #include <QtSql/QSqlDatabase>
 
 class CategoryDao : public NamedEntityDao<Category> {
-    const char *createTableSql;
-
 public:
     CategoryDao(const QString &dbType);
 
-    void createTable(const QSqlDatabase &db) const;
+    virtual void createTable(const QSqlDatabase &db) const override;
 
     QHash<qlonglong, const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
     void moveChildren(QSqlDatabase &db, const Category* category, const QVariant destinationId, const QString user) const;

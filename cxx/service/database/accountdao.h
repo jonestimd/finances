@@ -6,12 +6,8 @@
 #include <QtSql/QSqlDatabase>
 
 class AccountDao : public NamedEntityDao<Account> {
-    const char *createTableSql;
-
 public:
     AccountDao(const QString &dbType);
-
-    void createTable(const QSqlDatabase &db) const;
 
     using NamedEntityDao::getAll;
 

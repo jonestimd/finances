@@ -22,10 +22,6 @@
     "    constraint tx_security_fk foreign key (security_id) references asset (id)\n" \
     ")"
 
-static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
-static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
-static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
-
 static const auto createPayeeIndexSql = "create index tx_payee on tx (payee_id)";
 
 #define GET_BY_ACCOUNT_QUERY(jsonArrayAgg) \
@@ -78,22 +74,31 @@ update tx
 set payee_id = :payeeId, change_user = :user, change_date = current_timestamp, version = version + 1
 where payee_id = :oldPayeeId)";
 
-static const DaoQueries daoQueries{
-    .getAllSql = "select * from tx",
-    .updateSql = updateQuery,
-    .insertSql = insertQuery,
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = "select * from tx",\
+    .updateSql = updateQuery,\
+    .insertSql = insertQuery,\
     .deleteSql =  "delete from tx where id = :id",
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
 };
 
 TransactionDao::TransactionDao(const QString &dbType)
-    : EntityDao<Transaction>{daoQueries, "TransactionDao",
+    : EntityDao<Transaction>{DB_TYPE_QUERY(dbType, Queries), "TransactionDao",
                              QObject::tr("Transactions have been modified.  Please reload and try again.")}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
     , getByAccountSql{DB_TYPE_QUERY(dbType, GetByAccountSql)}
 {}
 
 void TransactionDao::createTable(const QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
+    EntityDao::createTable(db);
     sql::exec(db, createPayeeIndexSql, className, "createPayeeIndex");
 }
 

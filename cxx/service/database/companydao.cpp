@@ -33,19 +33,24 @@ values (:name, 0, :user, current_timestamp))";
 
 static const auto deleteCompanySql = "delete from company where id = :id";
 
-static const DaoQueries queries{
-    .getAllSql = getCompaniesSql,
-    .updateSql = updateCompanySql,
-    .insertSql = insertCompanySql,
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = getCompaniesSql,\
+    .updateSql = updateCompanySql,\
+    .insertSql = insertCompanySql,\
     .deleteSql = deleteCompanySql,
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
 };
 
 CompanyDao::CompanyDao(const QString &dbType)
-    : NamedEntityDao<Company>{queries, "CompanyDao",
+    : NamedEntityDao<Company>{DB_TYPE_QUERY(dbType, Queries), "CompanyDao",
                               QObject::tr("Companies have been modified.  Please reload and try again.")}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
 {}
-
-void CompanyDao::createTable(QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
-}

@@ -10,6 +10,8 @@
 #include "service/database/categorydao.h"
 #include "service/database/payeedao.h"
 #include "service/database/securitydao.h"
+#include "service/database/securitylotdao.h"
+#include "service/database/stocksplitdao.h"
 #include "service/database/transactiondao.h"
 #include "service/database/transactiondetaildao.h"
 #include "service/database/transactiongroupdao.h"
@@ -38,9 +40,16 @@ struct Daos {
     SecurityDao securityDao;
     TransactionDao transactionDao;
     TransactionDetailDao detailDao;
+    StockSplitDao stockSplitDao;
+    SecurityLotDao securityLotDao;
 
     Daos(const QString &dbType);
 };
+
+namespace factory {
+    Transaction transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    TransactionDetail detail(const char *amount = "1.00");
+}
 
 class DbTestCase {
     QHash<QString, ConnectionPool*> connectionPools{};
@@ -67,31 +76,25 @@ public:
     CategoryDao &categoryDao(const QString &driver);
     PayeeDao &payeeDao(const QString &driver);
     SecurityDao &securityDao(const QString &driver);
+    StockSplitDao &stockSplitDao(const QString &driver);
     TransactionDao &transactionDao(const QString &driver);
     TransactionDetailDao &detailDao(const QString &driver);
-
+    
     void createDatabases();
 
-    QVariant addCompany(QString driver, const QString &name);
+    QVariant addCompany(const QString &driver, const QString &name);
+    Account *addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
+    QVariant addPayee(const QString &driver, const QString &name);
+    QVariant addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
 
-    Account *addAccount(QString driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
+    const Account *loadAccount(const QString &driver, QVariant id);
 
-    const Account *loadAccount(QString driver, const QVariant &id);
-
-    QVariant addPayee(QString driver, const QString &name);
-
-    Transaction unsavedTransaction(QDate date = QDate::currentDate());
-    Transaction unsavedTransaction(QVariant accountId, QDate date = QDate::currentDate());
-
-    TransactionDetail unsavedDetail(const char *amount = "1.00");
-
-    TxDetails saveTransaction(QList<const char*> detailAmounts);
-    TxDetails saveTransaction(QVariant accountId, QList<const char*> detailAmounts);
+    TxDetails saveTransaction(const Transaction &unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
 
     void cleanup();
 
 private:
-    void addConnection(QString name, const ConnectionSettings &settings);
+    void addConnection(const QString &name, const ConnectionSettings &settings);
 };
 
 #endif // DB_TEST_CASE_H

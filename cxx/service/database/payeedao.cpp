@@ -11,10 +11,6 @@
     "    constraint payee_ak unique (name)\n" \
     ")"
 
-static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
-static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
-static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
-
 static const auto getAllQuery = R"(
 with summary as (
     select payee_id, count(*) transactions
@@ -36,20 +32,24 @@ values (:name, 0, :user, current_timestamp))";
 
 static const auto deleteQuery = "delete from payee where id = :id";
 
-static const DaoQueries payeeQueries{
-    .getAllSql = getAllQuery,
-    .updateSql = updateQuery,
-    .insertSql = insertQuery,
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = getAllQuery,\
+    .updateSql = updateQuery,\
+    .insertSql = insertQuery,\
     .deleteSql = deleteQuery,
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
 };
 
 PayeeDao::PayeeDao(const QString &dbType)
-    : NamedEntityDao<Payee>{payeeQueries, "PayeeDao",
+    : NamedEntityDao<Payee>{DB_TYPE_QUERY(dbType, Queries), "PayeeDao",
                             QObject::tr("Payees have been modified.  Please reload and try again.")}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
 {}
-
-void PayeeDao::createTable(const QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
-}
-

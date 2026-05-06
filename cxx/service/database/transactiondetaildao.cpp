@@ -28,10 +28,6 @@
     "    constraint tx_detail_tx_type_fk foreign key (tx_category_id) references tx_category (id)\n" \
     ")"
 
-static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
-static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
-static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
-
 static const auto getAllQuery = R"(
 select td.*, rx.account_id transfer_account_id
 from tx_detail td
@@ -108,26 +104,31 @@ update tx_detail
 set tx_category_id = :categoryId, change_user = :user, change_date = current_timestamp, version = version + 1
 where tx_category_id = :oldCategoryId)";
 
-static const DaoQueries daoQueries{
-    .getAllSql = getAllQuery,
-    .updateSql = updateQuery,
-    .insertSql = insertQuery,
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = getAllQuery,\
+    .updateSql = updateQuery,\
+    .insertSql = insertQuery,\
     .deleteSql = "delete from tx_detail where id = :id",
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
 };
 
 TransactionDetailDao::TransactionDetailDao(const QString &dbType)
-    : EntityDao<TransactionDetail>{daoQueries, "TransactionDetailDao",
+    : EntityDao<TransactionDetail>{DB_TYPE_QUERY(dbType, Queries), "TransactionDetailDao",
                                    QObject::tr("Transaction details have been modified.  Please reload and try again."), "td.id"}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
     , deleteByTransactionSql{DB_TYPE_QUERY(dbType, DeleteByTransactionSql)}
     , deleteByIdsSql{DB_TYPE_QUERY(dbType, DeleteByIdsSql)}
     , updateTransferAmountSql{DB_TYPE_QUERY(dbType, UpdateTransferAmountSql)}
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
 {}
-
-void TransactionDetailDao::createTable(const QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
-}
 
 QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, const QVariant &accountId) {
     QSqlQuery query(db);

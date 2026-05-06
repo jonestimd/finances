@@ -5,12 +5,14 @@
 #include "service/model/security.h"
 
 class SecurityDao : public NamedEntityDao<Security> {
-    const char *createAssetTableSql;
+    const char *createAdjustSharesSql;
+    const char *createAccountSecuritySql;
 
 public:
     SecurityDao(const QString &dbType);
 
-    void createTable(const QSqlDatabase &db) const;
+    virtual void createTable(const QSqlDatabase &db) const override;
+    void createViews(const QSqlDatabase &db) const;
 
     virtual QList<const Security*> add(QSqlDatabase &db, QList<Security*> securities, const QString &user) override;
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;

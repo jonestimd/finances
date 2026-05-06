@@ -19,10 +19,6 @@
     "    constraint tx_type_parent_fk foreign key (parent_id) references tx_category (id)\n" \
     ")"
 
-static const auto pgCreateTableQuery = CREATE_TABLE_QUERY(PG_ID_TYPE, "nulls not distinct ");
-static const auto mysqlCreateTableQuery = CREATE_TABLE_QUERY(MYSQL_ID_TYPE, "");
-static const auto sqliteCreateTableQuery = CREATE_TABLE_QUERY(SQLITE_ID_TYPE, "");
-
 static const auto uniqueIndexQuery = "create unique index unique_category on tx_category (coalesce(parent_id, -1), code)";
 
 #define GET_ALL_QUERY(jsonArrayAgg) \
@@ -40,9 +36,6 @@ static const auto uniqueIndexQuery = "create unique index unique_category on tx_
     "from tx_category c\n" \
     "left join summary s on c.id = s.tx_category_id\n" \
     "left join children ch on c.id = ch.parent_id"
-
-static const auto getCategoriesSql = GET_ALL_QUERY(DEFAULT_JSON_ARRAY_AGG);
-static const auto sqliteGetCategoriesSql = GET_ALL_QUERY(SQLITE_JSON_ARRAY_AGG);
 
 static const auto updateCategorySql = R"(
 update tx_category
@@ -67,27 +60,30 @@ update tx_category
 set parent_id = :parentId, change_user = :user, change_date = current_timestamp, version = version + 1
 where parent_id = :oldParentId)";
 
-static const DaoQueries pgMysqlQueries{
-    .getAllSql = GET_ALL_QUERY(DEFAULT_JSON_ARRAY_AGG),
-    .updateSql = updateCategorySql,
-    .insertSql = insertCategorySql,
+#define DAO_QUERIES(idtype, uniqueNulls, jsonArrayAgg) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype, uniqueNulls),\
+    .getAllSql = GET_ALL_QUERY(jsonArrayAgg),\
+    .updateSql = updateCategorySql,\
+    .insertSql = insertCategorySql,\
     .deleteSql = deleteCategorySql,
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE, "nulls not distinct ", DEFAULT_JSON_ARRAY_AGG)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE, "", DEFAULT_JSON_ARRAY_AGG)
 };
 static const DaoQueries sqliteQueries{
-    .getAllSql = GET_ALL_QUERY(SQLITE_JSON_ARRAY_AGG),
-    .updateSql = updateCategorySql,
-    .insertSql = insertCategorySql,
-    .deleteSql = deleteCategorySql,
+    DAO_QUERIES(SQLITE_ID_TYPE, "", SQLITE_JSON_ARRAY_AGG)
 };
 
 CategoryDao::CategoryDao(const QString &dbType)
-    : NamedEntityDao<Category>{dbType == SQLITE_DRIVER ? sqliteQueries : pgMysqlQueries, "CategoryDao",
+    : NamedEntityDao<Category>{DB_TYPE_QUERY(dbType, Queries), "CategoryDao",
                                QObject::tr("Categories have been modified.  Please reload and try again.")}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableQuery)}
 {}
 
 void CategoryDao::createTable(const QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
+    NamedEntityDao::createTable(db);
     if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 

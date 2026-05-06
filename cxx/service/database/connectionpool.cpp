@@ -4,6 +4,7 @@
 #include <QSqlDriver>
 #include <sqlite3.h>
 #include "connectionpool.h"
+#include "dbdialect.h"
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
@@ -57,6 +58,7 @@ QSqlDatabase ConnectionPool::acquire() {
                     qCritical() << msg;
                     sqlite3_free(msg);
                 }
+                dbDialect::addDbFunctions(handle);
             }
         }
         nameStore.setLocalData(dbName);

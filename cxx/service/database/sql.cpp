@@ -1,6 +1,7 @@
 #include "sql.h"
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QSqlDriver>
 #include <QSqlField>
 #include <QSqlError>
 
@@ -22,7 +23,9 @@ void sql::bindList(QSqlQuery &query, const char *name, const QVariantList &value
 }
 
 static void logAndThrowError(const QSqlQuery &query, const QString &className, const char *queryName) {
-    qCritical().noquote().nospace() << className << "." << queryName << ": " << query.lastError().text();
+    auto connectionName = query.driver()->connectionName();
+    auto driver = connectionName.split(':').first();
+    qCritical().noquote().nospace() << driver << " " << className << "." << queryName << ": " << query.lastError().text();
     qCritical().noquote() << query.lastQuery();
     throw query.lastError().text();
 }

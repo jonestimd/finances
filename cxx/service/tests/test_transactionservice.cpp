@@ -17,14 +17,19 @@ class TestTransactionService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
 
+    DbTestCase::TxDetails saveTransaction(QList<const char*> amounts) {
+        QFETCH_GLOBAL(QVariant, accountId);
+        return dbTestCase.saveTransaction(factory::transaction(accountId), amounts);
+    }
+
     QList<DbTestCase::TxDetails> saveTransfer(QList<const char*> amounts) {
         const char *transferAmount = amounts.at(0);
         QString relatedAmount = transferAmount[0] == '-' ? QString(transferAmount[1]) : QString(transferAmount).prepend('-');
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(QVariant, accountId);
         QFETCH_GLOBAL(QVariant, altAccountId);
-        auto tx = dbTestCase.saveTransaction(amounts);
-        auto relatedTx = dbTestCase.saveTransaction(altAccountId, QList{relatedAmount.toLocal8Bit().constData()});
+        auto tx = saveTransaction(amounts);
+        auto relatedTx = dbTestCase.saveTransaction(factory::transaction(altAccountId), QList{relatedAmount.toLocal8Bit().constData()});
         auto detail = GET_DETAILS(tx).at(0);
         detail->transferAccountId = altAccountId;
         auto relatedDetail = GET_DETAILS(relatedTx).at(0);
@@ -53,6 +58,12 @@ class TestTransactionService : public QObject {
         auto result = dbTestCase.detailDao(driver).get(conn.db, QList{id});
         dbTestCase.details.append(result.values());
         return result.value(id.toLongLong());
+    }
+
+    Transaction unsavedTransaction() {
+        QFETCH_GLOBAL(QVariant, accountId);
+        QFETCH_GLOBAL(QVariant, payeeId);
+        return factory::transaction(accountId, payeeId);
     }
 
 private slots:
@@ -84,9 +95,9 @@ private slots:
 
     void update_addsNewTransaction() {
         QFETCH_GLOBAL(TransactionService*, service);
-        Transaction tx = dbTestCase.unsavedTransaction();
-        TransactionDetail detail1 = dbTestCase.unsavedDetail("1.00");
-        TransactionDetail detail2 = dbTestCase.unsavedDetail("2.00");
+        Transaction tx = unsavedTransaction();
+        TransactionDetail detail1 = factory::detail("1.00");
+        TransactionDetail detail2 = factory::detail("2.00");
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(&tx), TX_DELETES(),
             DETAIL_UPDATES(), DETAIL_ADDS({&tx, &detail1}, {&tx, &detail2}), DETAIL_DELETES(),
@@ -108,8 +119,8 @@ private slots:
     void update_addsNewTransfer() {
         QFETCH_GLOBAL(TransactionService*, service);
         QFETCH_GLOBAL(QVariant, altAccountId);
-        Transaction tx = dbTestCase.unsavedTransaction();
-        TransactionDetail detail = dbTestCase.unsavedDetail("1.00");
+        Transaction tx = unsavedTransaction();
+        TransactionDetail detail = factory::detail("1.00");
         detail.transferAccountId = altAccountId;
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(&tx), TX_DELETES(),
@@ -133,8 +144,8 @@ private slots:
 
     void update_updatesTransactionAndDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
-        auto [tx, details] = dbTestCase.saveTransaction(QList{"1.00", "2.00"});
-        auto newDetail = dbTestCase.unsavedDetail("3.45");
+        auto [tx, details] = saveTransaction(QList{"1.00", "2.00"});
+        auto newDetail = factory::detail("3.45");
         tx->payeeId = QVariant{};
         tx->memo = "tx comment";
         auto detail0 = details.at(0);
@@ -179,7 +190,7 @@ private slots:
     void update_addsRelatedTransactionAndDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
         QFETCH_GLOBAL(QVariant, altAccountId);
-        auto [tx, details] = dbTestCase.saveTransaction(QList{"1.00", "2.34"});
+        auto [tx, details] = saveTransaction(QList{"1.00", "2.34"});
         auto detail = details.at(1);
         detail->transferAccountId = altAccountId;
         TransactionUpdate changes{
@@ -220,8 +231,8 @@ private slots:
 
     void update_deletesTransactionAndDetails() {
         QFETCH_GLOBAL(TransactionService*, service);
-        auto [tx1, details1] = dbTestCase.saveTransaction(QList{"1.00", "2.00"});
-        auto [tx2, details2] = dbTestCase.saveTransaction(QList{"3.00"});
+        auto [tx1, details1] = saveTransaction(QList{"1.00", "2.00"});
+        auto [tx2, details2] = saveTransaction(QList{"3.00"});
         auto transfer1 = saveTransfer({"4.00"}); // delete transfer tx
         auto [tx3, details3] = transfer1.at(0);
         auto [tx4, details4] = transfer1.at(1);

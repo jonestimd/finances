@@ -20,10 +20,6 @@
     "    constraint account_currency_fk foreign key (currency_id) references asset (id)\n" \
     ")"
 
-static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
-static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
-static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
-
 #define GET_ALL_QUERY(sum) \
     "with balance as (\n" \
     "  select tx.account_id, " sum "(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions\n" \
@@ -52,28 +48,27 @@ where c.type = 'Currency' and c.symbol = '$')";
 
 static const auto deleteAccountSql = "delete from account where id = :id";
 
-#define DAO_QUERIES(selectAll) \
-    .getAllSql = selectAll,\
+#define DAO_QUERIES(idtype, sum) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = GET_ALL_QUERY(sum),\
     .updateSql = updateAccountSql,\
     .insertSql = insertAccountSql,\
     .deleteSql = deleteAccountSql,
 
-static const DaoQueries pgMysqlQueries{
-    DAO_QUERIES(GET_ALL_QUERY("sum"))
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE, DEFAULT_SUM)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE, DEFAULT_SUM)
 };
 static const DaoQueries sqliteQueries{
-    DAO_QUERIES(GET_ALL_QUERY(SQLITE_SUM))
+    DAO_QUERIES(SQLITE_ID_TYPE, SQLITE_SUM)
 };
 
 AccountDao::AccountDao(const QString &dbType)
-    : NamedEntityDao<Account>{dbType == SQLITE_DRIVER ? sqliteQueries : pgMysqlQueries, "AccountDao",
+    : NamedEntityDao<Account>{DB_TYPE_QUERY(dbType, Queries), "AccountDao",
                               QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"}
-    , createTableSql{DB_TYPE_QUERY(dbType, CreateTableSql)}
 {}
-
-void AccountDao::createTable(const QSqlDatabase &db) const {
-    sql::exec(db, createTableSql, className, "createTable");
-}
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
     NamedEntityDao::bindUpdateValues(query, account);

@@ -7,7 +7,6 @@
 
 class Payee : public NamedEntity {
 public:
-    QVariant name;
     QVariant transactions{0};
 
     Payee();

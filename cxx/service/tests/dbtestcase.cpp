@@ -3,6 +3,8 @@
 #include "service/database/transactiongroupdao.h"
 #include "service/database/transactiondetaildao.h"
 #include <QFile>
+#include <QSqlError>
+#include <QSqlResult>
 #include <QtTest/qtestcase.h>
 
 Q_LOGGING_CATEGORY(sqlLogger, "sql")
@@ -11,7 +13,11 @@ static const auto addCurencyQuery = R"(
 insert into asset (name, type, scale, symbol, change_user, version)
 values ('USD', 'Currency', 2, '$', :user, 0))";
 
-static const QList<const char *> dropTableQueries = {
+static const QList<const char*> dropTableQueries = {
+    "drop view if exists account_security",
+    "drop function if exists adjust_shares",
+    "drop table if exists security_lot",
+    "drop table if exists stock_split",
     "drop table if exists tx_detail",
     "drop table if exists tx",
     "drop table if exists tx_group",
@@ -32,7 +38,25 @@ Daos::Daos(const QString &dbType)
     , securityDao{dbType}
     , transactionDao{dbType}
     , detailDao{dbType}
+    , stockSplitDao{dbType}
+    , securityLotDao{dbType}
 {};
+
+namespace factory {
+    Transaction transaction(QVariant accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
+        Transaction tx{accountId};
+        tx.payeeId = payeeId;
+        tx.securityId = securityId;
+        tx.date = date;
+        return tx;
+    }
+
+    TransactionDetail detail(const char *amount) {
+        TransactionDetail detail{};
+        detail.amount = DECIMAL_VARIANT(amount);
+        return detail;
+    }
+}
 
 #define DAOS(driver) (driver == PG_DRIVER ? pgDaos : driver == MYSQL_DRIVER ? mysqlDaos : sqliteDaos)
 
@@ -100,6 +124,10 @@ SecurityDao &DbTestCase::securityDao(const QString &driver) {
     return DAOS(driver).securityDao;
 }
 
+StockSplitDao &DbTestCase::stockSplitDao(const QString &driver) {
+    return DAOS(driver).stockSplitDao;
+}
+
 TransactionDao &DbTestCase::transactionDao(const QString &driver) {
     return DAOS(driver).transactionDao;
 }
@@ -108,11 +136,16 @@ TransactionDetailDao &DbTestCase::detailDao(const QString &driver) {
     return DAOS(driver).detailDao;
 }
 
+#define not_starts_with(str, prefix) std::strncmp(str, prefix, sizeof(prefix)-1)
+#define CLASS_NAME "DbTestCase"
+
 void DbTestCase::createDatabases() {
     for (auto [driver, pool] : connectionPools.asKeyValueRange()) {
         auto conn = Connection(pool);
-        for (auto &dropQuery : dropTableQueries) {
-            QSqlQuery{conn.db}.exec(dropQuery);
+        for (auto const dropQuery : dropTableQueries) {
+            if (driver != SQLITE_DRIVER || not_starts_with(dropQuery, "drop function")) {
+                sql::exec(conn.db, dropQuery, CLASS_NAME, "dropObject");
+            }
         }
         auto daos = DAOS(driver);
         daos.securityDao.createTable(conn.db);
@@ -123,15 +156,19 @@ void DbTestCase::createDatabases() {
         daos.transactionGroupDao.createTable(conn.db);
         daos.transactionDao.createTable(conn.db);
         daos.detailDao.createTable(conn.db);
+        daos.stockSplitDao.createTable(conn.db);
+        daos.securityLotDao.createTable(conn.db);
 
-        QSqlQuery query(conn.db);
+        daos.securityDao.createViews(conn.db);
+
+        QSqlQuery query{conn.db};
         query.prepare(addCurencyQuery);
         query.bindValue(":user", TEST_USER);
-        sql::exec(query, "DbTestCase", "addCurency");
+        sql::exec(query, CLASS_NAME, "addCurency");
     }
 }
 
-QVariant DbTestCase::addCompany(QString driver, const QString &name) {
+QVariant DbTestCase::addCompany(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Company company{};
     company.name = name;
@@ -146,7 +183,7 @@ void save(DbTestCase *test, const QString &driver, Entity *entity, QList<const E
     list.append(entity);
 }
 
-Account *DbTestCase::addAccount(QString driver, const QString &name, const QString &type, const QVariant companyId) {
+Account *DbTestCase::addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId) {
     Account *account = new Account;
     account->name = name;
     account->type = type;
@@ -163,35 +200,24 @@ const Entity* load(DbTestCase *test, const QString &driver, const QVariant &id, 
     return rows.value(id.toLongLong());
 }
 
-const Account *DbTestCase::loadAccount(QString driver, const QVariant &id) {
-    return load<Account, AccountDao, &DbTestCase::accountDao>(this, driver, id, accounts);
-}
-
-QVariant DbTestCase::addPayee(QString driver, const QString &name) {
+QVariant DbTestCase::addPayee(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
-    Payee payee{};
-    payee.name = name;
+    Payee payee{name};
     payeeDao(driver).add(conn.db, QList{&payee}, TEST_USER);
     return payee.id;
 }
 
-Transaction DbTestCase::unsavedTransaction(QDate date) {
-    QFETCH_GLOBAL(QVariant, accountId);
-    return unsavedTransaction(accountId, date);
+QVariant DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
+    auto conn = Connection(connectionPool(driver));
+    Security security{};
+    security.name = name;
+    security.type = type;
+    securityDao(driver).add(conn.db, QList{&security}, TEST_USER);
+    return security.id;
 }
 
-Transaction DbTestCase::unsavedTransaction(QVariant accountId, QDate date) {
-    QFETCH_GLOBAL(QVariant, payeeId);
-    Transaction tx{accountId};
-    tx.payeeId = payeeId;
-    tx.date = date;
-    return tx;
-}
-
-TransactionDetail DbTestCase::unsavedDetail(const char *amount) {
-    TransactionDetail detail{};
-    detail.amount = DECIMAL_VARIANT(amount);
-    return detail;
+const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {
+    return load<Account, AccountDao, &DbTestCase::accountDao>(this, driver, id, accounts);
 }
 
 #define freeObjects(list) \
@@ -204,15 +230,17 @@ void DbTestCase::cleanup() {
     freeObjects(details)
 }
 
-DbTestCase::TxDetails DbTestCase::saveTransaction(QVariant accountId, QList<const char *> detailAmounts) {
+DbTestCase::TxDetails DbTestCase::saveTransaction(const Transaction &unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares) {
     QFETCH_GLOBAL(QString, driver);
-    Transaction *tx = new Transaction(unsavedTransaction(accountId));
+    Transaction *tx = new Transaction(unsaved);
     Connection conn(connectionPool(driver));
     transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
     QList<TransactionDetail*> details{};
     for (auto &amount : detailAmounts) {
-        TransactionDetail *detail = new TransactionDetail(unsavedDetail(amount));
+        auto i = details.size();
+        TransactionDetail *detail = new TransactionDetail(factory::detail(amount));
         detail->transactionId = tx->id;
+        if (tx->securityId.isValid() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
         details.append(detail);
     }
     detailDao(driver).add(conn.db, details, TEST_USER);
@@ -222,12 +250,7 @@ DbTestCase::TxDetails DbTestCase::saveTransaction(QVariant accountId, QList<cons
     return TxDetails{tx, details};
 }
 
-DbTestCase::TxDetails DbTestCase::saveTransaction(QList<const char *> detailAmounts) {
-    QFETCH_GLOBAL(QVariant, accountId);
-    return saveTransaction(accountId, detailAmounts);
-}
-
-void DbTestCase::addConnection(QString name, const ConnectionSettings &settings) {
+void DbTestCase::addConnection(const QString &name, const ConnectionSettings &settings) {
     auto connectionPool = new ConnectionPool(settings);
     connectionPools.insert(name, connectionPool);
 }

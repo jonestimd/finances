@@ -36,8 +36,8 @@ private slots:
         QFETCH_GLOBAL(AccountService*, service);
         auto account = dbTestCase.addAccount(driver, "account", "BANK");
         // for sqlite3: use amounts that will result in rounding errors if decimal extension is not loaded
-        dbTestCase.saveTransaction(account->id, {"1.23"});
-        dbTestCase.saveTransaction(account->id, {"2.34", "-5.00"});
+        dbTestCase.saveTransaction(factory::transaction(account->id), {"1.23"});
+        dbTestCase.saveTransaction(factory::transaction(account->id), {"2.34", "-5.00"});
 
         auto result = service->getAll();
 

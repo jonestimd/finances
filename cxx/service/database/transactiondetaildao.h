@@ -13,7 +13,6 @@ struct RelatedDetailIds {
 };
 
 class TransactionDetailDao : public EntityDao<TransactionDetail> {
-    const char *createTableSql;
     const char *deleteByTransactionSql;
     const char *deleteByIdsSql;
     const char *updateTransferAmountSql;
@@ -21,8 +20,6 @@ class TransactionDetailDao : public EntityDao<TransactionDetail> {
 
 public:
     TransactionDetailDao(const QString &dbType);
-
-    void createTable(const QSqlDatabase &db) const;
 
     QHash<qlonglong, const TransactionDetail*> getAll(const QSqlDatabase &db, const QVariant &accountId);
 

@@ -7,13 +7,12 @@
 #include <QSqlDatabase>
 
 class TransactionDao : public EntityDao<Transaction> {
-    const char *createTableSql;
     const char *getByAccountSql;
 
 public:
     TransactionDao(const QString &dbType);
 
-    void createTable(const QSqlDatabase &db) const;
+    virtual void createTable(const QSqlDatabase &db) const override;
 
     QHash<qlonglong, const Transaction*> getAll(const QSqlDatabase &db, qlonglong accountId);
 
