@@ -2,6 +2,7 @@
 #include <QThread>
 #include <QtDebug>
 #include <QSqlDriver>
+#include <QSqlQuery>
 #include <sqlite3.h>
 #include "connectionpool.h"
 #include "dbdialect.h"
@@ -59,6 +60,8 @@ QSqlDatabase ConnectionPool::acquire() {
                     sqlite3_free(msg);
                 }
                 dbDialect::addDbFunctions(handle);
+                QSqlQuery query{db};
+                query.exec("pragma foreign_keys = on");
             }
         }
         nameStore.setLocalData(dbName);
