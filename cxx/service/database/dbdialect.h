@@ -40,8 +40,6 @@ namespace dbDialect {
     QString inList(const QSqlDatabase &db, const char *column, const char *placeholder);
 
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, QVariantList ids, const char *idColumn);
-
-    void addDbFunctions(sqlite3 *handle);
 };
 
 #endif // DBDIALECT_H

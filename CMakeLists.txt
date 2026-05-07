@@ -39,7 +39,7 @@ add_custom_target(decimal.so
 
 ExternalProject_Add(qdecimal
     GIT_REPOSITORY git@github.com:semihc/qdecimal.git
-    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} -DCMAKE_C_FLAGS=-fPIC
     INSTALL_COMMAND ""
     BUILD_BYPRODUCTS
         <BINARY_DIR>/decnumber/libdecnumber.a

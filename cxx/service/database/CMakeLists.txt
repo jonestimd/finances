@@ -16,3 +16,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/securitylotdao.h ${CMAKE_CURRENT_LIST_DIR}/securitylotdao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/stocksplitdao.h ${CMAKE_CURRENT_LIST_DIR}/stocksplitdao.cpp
 )
+
+add_subdirectory(sqlite3)

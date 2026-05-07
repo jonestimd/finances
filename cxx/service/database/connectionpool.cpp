@@ -5,7 +5,6 @@
 #include <QSqlQuery>
 #include <sqlite3.h>
 #include "connectionpool.h"
-#include "dbdialect.h"
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
@@ -34,6 +33,16 @@ const QString &ConnectionPool::dbType() const {
     return settings.dbType;
 }
 
+static void load_sqlite_extension(sqlite3 *handle, const char *filename, const char *initFunction) {
+    char *msg;
+    sqlite3_load_extension(handle, filename, initFunction, &msg);
+    if (msg) {
+        qCritical() << qgetenv("LD_LIBRARY_PATH");
+        qCritical() << msg;
+        sqlite3_free(msg);
+    }
+}
+
 QSqlDatabase ConnectionPool::acquire() {
     QString dbName = nameStore.localData();
     if (dbName.isNull()) {
@@ -52,14 +61,8 @@ QSqlDatabase ConnectionPool::acquire() {
             if (qhandle.isValid()) {
                 sqlite3 *handle = qhandle.value<sqlite3*>();
                 sqlite3_db_config(handle, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, 1, nullptr);
-                char *msg;
-                sqlite3_load_extension(handle, "./decimal", "sqlite3_decimal_init", &msg);
-                if (msg) {
-                    qCritical() << qgetenv("LD_LIBRARY_PATH");
-                    qCritical() << msg;
-                    sqlite3_free(msg);
-                }
-                dbDialect::addDbFunctions(handle);
+                load_sqlite_extension(handle, "./decimal", "sqlite3_decimal_init");
+                load_sqlite_extension(handle, "./sqlite_finances", "sqlite3_finances_init");
                 QSqlQuery query{db};
                 query.exec("pragma foreign_keys = on");
             }
