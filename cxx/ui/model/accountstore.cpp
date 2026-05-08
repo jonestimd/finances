@@ -2,6 +2,8 @@
 #include "ui/model/accounttablemodel.h"
 #include "ui/widget/statusmessage.h"
 
+Q_STATIC_LOGGING_CATEGORY(logger, "store.account")
+
 AccountStore::AccountStore(ServiceContext *services)
     : EntityStore{&services->accountService}
     , companyStore{&services->companyService} {}
@@ -35,8 +37,8 @@ QString AccountStore::qualifiedName(const QVariant &accountId, QChar delimiter) 
         if (account->companyId.isNull()) return name;
         auto company = companyStore.value(account->companyId.toLongLong());
         if (company) return company->name.toString().append(delimiter).append(name);
-        else qWarning("qualifiedName: company not loaded");
+        else qCDebug(logger, "qualifiedName: company not loaded: %lld", account->companyId.toLongLong());
     }
-    else qWarning("qualifiedName: account not loaded");
+    else qCDebug(logger, "qualifiedName: account not loaded: %lld", accountId.toLongLong());
     return accountId.toString();
 }

@@ -1,5 +1,7 @@
 #include "categorystore.h"
 
+Q_STATIC_LOGGING_CATEGORY(logger, "store.category")
+
 CategoryStore::CategoryStore(CategoryService *service) : EntityStore(service) {}
 
 const QSet<qlonglong> CategoryStore::rootIds() const {
@@ -7,10 +9,7 @@ const QSet<qlonglong> CategoryStore::rootIds() const {
 }
 
 QString CategoryStore::displayName(qlonglong categoryId) const {
-    return displayName(value(categoryId));
-}
-
-QString CategoryStore::displayName(const Category *category) const {
+    auto category = value(categoryId);
     if (category) {
         auto name = category->name.toString();
         if (category->parentId.isValid()) {
@@ -18,7 +17,7 @@ QString CategoryStore::displayName(const Category *category) const {
         }
         return name;
     }
-    else qWarning("displayName: category not loaded");
+    else qCDebug(logger, "displayName: category not loaded: %lld", categoryId);
     return "";
 }
 

@@ -3,6 +3,8 @@
 #include "ui/widget/statusmessage.h"
 #include <QDate>
 
+Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
+
 TransactionStore::TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore)
     : EntityStore{&serviceContext->transationService}
     , categoryStore{categoryStore}
@@ -41,7 +43,7 @@ QDecNumber TransactionStore::amount(const QVariant &transactionId) const {
         auto detail = detailStore.value(detailId);
         if (!detail->categoryId.isNull()) {
             auto category = categoryStore->value(detail->categoryId);
-            if (!category) qWarning("amount: category not loaded");
+            if (!category) qCDebug(logger, "amount: category not loaded: %lld", detail->categoryId.toLongLong());
             else if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
         }
         total += detail->amount.value<QDecNumber>();

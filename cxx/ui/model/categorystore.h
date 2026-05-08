@@ -14,7 +14,6 @@ public:
     const QSet<qlonglong> rootIds() const;
 
     QString displayName(qlonglong categoryId) const;
-    QString displayName(const Category *category) const;
     bool movable(qlonglong categoryId) const;
     /**
      * @return `true` if `parentId` is an ancestor of `categoryId`.
