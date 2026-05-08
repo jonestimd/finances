@@ -12,8 +12,8 @@ set_target_properties(test_decimal PROPERTIES
 )
 
 target_include_directories(test_decimal PRIVATE
-    ${SOURCE_DIR}/src
-    ${SOURCE_DIR}/decnumber
+    ${QDECIMAL_SOURCE_DIR}/src
+    ${QDECIMAL_SOURCE_DIR}/decnumber
 )
 
 target_link_libraries(test_decimal PRIVATE
@@ -21,8 +21,8 @@ target_link_libraries(test_decimal PRIVATE
     Qt6::Gui
     Qt6::Test
     Qt6::Widgets
-    ${BINARY_DIR}/src/libqdecimal.a
-    ${BINARY_DIR}/decnumber/libdecnumber.a
+    ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
+    ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
 )
 
 install(TARGETS test_decimal

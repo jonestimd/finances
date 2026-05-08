@@ -46,15 +46,17 @@ ExternalProject_Add(qdecimal
         <BINARY_DIR>/src/libqdecimal.a
 )
 ExternalProject_Get_Property(qdecimal SOURCE_DIR BINARY_DIR)
+set(QDECIMAL_SOURCE_DIR ${SOURCE_DIR})
+set(QDECIMAL_BINARY_DIR ${BINARY_DIR})
 add_library(libdecnumber STATIC IMPORTED)
 add_dependencies(libdecnumber qdecimal)
 set_target_properties(libdecnumber
-    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/decnumber/libdecnumber.a
+    PROPERTIES IMPORTED_LOCATION ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
 )
 add_library(libqdecimal STATIC IMPORTED)
 add_dependencies(libqdecimal qdecimal)
 set_target_properties(libqdecimal
-    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/src/libqdecimal.a
+    PROPERTIES IMPORTED_LOCATION ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
 )
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgetsl)
@@ -100,8 +102,8 @@ file(GLOB_RECURSE QT_SQLITE_OBJ_FILE
 )
 
 target_include_directories(finances PRIVATE
-    ${SOURCE_DIR}/src
-    ${SOURCE_DIR}/decnumber
+    ${QDECIMAL_SOURCE_DIR}/src
+    ${QDECIMAL_SOURCE_DIR}/decnumber
     ${QT_SQLITE_INCLUDE_DIR}
     ${CMAKE_HOME_DIRECTORY}/cxx
 )

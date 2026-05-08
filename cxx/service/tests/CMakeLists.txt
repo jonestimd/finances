@@ -13,8 +13,8 @@ qt_add_library(dbtestcase OBJECT
 target_link_libraries(dbtestcase PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Sql
-    ${BINARY_DIR}/src/libqdecimal.a
-    ${BINARY_DIR}/decnumber/libdecnumber.a
+    ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
+    ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
     ${QT_SQLITE_OBJ_FILE}
 )
 
@@ -44,8 +44,8 @@ function(add_service_test name)
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Sql
         Qt${QT_VERSION_MAJOR}::Test
-        ${BINARY_DIR}/src/libqdecimal.a
-        ${BINARY_DIR}/decnumber/libdecnumber.a
+        ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
+        ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
         dbtestcase
     )
 
