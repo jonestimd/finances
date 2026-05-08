@@ -42,6 +42,7 @@ private:
 
 private Q_SLOTS:
     void accountsLoaded();
+    void companiesLoaded();
     void transactionsLoaded();
     void newWindow();
     void clearedBalanceChanged(const QDecNumber &balance);

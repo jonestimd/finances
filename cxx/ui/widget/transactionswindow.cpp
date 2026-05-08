@@ -57,6 +57,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
+    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(companiesLoaded()));
     connect(dataStore->transactionStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(transactionsLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
@@ -150,13 +151,17 @@ void TransactionsWindow::initializeData() {
 }
 
 void TransactionsWindow::accountsLoaded() {
-    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
+    companiesLoaded();
     auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
     if (hidden == security()) {
         settings::saveWindowState(SETTINGS_GROUP(!hidden), this, &entityView);
         entityView.viewHeader->setSectionHidden(model()->securityColumn, !hidden);
         settings::restoreWindowState(SETTINGS_GROUP(hidden), this, QSize{800, 600}, &entityView);
     }
+}
+
+void TransactionsWindow::companiesLoaded() {
+    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
 }
 
 void TransactionsWindow::transactionsLoaded() {
