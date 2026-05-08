@@ -24,7 +24,7 @@ class EntityDao {
     const char *const idColumn;
 
 protected:
-    const QString className;
+    const char* const className;
     const QString staleDataMessage;
 
     QHash<qlonglong, const Entity*> load(QSqlQuery &query) {
@@ -77,7 +77,6 @@ public:
         QList<const Entity*> result;
         result.reserve(entities.length());
         query.prepare(updateSql);
-        qCInfo(sqlLogger, updateSql);
         SQL_BIND_VALUE(query, ":user", user);
         for (auto entity : entities) {
             bindUpdateValues(query, entity);
@@ -95,7 +94,6 @@ public:
         QList<const Entity*> result;
         result.reserve(entities.length());
         query.prepare(insertSql);
-        qCInfo(sqlLogger, insertSql);
         SQL_BIND_VALUE(query, ":user", user);
         for (auto entity : entities) {
             bindInsertValues(query, entity);
@@ -110,7 +108,6 @@ public:
     virtual void remove(QSqlDatabase &db, const QVariant id) {
         QSqlQuery query(db);
         query.prepare(deleteSql);
-        qCInfo(sqlLogger, deleteSql);
         SQL_BIND_VALUE(query, ":id", id);
         sql::exec(query, className, "remove");
     }
@@ -118,7 +115,6 @@ public:
     virtual void remove(QSqlDatabase &db, const QList<const Entity*> entities) {
         QSqlQuery query(db);
         query.prepare(deleteSql);
-        qCInfo(sqlLogger, deleteSql);
         for (auto entity : entities) {
             SQL_BIND_VALUE(query, ":id", entity->id);
             sql::exec(query, className, "remove");

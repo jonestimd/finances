@@ -113,7 +113,6 @@ QHash<qlonglong, const Transaction*> TransactionDao::getAll(const QSqlDatabase &
 void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setPayeeQuery);
-    qCInfo(sqlLogger, setPayeeQuery);
     SQL_BIND_VALUE(query, ":user", user);
     SQL_BIND_VALUE(query, ":payeeId", newPayeeId);
     SQL_BIND_VALUE(query, ":oldPayeeId", payee->id);

@@ -7,8 +7,6 @@
 #include <QSqlResult>
 #include <QtTest/qtestcase.h>
 
-Q_LOGGING_CATEGORY(sqlLogger, "sql")
-
 static const auto addCurencyQuery = R"(
 insert into asset (name, type, scale, symbol, change_user, version)
 values ('USD', 'Currency', 2, '$', :user, 0))";

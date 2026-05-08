@@ -141,7 +141,6 @@ QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QS
 void TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions) {
     QSqlQuery query(db);
     query.prepare(deleteByTransactionSql);
-    qCInfo(sqlLogger, "%s", deleteByTransactionSql);
     SQL_BIND_LIST(query, ":txIds", getEntityIds(transactions));
     sql::exec(query, className, "deleteByTransaction");
 }

@@ -8,8 +8,6 @@
 #include <QStyle>
 #include <QStyleHints>
 
-Q_LOGGING_CATEGORY(sqlLogger, "sql")
-
 // to load styles use --stylesheet finances.qss
 int main(int argc, char *argv[])
 {

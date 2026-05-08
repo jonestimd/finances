@@ -5,6 +5,8 @@
 #include <QSqlField>
 #include <QSqlError>
 
+Q_LOGGING_CATEGORY(sqlLogger, "sql")
+
 QVariant sql::getValue(QSqlRecord record, const char *name, QVariant defaultValue) {
     auto field = record.field(name);
     if (field.isNull()) return defaultValue;
@@ -30,11 +32,13 @@ static void logAndThrowError(const QSqlQuery &query, const QString &className, c
     throw query.lastError().text();
 }
 
-void sql::exec(const QSqlDatabase &db, const QString &sql, const QString &className, const char *queryName) {
+void sql::exec(const QSqlDatabase &db, const char *sql, const char *className, const char *queryName) {
+    qCInfo(sqlLogger, "%s.%s:\n%s", className, queryName, sql);
     QSqlQuery query(sql, db);
     if (query.lastError() != QSqlError()) logAndThrowError(query, className, queryName);
 }
 
-void sql::exec(QSqlQuery &query, const QString &className, const char *queryName) {
+void sql::exec(QSqlQuery &query, const char *className, const char *queryName) {
+    if (sqlLogger().isInfoEnabled()) qCInfo(sqlLogger, "%s.%s:\n%s", className, queryName, query.lastQuery().toLocal8Bit().data());
     if (!query.exec()) logAndThrowError(query, className, queryName);
 }
