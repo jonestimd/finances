@@ -10,7 +10,9 @@ NumberValidatorFactory::NumberValidatorFactory(IsRequired isRequired, int decima
     , validator(-INFINITY, INFINITY, decimals)
     , isRequired{isRequired}
     , getTitle{getTitle}
-{}
+{
+    validator.setNotation(QDoubleValidator::StandardNotation);
+}
 
 const QString NumberValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     if (isRequired(index)) {
