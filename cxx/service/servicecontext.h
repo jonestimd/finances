@@ -21,6 +21,7 @@ class ServiceContext
     TransactionGroupDao transactionGroupDao;
     PayeeDao payeeDao;
     SecurityDao securityDao;
+    StockSplitDao stockSplitDao;
     TransactionDao transactionDao;
     TransactionDetailDao transactionDetailDao;
 

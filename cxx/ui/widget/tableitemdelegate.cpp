@@ -17,6 +17,12 @@ TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
     : QStyledItemDelegate{parent}, statusBar{statusBar}
 {}
 
+static QFont bold(const QFont src) {
+    QFont font{src};
+    font.setBold(true);
+    return font;
+}
+
 void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     QStyledItemDelegate::initStyleOption(option, index);
     QVariant highlight = index.data(finances::TextHighlightRole);
@@ -52,9 +58,18 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
         option->displayAlignment = Qt::AlignCenter;
     }
     auto decoration = index.data(Qt::DecorationRole);
-    if (!decoration.isNull()) {
+    if (decoration.isValid()) {
         auto icon = decoration.value<finances::FontIcon>();
         option->icon = finances::materialIcon(icon, option->widget->palette().text().color());
+    }
+    auto altDisplay = index.data(finances::AltDisplayRole);
+    if (altDisplay.isValid()) {
+        if (option->displayAlignment & Qt::AlignTrailing) {
+            QFont font = bold(option->font);
+            QFontMetrics fontMetrics{font, option->widget};
+            auto width = fontMetrics.horizontalAdvance(altDisplay.toString()) + fontMetrics.horizontalAdvance(" ()");
+            option->rect.adjust(0, 0, -width, 0);
+        }
     }
     if (!index.data(finances::ValidationMessageRole).toString().isEmpty()) {
         if (option->displayAlignment & Qt::AlignTrailing) {
@@ -63,16 +78,33 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     }
 }
 
+static QRect clippingRect(QPainter *p, const QStyleOptionViewItem &opt) {
+    const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
+    return clipRegion.boundingRect();
+}
+
 void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &index) const {
     QStyledItemDelegate::paint(p, opt, index);
     auto validationMessage = index.data(finances::ValidationMessageRole);
-    if (!validationMessage.isNull()) {
-        const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
-        QRect rect = clipRegion.boundingRect();
+    auto altDisplay = index.data(finances::AltDisplayRole);
+    QRect rect = clippingRect(p, opt);
+    if (validationMessage.isValid()) {
         auto image = QImage(":/images/invalid.svg");
+        rect.adjust(0, 0, -image.width(), 0);
         auto y = rect.y() + (rect.height() - image.rect().height()) / 2;
-        auto x = rect.right() - image.width();
-        p->drawImage(x, y, image);
+        p->drawImage(rect.right(), y, image);
+    }
+    if (altDisplay.isValid()) {
+        QStyleOptionViewItem option = opt;
+        initStyleOption(&option, index);
+        QStyle *style = opt.widget ? opt.widget->style() : QApplication::style();
+        auto displayValue = QString("(%0)").arg(altDisplay.toString());
+        auto margin = style->pixelMetric(QStyle::PM_FocusFrameHMargin, nullptr, opt.widget) + 1;
+        rect.adjust(option.rect.width(), 0, 0, 0);
+        p->setFont(bold(option.font));
+        p->fillRect(rect, option.backgroundBrush);
+        rect.adjust(0, 0, -margin, 0);
+        style->drawItemText(p, rect, Qt::AlignRight, option.palette, opt.state & Qt::ItemIsEnabled, displayValue, QPalette::Text);
     }
 }
 

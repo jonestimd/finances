@@ -9,6 +9,7 @@
 
 #define DETAIL_ROW_TYPE 1
 
+#define DATE_TITLE "Date"
 #define PAYEE_TITLE "Payee"
 #define SECURITY_TITLE "Security"
 #define CLEARED_TITLE "🮱"
@@ -93,7 +94,7 @@ using namespace transactiontablemodel;
 
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
     : PodItemModel{{
-        new TxDateColumnAdapter{tr("Date")},
+        new TxDateColumnAdapter{tr(DATE_TITLE)},
         new ColumnAdapter<Transaction>(tr("Ref #"), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
         new ColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
@@ -108,12 +109,13 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
         new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
         new ColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
-        new SharesColumnAdapter(tr("Shares"), this),
+        new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),
         new DetailAmountColumnAdapter(tr("Amount")),
         new EmptyColumnAdapter(),
         new EmptyColumnAdapter(),
     }
     , store{dataStore->transactionStore}
+    , dateColumn{columnIndex(tr(DATE_TITLE))}
     , payeeColumn{columnIndex(tr(PAYEE_TITLE))}
     , securityColumn{columnIndex(tr(SECURITY_TITLE))}
     , clearedColumn{columnIndex(tr(CLEARED_TITLE))}

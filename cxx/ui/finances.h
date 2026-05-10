@@ -21,6 +21,7 @@ namespace finances {
         ValidatorFactoryRole,
         EntityIdRole,
         EntityPtrRole,
+        AltDisplayRole,
     };
 
     enum TextHighlight {

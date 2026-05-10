@@ -8,6 +8,7 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , transactionGroupDao{pool->dbType()}
     , payeeDao{pool->dbType()}
     , securityDao{pool->dbType()}
+    , stockSplitDao{pool->dbType()}
     , transactionDao{pool->dbType()}
     , transactionDetailDao{pool->dbType()}
     , accountService{pool, accountDao, companyDao}
@@ -15,7 +16,7 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , payeeService{pool, payeeDao, transactionDao}
     , categoryService{pool, categoryDao, transactionDetailDao}
     , groupService{pool, transactionGroupDao}
-    , securityService{pool, securityDao}
+    , securityService{pool, securityDao, stockSplitDao}
     , transationDetailService{pool, transactionDetailDao}
     , transationService{pool, transactionDao, transactionDetailDao}
 {}

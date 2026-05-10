@@ -17,6 +17,7 @@ class TransactionTableModel : public PodItemModel<Transaction> {
     QDecNumber clearedBalance_{0};
 
 public:
+    const int dateColumn;
     const int payeeColumn;
     const int securityColumn;
     const int clearedColumn;

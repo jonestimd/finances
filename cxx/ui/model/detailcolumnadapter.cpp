@@ -3,6 +3,8 @@
 #include "ui/model/formats.h"
 #include "ui/validation/detailvalidator.h"
 
+#include <QDate>
+
 // TransactionTypeColumnAdapter //
 
 TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore)
@@ -81,10 +83,28 @@ ComboBoxModel *TransactionTypeColumnAdapter::getOptions() const {
 
 // SharesColumnAdapter //
 
-SharesColumnAdapter::SharesColumnAdapter(const QString &title, const TransactionTableModel *model)
+SharesColumnAdapter::SharesColumnAdapter(const QString &title, const TransactionTableModel *model, const SecurityStore *securityStore)
     : AmountColumnAdapter{title, &TransactionDetail::assetQuantity, securityShares, true,
         new SharesValidatorFactory(model->payeeColumn, model->securityColumn, model->subtotalColumn)}
+    , securityStore{securityStore}
+    , dateColumn{model->dateColumn}
+    , securityColumn{model->securityColumn}
 {}
+
+QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
+    if (index.isValid() && role == finances::AltDisplayRole) {
+        auto shares = row->assetQuantity;
+        if (!shares.isNull()) {
+            auto securityId = index.parent().siblingAtColumn(securityColumn).data(finances::EntityIdRole);
+            auto date = index.parent().siblingAtColumn(dateColumn).data(Qt::EditRole);
+            auto shares = AmountColumnAdapter::value(row, index, current, Qt::EditRole).value<QDecNumber>();
+            auto adjustedShares = securityStore->adjustedShares(securityId, date.value<QDate>(), shares);
+            if (shares != adjustedShares) return formatter(QVariant::fromValue(adjustedShares));
+        }
+        return QVariant{};
+    }
+    return AmountColumnAdapter::value(row, index, current, role);
+}
 
 // DetailAmountColumnAdapter //
 

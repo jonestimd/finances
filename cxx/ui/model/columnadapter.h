@@ -48,6 +48,7 @@ public:
         case Qt::DisplayRole:
         case Qt::EditRole:
         case finances::SortRole:
+        case finances::EntityIdRole:
             return current.isValid() ? current : fieldValue(row);
         case finances::ValidatorFactoryRole:
             if (validatorFactory) return QVariant::fromValue(validatorFactory->factory(index));

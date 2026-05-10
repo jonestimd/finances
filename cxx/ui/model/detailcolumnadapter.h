@@ -33,8 +33,14 @@ private:
 };
 
 class SharesColumnAdapter : public AmountColumnAdapter<TransactionDetail> {
+    const SecurityStore *securityStore;
+    const int dateColumn;
+    const int securityColumn;
+
 public:
-    SharesColumnAdapter(const QString &title, const TransactionTableModel *model);
+    SharesColumnAdapter(const QString &title, const TransactionTableModel *model, const SecurityStore *securityStore);
+
+    virtual QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
 };
 
 class DetailAmountColumnAdapter : public AmountColumnAdapter<TransactionDetail> {

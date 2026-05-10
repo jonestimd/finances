@@ -52,10 +52,11 @@ private slots:
             auto accountId2 = dbTestCase.addAccount(driver, "account 2", AccountType::bank.code)->id;
             auto securityId = dbTestCase.addSecurity(driver, "security 1");
             auto securityId2 = dbTestCase.addSecurity(driver, "security 2");
-            auto service = new SecurityService{dbTestCase.connectionPool(driver), dao};
+            auto service = new SecurityService{dbTestCase.connectionPool(driver), dao, dbTestCase.stockSplitDao(driver)};
             QTest::newRow(driver.toLocal8Bit()) << driver << service << payeeId << accountId << accountId2 << securityId << securityId2;
         }
     }
+
 
     void getAll_returnsTransactionSummary() {
         QFETCH_GLOBAL(QString, driver);
@@ -91,6 +92,24 @@ private slots:
         auto result = service->getAll();
 
         verifySecurity(result.value(securityId.toLongLong()), 2, "11", "2");
+    }
+
+    void getSplits_returnsAllSplits() {
+        QFETCH_GLOBAL(QString, driver);
+        resetDatabase(driver);
+        QFETCH_GLOBAL(SecurityService*, service);
+        QFETCH_GLOBAL(QVariant, securityId);
+        QFETCH_GLOBAL(QVariant, securityId2);
+        addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
+        addSplit(driver, securityId, QDate{2015, 12, 15}, 1, 3);
+        addSplit(driver, securityId2, QDate{2019, 10, 31}, 3, 2);
+
+        auto result = service->getSplits();
+
+        QCOMPARE(result.size(), 3);
+        auto split = result.values().constFirst();
+        QVERIFY(split->sharesIn.canConvert<QDecNumber>());
+        QVERIFY(split->sharesOut.canConvert<QDecNumber>());
     }
 };
 
