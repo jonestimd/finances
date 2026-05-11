@@ -16,7 +16,7 @@ public:
     QVariant securityId;
     QVariant referenceNumber;
     QVariant memo;
-    QVariant cleared;
+    QVariant cleared{false};
     QList<QVariant> detailIds{};
 
     Transaction();
@@ -24,13 +24,14 @@ public:
     Transaction(const QSqlRecord &record);
 
     bool deletable() const;
+    bool isEmpty() const;
 
     Transaction *newTransfer(const QVariant &accountId) const;
 };
 
 struct TransactionUpdate : public BulkUpdate<Transaction> {
     const QList<TransactionDetail*> detailUpdates;
-    QMultiHash<const Transaction*, TransactionDetail*> detailAdds;
+    QHash<const Transaction*, QList<TransactionDetail*>> detailAdds;
     const QList<const TransactionDetail*> detailDeletes;
 
     TransactionUpdate(
@@ -38,7 +39,7 @@ struct TransactionUpdate : public BulkUpdate<Transaction> {
         const QList<Transaction*> adds,
         QList<const Transaction*> deletes,
         const QList<TransactionDetail*> detailUpdates,
-        QMultiHash<const Transaction*, TransactionDetail*> detailAdds,
+        QHash<const Transaction*, QList<TransactionDetail*>> detailAdds,
         QList<const TransactionDetail*> detailDeletes);
 
     virtual void onError() override;

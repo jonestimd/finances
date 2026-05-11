@@ -25,8 +25,9 @@ bool TransactionDetail::isEmpty() const {
            && relatedDetailId.isNull()
            && groupId.isNull()
            && exchangeAssetId.isNull()
-           && assetQuantity.isNull()
-           && memo.isNull();
+           && memo.isNull()
+           && (amount.isNull() || amount.value<QDecNumber>().isZero())
+           && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
 }
 
 TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
@@ -39,6 +40,12 @@ TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccoun
     }
     relatedDetail->transferAccountId = transferAccountId;
     return relatedDetail;
+}
+
+QVariantList TransactionDetail::transactionIds(const QList<const TransactionDetail *> details) {
+    QVariantList ids{};
+    for (auto detail : details) if (!ids.contains(detail->transactionId)) ids.append(detail->transactionId);
+    return ids;
 }
 
 PendingDetail::PendingDetail(const Transaction* const tx)

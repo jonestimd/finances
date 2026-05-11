@@ -23,6 +23,8 @@ public:
     bool isEmpty() const;
 
     TransactionDetail *newTransfer(const QVariant &transferAccountId, const QVariant &transactionId = QVariant{}) const;
+
+    static QVariantList transactionIds(const QList<const TransactionDetail*> details);
 };
 
 class Transaction;

@@ -37,7 +37,8 @@ const QString SharesValidatorFactory::isValid(const QModelIndex &index, QString 
                 }
             }
             else if (amount.isNegative() == (shares < 0)) {
-                return tr("%1 is invalid").arg(getDetailTitle(index));
+                return tr("%1 and %2 must have opposite signs")
+                    .arg(getDetailTitle(index), getDetailTitle(index.siblingAtColumn(amountColumnIndex)));
             }
         }
     }

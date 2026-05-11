@@ -9,6 +9,20 @@
 #include <QTableWidget>
 #include <QTimer>
 
+
+class ViewFocusFilter : public QObject {
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override {
+        if (event->type() == QEvent::EnabledChange) {
+            auto widget = qobject_cast<QWidget*>(watched);
+            widget->removeEventFilter(this);
+            widget->setFocus();
+            deleteLater();
+        }
+        return false;
+    }
+};
+
 EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
@@ -104,6 +118,11 @@ void EntityView::disableUi(const QString &message) {
 void EntityView::removeMessage(const QString &message) {
     statusBar.removeMessage(message);
     if (statusBar.isEmpty()) itemView->setEnabled(true);
+}
+
+void EntityView::focusItemView() {
+    if (itemView->isEnabled()) itemView->setFocus();
+    else itemView->installEventFilter(new ViewFocusFilter);
 }
 
 void EntityView::dataChanged() {

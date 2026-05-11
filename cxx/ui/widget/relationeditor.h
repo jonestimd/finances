@@ -25,7 +25,8 @@ protected Q_SLOTS:
     void activated(const QModelIndex &index);
 
 protected:
-    void keyReleaseEvent(QKeyEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
 };
 
 #endif // RELATIONEDITOR_H

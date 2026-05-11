@@ -165,8 +165,11 @@ void TransactionsWindow::companiesLoaded() {
 }
 
 void TransactionsWindow::transactionsLoaded() {
-    model()->setRows(context->dataStore->transactionStore->transactionIds(model()->accountId));
+    auto m = model();
+    m->setRows(context->dataStore->transactionStore->transactionIds(m->accountId));
     entityView.removeMessage(SAVING_TRANSACTIONS);
+    entityView.itemView->setCurrentIndex(entityView.sortModel.mapFromSource(m->index(m->rowCount()-1, 0)));
+    entityView.focusItemView();
 }
 
 void TransactionsWindow::newWindow() {
@@ -179,6 +182,19 @@ void TransactionsWindow::clearedBalanceChanged(const QDecNumber &balance) {
 
 const char *TransactionsWindow::settingsGroup() const {
     return SETTINGS_GROUP(security());
+}
+
+static bool isEnter(const QKeyEvent *event) {
+    auto key = event->key();
+    return !(event->modifiers() & ~Qt::KeypadModifier) && (key == Qt::Key_Enter || key == Qt::Key_Return);
+}
+
+void TransactionsWindow::keyPressEvent(QKeyEvent *event) {
+    if (isEnter(event) && focusWidget() == entityView.itemView) {
+        auto index = entityView.sortModel.mapToSource(entityView.itemView->currentIndex());
+        if (model()->transactionHasChanges(index)) qDebug() << "save" << index << model()->transactionIsValid(index);
+    }
+    AppWindow::keyPressEvent(event);
 }
 
 TreeView *TransactionsWindow::treeView() const {

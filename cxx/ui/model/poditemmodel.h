@@ -51,6 +51,10 @@ protected:
         return index.row() >= childCount(index.parent());
     }
 
+    virtual Row * newRow() {
+        return new Row;
+    }
+
 public:
     explicit PodItemModel(const QList<ColumnAdapter<Row>*> columns, QObject *parent = nullptr)
         : AdapterItemModel(parent), columns{columns}
@@ -70,7 +74,7 @@ public:
         auto parent = selectedIndex.parent();
         auto rowIndex = rowCount(parent);
         beginInsertRows(parent, rowIndex, rowIndex);
-        Row *row = new Row;
+        Row *row = newRow();
         if (!newRows.contains(parent)) newRows.insert(parent, QList<Row*>());
         newRows[parent].append(row);
         validateRow(rowIndex, parent);

@@ -192,11 +192,16 @@ void TransactionTableModel::updateClearedBalance(const QDecNumber &delta) {
     emit clearedBalanceChanged(clearedBalance_);
 }
 
+Transaction *TransactionTableModel::newRow() {
+    return new Transaction(accountId);
+}
+
 void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     beginResetModel();
     clearChanges();
     updateBalances();
     endResetModel();
+    queueAdd(QModelIndex{});
     emit clearedBalanceChanged(clearedBalance_);
 }
 
@@ -232,8 +237,11 @@ int TransactionTableModel::rowType(const QModelIndex &index) const {
 }
 
 const Transaction *TransactionTableModel::getRow(const QModelIndex &index) const {
-    auto id = transactionIds().at(index.row());
-    return store->value(id);
+    if (index.row() < transactionIds().size()) {
+        auto id = transactionIds().at(index.row());
+        return store->value(id);
+    }
+    return newRows.value(QModelIndex{}).at(index.row() - transactionIds().size());
 }
 
 const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &index) const {
@@ -304,16 +312,79 @@ QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientat
 }
 
 bool TransactionTableModel::hasUnsavedChanges() const {
+    auto pendingTransactions = newRows.value(QModelIndex{});
+    if (pendingTransactions.size() == 1) {
+        auto tx = pendingTransactions.at(0);
+        if (!tx->isEmpty()) return true;
+        auto details = newDetails.value(rowCount() - 1);
+        for (auto detail : std::as_const(details)) {
+            if (!detail->isEmpty()) return true;
+        }
+        return false;
+    }
     return !newDetails.isEmpty() || PodItemModel::hasUnsavedChanges();
 }
 
-QMultiHash<const Transaction*, TransactionDetail*> TransactionTableModel::unsavedDetailAdds() const {
-    QMultiHash<const Transaction*, TransactionDetail*> detailAdds{};
+void TransactionTableModel::clearChanges() {
+    for (auto i = newDetails.begin(); i != newDetails.end(); i = newDetails.erase(i)) {
+        auto parentIndex = createIndex(i.key(), 0);
+        auto tx = getRow(parentIndex);
+        auto count = tx->detailIds.size() + i.value().size();
+        beginRemoveRows(parentIndex, tx->detailIds.size(), count-1);
+        while (!i.value().isEmpty()) delete i.value().takeFirst();
+        endRemoveRows();
+    }
+    PodItemModel::clearChanges();
+}
+
+bool TransactionTableModel::enableDelete(const QModelIndex &index) const {
+    if (index.parent().isValid()) {
+        if (isPendingAdd(index.parent())) {
+            return newRows.value(QModelIndex{}).size() > 1 || newDetails.value(index.parent().row()).size() > 1;
+        }
+    } else if (isPendingAdd(index)) {
+        return newRows.value(QModelIndex{}).size() > 1;
+    }
+    return PodItemModel::enableDelete(index);
+}
+
+bool TransactionTableModel::transactionHasChanges(const QModelIndex &rowIndex) const {
+    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txRow = txIndex.row();
+    if (txRow >= transactionIds().size() || isPendingDelete(txIndex) || newDetails.contains(txRow)) return true;
+    for (auto i = changes.keyBegin(); i != changes.keyEnd(); i++) {
+        if (!i->parent().isValid() && i->row() == txRow || i->parent() == txIndex) return true;
+    }
+    auto detailCount = rowCount(txIndex);
+    for (int i = 0; i < detailCount; i++) {
+        if (isPendingDelete(index(i, 0, txIndex))) return true;
+    }
+    return false;
+}
+
+bool TransactionTableModel::transactionIsValid(const QModelIndex &rowIndex) const {
+    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txRow = txIndex.row();
+    for (auto i = errors.keyBegin(); i != errors.keyEnd(); i++) {
+        if (i->row() == txRow || i->parent() == txIndex) return false;
+    }
+    int detailCount = rowCount(txIndex), validDetails = 0;
+    for (int i = 0; i < detailCount; i++) {
+        auto detail = getDetail(index(i, 0, txIndex));
+        if (!detail->isEmpty()) validDetails++;
+    }
+    return validDetails > 0;
+}
+
+QHash<const Transaction*, QList<TransactionDetail*>> TransactionTableModel::unsavedDetailAdds() const {
+    QHash<const Transaction*, QList<TransactionDetail*>> adds{};
     for (auto [rowIndex, details] : newDetails.asKeyValueRange()) {
         auto tx = getRow(createIndex(rowIndex, 0));
-        for (auto detail : details) detailAdds.insert(tx, detail);
+        QList<TransactionDetail*> txDetails{};
+        for (auto detail : details) txDetails.append(new TransactionDetail(*detail));
+        adds.insert(tx, txDetails);
     }
-    return detailAdds;
+    return adds;
 }
 
 QList<TransactionDetail*> TransactionTableModel::unsavedDetailChanges() { // TODO reuse code in PodItemModel
@@ -375,7 +446,12 @@ QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {
         endInsertRows();
         return index(rowIndex, 0, parent);
     }
-    return QModelIndex{};
+    auto index = PodItemModel::queueAdd(QModelIndex{});
+    setValue(index, QDate::currentDate());
+    beginInsertRows(index, 0, 0);
+    newDetails.insert(index.row(), QList{new TransactionDetail});
+    endInsertRows();
+    return index;
 }
 
 void TransactionTableModel::queueDelete(const QModelIndex &index) {
@@ -389,6 +465,9 @@ void TransactionTableModel::queueDelete(const QModelIndex &index) {
             endRemoveRows();
             adjustErrorIndexes(indexRow, parent, -1);
             removeStaleErrors();
+            if (isPendingAdd(parent) && !newDetails.contains(parent.row())) {
+                PodItemModel::queueDelete(parent);
+            }
         } else if (!isPendingDelete(parent)) {
             if (rowCount(parent) - pendingDeleteCount(parent) == 1) {
                 queueDelete(parent);
@@ -399,9 +478,17 @@ void TransactionTableModel::queueDelete(const QModelIndex &index) {
             } else PodItemModel::queueDelete(index);
         }
     } else {
+        if (isPendingAdd(index)) {
+            auto details = newDetails.value(index.row());
+            beginRemoveRows(index, 0, details.size()-1);
+            while (!details.isEmpty()) delete details.takeLast();
+            newDetails.remove(index.row());
+            endRemoveRows();
+        } else {
+            pendingDeletes.removeIf([index](const QModelIndex &i) { return i.parent() == index; });
+            rowsChanged(0, rowCount(index)-1, index);
+        }
         PodItemModel::queueDelete(index);
-        pendingDeletes.removeIf([index](const QModelIndex &i) { return i.parent() == index; });
-        rowsChanged(0, rowCount(index)-1, index);
     }
 }
 

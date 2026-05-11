@@ -48,7 +48,7 @@ QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) 
 }
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant value) const {
-    if (value.isValid()) {
+    if (value.value<const NamedEntity*>()) {
         auto typeId = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
         if (typeId->transfer) {
             row->transferAccountId = typeId->id;

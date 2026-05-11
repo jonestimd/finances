@@ -8,10 +8,16 @@
 #define TX_DELETES(...) QList<const Transaction*>{__VA_ARGS__}
 
 #define DETAIL_UPDATES(...) QList<TransactionDetail*>{__VA_ARGS__}
-#define DETAIL_ADDS(...) QMultiHash<const Transaction*, TransactionDetail*>{__VA_ARGS__}
+#define DETAIL_ADDS(...) QHash<const Transaction*, QList<TransactionDetail*>>{__VA_ARGS__}
 #define DETAIL_DELETES(...) QList<const TransactionDetail*>{__VA_ARGS__}
 
 #define GET_DETAILS(txDetails) std::get<1>(txDetails)
+
+template<class T>
+T *find(QVariant id, QList<T*> list) {
+    for (auto item : list) if (item->id == id) return item;
+    return nullptr;
+}
 
 class TestTransactionService : public QObject {
     Q_OBJECT
@@ -100,13 +106,13 @@ private slots:
         TransactionDetail detail2 = factory::detail("2.00");
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(&tx), TX_DELETES(),
-            DETAIL_UPDATES(), DETAIL_ADDS({&tx, &detail1}, {&tx, &detail2}), DETAIL_DELETES(),
+            DETAIL_UPDATES(), DETAIL_ADDS({&tx, {&detail1, &detail2}}), DETAIL_DELETES(),
         };
 
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.transactions.size(), 1);
-        auto detailIds = getEntityIds(changes.detailAdds.values());
+        auto detailIds = QList{detail1.id, detail2.id};
         QCOMPARE(result.transactions.at(0)->detailIds, detailIds);
         QCOMPARE(result.details.size(), 2);
         QVERIFY(!tx.id.isNull());
@@ -124,7 +130,7 @@ private slots:
         detail.transferAccountId = altAccountId;
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(&tx), TX_DELETES(),
-            DETAIL_UPDATES(), DETAIL_ADDS({&tx, &detail}), DETAIL_DELETES(),
+            DETAIL_UPDATES(), DETAIL_ADDS({&tx, {&detail}}), DETAIL_DELETES(),
         };
 
         auto result = service->update(changes, TEST_USER);
@@ -153,7 +159,7 @@ private slots:
         detail0->memo = "detail comment";
         TransactionUpdate changes{
             TX_UPDATES(tx), TX_ADDS(), TX_DELETES(),
-            DETAIL_UPDATES(detail0), DETAIL_ADDS({tx, &newDetail}), DETAIL_DELETES(),
+            DETAIL_UPDATES(detail0), DETAIL_ADDS({tx, {&newDetail}}), DETAIL_DELETES(),
         };
 
         auto result = service->update(changes, TEST_USER);
@@ -183,8 +189,8 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.details.size(), 2);
-        QCOMPARE(result.details.at(1)->id, details.at(0)->relatedDetailId);
-        QCOMPARE(result.details.at(1)->amount.toString(), "-3.45");
+        auto resultDetail = find(details.at(0)->relatedDetailId, result.details);
+        QCOMPARE(resultDetail->amount.toString(), "-3.45");
     }
 
     void update_addsRelatedTransactionAndDetail() {
@@ -201,9 +207,9 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.transactions.size(), 1);
-        QCOMPARE(result.transactions.at(0)->detailIds, QList{result.details.at(1)->id});
+        QCOMPARE(result.transactions.at(0)->detailIds, QList{result.details.at(0)->id});
         QCOMPARE(result.details.size(), 2);
-        auto relatedDetail = result.details.at(1);
+        auto relatedDetail = result.details.at(0);
         QCOMPARE(detail->relatedDetailId, relatedDetail->id);
         QCOMPARE(relatedDetail->relatedDetailId, detail->id);
         QCOMPARE(relatedDetail->amount.toString(), "-2.34");
@@ -231,7 +237,7 @@ private slots:
 
     void update_deletesTransactionAndDetails() {
         QFETCH_GLOBAL(TransactionService*, service);
-        auto [tx1, details1] = saveTransaction(QList{"1.00", "2.00"});
+        auto [tx1, details1] = saveTransaction(QList{"1.00", "2.00", "1.11", "2.22"});
         auto [tx2, details2] = saveTransaction(QList{"3.00"});
         auto transfer1 = saveTransfer({"4.00"}); // delete transfer tx
         auto [tx3, details3] = transfer1.at(0);
@@ -241,11 +247,13 @@ private slots:
         auto [tx6, details6] = transfer2.at(1);
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(), TX_DELETES(tx2, tx4),
-            DETAIL_UPDATES(), DETAIL_ADDS(), DETAIL_DELETES(details1.at(0), details5.at(0)),
+            DETAIL_UPDATES(), DETAIL_ADDS(), DETAIL_DELETES(details1.at(0), details1.at(2), details1.at(3), details5.at(0)),
         };
 
-        service->update(changes, TEST_USER);
+        auto result = service->update(changes, TEST_USER);
 
+        auto resultTx = find(tx1->id, result.transactions);
+        QCOMPARE(resultTx->detailIds.size(), 1);
         QCOMPARE(loadTransaction(tx2->id), nullptr); // deleted transaction
         QCOMPARE(loadDetail(details2.at(0)->id), nullptr);
         QCOMPARE(loadTransaction(tx3->id), nullptr); // deleted transfer

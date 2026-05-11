@@ -24,22 +24,24 @@
 
 static const auto createPayeeIndexSql = "create index tx_payee on tx (payee_id)";
 
-#define GET_BY_ACCOUNT_QUERY(jsonArrayAgg) \
+#define GET_ALL_QUERY(jsonArrayAgg) \
     "with detail_summary as (\n" \
     "    select tx_id, " jsonArrayAgg "(id) detail_ids\n" \
     "    from tx_detail\n" \
     "    group by tx_id\n" \
     "), tx_data as (\n" \
-    "    select distinct tx.*\n" \
+    "    select distinct tx.*, rx.account_id related_account_id\n" \
     "    from tx\n" \
     "    join tx_detail td on td.tx_id = tx.id\n" \
     "    left join tx_detail rd on rd.id = td.related_detail_id\n" \
     "    left join tx rx on rx.id = rd.tx_id\n" \
-    "    where :accountId in (tx.account_id, rx.account_id)\n" \
     ")\n" \
     "select tx.*, ds.detail_ids\n" \
     "from tx_data tx\n" \
     "join detail_summary ds on ds.tx_id = tx.id"
+
+#define GET_BY_ACCOUNT_QUERY(jsonArrayAgg) GET_ALL_QUERY(jsonArrayAgg) \
+    "\n    where :accountId in (tx.account_id, tx.related_account_id)" \
 
 static const auto pgGetByAccountSql = GET_BY_ACCOUNT_QUERY(DEFAULT_JSON_ARRAY_AGG);
 static const auto mysqlGetByAccountSql = pgGetByAccountSql;
@@ -74,21 +76,21 @@ update tx
 set payee_id = :payeeId, change_user = :user, change_date = current_timestamp, version = version + 1
 where payee_id = :oldPayeeId)";
 
-#define DAO_QUERIES(idtype) \
+#define DAO_QUERIES(idtype, jsonArrayAgg) \
     .createTableSql = CREATE_TABLE_QUERY(idtype),\
-    .getAllSql = "select * from tx",\
+    .getAllSql = GET_ALL_QUERY(jsonArrayAgg),\
     .updateSql = updateQuery,\
     .insertSql = insertQuery,\
     .deleteSql =  "delete from tx where id = :id",
 
 static const DaoQueries pgQueries{
-    DAO_QUERIES(PG_ID_TYPE)
+    DAO_QUERIES(PG_ID_TYPE, DEFAULT_JSON_ARRAY_AGG)
 };
 static const DaoQueries mysqlQueries{
-    DAO_QUERIES(MYSQL_ID_TYPE)
+    DAO_QUERIES(MYSQL_ID_TYPE, DEFAULT_JSON_ARRAY_AGG)
 };
 static const DaoQueries sqliteQueries{
-    DAO_QUERIES(SQLITE_ID_TYPE)
+    DAO_QUERIES(SQLITE_ID_TYPE, SQLITE_JSON_ARRAY_AGG)
 };
 
 TransactionDao::TransactionDao(const QString &dbType)

@@ -29,6 +29,7 @@ public:
 
     QVariant parseValue(const QVariant &value) override {
         if (value.metaType().id() == QMetaType::QString) {
+            if (value.toString().isEmpty()) return QVariant{};
             return QVariant::fromValue(QDecNumber(value.toByteArray().constData()));
         }
         return value;

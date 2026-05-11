@@ -53,6 +53,22 @@ void RelationEditor::activated(const QModelIndex &index) {
     emit entityChanged(entity_);
 }
 
+void RelationEditor::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        auto text = this->text().toLower();
+        auto model = completer()->completionModel();
+        for (int i = 0; i < model->rowCount(); i++) {
+            auto index = model->index(i, 0);
+            if (text == index.data().toString().toLower()) {
+                completer()->popup()->selectionModel()->select(index, QItemSelectionModel::SelectionFlag::SelectCurrent);
+                activated(index);
+                break;
+            }
+        }
+    }
+    QLineEdit::keyPressEvent(event);
+}
+
 void RelationEditor::keyReleaseEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         auto text = this->text();

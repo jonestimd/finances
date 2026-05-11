@@ -73,6 +73,7 @@ void DeleteRowAction::selectionChanged() {
 void DeleteRowAction::doAction() {
     auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
     for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model()->queueDelete(*i);
+    selectionChanged();
 }
 
 UndoChangeAction::UndoChangeAction(SortFilterProxyModel *sortModel, QAbstractItemView *itemView, QObject *parent)

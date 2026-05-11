@@ -62,6 +62,7 @@ public:
     }
 
     virtual void setValue(T *row, QVariant value) const {
+        if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
         row->*(this->field) = value;
     }
 

@@ -47,6 +47,8 @@ protected:
     Q_SLOT void updateBalances();
     void updateClearedBalance(const QDecNumber &delta);
 
+    virtual Transaction *newRow() override;
+
 public:
     void setRows(const QList<qlonglong> transactionIds);
 
@@ -73,10 +75,21 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     bool hasUnsavedChanges() const override;
-    // void clearChanges() override;
-    // bool enableDelete(const QModelIndex &index) const override;
+    void clearChanges() override;
+    bool enableDelete(const QModelIndex &index) const override;
 
-    QMultiHash<const Transaction*, TransactionDetail*> unsavedDetailAdds() const;
+    /**
+     *  @brief transactionHasChanges Checks if the transaction associated with `index` has unsaved changes.
+     *  @param index Model index of the transaction or one of its details.
+     */
+    bool transactionHasChanges(const QModelIndex &index) const;
+    /**
+     *  @brief transactionIsValid Checks if the transaction associated with `index` is valid.
+     *  @param index Model index of the transaction or one of its details.
+     */
+    bool transactionIsValid(const QModelIndex &index) const;
+
+    QHash<const Transaction*, QList<TransactionDetail*>> unsavedDetailAdds() const;
     QList<TransactionDetail*> unsavedDetailChanges();
     QList<const TransactionDetail*> unsavedDetailDeletes() const;
 

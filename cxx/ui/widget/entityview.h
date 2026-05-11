@@ -46,6 +46,8 @@ public:
     void disableUi(const QString &message);
     Q_INVOKABLE void removeMessage(const QString &message);
 
+    void focusItemView();
+
 public Q_SLOTS:
     void dataChanged();
     void showValidation(const QModelIndex &index);

@@ -49,6 +49,8 @@ private Q_SLOTS:
 
 protected:
     const char *settingsGroup() const override;
+
+    virtual void keyPressEvent(QKeyEvent *event) override;
 };
 
 #endif // TRANSACTIONSWINDOW_H
