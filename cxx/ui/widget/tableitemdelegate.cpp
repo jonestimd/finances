@@ -136,6 +136,14 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
     return editor;
 }
 
+void TableItemDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    QStyledItemDelegate::updateEditorGeometry(editor, option, index);
+    if (index.data(finances::ValidationMessageRole).isValid()) {
+        // cover cell error marker
+        editor->setGeometry(editor->geometry().adjusted(0, 0, ICON_WIDTH, 0));
+    }
+}
+
 bool TableItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {
     using enum QEvent::Type;
     auto eventType = event->type();
