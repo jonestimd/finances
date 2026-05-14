@@ -39,7 +39,6 @@ public:
  */
 struct ValidatorFactory : public QObject {
     typedef std::function<const ValidationStatus*(QObject*,QStatusBar*)> Factory;
-    typedef std::function<const QString(const QModelIndex &)> GetTitle;
 
     /**
      * @brief global Indicates the validator factory is a global/reusable instance.
@@ -69,7 +68,8 @@ struct ValidatorFactory : public QObject {
      */
     virtual QModelIndexList revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const;
 
-    static const QString columnHeader(const QModelIndex &index);
+    const QString columnHeader(const QModelIndex &index) const;
+    const QString columnHeader(const QModelIndex &index, int column) const;
 };
 
 Q_DECLARE_OPAQUE_POINTER(ValidatorFactory::Factory)

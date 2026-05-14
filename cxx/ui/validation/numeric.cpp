@@ -1,26 +1,25 @@
 #include "numeric.h"
 #include "ui/validation/required.h"
 
-NumberValidatorFactory::NumberValidatorFactory(int decimals, bool required, GetTitle getTitle)
-    : NumberValidatorFactory([=](const QModelIndex &) { return required; }, decimals, getTitle)
+NumberValidatorFactory::NumberValidatorFactory(int decimals, bool required)
+    : NumberValidatorFactory([=](const QModelIndex &) { return required; }, decimals)
 {}
 
-NumberValidatorFactory::NumberValidatorFactory(IsRequired isRequired, int decimals, GetTitle getTitle)
+NumberValidatorFactory::NumberValidatorFactory(IsRequired isRequired, int decimals)
     : ValidatorFactory(false)
     , validator(-INFINITY, INFINITY, decimals)
     , isRequired{isRequired}
-    , getTitle{getTitle}
 {
     validator.setNotation(QDoubleValidator::StandardNotation);
 }
 
 const QString NumberValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     if (isRequired(index)) {
-        auto message = requiredValidatorFactory->isValid(index, value, getTitle);
+        auto message = requiredValidatorFactory->isValid(index, value);
         if (!message.isEmpty()) return message;
     }
     int pos{0};
-    if (validator.validate(value, pos) == QValidator::Invalid) return tr("%1 is invalid").arg(getTitle(index));
+    if (validator.validate(value, pos) == QValidator::Invalid) return tr("%1 is invalid").arg(columnHeader(index));
     return nullptr;
 }
 

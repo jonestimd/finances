@@ -8,11 +8,10 @@ class NumberValidatorFactory : public ValidatorFactory {
 
     QDoubleValidator validator;
     const IsRequired isRequired;
-    const GetTitle getTitle;
 
 public:
-    NumberValidatorFactory(int decimals, bool required = false, GetTitle getTitle = ValidatorFactory::columnHeader);
-    NumberValidatorFactory(IsRequired isRequired, int decimals, GetTitle getTitle = ValidatorFactory::columnHeader);
+    NumberValidatorFactory(int decimals, bool required = false);
+    NumberValidatorFactory(IsRequired isRequired, int decimals);
 
     const QString isValid(const QModelIndex &index, QString &value) const override;
 

@@ -58,6 +58,12 @@ QModelIndexList ValidatorFactory::revalidateRows(QHash<QModelIndex, QString> &er
     return changes;
 }
 
-const QString ValidatorFactory::columnHeader(const QModelIndex &index) {
-    return index.model()->headerData(index.column(), Qt::Horizontal).toString();
+const QString ValidatorFactory::columnHeader(const QModelIndex &index) const {
+    return columnHeader(index, index.column());
+}
+
+const QString ValidatorFactory::columnHeader(const QModelIndex &index, int column) const {
+    auto title = index.model()->headerData(column, Qt::Horizontal).toString();
+    if (index.parent().isValid() && title.contains('\n')) return title.split('\n').at(1);
+    return title;
 }

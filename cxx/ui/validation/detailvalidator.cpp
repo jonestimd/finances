@@ -4,15 +4,8 @@
 #include "ui/model/transactiontablemodel.h"
 #include <QDecNumber.hh>
 
-namespace detailvalidator {
-    const QString getDetailTitle(const QModelIndex &index) {
-        return index.model()->headerData(index.column(), Qt::Horizontal).toString().split('\n').at(1);
-    }
-}
-using namespace detailvalidator;
-
 SharesValidatorFactory::SharesValidatorFactory(int categoryColumnIndex, int securityColumnIndex, int amountColumnIndex)
-    : NumberValidatorFactory(std::bind_front(&SharesValidatorFactory::isRequired, this), 6, getDetailTitle)
+    : NumberValidatorFactory(std::bind_front(&SharesValidatorFactory::isRequired, this), 6)
     , categoryColumnIndex{categoryColumnIndex}
     , securityColumnIndex{securityColumnIndex}
     , amountColumnIndex{amountColumnIndex}
@@ -23,22 +16,20 @@ const QString SharesValidatorFactory::isValid(const QModelIndex &index, QString 
     if (message.isEmpty() && index.parent().isValid()) {
         double shares(value.toDouble());
         if (shares == 0) {
-            if (isRequired(index)) return tr("%1 is required").arg(getDetailTitle(index));
+            if (isRequired(index)) return tr("%1 is required").arg(columnHeader(index));
         } else {
             auto securityId = index.parent().siblingAtColumn(securityColumnIndex).data();
             if (securityId.isNull() && !value.isEmpty()) {
-                return tr("%1 requires a security").arg(getDetailTitle(index));
+                return tr("%1 requires a security").arg(columnHeader(index));
             }
             auto amount = index.siblingAtColumn(amountColumnIndex).data(Qt::EditRole).value<QDecNumber>();
             if (isTransfer(index)) {
                 if (!amount.isZero()) {
-                    return tr("Transfer with %1 and %2 not allowed")
-                        .arg(getDetailTitle(index), getDetailTitle(index.siblingAtColumn(amountColumnIndex)));
+                    return tr("Transfer with %1 and %2 not allowed").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
                 }
             }
             else if (amount.isNegative() == (shares < 0)) {
-                return tr("%1 and %2 must have opposite signs")
-                    .arg(getDetailTitle(index), getDetailTitle(index.siblingAtColumn(amountColumnIndex)));
+                return tr("%1 and %2 must have opposite signs").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
             }
         }
     }
@@ -62,7 +53,7 @@ bool SharesValidatorFactory::isTransfer(const QModelIndex &index) const {
 }
 
 DetailAmountValidatorFactory::DetailAmountValidatorFactory()
-    : NumberValidatorFactory{std::bind_front(&DetailAmountValidatorFactory::isRequired, this), 2, getDetailTitle}
+    : NumberValidatorFactory{std::bind_front(&DetailAmountValidatorFactory::isRequired, this), 2}
 {}
 
 bool DetailAmountValidatorFactory::isRequired(const QModelIndex &index) const {

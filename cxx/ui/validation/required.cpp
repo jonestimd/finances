@@ -7,11 +7,7 @@ RequiredValidatorFactory::RequiredValidatorFactory()
 {}
 
 const QString RequiredValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
-    return isValid(index, value, columnHeader);
-}
-
-const QString RequiredValidatorFactory::isValid(const QModelIndex &index, QString &value, GetTitle getTitle) const {
-    auto message = trimmedValidatorFactory->isValid(index, value, getTitle);
+    auto message = trimmedValidatorFactory->isValid(index, value);
     if (!message.isEmpty()) return message;
-    return value.isEmpty() ? tr("%1 is required").arg(getTitle(index)) : nullptr;
+    return value.isEmpty() ? tr("%1 is required").arg(columnHeader(index)) : nullptr;
 }
