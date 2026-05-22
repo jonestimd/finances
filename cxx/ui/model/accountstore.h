@@ -20,7 +20,7 @@ public:
     QString qualifiedName(const QVariant &accountId, QChar delimiter) const;
 
 protected:
-    void update(QWidget *source, QList<Account*> updates, const QList<Account*> adds, const QList<const Account*> deletes);
+    void update(QWidget *source, QList<Account*> updates, const QList<const Account*> adds, const QList<const Account*> deletes);
     using EntityStore::update;
 };
 

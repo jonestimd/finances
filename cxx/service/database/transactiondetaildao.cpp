@@ -43,14 +43,16 @@ left join tx rx on rx.id = rd.tx_id
 where :accountId in (tx.account_id, rx.account_id))";
 
 #define GET_RELATED_IDS_QUERY(inList) \
-    "select td.id, td.related_detail_id, tx.account_id\n" \
+    "select td.id, td.related_detail_id, tx.account_id, rx.id related_tx_id, rx.account_id transfer_account_id\n" \
     "from tx_detail td\n" \
     "join tx on td.tx_id = tx.id\n" \
-    "where " inList
+    "left join tx_detail rd on td.related_detail_id = rd.id\n" \
+    "left join tx rx on rd.tx_id = rx.id\n" \
+    "where " inList(td.id, :ids)
 
-static const auto pgGetRelatedIdsSql = GET_RELATED_IDS_QUERY(PG_IN_LIST(td.id, :ids));
-static const auto sqliteGetRelatedIdsSql = GET_RELATED_IDS_QUERY(SQLITE_IN_LIST(td.id, :ids));
-static const auto mysqlGetRelatedIdsSql = GET_RELATED_IDS_QUERY(MYSQL_IN_LIST(td.id, :ids));
+static const auto pgGetRelatedIdsSql = GET_RELATED_IDS_QUERY(PG_IN_LIST);
+static const auto sqliteGetRelatedIdsSql = GET_RELATED_IDS_QUERY(SQLITE_IN_LIST);
+static const auto mysqlGetRelatedIdsSql = GET_RELATED_IDS_QUERY(MYSQL_IN_LIST);
 
 static const auto insertQuery = R"(
 insert into tx_detail (tx_id, amount, asset_quantity, memo, tx_category_id, tx_group_id, related_detail_id, version, change_user, change_date)
@@ -69,10 +71,10 @@ where id = :id and version = :version)";
     "update tx_detail\n" \
     "set amount = (select -rd.amount from tx_detail rd where rd.related_detail_id = tx_detail.id),\n" \
     "    change_user = :user, change_date = current_timestamp, version = version + 1\n" \
-    "where " inList
+    "where " inList(id, :ids)
 
-static const auto pgUpdateTransferAmountSql = UPDATE_TRANSFER_AMOUNT_QUERY(PG_IN_LIST(id, :ids));
-static const auto sqliteUpdateTransferAmountSql = UPDATE_TRANSFER_AMOUNT_QUERY(SQLITE_IN_LIST(id, :ids));
+static const auto pgUpdateTransferAmountSql = UPDATE_TRANSFER_AMOUNT_QUERY(PG_IN_LIST);
+static const auto sqliteUpdateTransferAmountSql = UPDATE_TRANSFER_AMOUNT_QUERY(SQLITE_IN_LIST);
 static const auto mysqlUpdateTransferAmountSql = R"(
 update tx_detail td
 join tx_detail rd on rd.id = td.related_detail_id
@@ -80,24 +82,21 @@ set td.amount = -rd.amount,
     td.change_user = :user, td.change_date = current_timestamp, td.version = td.version + 1
 where td.id member of (:ids))";
 
-#define DELETE_BY_IDS_QUERY(inList) "delete from tx_detail where " inList
+#define DELETE_BY_IDS_QUERY(inList) "delete from tx_detail where " inList(id, :ids)
 
-static const auto pgDeleteByIdsSql = DELETE_BY_IDS_QUERY(PG_IN_LIST(id, :ids));
-static const auto sqliteDeleteByIdsSql = DELETE_BY_IDS_QUERY(SQLITE_IN_LIST(id, :ids));
-static const auto mysqlDeleteByIdsSql = DELETE_BY_IDS_QUERY(MYSQL_IN_LIST(id, :ids));
+static const auto pgDeleteByIdsSql = DELETE_BY_IDS_QUERY(PG_IN_LIST);
+static const auto sqliteDeleteByIdsSql = DELETE_BY_IDS_QUERY(SQLITE_IN_LIST);
+static const auto mysqlDeleteByIdsSql = DELETE_BY_IDS_QUERY(MYSQL_IN_LIST);
 
-#define DELETE_BY_TRANSACTION_QUERY(inList) \
-    "delete from tx_detail\n" \
-    "where " inList "\n" \
-    "   or id in (select related_detail_id from tx_detail where " inList ")"
+#define DELETE_IDS_BY_TRANSACTION_QUERY(inList) \
+    "select td.id, td.related_detail_id, rd.tx_id related_tx_id\n" \
+    "from tx_detail td\n" \
+    "left join tx_detail rd on td.related_detail_id = rd.id\n" \
+    "where " inList(td.tx_id, :txIds)
 
-static const auto pgDeleteByTransactionSql = DELETE_BY_TRANSACTION_QUERY(PG_IN_LIST(tx_id, :txIds));
-static const auto sqliteDeleteByTransactionSql = DELETE_BY_TRANSACTION_QUERY(SQLITE_IN_LIST(tx_id, :txIds));
-static const auto mysqlDeleteByTransactionSql = R"(
-delete td, rd
-from tx_detail td
-left join tx_detail rd on td.related_detail_id = rd.id
-where td.tx_id member of (:txIds))";
+static const auto pgDeleteIdsByTransactionSql = DELETE_IDS_BY_TRANSACTION_QUERY(PG_IN_LIST);
+static const auto sqliteDeleteIdsByTransactionSql = DELETE_IDS_BY_TRANSACTION_QUERY(SQLITE_IN_LIST);
+static const auto mysqlDeleteIdsByTransactionSql = DELETE_IDS_BY_TRANSACTION_QUERY(MYSQL_IN_LIST);
 
 static const auto setCategorySql = R"(
 update tx_detail
@@ -124,7 +123,7 @@ static const DaoQueries sqliteQueries{
 TransactionDetailDao::TransactionDetailDao(const QString &dbType)
     : EntityDao<TransactionDetail>{DB_TYPE_QUERY(dbType, Queries), "TransactionDetailDao",
                                    QObject::tr("Transaction details have been modified.  Please reload and try again."), "td.id"}
-    , deleteByTransactionSql{DB_TYPE_QUERY(dbType, DeleteByTransactionSql)}
+    , deleteIdsByTransactionSql{DB_TYPE_QUERY(dbType, DeleteIdsByTransactionSql)}
     , deleteByIdsSql{DB_TYPE_QUERY(dbType, DeleteByIdsSql)}
     , updateTransferAmountSql{DB_TYPE_QUERY(dbType, UpdateTransferAmountSql)}
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
@@ -138,11 +137,35 @@ QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QS
     return load(query);
 }
 
-void TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions) {
+const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, const QVariant &txId, const TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
-    query.prepare(deleteByTransactionSql);
+    query.prepare(insertQuery);
+    TransactionDetail relatedDetail;
+    detail->initTransfer(txId, relatedDetail);
+    SQL_BIND_VALUE(query, ":user", user);
+    bindInsertValues(query, &relatedDetail);
+    sql::exec(query, className, "insert");
+    auto id = query.lastInsertId();
+    return get(db, {id}).value(id.toLongLong());
+}
+
+QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds) {
+    QSqlQuery query(db);
+    query.prepare(deleteIdsByTransactionSql);
     SQL_BIND_LIST(query, ":txIds", getEntityIds(transactions));
-    sql::exec(query, className, "deleteByTransaction");
+    sql::exec(query, className, "deleteIdsByTransaction");
+    QVariantList ids{}, relatedDetailIds{};
+    while (query.next()) {
+        auto record = query.record();
+        ids.append(sql::getValue(record, "id"));
+        auto relatedId = record.field("related_detail_id");
+        if (!relatedId.isNull()) {
+            relatedDetailIds.append(relatedId.value());
+            relatedTransactionIds.append(record.field("related_tx_id").value());
+        }
+    }
+    removeByIds(db, ids + relatedDetailIds);
+    return relatedDetailIds;
 }
 
 void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user) {
@@ -155,10 +178,10 @@ void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *cat
     if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
 }
 
-QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, const QList<TransactionDetail *> entities, const QString &user) {
-    auto updates = EntityDao<TransactionDetail>::update(db, entities, user);
+QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, const QList<TransactionDetail *> details, const QString &user) {
+    auto updates = EntityDao<TransactionDetail>::update(db, details, user);
     QVariantList relatedIds{};
-    for (auto detail : entities) {
+    for (auto detail : details) {
         if (!detail->relatedDetailId.isNull()) relatedIds.append(detail->relatedDetailId);
     }
     if (!relatedIds.isEmpty()) {
@@ -172,11 +195,11 @@ QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, 
     return updates;
 }
 
-void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail*, TransactionDetail*> transfers) {
+void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail *, qlonglong> relatedIds) {
     QSqlQuery query(db);
     query.prepare(setRelatedDetailQuery);
-    for (auto [detail, relatedDetail] : transfers.asKeyValueRange()) {
-        detail->relatedDetailId = relatedDetail->id;
+    for (auto [detail, relatedId] : relatedIds.asKeyValueRange()) {
+        detail->relatedDetailId = relatedId;
         SQL_BIND_VALUE(query, ":id", detail->id);
         SQL_BIND_VALUE(query, ":relatedId", detail->relatedDetailId);
         sql::exec(query, className, "setRelatedDetailId");
@@ -192,7 +215,7 @@ QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
     QHash<qlonglong, RelatedDetailIds> relatedIds{};
     while (query.next()) {
         auto record = query.record();
-        relatedIds.insert(record.value("id").toLongLong(), {record.value("account_id"), sql::getValue(record, "related_detail_id")});
+        relatedIds.insert(record.value("id").toLongLong(), RelatedDetailIds{record});
     }
     return relatedIds;
 }
@@ -201,9 +224,7 @@ void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const Transactio
     QSqlQuery query(db);
     auto ids = getEntityIds(details);
     for (auto detail : details) if (!detail->relatedDetailId.isNull()) ids.append(detail->relatedDetailId);
-    query.prepare(deleteByIdsSql);
-    SQL_BIND_LIST(query, ":ids", ids);
-    sql::exec(query, className, "deleteByIds");
+    removeByIds(db, ids);
 }
 
 void TransactionDetailDao::bindInsertValues(QSqlQuery &query, TransactionDetail *detail) {
@@ -226,3 +247,17 @@ void TransactionDetailDao::bindUpdateValues(QSqlQuery &query, TransactionDetail 
     SQL_BIND_VALUE(query, ":groupId", detail->groupId);
     SQL_BIND_VALUE(query, ":relatedDetailId", detail->relatedDetailId);
 }
+
+void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QVariantList ids) {
+    QSqlQuery query(db);
+    query.prepare(deleteByIdsSql);
+    SQL_BIND_LIST(query, ":ids", ids);
+    sql::exec(query, className, "deleteByIds");
+}
+
+RelatedDetailIds::RelatedDetailIds(QSqlRecord &record)
+    : accountId{record.value("account_id")}
+    , relatedDetailId{sql::getValue(record, "related_detail_id")}
+    , relatedTransactionId{sql::getValue(record, "related_tx_id")}
+    , transferAccountId{sql::getValue(record, "transfer_account_id")}
+{}

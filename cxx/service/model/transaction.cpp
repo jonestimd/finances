@@ -23,38 +23,72 @@ bool Transaction::deletable() const {
     return true;
 }
 
-bool Transaction::isEmpty() const {
-    return payeeId.isNull() && securityId.isNull() && referenceNumber.isNull() && memo.isNull();
-}
-
 Transaction *Transaction::newTransfer(const QVariant &accountId) const {
     auto relatedTransaction = new Transaction(*this);
     relatedTransaction->accountId = accountId;
     return relatedTransaction;
 }
 
+QString Transaction::toString() const {
+    return QString("accountId{") % accountId.toString()
+           % "},date{" % date.toString()
+           % "},referenceNumber{" % referenceNumber.toString()
+           % "},payeeId{" % payeeId.toString()
+           % "},securityId{" % securityId.toString()
+           % "},memo{" % memo.toString()
+           % "},cleared{" % cleared.toString() % "}";
+}
+
+PendingTransaction::PendingTransaction() {}
+
+PendingTransaction::PendingTransaction(const QVariant &accountId) : Transaction{accountId} {
+    details.append(new TransactionDetail);
+}
+
+PendingTransaction::PendingTransaction(const PendingTransaction &that) : Transaction(that) {
+    for (auto detail : std::as_const(that.details)) details.append(new TransactionDetail(*detail));
+}
+
+PendingTransaction::~PendingTransaction() {
+    qDeleteAll(details);
+}
+
+bool PendingTransaction::isEmpty() const {
+    for (auto detail : std::as_const(details)) if (!detail->isEmpty()) return false;
+    return payeeId.isNull() && securityId.isNull() && referenceNumber.isNull() && memo.isNull();
+}
+
 TransactionUpdate::TransactionUpdate(
     const QList<Transaction*> updates,
-    const QList<Transaction*> adds,
+    const QList<const PendingTransaction*> adds,
     QList<const Transaction*> deletes,
     const QList<TransactionDetail*> detailUpdates,
-    QHash<const Transaction*, QList<TransactionDetail*>>  detailAdds,
+    QList<const TransactionDetail*>  detailAdds,
     QList<const TransactionDetail*> detailDeletes)
-    : BulkUpdate<Transaction>{updates, adds, deletes}
+    : BulkUpdate{updates, adds, deletes}
     , detailUpdates{detailUpdates}
-    , detailAdds{detailAdds}
+    , detailAdds{model::copy(detailAdds)}
     , detailDeletes{detailDeletes}
 {}
 
-void TransactionUpdate::onError() {
-    BulkUpdate::onError();
-    for (auto entity : std::as_const(detailUpdates)) delete entity;
-    for (auto &entities : std::as_const(detailAdds)) {
-        for (auto entity : entities) delete entity;
-    }
+TransactionUpdate::~TransactionUpdate() {
+    qDeleteAll(adds);
 }
 
-TransactionsData::TransactionsData(QList<const Transaction*> transactions, QList<const TransactionDetail*> details)
+void TransactionUpdate::onError() {
+    BulkUpdate::onError();
+    qDeleteAll(detailUpdates);
+    qDeleteAll(detailAdds);
+}
+
+TransactionsData::TransactionsData(
+    QList<const Transaction*> transactions,
+    QList<const TransactionDetail*> details,
+    const QList<QVariant> deletedIds,
+    const QList<QVariant> deletedDetailIds
+)
     : transactions{transactions}
     , details{details}
+    , deletedIds(deletedIds)
+    , deletedDetailIds(deletedDetailIds)
 {}

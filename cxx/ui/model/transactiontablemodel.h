@@ -6,7 +6,7 @@
 #include "service/model/transaction.h"
 #include "ui/model/datastore.h"
 
-class TransactionTableModel : public PodItemModel<Transaction> {
+class TransactionTableModel : public PodItemModel<Transaction, PendingTransaction> {
     Q_OBJECT
     TransactionTypeColumnAdapter *const transactionTypeAdapter;
     const TransactionStore *const store;
@@ -41,13 +41,14 @@ protected:
 
     int childCount(const QModelIndex &index) const override;
 
+    PendingTransaction *pendingTransaction(const QModelIndex &index) const;
     const QList<TransactionDetail*> pendingDetails(const QModelIndex &parent) const;
 
     void updateBalances(int fromRow, const QDecNumber &delta);
     Q_SLOT void updateBalances();
     void updateClearedBalance(const QDecNumber &delta);
 
-    virtual Transaction *newRow() override;
+    virtual PendingTransaction *newRow() override;
 
 public:
     void setRows(const QList<qlonglong> transactionIds);
@@ -66,6 +67,7 @@ public:
 
     AbstractColumnAdapter *adapter(const QModelIndex &index) const override;
 
+    bool isPendingAdd(const QModelIndex &index) const override;
     bool isPendingDelete(const QModelIndex &index) const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -89,22 +91,32 @@ public:
      */
     bool transactionIsValid(const QModelIndex &index) const;
 
-    QHash<const Transaction*, QList<TransactionDetail*>> unsavedDetailAdds() const;
-    QList<TransactionDetail*> unsavedDetailChanges();
-    QList<const TransactionDetail*> unsavedDetailDeletes() const;
+    QList<const TransactionDetail*> unsavedDetailAdds(int txRow = -1) const;
+    QList<TransactionDetail*> unsavedDetailChanges(int txRow = -1);
+    QList<const TransactionDetail*> unsavedDetailDeletes(int txRow = -1) const;
+
+private slots:
+    void accountLoaded(qlonglong accountId);
+    void accountUpdated(qlonglong accountId);
+    void transactionsSaved(const QList<const PendingTransaction*>& transactions);
+    void transactionAdded(qlonglong accountId, int index);
+    void transactionRemoved(qlonglong accountId, int index);
+    void transactionUpdated(qlonglong accountId, int index, int oldDetailCount);
 
 private:
-    Q_SLOT void accountLoaded(qlonglong accountId);
+    void queueAddTransaction();
 
     int pendingDeleteCount(const QModelIndex &parent) const;
 
     bool isBoldColumn(int column) const;
     static QFont boldFont();
 
-Q_SIGNALS:
+signals:
+    void dataLoaded();
     void clearedBalanceChanged(const QDecNumber &clearedBalance);
 
-public Q_SLOTS:
+public slots:
+    /** @brief queueAdd Called by toolbar action to add a detail row. */
     QModelIndex queueAdd(const QModelIndex &parent) override;
     void queueDelete(const QModelIndex &index) override;
     void undoChange(const QModelIndex &index) override;

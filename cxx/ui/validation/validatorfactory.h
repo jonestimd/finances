@@ -66,7 +66,7 @@ struct ValidatorFactory : public QObject {
      * @param index The index of the row
      * @return a list of modified indexes.
      */
-    virtual QModelIndexList revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const;
+    virtual QModelIndexList revalidateRows(QHash<const QModelIndex, QString> &errors, const QModelIndex &index) const;
 
     const QString columnHeader(const QModelIndex &index) const;
     const QString columnHeader(const QModelIndex &index, int column) const;

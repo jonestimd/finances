@@ -74,6 +74,9 @@ public:
         return new ComboBoxModel(options, NamedEntity::getName, createValue);
     }
 
+    /**
+     * @return Returns `true` if the data is already loaded or `false` if the data is loading in the background.
+     */
     bool load(EntityView *view, const QString &statusMessage, GetAllArgs... args, bool reload = false) {
         if (!reload && loaded) return true;
         view->disableUi(statusMessage);
@@ -88,7 +91,7 @@ public:
     /**
      * @brief update Call service to persist changes and update stored entities.
      */
-    void update(QWidget *source, const QList<T*> updates, const QList<T*> adds, const QList<const T*> deletes) {
+    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes) {
         doInBackground(source, [=, this]() {
             auto changes = BulkUpdate{updates, adds, deletes};
             update(service->update(changes, user), deletes);
@@ -115,6 +118,13 @@ protected:
             if (oldValue) delete oldValue;
         }
         for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
+    }
+
+    void removeValues(const QList<qlonglong> &ids) {
+        for (auto id : ids) {
+            auto oldEntity = byId.take(id);
+            if (oldEntity) delete oldEntity;
+        }
     }
 
     /**

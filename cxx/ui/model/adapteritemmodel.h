@@ -14,8 +14,8 @@ class AdapterItemModel : public QAbstractItemModel {
     Q_OBJECT
 protected:
     QHash<const QModelIndex, QVariant> changes; // TODO const values
-    QList<QModelIndex> pendingDeletes; // TODO const values?
-    QHash<QModelIndex, QString> errors; // TODO const keys/values
+    QList<QModelIndex> pendingDeletes;
+    QHash<const QModelIndex, QString> errors; // TODO const values
 
 public:
     explicit AdapterItemModel(QObject *parent = nullptr);
@@ -37,10 +37,15 @@ public Q_SLOTS:
 protected:
     virtual AbstractColumnAdapter *adapter(const QModelIndex &index) const = 0;
 
+public:
     virtual bool isPendingAdd(const QModelIndex &index) const = 0;
     virtual bool isPendingDelete(const QModelIndex &index) const;
 
+protected:
     virtual QVariant value(const QModelIndex &index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const = 0;
+    /**
+     * @brief setValue Sets a column value on a pending add (unsaved row).
+     */
     virtual void setValue(const QModelIndex &index, const QVariant &value) = 0;
 
     void rowsChanged(int from, int to, const QModelIndex &parent);

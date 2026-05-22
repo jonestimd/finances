@@ -39,7 +39,7 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     }
     QVariant unsaved = index.data(finances::UnsavedRole);
     if (unsaved.isValid()) {
-        if (unsaved.toInt() == finances::AddUpdate) {
+        if (unsaved.toInt() & (finances::Add | finances::Update)) {
             auto brush = option->palette.brush(QPalette::Base).color();
             int h, s, v;
             brush.getHsv(&h, &s, &v);

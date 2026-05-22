@@ -8,17 +8,17 @@
 
 #define ROOT_ROW_TYPE 0
 
-template<Copyable Row>
+template<Copyable Row, Copyable PendingAdd = Row>
 class PodItemModel : public AdapterItemModel {
 protected:
     const QList<ColumnAdapter<Row>*> columns;
     /*!
      * \brief newRows map of parent index to added children
      */
-    QHash<const QModelIndex, QList<Row*>> newRows;
+    QHash<const QModelIndex, QList<PendingAdd*>> newRows;
 
-    const QList<Row*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
-        return newRows.value(parent, QList<Row*>());
+    const QList<PendingAdd*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
+        return newRows.value(parent, QList<PendingAdd*>());
     }
 
     AbstractColumnAdapter *adapter(const QModelIndex &index) const override {
@@ -29,7 +29,10 @@ protected:
         return columns.at(index.column())->value(getRow(index), index, current, role);
     }
 
-    virtual int childCount(const QModelIndex &index) const = 0;
+    /**
+     * @brief childCount Returns the count of *saved* children for the parent `index`.
+     */
+    virtual int childCount(const QModelIndex &parent) const = 0;
 
     void setValue(Row *row, int column, QVariant value) {
         columns[column]->setValue(row, value);
@@ -47,12 +50,8 @@ protected:
         return -1;
     }
 
-    bool isPendingAdd(const QModelIndex &index) const override {
-        return index.row() >= childCount(index.parent());
-    }
-
-    virtual Row * newRow() {
-        return new Row;
+    virtual PendingAdd *newRow() {
+        return new PendingAdd;
     }
 
 public:
@@ -70,12 +69,16 @@ public:
 
     virtual const Row *getRow(const QModelIndex &index) const = 0;
 
+    bool isPendingAdd(const QModelIndex &index) const override {
+        return index.row() >= childCount(index.parent());
+    }
+
     QModelIndex queueAdd(const QModelIndex &selectedIndex) override {
         auto parent = selectedIndex.parent();
         auto rowIndex = rowCount(parent);
         beginInsertRows(parent, rowIndex, rowIndex);
-        Row *row = newRow();
-        if (!newRows.contains(parent)) newRows.insert(parent, QList<Row*>());
+        PendingAdd *row = newRow();
+        if (!newRows.contains(parent)) newRows.insert(parent, QList<PendingAdd*>());
         newRows[parent].append(row);
         validateRow(rowIndex, parent);
         endInsertRows();
@@ -104,12 +107,15 @@ public:
         return !newRows.isEmpty() || AdapterItemModel::hasUnsavedChanges();
     }
 
-    QList<Row*> unsavedAdds() const {
-        QList<Row*> rows;
-        for (const auto &children : newRows) {
-            for (auto row : children) {
-                rows.append(new Row(*row));
-            }
+    /**
+     * @return Returns copies of the new rows.
+     */
+    QList<const PendingAdd*> unsavedAdds(int rowIndex = -1) const {
+        QList<const PendingAdd*> rows;
+        int i = childCount(QModelIndex{});
+        for (const auto row : pendingAdds()) {
+            if (rowIndex < 0 || i == rowIndex) rows.append(row);
+            i++;
         }
         return rows;
     }
@@ -123,10 +129,10 @@ public:
         return ROOT_ROW_TYPE;
     }
 
-    virtual QList<Row*> unsavedChanges() {
+    virtual QList<Row*> unsavedChanges(int rowIndex = -1) {
         QHash<const QList<int>, Row*> changeRows;
         for (auto [index, value] : changes.asKeyValueRange()) {
-            if (isPendingDelete(index) || rowType(index) != ROOT_ROW_TYPE) continue;
+            if (isPendingDelete(index) || rowType(index) != ROOT_ROW_TYPE || rowIndex >= 0 && index.row() != rowIndex) continue;
             Row *updated;
             auto indexes = rowIndexes(index);
             if (changeRows.contains(indexes)) updated = changeRows[indexes];
@@ -139,10 +145,10 @@ public:
         return changeRows.values();
     }
 
-    virtual QList<const Row*> unsavedDeletes() const {
+    virtual QList<const Row*> unsavedDeletes(int rowIndex = -1) const {
         QList<const Row*> deletes{};
         for (auto i : pendingDeletes) {
-            if (rowType(i) == ROOT_ROW_TYPE) deletes.append(getRow(i));
+            if (rowType(i) == ROOT_ROW_TYPE && (rowIndex < 0 || i.row() == rowIndex)) deletes.append(getRow(i));
         }
         return deletes;
     }

@@ -7,9 +7,10 @@
 
 // TransactionTypeColumnAdapter //
 
-TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore)
+TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId)
     : ColumnAdapter(title, &TransactionDetail::categoryId, true)
     , dataStore{dataStore}
+    , accountId{accountId}
 {}
 
 QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
@@ -39,10 +40,8 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
 }
 
 QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) const {
-    if (!row->relatedDetailId.isNull()) {
-        auto rd = dataStore->transactionStore->detailStore.value(row->relatedDetailId);
-        auto rx = dataStore->transactionStore->value(rd->transactionId);
-        return QVariant::fromValue(TransactionTypeId(true, rx->accountId));
+    if (!row->transferAccountId.isNull()) {
+        return QVariant::fromValue(TransactionTypeId(true, row->transferAccountId));
     }
     return QVariant::fromValue(TransactionTypeId(false, ColumnAdapter::fieldValue(row)));
 }
@@ -59,7 +58,7 @@ void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant val
         }
     } else {
         row->categoryId = QVariant{};
-        row->transferAccountId = QVariant{};
+        row->transferAccountId = QVariant{};;
     }
 }
 
@@ -77,7 +76,7 @@ QString TransactionTypeColumnAdapter::optionText(const NamedEntity* option) cons
 ComboBoxModel *TransactionTypeColumnAdapter::getOptions() const {
     QList<const NamedEntity*> options;
     for (auto category: dataStore->categoryStore->values()) options.append(category);
-    for (auto account: dataStore->accountStore->values()) options.append(account);
+    for (auto account: dataStore->accountStore->values()) if (account->id.toLongLong() != accountId) options.append(account);
     return new ComboBoxModel(options, std::bind_front(&TransactionTypeColumnAdapter::optionText, this));
 }
 
@@ -111,6 +110,13 @@ QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIn
 DetailAmountColumnAdapter::DetailAmountColumnAdapter(const QString &title)
     : AmountColumnAdapter{title, &TransactionDetail::amount, dollarFormat, true, new DetailAmountValidatorFactory()}
 {}
+
+QVariant DetailAmountColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
+    // auto id = row->id.toLongLong();
+    // auto notnull = !row->id.isNull();
+    // if (notnull) qDebug() << "adapter:" << id << row->amount.toString();
+    return AmountColumnAdapter::value(row, index, current, role);
+}
 
 // EmptyColumnAdapter //
 

@@ -23,6 +23,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
 bool TransactionDetail::isEmpty() const {
     return categoryId.isNull()
            && relatedDetailId.isNull()
+           && transferAccountId.isNull()
            && groupId.isNull()
            && exchangeAssetId.isNull()
            && memo.isNull()
@@ -32,14 +33,19 @@ bool TransactionDetail::isEmpty() const {
 
 TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
     auto relatedDetail = new TransactionDetail(*this);
-    relatedDetail->relatedDetailId = id;
-    relatedDetail->transactionId = transactionId;
-    relatedDetail->amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
-    if (!relatedDetail->assetQuantity.isNull()) {
-        relatedDetail->assetQuantity = QVariant::fromValue(QDecNumber().copyNegate(assetQuantity.value<QDecNumber>()));
-    }
+    relatedDetail->id = QVariant{};
+    initTransfer(transactionId, *relatedDetail);
     relatedDetail->transferAccountId = transferAccountId;
     return relatedDetail;
+}
+
+void TransactionDetail::initTransfer(const QVariant &transactionId, TransactionDetail &relatedDetail) const {
+    relatedDetail.relatedDetailId = id;
+    relatedDetail.transactionId = transactionId;
+    relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
+    if (!relatedDetail.assetQuantity.isNull()) {
+        relatedDetail.assetQuantity = QVariant::fromValue(QDecNumber().copyNegate(assetQuantity.value<QDecNumber>()));
+    }
 }
 
 QVariantList TransactionDetail::transactionIds(const QList<const TransactionDetail *> details) {

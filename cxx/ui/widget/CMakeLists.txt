@@ -22,3 +22,5 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/treeview.h ${CMAKE_CURRENT_LIST_DIR}/treeview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.h ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.cpp
 )
+
+add_subdirectory(tests/)

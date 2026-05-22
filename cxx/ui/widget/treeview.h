@@ -17,6 +17,13 @@ protected:
     virtual void drawRow(QPainter *painter, const QStyleOptionViewItem &options, const QModelIndex &index) const override;
 
     virtual QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers) override;
+
+private:
+    bool isHidden(const QModelIndex &index) const;
+    QModelIndex nextCell(const QModelIndex &index) const;
+    QModelIndex previousCell(const QModelIndex &index) const;
+    QModelIndex nextColumn(QModelIndex index) const;
+    QModelIndex previousColumn(QModelIndex index) const;
 };
 
 #endif // TREEVIEW_H

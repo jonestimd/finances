@@ -39,3 +39,28 @@ install(TARGETS test_decimal
 # install(SCRIPT ${deploy_test_decimal})
 
 add_test(NAME test_decimal COMMAND test_decimal)
+
+get_target_property(UI_SOURCES finances SOURCES)
+list(FILTER UI_SOURCES INCLUDE REGEX ".*/ui/.+\\.(cpp|h)$")
+
+get_target_property(SERVICE_SOURCES finances SOURCES)
+list(FILTER SERVICE_SOURCES INCLUDE REGEX ".*/service/[^/]+\\.(cpp|h)$")
+
+qt_add_library(finances-testlib OBJECT
+    ${UI_SOURCES}
+    ${SERVICE_SOURCES}
+)
+
+target_link_libraries(finances-testlib PUBLIC
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Sql
+    ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
+    ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
+    ${QT_SQLITE_OBJ_FILE}
+)
+
+target_include_directories(finances-testlib PRIVATE
+    $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
+)

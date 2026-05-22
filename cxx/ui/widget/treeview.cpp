@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QKeyEvent>
 #include <QSortFilterProxyModel>
+#include <QHeaderView>
 
 bool TreeView::childInheritsBackground() const {
     return childInheritsBackground_;
@@ -41,14 +42,16 @@ void TreeView::drawRow(QPainter *painter, const QStyleOptionViewItem &options, c
     }
 }
 
-static QModelIndex nextCell(const QAbstractItemModel *model, QModelIndex current, int endColumn) {
-    auto column = current.column();
-    if (column < endColumn) return current.siblingAtColumn(column+1);
-    if (model->hasChildren(current)) return model->index(0, 0, current.siblingAtColumn(0));
-    while (current.isValid()) {
-        auto nextRow = current.row() + 1;
-        if (nextRow < model->rowCount(current.parent())) return current.sibling(nextRow, 0);
-        current = current.parent();
+QModelIndex TreeView::nextCell(const QModelIndex &current) const {
+    auto next = nextColumn(current);
+    if (next.column() > current.column()) return next;
+    auto model = this->model();
+    auto endColumn = model->columnCount(current) - 1;
+    next = current.siblingAtColumn(0);
+    if (model->hasChildren(next)) return nextColumn(model->index(0, endColumn, next));
+    for (next = current; next.isValid(); next = next.parent()) {
+        auto nextRow = next.row() + 1;
+        if (nextRow < model->rowCount(next.parent())) return nextColumn(next.sibling(nextRow, endColumn));
     }
     return QModelIndex{};
 }
@@ -62,9 +65,11 @@ static QModelIndex previousRow(const QAbstractItemModel *model, const QModelInde
     return sibling.siblingAtColumn(endColumn);
 }
 
-static QModelIndex previousCell(const QAbstractItemModel *model, const QModelIndex &current, int endColumn) {
-    auto column = current.column();
-    if (column > 0) return current.siblingAtColumn(column-1);
+QModelIndex TreeView::previousCell(const QModelIndex &current) const {
+    auto next = previousColumn(current);
+    if (next.column() < current.column()) return next;
+    auto model = this->model();
+    auto endColumn = model->columnCount(current)-1;
     if (current.row() > 0) return previousRow(model, current, endColumn);
     auto parent = current.parent();
     if (parent.isValid()) return model->index(parent.row(), endColumn, parent.parent());
@@ -75,31 +80,28 @@ QModelIndex TreeView::moveCursor(CursorAction cursorAction, Qt::KeyboardModifier
     if (modifiers == Qt::NoModifier) {
         auto current = currentIndex();
         auto column = current.column();
-        auto endColumn = model()->columnCount(current)-1;
         switch(cursorAction) {
         case QAbstractItemView::MoveLeft:
             if (column > 0 || !itemsExpandable() || !isExpanded(current.siblingAtColumn(0)) || !model()->hasChildren(current)) {
-                if (column > 0) return current.siblingAtColumn(column-1);
-                else return current.siblingAtColumn(endColumn);
+                return previousColumn(current);
             }
             break;
         case QAbstractItemView::MoveRight:
             if (column > 0 || isExpanded(current.siblingAtColumn(0)) || !model()->hasChildren(current)) {
-                if (column < endColumn) return current.siblingAtColumn(column+1);
-                return current.siblingAtColumn(0);
+                return nextColumn(current);
             }
             break;
         case QAbstractItemView::MoveHome:
             return current.siblingAtColumn(0);
         case QAbstractItemView::MoveEnd:
-            return current.siblingAtColumn(endColumn);
+            return current.siblingAtColumn(model()->columnCount(current)-1);
         case QAbstractItemView::MoveNext:
-            while ((current = nextCell(model(), current, endColumn)).isValid()) {
-                if ((current.flags() & Qt::ItemIsEditable)) return current;
+            while ((current = nextCell(current)).isValid()) {
+                if (current.flags() & Qt::ItemIsEditable) return current;
             }
             break;
         case QAbstractItemView::MovePrevious:
-            while ((current = previousCell(model(), current, endColumn)).isValid()) {
+            while ((current = previousCell(current)).isValid()) {
                 if ((current.flags() & Qt::ItemIsEditable)) return current;
             }
         default:
@@ -107,4 +109,24 @@ QModelIndex TreeView::moveCursor(CursorAction cursorAction, Qt::KeyboardModifier
         }
     }
     return QTreeView::moveCursor(cursorAction, modifiers);
+}
+
+bool TreeView::isHidden(const QModelIndex &index) const {
+    return header()->isSectionHidden(index.column());
+}
+
+QModelIndex TreeView::nextColumn(QModelIndex index) const {
+    do {
+        if (index.column() < model()->columnCount(index)-1) index = index.siblingAtColumn(index.column()+1);
+        else index = index.siblingAtColumn(0);
+    } while (isHidden(index));
+    return index;
+}
+
+QModelIndex TreeView::previousColumn(QModelIndex index) const {
+    do {
+        if (index.column() > 0) index = index.siblingAtColumn(index.column()-1);
+        else index = index.siblingAtColumn(model()->columnCount(index)-1);
+    } while (isHidden(index));
+    return index;
 }

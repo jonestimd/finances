@@ -105,19 +105,33 @@ void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
     else settings::saveWindowState(settingsGroup, window, model(), viewHeader);
 }
 
+void EntityView::restoreSelection() {
+    if (!lastSelection.isEmpty()) {
+        QModelIndex index;
+        for (int row : std::as_const(lastSelection)) index = sortModel.index(row, 0, index);
+        itemView->setCurrentIndex(index);
+    }
+}
+
 void EntityView::enableUi() {
     statusBar.clear();
     itemView->setEnabled(true);
+    restoreSelection();
 }
 
 void EntityView::disableUi(const QString &message) {
+    lastSelection.clear();
+    for (auto i = itemView->currentIndex(); i.isValid(); i = i.parent()) lastSelection.insert(0, i.row());
     statusBar.addMessage(message);
     itemView->setEnabled(false);
 }
 
 void EntityView::removeMessage(const QString &message) {
     statusBar.removeMessage(message);
-    if (statusBar.isEmpty()) itemView->setEnabled(true);
+    if (statusBar.isEmpty()) {
+        itemView->setEnabled(true);
+        restoreSelection();
+    }
 }
 
 void EntityView::focusItemView() {

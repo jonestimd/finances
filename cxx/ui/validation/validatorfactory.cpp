@@ -40,7 +40,7 @@ const ValidatorFactory::Factory ValidatorFactory::factory(const QModelIndex &ind
 
 void ValidatorFactory::fixup(QString &) const {}
 
-QModelIndexList ValidatorFactory::revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const {
+QModelIndexList ValidatorFactory::revalidateRows(QHash<const QModelIndex, QString> &errors, const QModelIndex &index) const {
     QList<QModelIndex> changes;
     if (multiRow) {
         QModelIndex i = index;

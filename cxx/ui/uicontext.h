@@ -55,6 +55,8 @@ public:
 
     TransactionsWindow *showTransactions(qlonglong accountId);
     TransactionTableModel *transactionsModel(qlonglong accountId);
+    int windowCount(const TransactionTableModel* model);
+
     /**
      * @brief transactionsModelRemoved Signals that a window is not longer using a model.
      */

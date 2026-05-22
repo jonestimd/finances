@@ -42,3 +42,9 @@ void sql::exec(QSqlQuery &query, const char *className, const char *queryName) {
     if (sqlLogger().isInfoEnabled()) qCInfo(sqlLogger, "%s.%s:\n%s", className, queryName, query.lastQuery().toLocal8Bit().data());
     if (!query.exec()) logAndThrowError(query, className, queryName);
 }
+
+QList<QVariant> sql::loadValues(QSqlQuery &query, const char *column) {
+    QList<QVariant> result;
+    while (query.next()) result.append(query.value(column));
+    return result;
+}

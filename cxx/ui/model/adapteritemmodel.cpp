@@ -26,7 +26,8 @@ QVariant AdapterItemModel::data(const QModelIndex &index, int role) const {
         return errors.contains(index) ? errors.value(index) : QVariant{};
     case finances::UnsavedRole:
         if (isPendingDelete(index)) return finances::Delete;
-        if (isPendingAdd(index) || changes.contains(index)) return finances::AddUpdate;
+        if (isPendingAdd(index)) return finances::Add;
+        if (changes.contains(index)) return finances::Update;
         return QVariant{};
     }
     return value(index, role, changes.value(index));
@@ -76,7 +77,7 @@ void AdapterItemModel::queueDelete(const QModelIndex &index) {
 }
 
 void AdapterItemModel::undoChange(const QModelIndex &index) {
-    if (pendingDeletes.removeAll(index.siblingAtColumn(0)) > 0) rowChanged(index);
+    if (pendingDeletes.removeOne(index.siblingAtColumn(0))) rowChanged(index);
     else if (changes.contains(index)) {
         changes.remove(index);
         emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
@@ -97,13 +98,23 @@ void AdapterItemModel::rowChanged(const QModelIndex &index) {
 }
 
 void AdapterItemModel::adjustErrorIndexes(int rowIndex, const QModelIndex &parent, int delta) {
-    QHash<QModelIndex, QString> updateErrors;
-    for (auto [key, value] : errors.asKeyValueRange()) {
-        if (key.parent() != parent || key.row() < rowIndex) updateErrors.insert(key, value);
-        else if (key.row() > rowIndex) updateErrors.insert(key.siblingAtRow(key.row() + delta), value);
+    QHash<const QModelIndex, QString> updatedErrors;
+    for (auto [cellIndex, value] : errors.asKeyValueRange()) {
+        QList<QModelIndex> parents{cellIndex};
+        for (auto i = cellIndex.parent(); i.isValid() && i != parent; i = i.parent()) {
+            parents.append(i);
+        }
+        auto i = parents.takeLast();
+        if (i.parent() == parent) {
+            if (i.row() >= rowIndex) i = i.siblingAtRow(i.row() + delta);
+            while (!parents.isEmpty()) {
+                auto child = parents.takeLast();
+                i = child.model()->index(child.row(), child.column(), i);
+            }
+            updatedErrors.insert(i, value);
+        } else updatedErrors.insert(cellIndex, value);
     }
-    errors.clear();
-    errors.insert(updateErrors);
+    errors = updatedErrors;
 }
 
 const QString AdapterItemModel::validate(const QModelIndex &index) {

@@ -27,14 +27,6 @@ class TestSecurityService : public QObject {
         dbTestCase.stockSplitDao(driver).add(conn.db, {&split}, TEST_USER);
     }
 
-    void resetDatabase(const QString &driver) {
-        Connection conn(dbTestCase.connectionPool(driver));
-        QSqlQuery query{conn.db};
-        query.exec("delete from tx_detail");
-        query.exec("delete from tx");
-        query.exec("delete from stock_split");
-    }
-
 private slots:
     void initTestCase_data() {
         dbTestCase.createDatabases();
@@ -60,7 +52,7 @@ private slots:
 
     void getAll_returnsTransactionSummary() {
         QFETCH_GLOBAL(QString, driver);
-        resetDatabase(driver);
+        dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
         QFETCH_GLOBAL(QVariant, accountId);
         QFETCH_GLOBAL(QVariant, accountId2);
@@ -79,7 +71,7 @@ private slots:
 
     void getAll_adjustsSharesForSplits() {
         QFETCH_GLOBAL(QString, driver);
-        resetDatabase(driver);
+        dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
         QFETCH_GLOBAL(QVariant, accountId);
         QFETCH_GLOBAL(QVariant, securityId);
@@ -96,7 +88,7 @@ private slots:
 
     void getSplits_returnsAllSplits() {
         QFETCH_GLOBAL(QString, driver);
-        resetDatabase(driver);
+        dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
         QFETCH_GLOBAL(QVariant, securityId);
         QFETCH_GLOBAL(QVariant, securityId2);

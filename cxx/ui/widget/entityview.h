@@ -14,6 +14,7 @@ class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
+    QList<int> lastSelection;
 
 public:
     StatusBar statusBar{};
@@ -47,6 +48,9 @@ public:
     Q_INVOKABLE void removeMessage(const QString &message);
 
     void focusItemView();
+
+private:
+    void restoreSelection();
 
 public Q_SLOTS:
     void dataChanged();

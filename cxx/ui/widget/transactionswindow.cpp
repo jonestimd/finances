@@ -25,8 +25,8 @@ namespace transactionwindow {
 
 using namespace transactionwindow;
 
-TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model)
-    : AppWindow{tr("Transaction"), model, new TreeView()}
+TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
+    : AppWindow{tr("Detail"), model, new TreeView()}
     , context{context}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
@@ -53,12 +53,12 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     setMenuWidget(frame);
 
     entityView.statusBar.addPermanentWidget(clearedBalance);
-    connect(model, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
+    connectModel(model);
 
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(companiesLoaded()));
-    connect(dataStore->transactionStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(transactionsLoaded()));
+    connect(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)), this, SLOT(accountUpdated(qlonglong)));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -82,8 +82,10 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     view->setChildInheritsBackground(true);
     view->setItemsExpandable(false);
     view->setRootIsDecorated(false);
+    view->setIndentation(0);
 
-    initializeData();
+    if (initializeModel) initializeData();
+    else transactionsLoaded();
 }
 
 TransactionsWindow::~TransactionsWindow() {
@@ -96,14 +98,18 @@ TransactionTableModel *TransactionsWindow::model() const {
 }
 
 void TransactionsWindow::showAccount(qlonglong accountId) {
-    if (entityView.confirmLoadData()) {
-        auto oldModel = model();
-        oldModel->clearChanges();
-        disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
-        entityView.sortModel.setSourceModel(context->transactionsModel(accountId));
-        context->transactionsModelRemoved(oldModel);
-        connect(model(), SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
-        initializeData();
+    auto oldModel = model();
+    if (accountId != oldModel->accountId) {
+        auto windowCount = context->windowCount(oldModel);
+        if (windowCount > 1 || entityView.confirmLoadData()) {
+            if (windowCount == 1) oldModel->clearChanges();
+            disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
+            disconnect(oldModel, SIGNAL(dataLoaded()), this, SLOT(transactionsLoaded()));
+            entityView.sortModel.setSourceModel(context->transactionsModel(accountId));
+            context->transactionsModelRemoved(oldModel);
+            connectModel(model());
+            initializeData();
+        }
     }
 }
 
@@ -141,6 +147,11 @@ QString TransactionsWindow::connectionName() const {
     return context->dataStore->connectionName();
 }
 
+void TransactionsWindow::connectModel(TransactionTableModel *model) {
+    connect(model, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
+    connect(model, SIGNAL(dataLoaded()), this, SLOT(transactionsLoaded()));
+}
+
 void TransactionsWindow::initializeData() {
     auto accountId = model()->accountId;
     if (store()->load(&entityView, accountId)) {
@@ -160,14 +171,20 @@ void TransactionsWindow::accountsLoaded() {
     }
 }
 
+void TransactionsWindow::accountUpdated(qlonglong accountId) {
+    if (accountId == model()->accountId) {
+        entityView.removeMessage(SAVING_TRANSACTION);
+        entityView.removeMessage(SAVING_TRANSACTIONS);
+        entityView.focusItemView();
+    }
+}
+
 void TransactionsWindow::companiesLoaded() {
     setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
 }
 
 void TransactionsWindow::transactionsLoaded() {
     auto m = model();
-    m->setRows(context->dataStore->transactionStore->transactionIds(m->accountId));
-    entityView.removeMessage(SAVING_TRANSACTIONS);
     entityView.itemView->setCurrentIndex(entityView.sortModel.mapFromSource(m->index(m->rowCount()-1, 0)));
     entityView.focusItemView();
 }
@@ -192,7 +209,11 @@ static bool isEnter(const QKeyEvent *event) {
 void TransactionsWindow::keyPressEvent(QKeyEvent *event) {
     if (isEnter(event) && focusWidget() == entityView.itemView) {
         auto index = entityView.sortModel.mapToSource(entityView.itemView->currentIndex());
-        if (model()->transactionHasChanges(index)) qDebug() << "save" << index << model()->transactionIsValid(index);
+        if (model()->transactionHasChanges(index) && model()->transactionIsValid(index)) {
+            auto txRow = index.parent().isValid() ? index.parent().row() : index.row();
+            entityView.disableUi(tr(SAVING_TRANSACTION));
+            store()->update(this, model(), txRow);
+        }
     }
     AppWindow::keyPressEvent(event);
 }

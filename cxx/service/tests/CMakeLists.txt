@@ -2,7 +2,7 @@ get_target_property(DATABASE_SOURCES finances SOURCES)
 list(FILTER DATABASE_SOURCES INCLUDE REGEX ".*/database/.*")
 
 get_target_property(MODEL_SOURCES finances SOURCES)
-list(FILTER MODEL_SOURCES INCLUDE REGEX ".*/model/.*")
+list(FILTER MODEL_SOURCES INCLUDE REGEX ".*/service/model/.*")
 
 qt_add_library(dbtestcase OBJECT
     dbtestcase.h dbtestcase.cpp
@@ -10,7 +10,7 @@ qt_add_library(dbtestcase OBJECT
     ${MODEL_SOURCES}
 )
 
-target_link_libraries(dbtestcase PRIVATE
+target_link_libraries(dbtestcase
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Sql
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
@@ -41,11 +41,7 @@ function(add_service_test name)
     )
 
     target_link_libraries(${exec_name} PRIVATE
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Sql
         Qt${QT_VERSION_MAJOR}::Test
-        ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
-        ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
         dbtestcase
     )
 

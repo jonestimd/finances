@@ -72,6 +72,10 @@ public:
         return load(query);
     }
 
+    /**
+     * @brief update Saves changes to `entities` to the database.
+     * @return input `entities` with `id`, `version` and `changeUser` updated.
+     */
     virtual QList<const Entity*> update(QSqlDatabase &db, const QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;
@@ -89,6 +93,10 @@ public:
         return result;
     }
 
+    /**
+     * @brief add Saves `entities` to the database.
+     * @return input `entities` with `id` and `changeUser` updated.
+     */
     virtual QList<const Entity*> add(QSqlDatabase &db, const QList<Entity*> entities, const QString &user) {
         QSqlQuery query(db);
         QList<const Entity*> result;

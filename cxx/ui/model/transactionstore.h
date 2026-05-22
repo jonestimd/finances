@@ -11,31 +11,49 @@ class TransactionTableModel;
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, qlonglong> {
     Q_OBJECT
+
+    class TransactionSorter;
+    TransactionSorter *sorter;
+
     CategoryStore *const categoryStore;
     QList<qlonglong> loadedAccounts{};
+    /**
+     * @brief idsByAccountId List of transaction IDs for each loaded account.  The lists are sorted by
+     * transaction date/id to enable calculating the running balance.
+     */
     QHash<qlonglong, QList<qlonglong>> idsByAccountId{};
 
 public:
     TransactionDetailStore detailStore;
 
     TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore);
+    ~TransactionStore();
 
     bool load(EntityView *view, qlonglong accountId, bool reload = false);
 
-    void update(QWidget *source, TransactionTableModel *model);
+    void update(QWidget *source, TransactionTableModel *model, int txRow = -1);
 
     const QList<qlonglong> transactionIds(qlonglong accountId) const;
 
     QDecNumber amount(const QVariant &transactionId) const;
 
+    void clearData(qlonglong accountId);
+
 Q_SIGNALS:
     void accountLoaded(qlonglong id);
+    void accountUpdated(qlonglong id);
+    void transactionsSaved(const QList<const PendingTransaction*>& transactions);
+    void transactionAdded(qlonglong accountId, int index);
+    void transactionRemoved(qlonglong accountId, int index);
+    void transactionUpdated(qlonglong accountId, int index, int oldDetailCount);
 
 protected:
     void setValues(qlonglong accountId, const QHash<qlonglong, const Transaction*> values) override;
 
-    using EntityStore::update;
-    void updateDetails(const QList<const TransactionDetail*> &updates, const QList<const TransactionDetail*> deletes, const QList<const Transaction*> txDeletes);
+    virtual void update(const QList<const Transaction*>& updates, const QList<const Transaction*> deletes) override;
+
+private:
+    void sortTransactionIds(QList<qlonglong> &ids) const;
 };
 
 #endif // TRANSACTIONSTORE_H

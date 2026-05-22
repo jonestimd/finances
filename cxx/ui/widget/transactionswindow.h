@@ -15,10 +15,10 @@ class TransactionsWindow : public AppWindow {
     QLabel *const clearedBalance{new QLabel()};
 
 public:
-    TransactionsWindow(UiContext *context, TransactionTableModel *model);
+    TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
     ~TransactionsWindow();
 
-    TransactionTableModel *model() const;
+    TransactionTableModel* model() const;
 
     void showAccount(qlonglong accountId);
 
@@ -27,30 +27,32 @@ public:
 
 public Q_SLOTS:
     void modelReset();
-    void expandRow(const QModelIndex &parent, int first, int last);
+    void expandRow(const QModelIndex& parent, int first, int last);
     // TODO transactions/details loaded
 
 private:
-    TransactionStore *store() const;
-    AccountStore *accountStore() const;
+    TransactionStore* store() const;
+    AccountStore* accountStore() const;
     QString connectionName() const;
 
+    void connectModel(TransactionTableModel* model);
     void initializeData();
 
-    inline TreeView *treeView() const;
+    inline TreeView* treeView() const;
     bool security() const;
 
 private Q_SLOTS:
     void accountsLoaded();
+    void accountUpdated(qlonglong accountId);
     void companiesLoaded();
     void transactionsLoaded();
     void newWindow();
-    void clearedBalanceChanged(const QDecNumber &balance);
+    void clearedBalanceChanged(const QDecNumber& balance);
 
 protected:
-    const char *settingsGroup() const override;
+    const char* settingsGroup() const override;
 
-    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
 };
 
 #endif // TRANSACTIONSWINDOW_H

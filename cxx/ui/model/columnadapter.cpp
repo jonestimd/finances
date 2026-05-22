@@ -28,7 +28,7 @@ const QString AbstractColumnAdapter::isValid(const QModelIndex &index) const {
     return nullptr;
 }
 
-QList<QModelIndex> AbstractColumnAdapter::revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const {
+QList<QModelIndex> AbstractColumnAdapter::revalidateRows(QHash<const QModelIndex, QString> &errors, const QModelIndex &index) const {
     if (validatorFactory) return validatorFactory->revalidateRows(errors, index);
     return QList<QModelIndex>{};
 }

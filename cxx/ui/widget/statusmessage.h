@@ -21,5 +21,8 @@
 
 #define LOADING_TRANSACTIONS "Loading transactions..."
 #define SAVING_TRANSACTIONS "Saving transactions..."
+#define SAVING_TRANSACTION "Saving transaction..."
+
+#define LOADING_DETAILS "Loading details..."
 
 #endif // STATUSMESSAGE_H

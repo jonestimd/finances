@@ -72,8 +72,9 @@ QAction *UiContext::securitiesAction() {
 }
 
 TransactionsWindow *UiContext::showTransactions(qlonglong accountId) {
+    bool accountLoaded = transactionModels.contains(accountId);
     auto model = transactionsModel(accountId);
-    auto window = new TransactionsWindow(this, model);
+    auto window = new TransactionsWindow(this, model, !accountLoaded);
     window->show();
     if (!transactionsWindows.isEmpty()) {
         auto mover = new WindowMover(window, transactionsWindows);
@@ -93,14 +94,22 @@ TransactionTableModel *UiContext::transactionsModel(qlonglong accountId) {
     return model;
 }
 
+int UiContext::windowCount(const TransactionTableModel *model) {
+    int count = 0;
+    for (const auto window : std::as_const(transactionsWindows)) if (window->model() == model) count++;
+    return count;
+}
+
 void UiContext::transactionsModelRemoved(TransactionTableModel *model) {
     for (auto window : std::as_const(transactionsWindows)) {
         if (window->model() == model) return;
     }
-    delete transactionModels.take(model->accountId);
+    auto accountId = model->accountId;
+    delete transactionModels.take(accountId);
+    dataStore->transactionStore->clearData(accountId);
 }
 
 void UiContext::transactionsWindowClosed(TransactionsWindow *window) {
-    transactionsWindows.removeAll(window);
+    transactionsWindows.removeOne(window);
     transactionsModelRemoved(window->model());
 }

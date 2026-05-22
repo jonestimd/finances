@@ -67,9 +67,15 @@ set account_id = :accountId, date = :date, reference_number = :referenceNo, memo
     change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
-static const auto deleteEmptyQuery = R"(
-delete from tx
+static const auto findEmptyQuery = R"(
+select id
+from tx
 where not exists (select 1 from tx_detail where tx_id = tx.id))";
+
+static const auto setAccountQuery = R"(
+update tx
+set account_id = :newAccountId, change_user = :user, change_date = current_timestamp, version = version + 1
+where id = :id and account_id = :oldAccountId)";
 
 static const auto setPayeeQuery = R"(
 update tx
@@ -112,6 +118,27 @@ QHash<qlonglong, const Transaction*> TransactionDao::getAll(const QSqlDatabase &
     return load(query);
 }
 
+const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QList<PendingTransaction*> adds, const QString &user) {
+    QList<Transaction*> txAdds{};
+    for (auto tx : adds) txAdds.append(tx);
+    EntityDao::add(db, txAdds, user);
+    for (auto tx : adds) {
+        for (auto detail : std::as_const(tx->details)) detail->transactionId = tx->id;
+    }
+    return adds;
+}
+
+void TransactionDao::setAccountId(const QSqlDatabase &db, const QVariant &transactionId, const QVariant &oldAccountId, const QVariant &newAccountId, const QString &user) {
+    QSqlQuery query(db);
+    query.prepare(setAccountQuery);
+    SQL_BIND_VALUE(query, ":user", user);
+    SQL_BIND_VALUE(query, ":id", transactionId);
+    SQL_BIND_VALUE(query, ":oldAccountId", oldAccountId);
+    SQL_BIND_VALUE(query, ":newAccountId", newAccountId);
+    sql::exec(query, className, "setCategory");
+    if (query.numRowsAffected() != 1) throw staleDataMessage;
+}
+
 void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setPayeeQuery);
@@ -122,10 +149,13 @@ void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, co
     if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
 }
 
-void TransactionDao::removeEmpty(const QSqlDatabase &db) {
+QList<QVariant> TransactionDao::removeEmpty(QSqlDatabase &db) {
     QSqlQuery query(db);
-    query.prepare(deleteEmptyQuery);
-    sql::exec(query, className, "deleteEmpty");
+    query.prepare(findEmptyQuery);
+    sql::exec(query, className, "findEmpty");
+    QList<QVariant> ids = sql::loadValues(query, "id");
+    for (const auto& id : std::as_const(ids)) remove(db, id);
+    return ids;
 }
 
 Transaction *TransactionDao::addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user) {

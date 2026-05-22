@@ -14,9 +14,10 @@ class TransactionTableModel;
  */
 class TransactionTypeColumnAdapter : public ColumnAdapter<TransactionDetail>  {
     DataStore *const dataStore;
+    const qlonglong accountId;
 
 public:
-    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore);
+    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId);
 
     QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
     QVariant fieldValue(const TransactionDetail *row) const override;
@@ -46,6 +47,8 @@ public:
 class DetailAmountColumnAdapter : public AmountColumnAdapter<TransactionDetail> {
 public:
     DetailAmountColumnAdapter(const QString &title);
+
+    virtual QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
 };
 
 /**

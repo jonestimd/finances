@@ -9,34 +9,20 @@ void TransactionDetailStore::load(qlonglong accountId) {
     setValues(accountId, service->getAll(accountId));
 }
 
-void TransactionDetailStore::update(const QList<const TransactionDetail*> &updates, const QList<const TransactionDetail*> deletes, const QList<const Transaction*> txDeletes) {
+void TransactionDetailStore::update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes) {
     auto allDeletes = QList<const TransactionDetail*>{deletes};
+    for (auto& detailId : updates.deletedDetailIds) {
+        if (contains(detailId)) allDeletes.append(value(detailId));
+    }
     for (auto tx : txDeletes) {
-        for (auto &detailId : tx->detailIds) {
+        for (auto& detailId : tx->detailIds) {
             if (contains(detailId)) {
                 auto detail = value(detailId);
                 allDeletes.append(detail);
-                if (!detail->relatedDetailId.isNull() && contains(detail->relatedDetailId)) {
-                    allDeletes.append(value(detail->relatedDetailId));
-                }
             }
         }
     }
-    for (auto detail : deletes) {
-        if (!detail->relatedDetailId.isNull() && contains(detail->relatedDetailId)) {
-            allDeletes.append(value(detail->relatedDetailId));
-        }
-    }
-    for (auto updated : updates) {
-        auto id = updated->id.toLongLong();
-        if (contains(id)) {
-            auto oldRelatedId = value(id)->relatedDetailId;
-            if (!oldRelatedId.isNull() && updated->relatedDetailId.isNull()) {
-                if (contains(oldRelatedId)) allDeletes.append(value(oldRelatedId));
-            }
-        }
-    }
-    EntityStore::update(updates, allDeletes);
+    EntityStore::update(updates.details, allDeletes);
 }
 
 void TransactionDetailStore::setValues(qlonglong accountId, QHash<qlonglong, const TransactionDetail *> values) {

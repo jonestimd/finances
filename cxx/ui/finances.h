@@ -30,8 +30,9 @@ namespace finances {
     };
 
     enum UnsavedState {
-        AddUpdate,
-        Delete,
+        Add = 0x01,
+        Delete = 0x02,
+        Update = 0x04,
     };
 
     enum FontIcon {

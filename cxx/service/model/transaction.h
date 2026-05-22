@@ -5,6 +5,7 @@
 #include "bulkupdate.h"
 #include "transactiondetail.h"
 
+class Transaction;
 class TransactionDetail;
 class TransactionDetailUpdate;
 
@@ -24,23 +25,39 @@ public:
     Transaction(const QSqlRecord &record);
 
     bool deletable() const;
-    bool isEmpty() const;
 
     Transaction *newTransfer(const QVariant &accountId) const;
+
+    QString toString() const;
 };
 
-struct TransactionUpdate : public BulkUpdate<Transaction> {
+class PendingTransaction : public Transaction {
+public:
+    QList<TransactionDetail*> details{};
+
+    PendingTransaction();
+    PendingTransaction(const QVariant &accountId);
+    PendingTransaction(const PendingTransaction &that);
+    ~PendingTransaction();
+
+    bool isEmpty() const;
+};
+
+struct TransactionUpdate : public BulkUpdate<Transaction, PendingTransaction> {
     const QList<TransactionDetail*> detailUpdates;
-    QHash<const Transaction*, QList<TransactionDetail*>> detailAdds;
+    QList<TransactionDetail*> detailAdds;
     const QList<const TransactionDetail*> detailDeletes;
 
     TransactionUpdate(
         const QList<Transaction*> updates,
-        const QList<Transaction*> adds,
+        const QList<const PendingTransaction*> adds,
         QList<const Transaction*> deletes,
         const QList<TransactionDetail*> detailUpdates,
-        QHash<const Transaction*, QList<TransactionDetail*>> detailAdds,
+        QList<const TransactionDetail*> detailAdds,
         QList<const TransactionDetail*> detailDeletes);
+
+    /** @brief Deteles `adds` because the service converted them to `Transaction`s. */
+    ~TransactionUpdate();
 
     virtual void onError() override;
 };
@@ -48,9 +65,18 @@ struct TransactionUpdate : public BulkUpdate<Transaction> {
 struct TransactionsData {
     QList<const Transaction*> transactions{};
     QList<const TransactionDetail*> details{};
+    /** @brief deletedIds IDs of transactions deleted due to changes to transfer details. */
+    QList<QVariant> deletedIds{};
+    /** @brief deletedDetailIds IDs of deleted related details. */
+    QList<QVariant> deletedDetailIds{};
 
     TransactionsData() = default;
-    TransactionsData(QList<const Transaction*> transactions, QList<const TransactionDetail*> details);
+    TransactionsData(
+        QList<const Transaction*> transactions,
+        QList<const TransactionDetail*> details,
+        const QList<QVariant> deletedIds,
+        const QList<QVariant> deletedDetailIds
+    );
 };
 
 #endif // TRANSACTION_H

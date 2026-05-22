@@ -65,11 +65,11 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Te
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)
 
 set(PROJECT_RESOURCES
-    cxx/ui/resources/finances.qrc
-    cxx/ui/resources/finances.svg
-    cxx/ui/resources/finances.qss
-    cxx/ui/resources/minimal-dark.qss
-    cxx/ui/resources/minimal-light.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qrc
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.svg
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-dark.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-light.qss
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

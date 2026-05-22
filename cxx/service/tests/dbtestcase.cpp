@@ -41,17 +41,28 @@ Daos::Daos(const QString &dbType)
 {};
 
 namespace factory {
-    Transaction transaction(QVariant accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
-        Transaction tx{accountId};
-        tx.payeeId = payeeId;
-        tx.securityId = securityId;
-        tx.date = date;
+    Transaction* transaction(QVariant accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
+        Transaction* tx = new Transaction{accountId};
+        tx->payeeId = payeeId;
+        tx->securityId = securityId;
+        tx->date = date;
         return tx;
     }
 
-    TransactionDetail detail(const char *amount) {
-        TransactionDetail detail{};
-        detail.amount = DECIMAL_VARIANT(amount);
+    PendingTransaction* pendingTransaction(QVariant accountId, QList<const char*> amounts, QVariant payeeId, QVariant securityId, const QDate &date) {
+        PendingTransaction *tx = new PendingTransaction;
+        tx->accountId = accountId;
+        tx->payeeId = payeeId;
+        tx->securityId = securityId;
+        tx->date = date;
+        for (auto amount : amounts) tx->details.append(detail(tx->id, amount));
+        return tx;
+    }
+
+    TransactionDetail* detail(const QVariant &txId, const char *amount) {
+        TransactionDetail* detail = new TransactionDetail;
+        detail->transactionId = txId;
+        detail->amount = DECIMAL_VARIANT(amount);
         return detail;
     }
 }
@@ -214,6 +225,14 @@ QVariant DbTestCase::addSecurity(const QString &driver, const QString &name, con
     return security.id;
 }
 
+QVariant DbTestCase::addCategory(const QString &driver, const QString &name) {
+    auto conn = Connection(connectionPool(driver));
+    Category category;
+    category.name = name;
+    categoryDao(driver).add(conn.db, QList{&category}, TEST_USER);
+    return category.id;
+}
+
 const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {
     return load<Account, AccountDao, &DbTestCase::accountDao>(this, driver, id, accounts);
 }
@@ -228,16 +247,46 @@ void DbTestCase::cleanup() {
     freeObjects(details)
 }
 
-DbTestCase::TxDetails DbTestCase::saveTransaction(const Transaction &unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares) {
+void DbTestCase::resetDatabase(const QString& driver) {
+    Connection conn(connectionPool(driver));
+    QSqlQuery query{conn.db};
+    query.exec("delete from tx_detail");
+    query.exec("delete from tx");
+    query.exec("delete from stock_split");
+}
+
+QList<DbTestCase::TxDetails> DbTestCase::saveTransfer(const QString& driver, const QVariant& accountId, const QVariant& altAccountId, QList<const char *> amounts) {
+    const char *transferAmount = amounts.at(0);
+    QString relatedAmount = transferAmount[0] == '-' ? QString(transferAmount[1]) : QString(transferAmount).prepend('-');
+    auto tx = saveTransaction(driver, factory::transaction(accountId), amounts);
+    auto relatedTx = saveTransaction(driver, factory::transaction(altAccountId), QList{relatedAmount.toLocal8Bit().constData()});
+    auto detail = GET_DETAILS(tx).at(0);
+    detail->transferAccountId = altAccountId;
+    auto relatedDetail = GET_DETAILS(relatedTx).at(0);
+    relatedDetail->transferAccountId = accountId;
+    detail->relatedDetailId = relatedDetail->id;
+    relatedDetail->relatedDetailId = detail->id;
+
+    auto &detailDao = this->detailDao(driver);
+    Connection conn(connectionPool(driver));
+    detailDao.setRelatedDetailIds(conn.db, {{relatedDetail, detail->id.toLongLong()}});
+    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail->id.toLongLong()}});
+    return QList{tx, relatedTx};
+}
+
+DbTestCase::TxDetails DbTestCase::saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares) {
     QFETCH_GLOBAL(QString, driver);
-    Transaction *tx = new Transaction(unsaved);
+    return saveTransaction(driver, unsaved, detailAmounts, detailShares);
+}
+
+DbTestCase::TxDetails DbTestCase::saveTransaction(const QString &driver, const Transaction *unsaved, const QList<const char *> &detailAmounts, const QList<const char *> &detailShares) {
+    Transaction *tx = new Transaction(*unsaved);
     Connection conn(connectionPool(driver));
     transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
     QList<TransactionDetail*> details{};
     for (auto &amount : detailAmounts) {
         auto i = details.size();
-        TransactionDetail *detail = new TransactionDetail(factory::detail(amount));
-        detail->transactionId = tx->id;
+        TransactionDetail *detail = factory::detail(tx->id, amount);
         if (tx->securityId.isValid() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
         details.append(detail);
     }

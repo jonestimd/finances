@@ -26,6 +26,8 @@ namespace sql {
     void exec(const QSqlDatabase &db, const char *query, const char *className, const char *queryName);
 
     void exec(QSqlQuery &query, const char *className, const char *queryName);
+
+    QList<QVariant> loadValues(QSqlQuery& query, const char* column);
 }
 
 #endif // SQL_H

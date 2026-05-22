@@ -20,6 +20,8 @@
 
 #define DECIMAL_VARIANT(value) QVariant::fromValue(QDecNumber{value})
 
+#define GET_DETAILS(txDetails) std::get<1>(txDetails)
+
 #define SKIP_FOR(...) \
 QFETCH_GLOBAL(QString, driver); \
     if (QStringList{__VA_ARGS__}.contains(driver)) QSKIP("wrong driver");
@@ -47,8 +49,9 @@ struct Daos {
 };
 
 namespace factory {
-    Transaction transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    TransactionDetail detail(const char *amount = "1.00");
+    Transaction *transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    PendingTransaction *pendingTransaction(QVariant accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    TransactionDetail *detail(const QVariant &txId, const char *amount = "1.00");
 }
 
 class DbTestCase {
@@ -86,12 +89,16 @@ public:
     Account *addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
     QVariant addPayee(const QString &driver, const QString &name);
     QVariant addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
+    QVariant addCategory(const QString &driver, const QString &name);
 
     const Account *loadAccount(const QString &driver, QVariant id);
 
-    TxDetails saveTransaction(const Transaction &unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
+    QList<TxDetails> saveTransfer(const QString& driver, const QVariant& accountId, const QVariant& altAccountId, QList<const char*> amounts);
+    TxDetails saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
+    TxDetails saveTransaction(const QString& driver, const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
 
     void cleanup();
+    void resetDatabase(const QString& driver);
 
 private:
     void addConnection(const QString &name, const ConnectionSettings &settings);

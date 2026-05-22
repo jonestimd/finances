@@ -22,7 +22,7 @@ public:
 
     const QString isValid(const QModelIndex &index) const;
 
-    QList<QModelIndex> revalidateRows(QHash<QModelIndex, QString> &errors, const QModelIndex &index) const;
+    QList<QModelIndex> revalidateRows(QHash<const QModelIndex, QString> &errors, const QModelIndex &index) const;
 };
 
 template<class T>
