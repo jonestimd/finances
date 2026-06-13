@@ -28,13 +28,4 @@ public:
     static QVariantList transactionIds(const QList<const TransactionDetail*> details);
 };
 
-class Transaction;
-
-class PendingDetail : public TransactionDetail {
-public:
-    const Transaction* const transaction;
-
-    PendingDetail(const Transaction* const tx);
-};
-
 #endif // TRANSACTIONDETAIL_H

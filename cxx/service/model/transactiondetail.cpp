@@ -53,6 +53,3 @@ QVariantList TransactionDetail::transactionIds(const QList<const TransactionDeta
     for (auto detail : details) if (!ids.contains(detail->transactionId)) ids.append(detail->transactionId);
     return ids;
 }
-
-PendingDetail::PendingDetail(const Transaction* const tx)
-    : transaction{tx} {}
