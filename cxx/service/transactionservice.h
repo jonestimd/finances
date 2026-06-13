@@ -34,6 +34,7 @@ public:
      *   * `deletedDetailIds`
      *     - implicitly deleted related details
      *       - for changes to transfer details
+     *       - for deleted transfer transactions
      *       - NOT for DELETED transfer details
      */
     const TransactionsData update(TransactionUpdate &changes, const QString &user);
