@@ -64,13 +64,20 @@ public:
         return byId.contains(id.toLongLong());
     }
 
-    const QList<const T*> values() const {
-        return byId.values();
+    void forEachEntry(std::function<void(qlonglong, const T*)> func) const {
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) func(i.key(), i.value());
+    }
+
+    template<class V>
+    void appendValues(QList<const V*> &values, QList<qlonglong> excludeIds = QList<qlonglong>{}) const {
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) {
+            if (!excludeIds.contains(i.key())) values.append(i.value());
+        }
     }
 
     ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const {
         QList<const NamedEntity*> options;
-        for (auto entity : values()) options.append(entity);
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) options.append(i.value());
         return new ComboBoxModel(options, NamedEntity::getName, createValue);
     }
 

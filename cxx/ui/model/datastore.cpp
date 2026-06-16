@@ -4,7 +4,7 @@
 DataStore::DataStore(ServiceContext *services)
     : services{services}
     , accountStore{new AccountStore(services)}
-    , payeeStore{new PayeeStore(&services->payeeService)}
+    , payeeStore{new PayeeStore(&services->payeeService, this)}
     , categoryStore{new CategoryStore(&services->categoryService)}
     , groupStore{new GroupStore{&services->groupService}}
     , securityStore{new SecurityStore{&services->securityService}}

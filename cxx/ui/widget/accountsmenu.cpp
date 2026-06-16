@@ -68,8 +68,8 @@ void AccountsMenu::updateMenu() {
     clear();
     connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
     QHash<qlonglong, QMenu*> companyMenus{};
-    for (auto account : store->values()) {
-        if (hideClosed && account->closed.toBool()) continue;
+    store->forEachEntry([&](qlonglong id, const Account* account) {
+        if (hideClosed && account->closed.toBool()) return;
         if (account->companyId.isNull()) {
             insertByName(this, new AccountAction(this, window, account));
         } else {
@@ -84,7 +84,7 @@ void AccountsMenu::updateMenu() {
             }
             if (companyMenu) insertByName(companyMenu, new AccountAction(this, window, account));
         }
-    }
+    });
     for (auto menu : companyMenus) {
         if (menu->actions().length() == 1) {
             auto action = menu->actions().constFirst();

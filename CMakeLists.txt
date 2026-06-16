@@ -101,7 +101,7 @@ file(GLOB_RECURSE QT_SQLITE_OBJ_FILE
     ${CMAKE_PREFIX_PATH}/../Src/sqlite3.c.o
 )
 
-target_include_directories(finances PRIVATE
+target_include_directories(finances PUBLIC
     ${QDECIMAL_SOURCE_DIR}/src
     ${QDECIMAL_SOURCE_DIR}/decnumber
     ${QT_SQLITE_INCLUDE_DIR}

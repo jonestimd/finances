@@ -39,7 +39,7 @@ public:
     }
 };
 
-TransactionStore::TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore)
+TransactionStore::TransactionStore(ServiceContext* serviceContext, CategoryStore* categoryStore)
     : EntityStore{&serviceContext->transationService}
     , categoryStore{categoryStore}
     , detailStore{&serviceContext->transationDetailService}
@@ -83,6 +83,19 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, int
         update(updateData.transactions, deletes);
         for (auto accountId : accountIds) emit accountUpdated(accountId);
     });
+}
+
+void TransactionStore::replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId) {
+    QList<const Transaction*> updates;
+    forEachEntry([&](qlonglong id, const Transaction* tx) {
+        if (tx->payeeId == oldPayeeId) {
+            auto updatedTx = new Transaction(*tx);
+            updatedTx->payeeId = newPayeeId;
+            updatedTx->version = updatedTx->version.toLongLong() + 1;
+            updates.append(updatedTx);
+        }
+    });
+    if (!updates.isEmpty()) update(updates, {});
 }
 
 const QList<qlonglong> TransactionStore::transactionIds(qlonglong accountId) const {
@@ -155,7 +168,8 @@ void TransactionStore::update(const QList<const Transaction*>& updates, const QL
             auto index = txIds.indexOf(txId);
             if (index < 0) emit transactionAdded(accountId, sorter->insert(txIds, txId));
             else {
-                if (sorter->inOrder(txIds, index)) emit transactionUpdated(accountId, index, detailCounts.value(txId));
+                if (sorter->inOrder(txIds, index))
+                    emit transactionUpdated(accountId, index, detailCounts.value(txId));
                 else {
                     txIds.remove(index);
                     emit transactionRemoved(accountId, index);

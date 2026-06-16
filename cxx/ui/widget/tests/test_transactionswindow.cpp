@@ -1,34 +1,47 @@
 #include <QSignalSpy>
 #include <QTest>
+#include <QTimer>
 
 #include "service/tests/dbtestcase.h"
 #include "ui/uicontext.h"
+#include "ui/widget/entityselectiondialog.h"
 #include "ui/widget/relationeditor.h"
 #include "ui/widget/transactionswindow.h"
+#include "windowtest.h"
 
 #define COMPANY_NAME "Bank 1"
 #define ACCOUNT_NAME "Checking"
 #define ALT_ACCOUNT_NAME "Savings"
 #define PAYEE_NAME "Payee 1"
+#define ALT_PAYEE_NAME "Payee 2"
 #define CATEGORY_NAME "Category 1"
 
 #define INITIAL_TRANSACTION_COUNT 3
 #define ALT_INITIAL_TRANSACTION_COUNT 1
 
+template<class Window, class Model, class View>
 struct WindowHolder {
-    TransactionsWindow* const window;
+    Window* const window;
+    View* const view;
 
-    WindowHolder(TransactionsWindow* window) : window{window} {}
+    WindowHolder(Window* window)
+        : window{window}
+        , view{window->template findChild<View*>()}
+    {}
+
     ~WindowHolder() {
         window->model()->clearChanges();
         QVERIFY(window->close());
         delete window;
     }
 
-    TransactionTableModel* model() {
+    Model* model() {
         return window->model();
     }
 };
+
+typedef WindowHolder<TransactionsWindow, TransactionTableModel, TreeView> TxWindowHolder;
+typedef WindowHolder<PayeesWindow, PayeeTableModel, QTableView> PayeeWindowHolder;
 
 class TestTransactionsWindow : public QObject {
     Q_OBJECT
@@ -36,11 +49,9 @@ class TestTransactionsWindow : public QObject {
 
     DbTestCase dbTestCase{};
     ServiceContext services{dbTestCase.connectionPool(driver)};
-    DataStore dataStore{&services};
-    UiContext uiContext{&dataStore};
+    DataStore* dataStore;
+    UiContext* uiContext;
 
-    TransactionsWindow *window;
-    TreeView* treeView;
     QVariant companyId;
     QVariant accountId;
     QVariant altAccountId;
@@ -58,56 +69,56 @@ private:
     }
 
     TransactionsWindow* openWindow(const QVariant &accountId) {
-        TransactionsWindow* window = uiContext.showTransactions(accountId.toLongLong());
+        TransactionsWindow* window = uiContext->showTransactions(accountId.toLongLong());
         waitForDataLoaded(window);
         return window;
     }
 
-    void addDetail() {
+    void addDetail(TreeView* treeView) {
         QTest::keyClick(treeView, Qt::Key_N, Qt::ControlModifier);
         QTest::keyClick(treeView, Qt::Key_Escape);
     }
 
-    void enterText(const char* text) {
-        QSignalSpy editSpy(treeView->itemDelegate(), &QAbstractItemDelegate::closeEditor);
+    void enterText(QAbstractItemView *view, const char* text) {
+        QSignalSpy editSpy(view->itemDelegate(), &QAbstractItemDelegate::closeEditor);
         QVERIFY(editSpy.isValid());
-        QTest::keyClick(treeView, text[0]);
-        auto editor = qobject_cast<QLineEdit*>(window->focusWidget());
+        QTest::keyClick(view, text[0]);
+        auto editor = qobject_cast<QLineEdit*>(view->window()->focusWidget());
         QTest::keyClicks(editor, QString{text}.slice(1));
         QTest::keyClick(editor, Qt::Key_Enter);
         QVERIFY(editSpy.wait());
     }
 
-    void selectValue(const char* text) {
-        QSignalSpy editSpy(treeView->itemDelegate(), &QAbstractItemDelegate::closeEditor);
+    void selectValue(QAbstractItemView *view, const char* text) {
+        QSignalSpy editSpy(view->itemDelegate(), &QAbstractItemDelegate::closeEditor);
         QVERIFY(editSpy.isValid());
-        QTest::keyClick(treeView, text[0]);
-        auto editor = qobject_cast<RelationEditor*>(window->focusWidget());
+        QTest::keyClick(view, text[0]);
+        auto editor = qobject_cast<RelationEditor*>(view->window()->focusWidget());
         QTest::keyClicks(editor, QString{text}.slice(1));
         QTest::keySequence(editor, {Qt::Key_Enter, Qt::Key_Enter});
         QVERIFY(editSpy.wait());
     }
 
-    void fillTransaction(const char* refNumber, const char* payee, const char* description) {
-        if (window->focusWidget() != treeView) focusWindow(treeView);
-        QTRY_COMPARE(window->focusWidget(), treeView);
-        QTest::keyClick(treeView, Qt::Key_Tab);
-        enterText(refNumber);
-        QTest::keyClick(treeView, Qt::Key_Tab);
-        selectValue(payee);
-        QTest::keyClick(treeView, Qt::Key_Tab);
-        enterText(description);
+    void fillTransaction(QAbstractItemView *view, const char* refNumber, const char* payee, const char* description) {
+        if (view->window()->focusWidget() != view) focusWindow(view);
+        QTRY_COMPARE(view->window()->focusWidget(), view);
+        QTest::keyClick(view, Qt::Key_Tab);
+        enterText(view, refNumber);
+        QTest::keyClick(view, Qt::Key_Tab);
+        selectValue(view, payee);
+        QTest::keyClick(view, Qt::Key_Tab);
+        enterText(view, description);
     }
 
-    void fillDetail(const char* category, const char* amount = nullptr) {
-        if (window->focusWidget() != treeView) focusWindow(treeView);
-        QTRY_COMPARE(window->focusWidget(), treeView);
-        if (!treeView->currentIndex().parent().isValid()) QTest::keyClick(treeView, Qt::Key_Down);
-        QTest::keySequence(treeView, {Qt::Key_Home, Qt::Key_Tab, Qt::Key_Tab});
-        selectValue(category);
+    void fillDetail(QAbstractItemView *view, const char* category, const char* amount = nullptr) {
+        if (view->window()->focusWidget() != view) focusWindow(view);
+        QTRY_COMPARE(view->window()->focusWidget(), view);
+        if (!view->currentIndex().parent().isValid()) QTest::keyClick(view, Qt::Key_Down);
+        QTest::keySequence(view, {Qt::Key_Home, Qt::Key_Tab, Qt::Key_Tab});
+        selectValue(view, category);
         if (amount) {
-            QTest::keySequence(treeView, {Qt::Key_Tab, Qt::Key_Tab});
-            enterText(amount);
+            QTest::keySequence(view, {Qt::Key_Tab, Qt::Key_Tab});
+            enterText(view, amount);
         }
     }
 
@@ -118,7 +129,7 @@ private:
     }
 
     void verifyDetail(QVariant detailId, QVariant categoryId, QVariant transferAccountId, QVariant amount) {
-        verifyDetail(dataStore.transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
+        verifyDetail(dataStore->transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
     }
 
     void verifyPendingTransaction(const TransactionsWindow *window) {
@@ -139,7 +150,7 @@ private:
         widget->raise();
         widget->activateWindow();
         widget->setFocus();
-        QVERIFY(QTest::qWaitForWindowFocused(window));
+        QVERIFY(QTest::qWaitForWindowFocused(widget->window()));
     }
 
 private slots:
@@ -153,120 +164,155 @@ private slots:
     }
 
     void init() {
+        dataStore = new DataStore(&services);
+        uiContext = new UiContext(dataStore);
         dbTestCase.resetDatabase(driver);
         dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"23.45"});
         dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"34.56"});
         dbTestCase.saveTransfer(driver, altAccountId, accountId, {"78.90", "567.89"});
-        window = openWindow(accountId);
-        treeView = window->findChild<TreeView*>();
-        accountUpdatedSpy = new QSignalSpy(dataStore.transactionStore, SIGNAL(accountUpdated(qlonglong)));
+        accountUpdatedSpy = new QSignalSpy(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)));
         QVERIFY(accountUpdatedSpy->isValid());
     }
 
     void addTransaction() {
-        QCOMPARE(window->focusWidget(), treeView);
-        fillTransaction("123", PAYEE_NAME, "description");
-        fillDetail(CATEGORY_NAME, "12.34");
+        TxWindowHolder holder(openWindow(accountId));
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        fillTransaction(holder.view, "123", PAYEE_NAME, "description");
+        fillDetail(holder.view, CATEGORY_NAME, "12.34");
 
-        QTest::keyClick(treeView, Qt::Key_Enter);
+        QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(window->focusWidget(), treeView);
+        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
-        QCOMPARE(dataStore.transactionStore->transactionIds(accountId.toLongLong()).size(), INITIAL_TRANSACTION_COUNT+1);
-        QCOMPARE(window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
-        auto tx = window->model()->getRow(window->model()->index(INITIAL_TRANSACTION_COUNT, 0));
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).size(), INITIAL_TRANSACTION_COUNT+1);
+        QCOMPARE(holder.window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
+        auto tx = holder.window->model()->getRow(holder.window->model()->index(INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, "123", payeeId, "description");
         verifyDetail(tx->detailIds.at(0), categoryId, QVariant{}, "12.34");
-        QVERIFY(window->model()->unsavedDetailAdds().isEmpty());
+        QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
-        verifyPendingTransaction(window);
+        verifyPendingTransaction(holder.window);
     }
 
     void deleteTransaction_adjustsErrors() {
-        QCOMPARE(window->focusWidget(), treeView);
-        fillDetail(CATEGORY_NAME);
-        QCOMPARE(window->model()->isValid(), false);
-        treeView->setCurrentIndex(treeView->model()->index(0, 0));
+        TxWindowHolder holder(openWindow(accountId));
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        fillDetail(holder.view, CATEGORY_NAME);
+        QCOMPARE(holder.window->model()->isValid(), false);
+        holder.view->setCurrentIndex(holder.view->model()->index(0, 0));
 
-        QTest::keySequence(treeView, {Qt::Key_Delete, Qt::Key_Enter});
+        QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
 
-        auto model = window->model();
+        auto model = holder.window->model();
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
-        QCOMPARE(dataStore.transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
     }
 
     void addTransfer_updatesRelatedWindows() {
-        WindowHolder window2(openWindow(altAccountId));
-        focusWindow(treeView);
-        QCOMPARE(window2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
-        QCOMPARE(window->focusWidget(), treeView);
-        fillTransaction("123", PAYEE_NAME, "description");
-        fillDetail(ALT_ACCOUNT_NAME, "2.34");
-        addDetail();
-        fillDetail(CATEGORY_NAME, "321.43");
-        if (window->focusWidget() != treeView) focusWindow(treeView); // FIXME why is focus moving to filter input?
+        TxWindowHolder holder(openWindow(accountId));
+        TxWindowHolder holder2(openWindow(altAccountId));
+        focusWindow(holder.view);
+        QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        fillTransaction(holder.view, "123", PAYEE_NAME, "description");
+        fillDetail(holder.view, ALT_ACCOUNT_NAME, "2.34");
+        addDetail(holder.view);
+        fillDetail(holder.view, CATEGORY_NAME, "321.43");
+        if (holder.window->focusWidget() != holder.view) focusWindow(holder.view); // FIXME why is focus moving to filter input?
 
-        QTest::keyClick(treeView, Qt::Key_Enter);
+        QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(window->focusWidget(), treeView);
+        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
-        QCOMPARE(window2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
-        auto tx = window2.model()->getRow(window2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
+        QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
+        auto tx = holder2.model()->getRow(holder2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
-        verifyPendingTransaction(window);
-        verifyPendingTransaction(window2.window);
+        verifyPendingTransaction(holder.window);
+        verifyPendingTransaction(holder2.window);
     }
 
     void updateDetail_updatesRelatedWindows() {
-        WindowHolder window2(openWindow(altAccountId));
-        focusWindow(treeView);
-        treeView->setCurrentIndex(treeView->model()->index(0, 0));
-        QCOMPARE(window->focusWidget(), treeView);
-        fillDetail(ALT_ACCOUNT_NAME, "98.76");
-        if (window->focusWidget() != treeView) focusWindow(treeView); // FIXME why is focus moving to filter input?
+        TxWindowHolder holder(openWindow(accountId));
+        TxWindowHolder holder2(openWindow(altAccountId));
+        focusWindow(holder.view);
+        holder.view->setCurrentIndex(holder.view->model()->index(0, 0));
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        fillDetail(holder.view, ALT_ACCOUNT_NAME, "98.76");
+        if (holder.window->focusWidget() != holder.view) focusWindow(holder.view); // FIXME why is focus moving to filter input?
 
-        QTest::keyClick(treeView, Qt::Key_S, Qt::ControlModifier);
+        QTest::keyClick(holder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(window->focusWidget(), treeView);
+        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
         QTest::qWait(100);
 
-        QCOMPARE(window2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
-        auto tx = window2.model()->getRow(window2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
+        QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
+        auto tx = holder2.model()->getRow(holder2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, QVariant{}, QVariant{});
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
     }
 
     void deleteTransfer_updatesRelatedWindows() {
-        WindowHolder window2(openWindow(altAccountId));
-        focusWindow(treeView);
+        TxWindowHolder holder(openWindow(accountId));
+        TxWindowHolder holder2(openWindow(altAccountId));
+        focusWindow(holder.view);
 
-        treeView->setCurrentIndex(treeView->model()->index(INITIAL_TRANSACTION_COUNT-1, 0));
-        QTest::keySequence(treeView, {Qt::Key_Delete, Qt::Key_Enter});
+        holder.view->setCurrentIndex(holder.view->model()->index(INITIAL_TRANSACTION_COUNT-1, 0));
+        QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
 
-        auto model = window->model();
+        auto model = holder.window->model();
         QVERIFY(model->isPendingAdd(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
-        QCOMPARE(dataStore.transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
-        auto model2 = window2.model();
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        auto model2 = holder2.model();
         QCOMPARE(model2->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
-        auto tx = model2->getRow(model2->index(0, 0));
-        qDebug() << tx->detailIds.size();
         QCOMPARE(model2->rowCount(model2->index(0, 0)), 1);
     }
 
+    void mergePayees() {
+        auto altPayeeId = dbTestCase.addPayee(driver, ALT_PAYEE_NAME);
+        auto [tx, details] = dbTestCase.saveTransaction(driver, factory::transaction(accountId, altPayeeId), {"65.78"});
+        TxWindowHolder holder(openWindow(accountId));
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
+        payeeHolder.window->show();
+        QVERIFY(QTest::qWaitForWindowActive(payeeHolder.window));
+        payeeHolder.view->setCurrentIndex(payeeHolder.view->model()->index(1, 0));
+        focusWindow(payeeHolder.view);
+        QSignalSpy mergeSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QVERIFY(mergeSpy.isValid());
+        QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(qlonglong,int,int)));
+        QVERIFY(updateSpy.isValid());
+
+        QTimer::singleShot(0, payeeHolder.window, [&]() {
+            auto dialog = windowtest::findWindow<EntitySelectionDialog>();
+            if (dialog) {
+                dialog->setSelectedEntity(dataStore->payeeStore->value(payeeId));
+                dialog->accept();
+            } else QFAIL("no payee selection dialog");
+        });
+        QTest::keyClick(payeeHolder.view, Qt::Key_Y, Qt::ControlModifier);
+        QVERIFY(mergeSpy.wait());
+
+        if (updateSpy.isEmpty()) QVERIFY(updateSpy.wait());
+        QCOMPARE(updateSpy.size(), 1);
+        QCOMPARE(updateSpy.at(0).at(0), accountId);
+        QVERIFY(!dataStore->payeeStore->contains(altPayeeId));
+        QCOMPARE(dataStore->transactionStore->value(tx->id)->payeeId, payeeId);
+        QCOMPARE(dataStore->transactionStore->value(tx->id)->version, tx->version.toLongLong()+1);
+    }
+
     void cleanup() {
-        window->model()->clearChanges();
-        QVERIFY(window->close());
-        delete window;
-        window = nullptr;
-        treeView = nullptr;
         delete accountUpdatedSpy;
         accountUpdatedSpy = nullptr;
         dbTestCase.cleanup();
+        delete uiContext;
+        uiContext = nullptr;
+        delete dataStore;
+        dataStore = nullptr;
     }
 };
 

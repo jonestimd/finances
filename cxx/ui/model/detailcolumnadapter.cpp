@@ -75,8 +75,8 @@ QString TransactionTypeColumnAdapter::optionText(const NamedEntity* option) cons
 
 ComboBoxModel *TransactionTypeColumnAdapter::getOptions() const {
     QList<const NamedEntity*> options;
-    for (auto category: dataStore->categoryStore->values()) options.append(category);
-    for (auto account: dataStore->accountStore->values()) if (account->id.toLongLong() != accountId) options.append(account);
+    dataStore->categoryStore->appendValues(options);
+    dataStore->accountStore->appendValues(options, {accountId});
     return new ComboBoxModel(options, std::bind_front(&TransactionTypeColumnAdapter::optionText, this));
 }
 

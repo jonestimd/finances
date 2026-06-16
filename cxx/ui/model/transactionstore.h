@@ -15,7 +15,8 @@ class TransactionStore : public EntityStore<Transaction, TransactionService, qlo
     class TransactionSorter;
     TransactionSorter *sorter;
 
-    CategoryStore *const categoryStore;
+    const CategoryStore *const categoryStore;
+
     QList<qlonglong> loadedAccounts{};
     /**
      * @brief idsByAccountId List of transaction IDs for each loaded account.  The lists are sorted by
@@ -26,12 +27,13 @@ class TransactionStore : public EntityStore<Transaction, TransactionService, qlo
 public:
     TransactionDetailStore detailStore;
 
-    TransactionStore(ServiceContext *serviceContext, CategoryStore *categoryStore);
+    TransactionStore(ServiceContext* serviceContext, CategoryStore* categoryStore);
     ~TransactionStore();
 
     bool load(EntityView *view, qlonglong accountId, bool reload = false);
 
     void update(QWidget *source, TransactionTableModel *model, int txRow = -1);
+    void replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId);
 
     const QList<qlonglong> transactionIds(qlonglong accountId) const;
 

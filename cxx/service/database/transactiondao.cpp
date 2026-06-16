@@ -145,7 +145,7 @@ void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, co
     SQL_BIND_VALUE(query, ":user", user);
     SQL_BIND_VALUE(query, ":payeeId", newPayeeId);
     SQL_BIND_VALUE(query, ":oldPayeeId", payee->id);
-    sql::exec(query, className, "setCategory");
+    sql::exec(query, className, "setPayee");
     if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
 }
 
