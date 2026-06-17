@@ -152,7 +152,8 @@ private slots:
     void update_updatesTransactionAndDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
         auto [tx, details] = saveTransaction(QList{"1.00", "2.00"});
-        auto newDetail = factory::detail(tx->id, "3.45");
+        auto newDetail = factory::detail("3.45");
+        newDetail->transactionId = tx->id;
         tx->payeeId = QVariant{};
         tx->memo = "tx comment";
         auto detail0 = details.at(0);

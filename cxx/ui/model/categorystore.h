@@ -6,10 +6,11 @@
 #include "service/categoryservice.h"
 
 class CategoryStore : public EntityStore<Category, CategoryService> {
+    DataStore* const dataStore;
     QSet<qlonglong> rootIds_;
 
 public:
-    CategoryStore(CategoryService *service);
+    CategoryStore(CategoryService *service, DataStore* dataStore);
 
     const QSet<qlonglong> rootIds() const;
 

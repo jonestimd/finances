@@ -9,6 +9,19 @@ void TransactionDetailStore::load(qlonglong accountId) {
     setValues(accountId, service->getAll(accountId));
 }
 
+void TransactionDetailStore::replaceCategory(const QVariant oldCategoryId, const QVariant newCategoryId) {
+    QList<const TransactionDetail*> updates;
+    forEachEntry([&](qlonglong id, const TransactionDetail* detail) {
+        if (detail->categoryId == oldCategoryId) {
+            auto updatedDetail = new TransactionDetail(*detail);
+            updatedDetail->categoryId = newCategoryId;
+            updatedDetail->version = detail->version.toLongLong() + 1;
+            updates.append(updatedDetail);
+        }
+    });
+    if (!updates.isEmpty()) update(updates, {});
+}
+
 void TransactionDetailStore::update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes) {
     auto allDeletes = QList<const TransactionDetail*>{deletes};
     for (auto& detailId : updates.deletedDetailIds) {

@@ -14,6 +14,8 @@ public:
 
     void load(qlonglong accountId);
 
+    void replaceCategory(const QVariant oldCategoryId, const QVariant newCategoryId);
+
     void update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes);
 
 protected:

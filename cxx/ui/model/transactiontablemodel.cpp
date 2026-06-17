@@ -195,6 +195,7 @@ void TransactionTableModel::updateBalances() {
             if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
         }
         emit dataChanged(index(0, balanceColumn), index(rowCount()-1, balanceColumn));
+        emit dataChanged(index(0, payeeColumn), index(rowCount()-1, payeeColumn));
         emit clearedBalanceChanged(clearedBalance_);
     }
 }

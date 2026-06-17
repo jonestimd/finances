@@ -51,7 +51,7 @@ struct Daos {
 namespace factory {
     Transaction *transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
     PendingTransaction *pendingTransaction(QVariant accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    TransactionDetail *detail(const QVariant &txId, const char *amount = "1.00");
+    TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{});
 }
 
 class DbTestCase {
@@ -96,6 +96,7 @@ public:
     QList<TxDetails> saveTransfer(const QString& driver, const QVariant& accountId, const QVariant& altAccountId, QList<const char*> amounts);
     TxDetails saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
     TxDetails saveTransaction(const QString& driver, const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
+    void saveTransaction(const QString& driver, Transaction* unsaved, const QList<TransactionDetail*> details);
 
     void cleanup();
     void resetDatabase(const QString& driver);

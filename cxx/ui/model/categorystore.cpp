@@ -1,8 +1,12 @@
 #include "categorystore.h"
+#include "datastore.h"
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.category")
 
-CategoryStore::CategoryStore(CategoryService *service) : EntityStore(service) {}
+CategoryStore::CategoryStore(CategoryService* service, DataStore* dataStore)
+    : EntityStore(service)
+    , dataStore{dataStore}
+{}
 
 const QSet<qlonglong> CategoryStore::rootIds() const {
     return rootIds_;
@@ -52,6 +56,7 @@ void CategoryStore::setParent(QWidget *source, const Category *category, const Q
 void CategoryStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
+        dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
         update(categories.values(), QList{category});
         emit valuesLoaded(ids());
     });

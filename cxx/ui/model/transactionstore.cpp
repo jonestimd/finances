@@ -91,7 +91,7 @@ void TransactionStore::replacePayee(const QVariant oldPayeeId, const QVariant ne
         if (tx->payeeId == oldPayeeId) {
             auto updatedTx = new Transaction(*tx);
             updatedTx->payeeId = newPayeeId;
-            updatedTx->version = updatedTx->version.toLongLong() + 1;
+            updatedTx->version = tx->version.toLongLong() + 1;
             updates.append(updatedTx);
         }
     });

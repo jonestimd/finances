@@ -55,14 +55,14 @@ namespace factory {
         tx->payeeId = payeeId;
         tx->securityId = securityId;
         tx->date = date;
-        for (auto amount : amounts) tx->details.append(detail(tx->id, amount));
+        for (auto amount : amounts) tx->details.append(detail(amount));
         return tx;
     }
 
-    TransactionDetail* detail(const QVariant &txId, const char *amount) {
+    TransactionDetail* detail(const char *amount, const QVariant &categoryId) {
         TransactionDetail* detail = new TransactionDetail;
-        detail->transactionId = txId;
         detail->amount = DECIMAL_VARIANT(amount);
+        detail->categoryId = categoryId;
         return detail;
     }
 }
@@ -281,20 +281,25 @@ DbTestCase::TxDetails DbTestCase::saveTransaction(const Transaction* unsaved, co
 
 DbTestCase::TxDetails DbTestCase::saveTransaction(const QString &driver, const Transaction *unsaved, const QList<const char *> &detailAmounts, const QList<const char *> &detailShares) {
     Transaction *tx = new Transaction(*unsaved);
-    Connection conn(connectionPool(driver));
-    transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
     QList<TransactionDetail*> details{};
     for (auto &amount : detailAmounts) {
         auto i = details.size();
-        TransactionDetail *detail = factory::detail(tx->id, amount);
+        TransactionDetail *detail = factory::detail(amount);
         if (tx->securityId.isValid() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
         details.append(detail);
     }
+    saveTransaction(driver, tx, details);
+    return TxDetails{tx, details};
+}
+
+void DbTestCase::saveTransaction(const QString &driver, Transaction *tx, const QList<TransactionDetail *> details) {
+    Connection conn(connectionPool(driver));
+    transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
+    for (auto detail : details) detail->transactionId = tx->id;
     detailDao(driver).add(conn.db, details, TEST_USER);
     tx->detailIds = getEntityIds(details);
     this->transactions.append(tx);
     for (auto detail : std::as_const(details)) this->details.append(detail);
-    return TxDetails{tx, details};
 }
 
 void DbTestCase::addConnection(const QString &name, const ConnectionSettings &settings) {
