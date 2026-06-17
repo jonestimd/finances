@@ -59,10 +59,11 @@ namespace factory {
         return tx;
     }
 
-    TransactionDetail* detail(const char *amount, const QVariant &categoryId) {
+    TransactionDetail* detail(const char *amount, const QVariant &categoryId, const QVariant& groupId) {
         TransactionDetail* detail = new TransactionDetail;
         detail->amount = DECIMAL_VARIANT(amount);
         detail->categoryId = categoryId;
+        detail->groupId = groupId;
         return detail;
     }
 }
@@ -123,6 +124,10 @@ AccountDao &DbTestCase::accountDao(const QString &driver) {
 
 CategoryDao &DbTestCase::categoryDao(const QString &driver) {
     return DAOS(driver).categoryDao;
+}
+
+TransactionGroupDao &DbTestCase::groupDao(const QString &driver) {
+    return DAOS(driver).transactionGroupDao;
 }
 
 PayeeDao &DbTestCase::payeeDao(const QString &driver) {
@@ -231,6 +236,14 @@ QVariant DbTestCase::addCategory(const QString &driver, const QString &name) {
     category.name = name;
     categoryDao(driver).add(conn.db, QList{&category}, TEST_USER);
     return category.id;
+}
+
+QVariant DbTestCase::addGroup(const QString &driver, const QString &name) {
+    auto conn = Connection(connectionPool(driver));
+    TransactionGroup group;
+    group.name = name;
+    groupDao(driver).add(conn.db, QList{&group}, TEST_USER);
+    return group.id;
 }
 
 const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {

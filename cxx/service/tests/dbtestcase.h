@@ -51,7 +51,7 @@ struct Daos {
 namespace factory {
     Transaction *transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
     PendingTransaction *pendingTransaction(QVariant accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{});
+    TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{}, const QVariant& groupId = QVariant{});
 }
 
 class DbTestCase {
@@ -77,6 +77,7 @@ public:
     CompanyDao &companyDao(const QString &driver);
     AccountDao &accountDao(const QString &driver);
     CategoryDao &categoryDao(const QString &driver);
+    TransactionGroupDao &groupDao(const QString &driver);
     PayeeDao &payeeDao(const QString &driver);
     SecurityDao &securityDao(const QString &driver);
     StockSplitDao &stockSplitDao(const QString &driver);
@@ -90,6 +91,7 @@ public:
     QVariant addPayee(const QString &driver, const QString &name);
     QVariant addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
     QVariant addCategory(const QString &driver, const QString &name);
+    QVariant addGroup(const QString &driver, const QString &name);
 
     const Account *loadAccount(const QString &driver, QVariant id);
 

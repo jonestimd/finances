@@ -18,6 +18,7 @@ class TransactionTableModel : public PodItemModel<Transaction, PendingTransactio
 
 public:
     const int dateColumn;
+    const int refColumn;
     const int payeeColumn;
     const int securityColumn;
     const int clearedColumn;
@@ -99,6 +100,7 @@ private slots:
     void accountLoaded(qlonglong accountId);
     void accountUpdated(qlonglong accountId);
     void payeesUpdated();
+    void groupsUpdated();
     void transactionsSaved(const QList<const PendingTransaction*>& transactions);
     void transactionAdded(qlonglong accountId, int index);
     void transactionRemoved(qlonglong accountId, int index);

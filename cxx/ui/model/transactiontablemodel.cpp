@@ -10,6 +10,7 @@
 #define DETAIL_ROW_TYPE 1
 
 #define DATE_TITLE "Date"
+#define REF_TITLE "Ref #"
 #define PAYEE_TITLE "Payee"
 #define SECURITY_TITLE "Security"
 #define CLEARED_TITLE "🮱"
@@ -95,7 +96,7 @@ using namespace transactiontablemodel;
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
     : PodItemModel{{
         new TxDateColumnAdapter{tr(DATE_TITLE)},
-        new ColumnAdapter<Transaction>(tr("Ref #"), &Transaction::referenceNumber),
+        new ColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
         new ColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
@@ -116,6 +117,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     }
     , store{dataStore->transactionStore}
     , dateColumn{columnIndex(tr(DATE_TITLE))}
+    , refColumn{columnIndex(tr(REF_TITLE))}
     , payeeColumn{columnIndex(tr(PAYEE_TITLE))}
     , securityColumn{columnIndex(tr(SECURITY_TITLE))}
     , clearedColumn{columnIndex(tr(CLEARED_TITLE))}
@@ -131,6 +133,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     connect(store, SIGNAL(transactionUpdated(qlonglong,int,int)), this, SLOT(transactionUpdated(qlonglong,int,int)), Qt::DirectConnection);
     connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(payeesUpdated()));
     connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
+    connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(groupsUpdated()));
 }
 
 TransactionTableModel::~TransactionTableModel() {
@@ -455,6 +458,11 @@ void TransactionTableModel::accountUpdated(qlonglong accountId) {
 void TransactionTableModel::payeesUpdated() {
     auto rows = rowCount();
     if (rows > 0) emit dataChanged(index(0, payeeColumn), index(rows-1, payeeColumn));
+}
+
+void TransactionTableModel::groupsUpdated() {
+    auto rows = rowCount();
+    if (rows > 0) emit dataChanged(index(0, refColumn), index(rows-1, refColumn));
 }
 
 void TransactionTableModel::transactionsSaved(const QList<const PendingTransaction *> &transactions) {

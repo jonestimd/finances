@@ -53,11 +53,20 @@ struct WindowHolder {
     Model* model() {
         return window->model();
     }
+
+    QModelIndex index(int row, int column, QModelIndex parent = QModelIndex{}) {
+        return view->model()->index(row, column, parent);
+    }
+
+    QVariant data(int row, int column, QModelIndex parent = QModelIndex{}) {
+        return view->model()->data(index(row, column, parent));
+    }
 };
 
 typedef WindowHolder<TransactionsWindow, TransactionTableModel, TreeView> TxWindowHolder;
 typedef WindowHolder<PayeesWindow, PayeeTableModel, QTableView> PayeeWindowHolder;
 typedef WindowHolder<CategoriesWindow, CategoryTableModel, TreeView> CategoryWindowHolder;
+typedef WindowHolder<GroupsWindow, GroupTableModel, QTableView> GroupWindowHolder;
 
 class TestTransactionsWindow : public QObject {
     Q_OBJECT
@@ -195,7 +204,7 @@ private slots:
 
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).size(), INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
-        auto tx = holder.window->model()->getRow(holder.window->model()->index(INITIAL_TRANSACTION_COUNT, 0));
+        auto tx = holder.window->model()->getRow(holder.index(INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, "123", payeeId, "description");
         verifyDetail(tx->detailIds.at(0), categoryId, QVariant{}, "12.34");
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
@@ -208,7 +217,7 @@ private slots:
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillDetail(holder, CATEGORY_NAME);
         QCOMPARE(holder.window->model()->isValid(), false);
-        holder.view->setCurrentIndex(holder.view->model()->index(0, 0));
+        holder.view->setCurrentIndex(holder.index(0, 0));
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
@@ -236,7 +245,7 @@ private slots:
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
-        auto tx = holder2.model()->getRow(holder2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
+        auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
@@ -247,7 +256,7 @@ private slots:
         TxWindowHolder holder(openWindow(accountId));
         TxWindowHolder holder2(openWindow(altAccountId));
         holder.focusWindow();
-        holder.view->setCurrentIndex(holder.view->model()->index(0, 0));
+        holder.view->setCurrentIndex(holder.index(0, 0));
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillDetail(holder, ALT_ACCOUNT_NAME, "98.76");
         if (holder.window->focusWidget() != holder.view) holder.focusWindow(); // FIXME why is focus moving to filter input?
@@ -258,7 +267,7 @@ private slots:
         QTest::qWait(100);
 
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
-        auto tx = holder2.model()->getRow(holder2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
+        auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
     }
@@ -268,7 +277,7 @@ private slots:
         TxWindowHolder holder2(openWindow(altAccountId));
         holder.focusWindow();
 
-        holder.view->setCurrentIndex(holder.view->model()->index(INITIAL_TRANSACTION_COUNT-1, 0));
+        holder.view->setCurrentIndex(holder.index(INITIAL_TRANSACTION_COUNT-1, 0));
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
 
@@ -287,7 +296,7 @@ private slots:
         TxWindowHolder holder(openWindow(accountId));
         PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
         payeeHolder.showWindow();
-        payeeHolder.view->setCurrentIndex(payeeHolder.view->model()->index(1, 0));
+        payeeHolder.view->setCurrentIndex(payeeHolder.index(1, 0));
         QSignalSpy mergeSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
         QVERIFY(mergeSpy.isValid());
         QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(qlonglong,int,int)));
@@ -317,7 +326,7 @@ private slots:
         QVERIFY(modelSpy.isValid());
         PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
         payeeHolder.showWindow();
-        payeeHolder.view->setCurrentIndex(payeeHolder.view->model()->index(0, 0));
+        payeeHolder.view->setCurrentIndex(payeeHolder.index(0, 0));
         QSignalSpy updateSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
         QVERIFY(updateSpy.isValid());
 
@@ -325,7 +334,7 @@ private slots:
         QTest::keyClick(payeeHolder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(updateSpy.wait());
 
-        QCOMPARE(holder.model()->data(holder.model()->index(0, 2)), "new payee name");
+        QCOMPARE(holder.data(0, 2), "new payee name");
         QCOMPARE(modelSpy.size(), 1);
         QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->payeeColumn);
         QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->payeeColumn);
@@ -339,7 +348,7 @@ private slots:
         TxWindowHolder holder(openWindow(accountId));
         CategoryWindowHolder categoryHolder(new CategoriesWindow(dataStore));
         categoryHolder.showWindow();
-        categoryHolder.view->setCurrentIndex(categoryHolder.view->model()->index(1, 0));
+        categoryHolder.view->setCurrentIndex(categoryHolder.index(1, 0));
         QSignalSpy mergeSpy(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
         QVERIFY(mergeSpy.isValid());
 
@@ -356,6 +365,29 @@ private slots:
         QVERIFY(!dataStore->categoryStore->contains(altCategoryId));
         QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->categoryId, categoryId);
         QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->version, detail->version.toLongLong()+1);
+    }
+
+    void renameGroup_updatesTransactionDetails() {
+        auto groupId = dbTestCase.addGroup(driver, "group 1");
+        auto tx = factory::transaction(accountId);
+        auto detail = factory::detail("65.78", categoryId, groupId);
+        dbTestCase.saveTransaction(driver, tx, {detail});
+        TxWindowHolder holder(openWindow(accountId));
+        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
+        QVERIFY(modelSpy.isValid());
+        GroupWindowHolder groupHolder(new GroupsWindow(dataStore));
+        groupHolder.showWindow();
+        groupHolder.view->setCurrentIndex(groupHolder.index(0, 0));
+        QSignalSpy updateSpy(dataStore->groupStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+
+        enterText(groupHolder.view, "new group name");
+        QTest::keyClick(groupHolder.view, Qt::Key_S, Qt::ControlModifier);
+        QVERIFY(updateSpy.wait());
+
+        QCOMPARE(holder.data(0, holder.model()->refColumn, holder.index(INITIAL_TRANSACTION_COUNT, 0)), "new group name");
+        QCOMPARE(modelSpy.size(), 1);
+        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->refColumn);
+        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->refColumn);
     }
 
     void cleanup() {
