@@ -176,7 +176,7 @@ private slots:
         dataStore = new DataStore(&services);
         uiContext = new UiContext(dataStore);
         dbTestCase.resetDatabase(driver);
-        dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"23.45"});
+        dbTestCase.saveTransaction(driver, factory::transaction(accountId, payeeId), {"23.45"});
         dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"34.56"});
         dbTestCase.saveTransfer(driver, altAccountId, accountId, {"78.90", "567.89"});
         accountUpdatedSpy = new QSignalSpy(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)));
@@ -259,7 +259,7 @@ private slots:
 
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.model()->index(ALT_INITIAL_TRANSACTION_COUNT, 0));
-        verifyTransaction(tx, QVariant{}, QVariant{}, QVariant{});
+        verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
     }
 
@@ -309,6 +309,26 @@ private slots:
         QVERIFY(!dataStore->payeeStore->contains(altPayeeId));
         QCOMPARE(dataStore->transactionStore->value(tx->id)->payeeId, payeeId);
         QCOMPARE(dataStore->transactionStore->value(tx->id)->version, tx->version.toLongLong()+1);
+    }
+
+    void renamePayee_updatesTransactions() {
+        TxWindowHolder holder(openWindow(accountId));
+        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
+        QVERIFY(modelSpy.isValid());
+        PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
+        payeeHolder.showWindow();
+        payeeHolder.view->setCurrentIndex(payeeHolder.view->model()->index(0, 0));
+        QSignalSpy updateSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QVERIFY(updateSpy.isValid());
+
+        enterText(payeeHolder.view, "new payee name");
+        QTest::keyClick(payeeHolder.view, Qt::Key_S, Qt::ControlModifier);
+        QVERIFY(updateSpy.wait());
+
+        QCOMPARE(holder.model()->data(holder.model()->index(0, 2)), "new payee name");
+        QCOMPARE(modelSpy.size(), 1);
+        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->payeeColumn);
+        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->payeeColumn);
     }
 
     void mergeCategories_updatesTransactionDetails() {

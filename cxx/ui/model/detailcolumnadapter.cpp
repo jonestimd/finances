@@ -112,9 +112,6 @@ DetailAmountColumnAdapter::DetailAmountColumnAdapter(const QString &title)
 {}
 
 QVariant DetailAmountColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
-    // auto id = row->id.toLongLong();
-    // auto notnull = !row->id.isNull();
-    // if (notnull) qDebug() << "adapter:" << id << row->amount.toString();
     return AmountColumnAdapter::value(row, index, current, role);
 }
 

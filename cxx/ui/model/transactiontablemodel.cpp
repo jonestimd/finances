@@ -129,6 +129,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     connect(store, SIGNAL(transactionAdded(qlonglong,int)), this, SLOT(transactionAdded(qlonglong,int)), Qt::DirectConnection);
     connect(store, SIGNAL(transactionRemoved(qlonglong,int)), this, SLOT(transactionRemoved(qlonglong,int)), Qt::DirectConnection);
     connect(store, SIGNAL(transactionUpdated(qlonglong,int,int)), this, SLOT(transactionUpdated(qlonglong,int,int)), Qt::DirectConnection);
+    connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(payeesUpdated()));
     connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
 }
 
@@ -449,6 +450,11 @@ void TransactionTableModel::accountUpdated(qlonglong accountId) {
     // force sort model to reset its state
     beginResetModel();
     endResetModel();
+}
+
+void TransactionTableModel::payeesUpdated() {
+    auto rows = rowCount();
+    if (rows > 0) emit dataChanged(index(0, payeeColumn), index(rows-1, payeeColumn));
 }
 
 void TransactionTableModel::transactionsSaved(const QList<const PendingTransaction *> &transactions) {

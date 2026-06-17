@@ -98,6 +98,7 @@ public:
 private slots:
     void accountLoaded(qlonglong accountId);
     void accountUpdated(qlonglong accountId);
+    void payeesUpdated();
     void transactionsSaved(const QList<const PendingTransaction*>& transactions);
     void transactionAdded(qlonglong accountId, int index);
     void transactionRemoved(qlonglong accountId, int index);
