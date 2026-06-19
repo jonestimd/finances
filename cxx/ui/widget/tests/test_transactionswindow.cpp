@@ -12,6 +12,7 @@
 #define COMPANY_NAME "Bank 1"
 #define ACCOUNT_NAME "Checking"
 #define ALT_ACCOUNT_NAME "Savings"
+#define SECURITY_ACCOUNT_NAME "Broker"
 #define PAYEE_NAME "Payee 1"
 #define ALT_PAYEE_NAME "Payee 2"
 #define CATEGORY_NAME "Category 1"
@@ -22,6 +23,8 @@
 
 template<class Window, class Model, class View>
 struct WindowHolder {
+    typedef Window windowType;
+
     Window* const window;
     View* const view;
 
@@ -67,6 +70,7 @@ typedef WindowHolder<TransactionsWindow, TransactionTableModel, TreeView> TxWind
 typedef WindowHolder<PayeesWindow, PayeeTableModel, QTableView> PayeeWindowHolder;
 typedef WindowHolder<CategoriesWindow, CategoryTableModel, TreeView> CategoryWindowHolder;
 typedef WindowHolder<GroupsWindow, GroupTableModel, QTableView> GroupWindowHolder;
+typedef WindowHolder<SecuritiesWindow, SecurityTableModel, QTableView> SecurityWindowHolder;
 
 class TestTransactionsWindow : public QObject {
     Q_OBJECT
@@ -80,6 +84,7 @@ class TestTransactionsWindow : public QObject {
     QVariant companyId;
     QVariant accountId;
     QVariant altAccountId;
+    QVariant securityAccountId;
     QVariant payeeId;
     QVariant categoryId;
 
@@ -90,7 +95,7 @@ private:
         auto spy = QSignalSpy(win->model(), SIGNAL(dataLoaded()));
         QVERIFY(spy.isValid());
         QVERIFY(spy.wait());
-        QVERIFY(win->findChild<TreeView*>()->isEnabled());
+        QTRY_VERIFY(win->findChild<TreeView*>()->isEnabled());
     }
 
     TransactionsWindow* openWindow(const QVariant &accountId) {
@@ -171,12 +176,54 @@ private:
         else QCOMPARE(detail->amount.toString(), amount);
     }
 
+    template<class Holder>
+    void testRenameTxReference(const QVariant accountId, int refRow, int refNameColumn, const QObject* refStore, QModelIndex txCellIndex(const TransactionTableModel*)) {
+        TxWindowHolder holder(openWindow(accountId));
+        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
+        QVERIFY(modelSpy.isValid());
+        Holder refHolder(new Holder::windowType(dataStore));
+        refHolder.showWindow();
+        refHolder.view->setCurrentIndex(refHolder.index(refRow, refNameColumn));
+        QSignalSpy updateSpy(refStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QVERIFY(updateSpy.isValid());
+
+        enterText(refHolder.view, "new ref name");
+        QTest::keyClick(refHolder.view, Qt::Key_S, Qt::ControlModifier);
+        QVERIFY(updateSpy.wait());
+
+        auto index = txCellIndex(holder.model());
+        QCOMPARE(index.data(), "new ref name");
+        QCOMPARE(modelSpy.size(), 1);
+        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), index.column());
+        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), index.column());
+    }
+
+    template<class Holder, class Store>
+    void doMerge(const QVariant destinationId, const Store* store) {
+        Holder refHolder(new Holder::windowType(dataStore));
+        refHolder.showWindow();
+        refHolder.view->setCurrentIndex(refHolder.index(1, 0));
+        QSignalSpy mergeSpy(store, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QVERIFY(mergeSpy.isValid());
+
+        QTimer::singleShot(0, refHolder.window, [&]() {
+            auto dialog = windowtest::findWindow<EntitySelectionDialog>();
+            if (dialog) {
+                dialog->setSelectedEntity(dataStore->categoryStore->value(categoryId));
+                dialog->accept();
+            } else QFAIL("no selection dialog");
+        });
+        QTest::keyClick(refHolder.view, Qt::Key_Y, Qt::ControlModifier);
+        QVERIFY(mergeSpy.wait());
+    }
+
 private slots:
     void initTestCase_data() {
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
         accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id;
         altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, AccountType::bank.code, companyId)->id;
+        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id;
         payeeId = dbTestCase.addPayee(driver, PAYEE_NAME);
         categoryId = dbTestCase.addCategory(driver, CATEGORY_NAME);
     }
@@ -294,23 +341,10 @@ private slots:
         auto altPayeeId = dbTestCase.addPayee(driver, ALT_PAYEE_NAME);
         auto [tx, details] = dbTestCase.saveTransaction(driver, factory::transaction(accountId, altPayeeId), {"65.78"});
         TxWindowHolder holder(openWindow(accountId));
-        PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
-        payeeHolder.showWindow();
-        payeeHolder.view->setCurrentIndex(payeeHolder.index(1, 0));
-        QSignalSpy mergeSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
-        QVERIFY(mergeSpy.isValid());
         QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(qlonglong,int,int)));
         QVERIFY(updateSpy.isValid());
 
-        QTimer::singleShot(0, payeeHolder.window, [&]() {
-            auto dialog = windowtest::findWindow<EntitySelectionDialog>();
-            if (dialog) {
-                dialog->setSelectedEntity(dataStore->payeeStore->value(payeeId));
-                dialog->accept();
-            } else QFAIL("no payee selection dialog");
-        });
-        QTest::keyClick(payeeHolder.view, Qt::Key_Y, Qt::ControlModifier);
-        QVERIFY(mergeSpy.wait());
+        doMerge<PayeeWindowHolder, PayeeStore>(payeeId, dataStore->payeeStore);
 
         if (updateSpy.isEmpty()) QVERIFY(updateSpy.wait());
         QCOMPARE(updateSpy.size(), 1);
@@ -321,23 +355,15 @@ private slots:
     }
 
     void renamePayee_updatesTransactions() {
-        TxWindowHolder holder(openWindow(accountId));
-        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
-        QVERIFY(modelSpy.isValid());
-        PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
-        payeeHolder.showWindow();
-        payeeHolder.view->setCurrentIndex(payeeHolder.index(0, 0));
-        QSignalSpy updateSpy(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
-        QVERIFY(updateSpy.isValid());
+        auto txCellIndex = [](const TransactionTableModel* model) { return model->index(0, model->payeeColumn); };
+        testRenameTxReference<PayeeWindowHolder>(accountId, 0, 0, dataStore->payeeStore, txCellIndex);
+    }
 
-        enterText(payeeHolder.view, "new payee name");
-        QTest::keyClick(payeeHolder.view, Qt::Key_S, Qt::ControlModifier);
-        QVERIFY(updateSpy.wait());
-
-        QCOMPARE(holder.data(0, 2), "new payee name");
-        QCOMPARE(modelSpy.size(), 1);
-        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->payeeColumn);
-        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->payeeColumn);
+    void renameSecurity_updatesTransactions() {
+        auto txCellIndex = [](const TransactionTableModel* model) { return model->index(0, model->securityColumn); };
+        auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
+        dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, QVariant{}, securityId), {"123.45"});
+        testRenameTxReference<SecurityWindowHolder>(securityAccountId, 0, 0, dataStore->securityStore, txCellIndex);
     }
 
     void mergeCategories_updatesTransactionDetails() {
@@ -346,21 +372,8 @@ private slots:
         auto detail = factory::detail("65.78", altCategoryId);
         dbTestCase.saveTransaction(driver, tx, {detail});
         TxWindowHolder holder(openWindow(accountId));
-        CategoryWindowHolder categoryHolder(new CategoriesWindow(dataStore));
-        categoryHolder.showWindow();
-        categoryHolder.view->setCurrentIndex(categoryHolder.index(1, 0));
-        QSignalSpy mergeSpy(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
-        QVERIFY(mergeSpy.isValid());
 
-        QTimer::singleShot(0, categoryHolder.window, [&]() {
-            auto dialog = windowtest::findWindow<EntitySelectionDialog>();
-            if (dialog) {
-                dialog->setSelectedEntity(dataStore->categoryStore->value(categoryId));
-                dialog->accept();
-            } else QFAIL("no category selection dialog");
-        });
-        QTest::keyClick(categoryHolder.view, Qt::Key_Y, Qt::ControlModifier);
-        QVERIFY(mergeSpy.wait());
+        doMerge<CategoryWindowHolder, CategoryStore>(categoryId, dataStore->categoryStore);
 
         QVERIFY(!dataStore->categoryStore->contains(altCategoryId));
         QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->categoryId, categoryId);
@@ -368,26 +381,14 @@ private slots:
     }
 
     void renameGroup_updatesTransactionDetails() {
+        auto txCellIndex = [](const TransactionTableModel* model) {
+            return model->index(0, model->refColumn, model->index(INITIAL_TRANSACTION_COUNT, 0));
+        };
         auto groupId = dbTestCase.addGroup(driver, "group 1");
         auto tx = factory::transaction(accountId);
         auto detail = factory::detail("65.78", categoryId, groupId);
         dbTestCase.saveTransaction(driver, tx, {detail});
-        TxWindowHolder holder(openWindow(accountId));
-        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
-        QVERIFY(modelSpy.isValid());
-        GroupWindowHolder groupHolder(new GroupsWindow(dataStore));
-        groupHolder.showWindow();
-        groupHolder.view->setCurrentIndex(groupHolder.index(0, 0));
-        QSignalSpy updateSpy(dataStore->groupStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
-
-        enterText(groupHolder.view, "new group name");
-        QTest::keyClick(groupHolder.view, Qt::Key_S, Qt::ControlModifier);
-        QVERIFY(updateSpy.wait());
-
-        QCOMPARE(holder.data(0, holder.model()->refColumn, holder.index(INITIAL_TRANSACTION_COUNT, 0)), "new group name");
-        QCOMPARE(modelSpy.size(), 1);
-        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->refColumn);
-        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->refColumn);
+        testRenameTxReference<GroupWindowHolder>(accountId, 0, 0, dataStore->groupStore, txCellIndex);
     }
 
     void cleanup() {

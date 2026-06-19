@@ -2,6 +2,7 @@
 #include "service/database/dbdialect.h"
 #include "service/database/transactiongroupdao.h"
 #include "service/database/transactiondetaildao.h"
+#include "qtcommon.h"
 #include <QFile>
 #include <QSqlError>
 #include <QSqlResult>
@@ -75,9 +76,7 @@ DbTestCase::DbTestCase()
     , mysqlDaos{MYSQL_DRIVER}
     , sqliteDaos{SQLITE_DRIVER}
 {
-    QMetaType::registerConverter<QDecNumber, QString>(
-        [](const QDecNumber &value) -> QString { return QString(value.toString()); }
-    );
+    qtcommon::registerConverters();
 
     addConnection(SQLITE_DRIVER, {SQLITE_DRIVER, "", 0, "test.db", "", ""});
     auto psqlConnection = qgetenv("TEST_PSQL_CONNECTION");
@@ -221,13 +220,12 @@ QVariant DbTestCase::addPayee(const QString &driver, const QString &name) {
     return payee.id;
 }
 
-QVariant DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
-    auto conn = Connection(connectionPool(driver));
-    Security security{};
-    security.name = name;
-    security.type = type;
-    securityDao(driver).add(conn.db, QList{&security}, TEST_USER);
-    return security.id;
+Security* DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
+    Security* security = new Security();
+    security->name = name;
+    security->securityType = type;
+    save<Security, SecurityDao, &DbTestCase::securityDao>(this, driver, security, securities);
+    return security;
 }
 
 QVariant DbTestCase::addCategory(const QString &driver, const QString &name) {
@@ -250,12 +248,17 @@ const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {
     return load<Account, AccountDao, &DbTestCase::accountDao>(this, driver, id, accounts);
 }
 
+const Security *DbTestCase::loadSecurity(const QString &driver, QVariant id) {
+    return load<Security, SecurityDao, &DbTestCase::securityDao>(this, driver, id, securities);
+}
+
 #define freeObjects(list) \
     for (auto item : std::as_const(list)) delete item; \
     list.clear();
 
 void DbTestCase::cleanup() {
     freeObjects(accounts)
+    freeObjects(securities)
     freeObjects(transactions)
     freeObjects(details)
 }

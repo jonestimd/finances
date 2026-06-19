@@ -16,6 +16,7 @@ public:
 
     virtual QList<const Security*> add(QSqlDatabase &db, QList<Security*> securities, const QString &user) override;
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;
+    virtual QList<const Security*> update(QSqlDatabase &db, const QList<Security*> securities, const QString &user) override;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Security *security) override;

@@ -22,7 +22,7 @@ bool AbstractColumnAdapter::isEqual(const QVariant &value1, const QVariant &valu
 
 const QString AbstractColumnAdapter::isValid(const QModelIndex &index) const {
     if (validatorFactory) {
-        QString val = index.data(Qt::EditRole).toString();
+        auto val = index.data(Qt::EditRole).toString();
         return validatorFactory->isValid(index, val);
     }
     return nullptr;

@@ -42,8 +42,8 @@ private slots:
             auto &dao = dbTestCase.securityDao(driver);
             auto accountId = dbTestCase.addAccount(driver, "account 1", AccountType::bank.code)->id;
             auto accountId2 = dbTestCase.addAccount(driver, "account 2", AccountType::bank.code)->id;
-            auto securityId = dbTestCase.addSecurity(driver, "security 1");
-            auto securityId2 = dbTestCase.addSecurity(driver, "security 2");
+            auto securityId = dbTestCase.addSecurity(driver, "security 1")->id;
+            auto securityId2 = dbTestCase.addSecurity(driver, "security 2")->id;
             auto service = new SecurityService{dbTestCase.connectionPool(driver), dao, dbTestCase.stockSplitDao(driver)};
             QTest::newRow(driver.toLocal8Bit()) << driver << service << payeeId << accountId << accountId2 << securityId << securityId2;
         }
@@ -102,6 +102,20 @@ private slots:
         auto split = result.values().constFirst();
         QVERIFY(split->sharesIn.canConvert<QDecNumber>());
         QVERIFY(split->sharesOut.canConvert<QDecNumber>());
+    }
+
+    void update_savesData() {
+        QFETCH_GLOBAL(QString, driver);
+        dbTestCase.resetDatabase(driver);
+        QFETCH_GLOBAL(SecurityService*, service);
+        auto security = dbTestCase.addSecurity(driver, "security x");
+        security->name = "security xyz";
+        BulkUpdate<Security> changes{{security}, {}, {}};
+
+        auto result = service->update(changes, TEST_USER);
+
+        auto updated = dbTestCase.loadSecurity(driver, security->id);
+        QCOMPARE(updated->name, security->name);
     }
 };
 

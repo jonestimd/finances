@@ -64,6 +64,13 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Te
 
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)
 
+add_library(qtcommon OBJECT
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/qtcommon.cpp ${CMAKE_CURRENT_LIST_DIR}/cxx/qtcommon.h
+)
+target_include_directories(qtcommon PRIVATE
+    $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
+)
+
 set(PROJECT_RESOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qrc
     ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.svg
@@ -113,6 +120,7 @@ target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Concurrent
     ${QT_SQLITE_OBJ_FILE}
+    $<TARGET_OBJECTS:qtcommon>
     # comment out next 2 lines for initial build with Ninja
     libqdecimal
     libdecnumber

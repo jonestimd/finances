@@ -16,6 +16,7 @@ target_link_libraries(dbtestcase
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
     ${QT_SQLITE_OBJ_FILE}
+    $<TARGET_OBJECTS:qtcommon>
 )
 
 target_include_directories(dbtestcase PRIVATE

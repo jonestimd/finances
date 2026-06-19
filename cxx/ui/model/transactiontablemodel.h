@@ -100,6 +100,7 @@ private slots:
     void accountLoaded(qlonglong accountId);
     void accountUpdated(qlonglong accountId);
     void payeesUpdated();
+    void securitiesUpdated();
     void groupsUpdated();
     void transactionsSaved(const QList<const PendingTransaction*>& transactions);
     void transactionAdded(qlonglong accountId, int index);

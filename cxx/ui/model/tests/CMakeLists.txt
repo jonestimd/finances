@@ -15,6 +15,8 @@ set_target_properties(test_comboboxmodel PROPERTIES
 
 target_include_directories(test_comboboxmodel PRIVATE
     ${CMAKE_HOME_DIRECTORY}/cxx
+    ${QDECIMAL_SOURCE_DIR}/src
+    ${QDECIMAL_SOURCE_DIR}/decnumber
 )
 target_link_libraries(test_comboboxmodel PRIVATE
     Qt6::Core

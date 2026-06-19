@@ -119,14 +119,15 @@ static const auto sqliteCreateAccountSecuritySql = CREATE_ACCOUNT_SECURITY_QUERY
     "join security s on a.id = s.asset_id\n" \
     "left join summary sum on a.id = sum.security_id"
 
-static const auto updateSecuritySql = R"(
-update asset a
-join security s on a.id = s.asset_id
-set a.name = :name, a.symbol = :symbol, s.type = :securityType,
-    a.change_user = :user, a.change_date = current_timestamp, a.version = version + 1
-where a.id = :id and a.version = :version)";
+static const auto updateAssetSql = R"(
+update asset
+set name = :name, symbol = :symbol,
+    change_user = :user, change_date = current_timestamp, version = version + 1
+where id = :id and version = :version)";
 
-static const auto insertSecuritySql = R"(
+static const auto updateSecuritySql = "update security set type = :securityType where asset_id = :id";
+
+static const auto insertAssetSql = R"(
 insert into asset (type, name, symbol, scale, version, change_user, change_date)
 values (:type, :name, :symbol, :scale, 0, :user, current_timestamp))";
 
@@ -137,8 +138,8 @@ static const auto deleteSecuritySql = "delete from security where asset_id = :id
 #define DAO_QUERIES(idtype, sum) \
     .createTableSql = CREATE_ASSET_TABLE_QUERY(idtype),\
     .getAllSql = GET_ALL_QUERY(sum),\
-    .updateSql = updateSecuritySql,\
-    .insertSql = insertSecuritySql,\
+    .updateSql = updateAssetSql,\
+    .insertSql = insertAssetSql,\
     .deleteSql = deleteSecuritySql,
 
 static const DaoQueries pgQueries{
@@ -190,10 +191,20 @@ void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securiti
     }
 }
 
+QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Security*> securities, const QString &user) {
+    auto updates = NamedEntityDao::update(db, securities, user);
+    QSqlQuery query(db);
+    query.prepare(updateSecuritySql);
+    for (auto security : securities) {
+        query.bindValue(":id", security->id);
+        query.bindValue(":securityType", security->securityType);
+    }
+    return updates;
+}
+
 void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {
     NamedEntityDao::bindUpdateValues(query, security);
     query.bindValue(":symbol", security->symbol);
-    query.bindValue(":securityType", security->securityType);
 }
 
  void SecurityDao::bindInsertValues(QSqlQuery &query, Security *security) {

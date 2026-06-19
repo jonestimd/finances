@@ -32,7 +32,7 @@ public:
             if (enumValue) return enumValue->name;
         } else if (role == Qt::EditRole) {
             if (current.isValid()) return current;
-            const EnumValue *enumValue = values->value(value .toString(), nullptr);
+            const EnumValue *enumValue = values->value(value.toString(), nullptr);
             if (enumValue) return QVariant::fromValue(enumValue);
         } else if (role == finances::OptionsRole) {
             QHash<QString, const EnumValue*> options;
