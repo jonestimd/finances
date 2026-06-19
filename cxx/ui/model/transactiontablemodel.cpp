@@ -131,6 +131,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     connect(store, SIGNAL(transactionAdded(qlonglong,int)), this, SLOT(transactionAdded(qlonglong,int)), Qt::DirectConnection);
     connect(store, SIGNAL(transactionRemoved(qlonglong,int)), this, SLOT(transactionRemoved(qlonglong,int)), Qt::DirectConnection);
     connect(store, SIGNAL(transactionUpdated(qlonglong,int,int)), this, SLOT(transactionUpdated(qlonglong,int,int)), Qt::DirectConnection);
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsUpdated()));
     connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(payeesUpdated()));
     connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(securitiesUpdated()));
     connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
@@ -464,6 +465,11 @@ void TransactionTableModel::payeesUpdated() {
 void TransactionTableModel::securitiesUpdated() {
     auto rows = rowCount();
     if (rows > 0) emit dataChanged(index(0, securityColumn), index(rows-1, securityColumn));
+}
+
+void TransactionTableModel::accountsUpdated() {
+    auto rows = rowCount();
+    if (rows > 0) emit dataChanged(index(0, payeeColumn), index(rows-1, payeeColumn));
 }
 
 void TransactionTableModel::groupsUpdated() {

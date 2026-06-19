@@ -67,6 +67,7 @@ struct WindowHolder {
 };
 
 typedef WindowHolder<TransactionsWindow, TransactionTableModel, TreeView> TxWindowHolder;
+typedef WindowHolder<AccountsWindow, AccountTableModel, QTableView> AccountWindowHolder;
 typedef WindowHolder<PayeesWindow, PayeeTableModel, QTableView> PayeeWindowHolder;
 typedef WindowHolder<CategoriesWindow, CategoryTableModel, TreeView> CategoryWindowHolder;
 typedef WindowHolder<GroupsWindow, GroupTableModel, QTableView> GroupWindowHolder;
@@ -177,11 +178,10 @@ private:
     }
 
     template<class Holder>
-    void testRenameTxReference(const QVariant accountId, int refRow, int refNameColumn, const QObject* refStore, QModelIndex txCellIndex(const TransactionTableModel*)) {
+    void testRenameTxReference(const QVariant accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
         TxWindowHolder holder(openWindow(accountId));
         QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
         QVERIFY(modelSpy.isValid());
-        Holder refHolder(new Holder::windowType(dataStore));
         refHolder.showWindow();
         refHolder.view->setCurrentIndex(refHolder.index(refRow, refNameColumn));
         QSignalSpy updateSpy(refStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
@@ -191,11 +191,9 @@ private:
         QTest::keyClick(refHolder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(updateSpy.wait());
 
-        auto index = txCellIndex(holder.model());
-        QCOMPARE(index.data(), "new ref name");
         QCOMPARE(modelSpy.size(), 1);
-        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), index.column());
-        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), index.column());
+        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
+        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
     }
 
     template<class Holder, class Store>
@@ -355,15 +353,15 @@ private slots:
     }
 
     void renamePayee_updatesTransactions() {
-        auto txCellIndex = [](const TransactionTableModel* model) { return model->index(0, model->payeeColumn); };
-        testRenameTxReference<PayeeWindowHolder>(accountId, 0, 0, dataStore->payeeStore, txCellIndex);
+        PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
+        testRenameTxReference(accountId, payeeHolder, 0, 0, dataStore->payeeStore, &TransactionTableModel::payeeColumn);
     }
 
     void renameSecurity_updatesTransactions() {
-        auto txCellIndex = [](const TransactionTableModel* model) { return model->index(0, model->securityColumn); };
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
         dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, QVariant{}, securityId), {"123.45"});
-        testRenameTxReference<SecurityWindowHolder>(securityAccountId, 0, 0, dataStore->securityStore, txCellIndex);
+        SecurityWindowHolder securityHolder(new SecuritiesWindow(dataStore));
+        testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }
 
     void mergeCategories_updatesTransactionDetails() {
@@ -380,15 +378,19 @@ private slots:
         QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->version, detail->version.toLongLong()+1);
     }
 
+    void renameAccount_updatesTransactionDetails() {
+        auto txDetails = dbTestCase.saveTransfer(driver, accountId, altAccountId, {"65.78"});
+        AccountWindowHolder accountHolder(new AccountsWindow(uiContext));
+        testRenameTxReference(accountId, accountHolder, 1, 2, dataStore->accountStore, &TransactionTableModel::payeeColumn);
+    }
+
     void renameGroup_updatesTransactionDetails() {
-        auto txCellIndex = [](const TransactionTableModel* model) {
-            return model->index(0, model->refColumn, model->index(INITIAL_TRANSACTION_COUNT, 0));
-        };
         auto groupId = dbTestCase.addGroup(driver, "group 1");
         auto tx = factory::transaction(accountId);
         auto detail = factory::detail("65.78", categoryId, groupId);
         dbTestCase.saveTransaction(driver, tx, {detail});
-        testRenameTxReference<GroupWindowHolder>(accountId, 0, 0, dataStore->groupStore, txCellIndex);
+        GroupWindowHolder groupHolder(new GroupsWindow(dataStore));
+        testRenameTxReference(accountId, groupHolder, 0, 0, dataStore->groupStore, &TransactionTableModel::refColumn);
     }
 
     void cleanup() {
