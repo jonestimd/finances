@@ -393,6 +393,33 @@ private slots:
         testRenameTxReference(accountId, groupHolder, 0, 0, dataStore->groupStore, &TransactionTableModel::refColumn);
     }
 
+    void renameCompany_updatesTransactionDetails() {
+        TxWindowHolder holder(openWindow(accountId));
+        QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
+        QVERIFY(modelSpy.isValid());
+        AccountWindowHolder accountHolder(new AccountsWindow(uiContext));
+        accountHolder.showWindow();
+        accountHolder.view->setCurrentIndex(accountHolder.index(1, 0));
+        QSignalSpy saveSpy(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QVERIFY(saveSpy.isValid());
+
+        QTimer::singleShot(0, accountHolder.window, [&]() {
+            auto dialog = windowtest::findWindow<CompaniesWindow>();
+            if (dialog) {
+                QVERIFY(QTest::qWaitForWindowFocused(dialog));
+                auto table = dialog->findChild<QTableView *>();
+                enterText(table, "new company name");
+                QTest::keyClick(table, Qt::Key_S, Qt::ControlModifier);
+            } else QFAIL("no company dialog");
+        });
+        QTest::keyClick(accountHolder.view, Qt::Key_C, Qt::AltModifier);
+        QVERIFY(saveSpy.wait());
+
+        QCOMPARE(modelSpy.size(), 1);
+        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->payeeColumn);
+        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->payeeColumn);
+    }
+
     void cleanup() {
         delete accountUpdatedSpy;
         accountUpdatedSpy = nullptr;
