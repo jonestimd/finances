@@ -5,11 +5,9 @@
 #include "../model/payee.h"
 #include <QtSql/QSqlDatabase>
 
-class PayeeDao : public EntityDao<Payee> {
+class PayeeDao : public NamedEntityDao<Payee> {
 public:
-    PayeeDao();
+    PayeeDao(const QString &dbType);
 };
-
-static PayeeDao payeeDao;
 
 #endif // PAYEE_DAO_H

@@ -8,12 +8,13 @@
 #include <QStyleHints>
 #include <QThreadPool>
 #include <QTranslator>
-#include <QtSql/QSqlDatabase>
+#include <QSqlDatabase>
+#include <QProxyStyle>
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
-    file.open(QFile::ReadOnly);
-    return QString(file.readAll());
+    if (file.open(QFile::ReadOnly)) return QString(file.readAll());
+    return "";
 }
 
 namespace finances {
@@ -39,25 +40,26 @@ namespace finances {
 
     class MaterialIconEngine : public QIconEngine {
         const FontIcon icon;
+        const QColor color;
     public:
-        MaterialIconEngine(FontIcon icon) : icon{icon} {}
+        MaterialIconEngine(FontIcon icon, QColor color) : icon{icon}, color{color} {}
 
     public:
         void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override {
             QFont font = iconFont->font();
             font.setPixelSize(qRound(rect.height() * 0.8));
             auto colorGroup = mode == QIcon::Mode::Disabled ? QPalette::Disabled : QPalette::Normal;
-            QColor textColor = QApplication::palette("QWidget").color(colorGroup, QPalette::ButtonText);;
+            QColor textColor = color.isValid() ? color : QApplication::palette("QWidget").color(colorGroup, QPalette::Text);
 
             painter->save();
             painter->setPen(textColor);
             painter->setFont(font);
-            painter->drawText(rect, Qt::AlignCenter, QChar{icon});
+            painter->drawText(rect, Qt::AlignCenter, QChar{uint(icon)});
             painter->restore();
         }
 
         QIconEngine *clone() const override {
-            return new MaterialIconEngine(icon);
+            return new MaterialIconEngine(icon, color);
         }
 
         QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override {
@@ -70,48 +72,56 @@ namespace finances {
         }
     };
 
-    QIcon qIcon(FontIcon icon) {
-        return QIcon(new MaterialIconEngine(icon)); // TODO memory leak?
+    QIcon materialIcon(FontIcon icon, QColor color) {
+        return QIcon(new MaterialIconEngine(icon, color));
     }
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
         auto label = new QLabel(parent);
         label->setFont(iconFont->font(label->font().pointSize() * 2));
-        label->setText(QChar{icon});
+        label->setText(QChar{uint(icon)});
         return label;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, QObject *parent) {
-        auto action = new QAction(parent);
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip) {
         action->setText(text);
-        action->setToolTip(text);
-        action->setIcon(qIcon(icon));
+        action->setToolTip(tooltip);
+        action->setIcon(materialIcon(icon));
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence shortcut, QObject *parent) {
+    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
         QString tooltip(text);
+        tooltip.remove('&');
         if (!shortcut.isEmpty()) tooltip.append(" (").append(shortcut.toString()).append(")");
-        auto action = iconAction(icon, tooltip, parent);
+        initAction(action, icon, text, tooltip);
         action->setShortcut(shortcut);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QString shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString &text, QObject *parent) {
+        return initAction(new QAction(parent), icon, text, text);
+    }
+
+    QAction *iconAction(FontIcon icon, const QString &text, const QKeySequence &shortcut, QObject *parent) {
+        return initAction(new QAction(parent), icon, text, shortcut);
+    }
+
+    QAction *iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString text, const QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         if (receiver && slot) QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(const char *iconFile, const QString text, QObject *parent) {
+    QAction *iconAction(const char *iconFile, const QString &text, QObject *parent) {
         auto action = new QAction(parent);
         action->setText(text);
         action->setToolTip(text);
@@ -119,12 +129,120 @@ namespace finances {
         return action;
     }
 
+    QAction *iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot) {
+        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
+        action->setCheckable(true);
+        if (receiver && slot) QObject::connect(action, SIGNAL(toggled(bool)), receiver, slot);
+        return action;
+    }
+
+    class InvokableAction : public QAction {
+    public:
+        InvokableAction(QWidget *window, const char *invokable, finances::FontIcon icon, const QString &text,
+                        const QKeySequence &shortcut, bool enabled = true)
+            : QAction{window}
+        {
+            initAction(this, icon, text, shortcut);
+            setEnabled(enabled);
+            connect(this, &QAction::triggered, window, [=]() {
+                QMetaObject::invokeMethod(window, invokable);
+            });
+        }
+    };
+
+    QAction *saveAction(QWidget *window, const char *invokable) {
+        return new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+    }
+
+    QAction *reloadAction(QWidget *window, const char *invokable) {
+        return new InvokableAction(window, invokable, Refresh, QObject::tr("Reload"), QKeySequence::Refresh);
+    }
+
+    void setColumnResize(QHeaderView *viewHeader) {
+        if (viewHeader->count() > 2) viewHeader->setStretchLastSection(true);
+        else {
+            viewHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
+            viewHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+        }
+    }
+
+    class AppStyle : public QProxyStyle {
+    public:
+        void drawControl(ControlElement element, const QStyleOption *opt, QPainter *p, const QWidget *w) const override {
+            if (element == CE_Header) qDebug("header");
+            else if (element == CE_HeaderSection) {
+                auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
+                if (headerOpt->text.contains('\n')) {
+                    auto lines = headerOpt->text.split('\n');
+                    QStyleOptionHeader option(*headerOpt);
+                    option.state.setFlag(State_Horizontal, false);
+                    auto height = opt->rect.height() / lines.length();
+                    option.rect.setHeight(height);
+                    p->save();
+                    for (const auto &line : std::as_const(lines)) {
+                        option.text = line;
+                        QProxyStyle::drawControl(element, &option, p, w);
+                        option.rect.adjust(0, height, 0, height);
+                    }
+                    p->restore();
+                    return;
+                }
+            } else if (element == CE_HeaderLabel) {
+                auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
+                if (headerOpt->text.contains('\n')) {
+                    auto lines = headerOpt->text.split('\n');
+                    QStyleOptionHeader option(*headerOpt);
+                    auto height = opt->rect.height()/lines.length() + opt->rect.top();
+                    option.rect.setBottom(height - option.rect.top() - 1);
+                    p->save();
+                    for (const auto &line : std::as_const(lines)) {
+                        option.text = line;
+                        QProxyStyle::drawControl(element, &option, p, w);
+                        option.rect.adjust(0, height, 0, height);
+                    }
+                    p->restore();
+                    return;
+                }
+            }
+            QProxyStyle::drawControl(element, opt, p, w);
+        }
+
+        QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *w) const override {
+            if (ct == CT_HeaderSection) {
+                auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
+                auto lines = headerOpt->text.split('\n');
+                if (lines.length() > 1) {
+                    QStyleOptionHeader option(*headerOpt);
+                    option.text = lines.first();
+                    auto size = QProxyStyle::sizeFromContents(ct, &option, contentsSize, w);
+                    return QSize(size.width(), size.height()*lines.length());
+                }
+            }
+            return QProxyStyle::sizeFromContents(ct, opt, contentsSize, w);
+        }
+
+        void drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPainter *p, const QWidget *w) const override {
+            if (pe == PE_IndicatorHeaderArrow) {
+                auto headerOpt = static_cast<const QStyleOptionHeader*>(opt);
+                auto lines = headerOpt->text.count('\n')+1;
+                if (lines > 1) {
+                    QStyleOptionHeader option(*headerOpt);
+                    auto height = opt->rect.height()/(lines) + opt->rect.top();
+                    option.rect.setBottom(height);
+                    QProxyStyle::drawPrimitive(pe, &option, p, w);
+                    return;
+                }
+            }
+            QProxyStyle::drawPrimitive(pe, opt, p, w);
+        }
+    };
+
     App::App(int &argc, char **argv)
-        : QApplication(argc, argv),
-        userStyleSheet{""},
-        settings{new QSettings(QSettings::IniFormat, QSettings::UserScope, "finances", "finances", this)}
+        : QApplication(argc, argv)
+        , userStyleSheet{""}
     {
-        setWindowIcon(QIcon(":/images/finances.svg"));
+        setStyle(new AppStyle()); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        setWindowIcon(QIcon(":/images/finances.svg")); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         auto styleFile = styleSheet();
         if (!styleFile.isEmpty()) userStyleSheet = readStyles(styleFile.replace(0, 8, ""));
         updateStyleSheet(styleHints()->colorScheme());
@@ -148,12 +266,5 @@ namespace finances {
             auto styles = readStyles(":/styles/minimal-light.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
-    }
-
-    QAction *iconToggle(FontIcon icon, QString text, QString shortcut, QObject *receiver, const char *slot) {
-        auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
-        action->setCheckable(true);
-        if (receiver && slot) QObject::connect(action, SIGNAL(toggled(bool)), receiver, slot);
-        return action;
     }
 }

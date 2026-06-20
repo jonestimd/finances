@@ -1,21 +1,37 @@
 #include "accountdao.h"
 #include "mapping.h"
+#include "dbdialect.h"
 
-#include <QtSql>
+#define CREATE_TABLE_QUERY(idtype) \
+    "create table account (\n" \
+    "    id " idtype ",\n" \
+    "    company_id bigint,\n" \
+    "    currency_id bigint not null,\n" \
+    "    type varchar(25) not null,\n" \
+    "    name varchar(100) not null,\n" \
+    "    description text,\n" \
+    "    account_no varchar(25),\n" \
+    "    closed character(1) not null,\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    constraint account_ak unique (name, company_id),\n" \
+    "    constraint account_company_fk foreign key (company_id) references company (id),\n" \
+    "    constraint account_currency_fk foreign key (currency_id) references asset (id)\n" \
+    ")"
 
-static const auto getAccountsSql = R"(
-with balance as (
-  select tx.account_id, sum(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions
-  from tx
-  join tx_detail td on tx.id = td.tx_id
-  left join tx_category tc on td.tx_category_id = tc.id
-  group by tx.account_id
-)
-select a.*, coalesce(b.transactions, 0) transactions, b.*, cur.symbol currency
-from account a
-join asset cur on a.currency_id = cur.id
-left join balance b on a.id = b.account_id
-order by a.name)";
+#define GET_ALL_QUERY(sum) \
+    "with balance as (\n" \
+    "  select tx.account_id, " sum "(case when tc.amount_type = 'ASSET_VALUE' then 0 else td.amount end) balance, count(distinct tx.id) transactions\n" \
+    "  from tx\n" \
+    "  join tx_detail td on tx.id = td.tx_id\n" \
+    "  left join tx_category tc on td.tx_category_id = tc.id\n" \
+    "  group by tx.account_id\n" \
+    ")\n" \
+    "select a.*, coalesce(b.transactions, 0) transactions, b.*, cur.symbol currency\n" \
+    "from account a\n" \
+    "join asset cur on a.currency_id = cur.id\n" \
+    "left join balance b on a.id = b.account_id"
 
 static const auto updateAccountSql = R"(
 update account
@@ -32,24 +48,42 @@ where c.type = 'Currency' and c.symbol = '$')";
 
 static const auto deleteAccountSql = "delete from account where id = :id";
 
-AccountDao::AccountDao()
-    : EntityDao<Account>{getAccountsSql, updateAccountSql, insertAccountSql, deleteAccountSql, "AccountDao",
-                         QObject::tr("Accounts have been modified.  Please reload and try again.")} {}
+#define DAO_QUERIES(idtype, sum) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = GET_ALL_QUERY(sum),\
+    .updateSql = updateAccountSql,\
+    .insertSql = insertAccountSql,\
+    .deleteSql = deleteAccountSql,
+
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE, DEFAULT_SUM)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE, DEFAULT_SUM)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE, SQLITE_SUM)
+};
+
+AccountDao::AccountDao(const QString &dbType)
+    : NamedEntityDao<Account>{DB_TYPE_QUERY(dbType, Queries), "AccountDao",
+                              QObject::tr("Accounts have been modified.  Please reload and try again."), "a.id"}
+{}
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
-    EntityDao::bindUpdateValues(query, account);
-    query.bindValue(":companyId", account->companyId);
-    query.bindValue(":description", account->description);
-    query.bindValue(":type", account->type);
-    query.bindValue(":accountNo", account->accountNumber);
-    query.bindValue(":closed", mapping::toYesNo(account->closed));
+    NamedEntityDao::bindUpdateValues(query, account);
+    SQL_BIND_VALUE(query, ":companyId", account->companyId);
+    SQL_BIND_VALUE(query, ":description", account->description);
+    SQL_BIND_VALUE(query, ":type", account->type);
+    SQL_BIND_VALUE(query, ":accountNo", account->accountNumber);
+    SQL_BIND_VALUE(query, ":closed", mapping::toYesNo(account->closed));
 }
 
 void AccountDao::bindInsertValues(QSqlQuery &query, Account *account) {
-    EntityDao::bindInsertValues(query, account);
-    query.bindValue(":companyId", account->companyId);
-    query.bindValue(":description", account->description);
-    query.bindValue(":type", account->type);
-    query.bindValue(":accountNo", account->accountNumber);
-    query.bindValue(":closed", mapping::toYesNo(account->closed));
+    NamedEntityDao::bindInsertValues(query, account);
+    SQL_BIND_VALUE(query, ":companyId", account->companyId);
+    SQL_BIND_VALUE(query, ":description", account->description);
+    SQL_BIND_VALUE(query, ":type", account->type);
+    SQL_BIND_VALUE(query, ":accountNo", account->accountNumber);
+    SQL_BIND_VALUE(query, ":closed", mapping::toYesNo(account->closed));
 }

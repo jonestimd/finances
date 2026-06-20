@@ -2,12 +2,30 @@
 #define SETTINGS_H
 
 #include "entityview.h"
+#include "service/database/connectionpool.h"
 #include <QWidget>
 
 namespace settings {
+    void saveSort(QSettings *settings, const QString &group, QAbstractItemModel* model, QHeaderView *viewHeader);
+
+    void saveSizes(QSettings *settings, const QString &group, QAbstractItemModel* model, QHeaderView *viewHeader);
+
+    void saveWindowState(const QString &group, QWidget *widget, QAbstractItemModel* model = nullptr, QHeaderView *viewHeader = nullptr);
+
     void saveWindowState(const char *group, QWidget *widget, EntityView *tableSort = nullptr);
 
-    void restoreWindowState(QString group, QWidget *widget, QSize defaultSize, EntityView *entityView= nullptr);
+    void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, QAbstractItemModel *model, QHeaderView *viewHeader);
+
+    void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, EntityView *entityView= nullptr);
+
+    void saveValue(const char *name, const QVariant &value);
+    QVariant getValue(const char *name, const QVariant &defaultValue = {});
+
+    ConnectionSettings connectionSettings(const QString &name = "default");
+
+    QVariant lastViewedAccount(const QString &connectionName = "default");
+
+    void setLastViewedAccount(const QVariant &id, const QString &connectionName = "default");
 }
 
 #endif // SETTINGS_H

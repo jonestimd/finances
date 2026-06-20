@@ -2,13 +2,13 @@
 #include "database/accountdao.h"
 #include "database/companydao.h"
 
-AccountService::AccountService(ConnectionPool *connectionPool) : EntityService(connectionPool, accountDao) {}
+AccountService::AccountService(ConnectionPool *connectionPool, AccountDao &accountDao, CompanyDao &companyDao)
+    : EntityService(connectionPool, accountDao)
+    , companyDao{companyDao} {}
 
-QList<const Account *> AccountService::update(BulkUpdate<Account> &changes, const QString &user, QList<const Company*> *companies) {
+QList<const Account*> AccountService::update(BulkUpdate<Account> &changes, const QString &user, QHash<qlonglong, const Company*> &companies) {
     auto result = EntityService::update(changes, user);
-    if (companies) {
-        auto conn = Connection(connectionPool);
-        *companies = companyDao.getAll(conn.db);
-    }
+    auto conn = Connection(connectionPool);
+    companies = companyDao.getAll(conn.db);
     return result;
 };

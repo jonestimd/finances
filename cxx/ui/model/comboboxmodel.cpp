@@ -1,4 +1,5 @@
 #include "comboboxmodel.h"
+#include "ui/finances.h"
 
 #include <QMessageBox>
 
@@ -6,19 +7,12 @@ ComboBoxModel::ComboBoxModel(const QList<const NamedEntity*> values, GetName get
     : validator(this), getName{getName}, createValue{createValue}
 {
     options.append(values);
-    auto less = [getName](const NamedEntity *v1, const NamedEntity *v2) {
-        auto name1 = getName(v1), name2 = getName(v2);
+    auto less = [this](const NamedEntity *v1, const NamedEntity *v2) {
+        auto name1 = this->getName(v1), name2 = this->getName(v2);
         auto lname1 = name1.toLower(), lname2 = name2.toLower();
         return lname1 == lname2 ? name1 < name2 : lname1 < lname2;
     };
-    std::sort(options.begin(), options.end(), less);
-}
-
-const NamedEntity *ComboBoxModel::valueOf(const QString &name) const {
-    for (auto option : options) {
-        if (getName(option) == name) return option;
-    }
-    return nullptr;
+    std::stable_sort(options.begin(), options.end(), less);
 }
 
 void ComboBoxModel::addOption(const QString &name) {
@@ -26,19 +20,13 @@ void ComboBoxModel::addOption(const QString &name) {
 }
 
 int ComboBoxModel::rowCount(const QModelIndex &parent) const {
-    if (parent.isValid()) return 0;
-    return options.length();
-}
-
-int ComboBoxModel::columnCount(const QModelIndex &parent) const {
-    return 2;
+    return parent.isValid() ? 0 : options.length();
 }
 
 QVariant ComboBoxModel::data(const QModelIndex &index, int role) const {
-    if (role == Qt::DisplayRole) {
-        if (index.column() == 0) return options.at(index.row())->id;
-        if (index.column() == 1) return getName(options.at(index.row()));
-    }
+    if (role == Qt::DisplayRole) return getName(options.at(index.row()));
+    if (role == finances::EntityIdRole) return options.at(index.row())->id;
+    if (role == finances::EntityPtrRole) return QVariant::fromValue(options.at(index.row()));
     return QVariant{};
 }
 
@@ -55,7 +43,7 @@ QValidator::State ComboBoxModel::Validator::validate(QString &input, int &pos) c
 void ComboBoxModel::Validator::fixup(QString &input) const {
     for (auto option : model->options) {
         auto name = model->getName(option);
-        if (name.toLower().contains(input.toLower())) {
+        if (name.contains(input, Qt::CaseInsensitive)) {
             input = name;
             return;
         }

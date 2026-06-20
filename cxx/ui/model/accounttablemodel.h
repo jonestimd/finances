@@ -12,7 +12,7 @@ class AccountTableModel : public PodTableModel<Account, AccountService> {
     using AddCompany = ComboBoxModel::CreateValue;
 
 public:
-    explicit AccountTableModel(AccountStore *store, QObject *parent, AddCompany addCompany = nullptr);
+    explicit AccountTableModel(AccountStore *store, AddCompany addCompany = nullptr);
 
     void companiesLoaded(const QList<qlonglong> companyIds);
 };

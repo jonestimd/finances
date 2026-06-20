@@ -2,10 +2,12 @@
 #include "trimmed.h"
 #include <QModelIndex>
 
-RequiredValidatorFactory::RequiredValidatorFactory() {}
+RequiredValidatorFactory::RequiredValidatorFactory()
+    : ValidatorFactory{false, true}
+{}
 
 const QString RequiredValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     auto message = trimmedValidatorFactory->isValid(index, value);
     if (!message.isEmpty()) return message;
-    return value.isEmpty() ? formatMessage(tr("%1 is required"), index): nullptr;
+    return value.isEmpty() ? tr("%1 is required").arg(columnHeader(index)) : nullptr;
 }

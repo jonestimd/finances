@@ -1,7 +1,10 @@
 #include "categoryservice.h"
 #include "service/database/transactiondetaildao.h"
 
-CategoryService::CategoryService(ConnectionPool *connectionPool) : EntityService(connectionPool, categoryDao) {}
+CategoryService::CategoryService(ConnectionPool *connectionPool, CategoryDao &dao, TransactionDetailDao &detailDao)
+    : EntityService(connectionPool, dao)
+    , detailDao{detailDao}
+{}
 
 QList<const Category *> CategoryService::update(BulkUpdate<Category> &changes, const QString &user) {
     auto result = EntityService<Category, CategoryDao>::update(changes, user);
@@ -16,21 +19,21 @@ QList<const Category *> CategoryService::update(BulkUpdate<Category> &changes, c
         }
         if (!parentIds.isEmpty()) {
             auto conn = Connection(connectionPool);
-            result += dao.get(conn.db, parentIds);
+            result += dao.get(conn.db, parentIds).values();
         }
     }
     return result;
 }
 
-QList<const Category*> CategoryService::setParent(const Category *category, const QVariant parentId, const QString &user) {
-    return doInTransaction([=, this](QSqlDatabase &db) {
+QHash<qlonglong, const Category*> CategoryService::setParent(const Category *category, const QVariant parentId, const QString &user) {
+    return doInTransaction<QHash<qlonglong, const Category*>>([=, this](QSqlDatabase &db) {
         return dao.setParent(db, category, parentId, user);
     });
 }
 
-QList<const Category *> CategoryService::merge(const Category *category, const QVariant destinationId, const QString &user) {
-    return doInTransaction([=, this](QSqlDatabase &db) {
-        transactionDetailDao.replaceCategory(db, category, destinationId, user);
+QHash<qlonglong, const Category*> CategoryService::merge(const Category *category, const QVariant destinationId, const QString &user) {
+    return doInTransaction<QHash<qlonglong, const Category*>>([=, this](QSqlDatabase &db) {
+        detailDao.replaceCategory(db, category, destinationId, user);
         dao.moveChildren(db, category, destinationId, user);
         dao.remove(db, QList{category});
         QVariantList ids{destinationId};

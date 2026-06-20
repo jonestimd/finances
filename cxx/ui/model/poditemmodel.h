@@ -6,88 +6,52 @@
 #include "adapteritemmodel.h"
 #include "columnadapter.h"
 
-template<Copyable Row>
-class PodItemModel : public AdapterItemModel
-{
+#define ROOT_ROW_TYPE 0
+
+template<Copyable Row, Copyable PendingAdd = Row>
+class PodItemModel : public AdapterItemModel {
 protected:
     const QList<ColumnAdapter<Row>*> columns;
-    QHash<const QModelIndex, QVariant> changes; // TODO const values
-    QHash<QModelIndex, QString> errors; // TODO const keys/values
     /*!
      * \brief newRows map of parent index to added children
      */
-    QHash<const QModelIndex, QList<Row*>> newRows;
-    QList<const Row*> pendingDeletes;
+    QHash<const QModelIndex, QList<PendingAdd*>> newRows;
 
-    QList<Row*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
-        return newRows.value(parent, QList<Row*>());
+    const QList<PendingAdd*> pendingAdds(const QModelIndex &parent = QModelIndex()) const {
+        return newRows.value(parent, QList<PendingAdd*>());
     }
 
-    QVariant value_(const QModelIndex index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const {
-        return columns[index.column()]->value(getRow(index), index, current, role);
+    AbstractColumnAdapter *adapter(const QModelIndex &index) const override {
+        return columns.at(index.column());
     }
 
-    virtual int childCount(const QModelIndex &index) const = 0;
-
-    void rowsChanged(int from, int to, const QModelIndex &parent) {
-        emit dataChanged(index(from, 0, parent), index(to, columns.length()-1, parent), QList<int>{Qt::DisplayRole, finances::UnsavedRole});
+    QVariant value(const QModelIndex &index, int role = Qt::DisplayRole, QVariant current = QVariant{}) const override {
+        return columns.at(index.column())->value(getRow(index), index, current, role);
     }
 
-    void rowChanged(const QModelIndex &index) {
-        rowsChanged(index.row(), index.row(), index.parent());
-    }
+    /**
+     * @brief childCount Returns the count of *saved* children for the parent `index`.
+     */
+    virtual int childCount(const QModelIndex &parent) const = 0;
 
-    void setValue_(Row *row, int column, QVariant value) {
+    void setValue(Row *row, int column, QVariant value) {
         columns[column]->setValue(row, value);
     }
 
-    void removeStaleErrors() {
-        QList<QModelIndex> fixes;
-        for (auto [index, message] : errors.asKeyValueRange()) {
-            auto newMessage = columns[index.column()]->isValid(index);
-            if (newMessage.isNull()) fixes.append(index);
-        }
-        for (auto index : fixes) {
-            errors.remove(index);
-            emit dataChanged(index, index, QList<int>{finances::ValidationMessageRole});
-        }
+    void setValue(const QModelIndex &index, const QVariant &value) override {
+        auto rowIndex = index.row() - childCount(index.parent());
+        setValue(newRows[index.parent()].at(rowIndex), index.column(), value);
     }
 
-    void revalidateColumn(int column) {
-        auto changes = columns[column]->revalidate(errors, index(0, column));
-        for (auto index : changes) {
-            emit dataChanged(index, index, QList<int>{finances::ValidationMessageRole});
+    int columnIndex(const QString &title) const {
+        for (int i = 0; i < columns.length(); i++) {
+            if (columns[i]->title == title) return i;
         }
+        return -1;
     }
 
-    void revalidateRow(const QModelIndex &index) {
-        for (int c = 0; c < columns.length(); ++c) {
-            auto i = index.siblingAtColumn(c);
-            auto message = columns[c]->isValid(i);
-            if (message.isEmpty()) {
-                if (errors.remove(i)) {
-                    emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
-                    removeStaleErrors();
-                }
-            } else {
-                if (!errors.contains(i) || message != errors.value(i)) {
-                    errors.insert(i, message);
-                    emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
-                }
-                // uniqueness conflict may have moved to another row
-                revalidateColumn(c);
-            }
-        }
-    }
-
-    const QList<int> rowIndexes(const QModelIndex &index) const {
-        QList<int> indexes{index.row()};
-        auto parent = index.parent();
-        while (parent.isValid()) {
-            indexes.append(parent.row());
-            parent = parent.parent();
-        }
-        return indexes;
+    virtual PendingAdd *newRow() {
+        return new PendingAdd;
     }
 
 public:
@@ -105,19 +69,20 @@ public:
 
     virtual const Row *getRow(const QModelIndex &index) const = 0;
 
-    int queueAdd(const QModelIndex &parent) override {
+    bool isPendingAdd(const QModelIndex &index) const override {
+        return index.row() >= childCount(index.parent());
+    }
+
+    QModelIndex queueAdd(const QModelIndex &selectedIndex) override {
+        auto parent = selectedIndex.parent();
         auto rowIndex = rowCount(parent);
         beginInsertRows(parent, rowIndex, rowIndex);
-        Row *row = new Row;
-        if (!newRows.contains(parent)) newRows.insert(parent, QList<Row*>());
+        PendingAdd *row = newRow();
+        if (!newRows.contains(parent)) newRows.insert(parent, QList<PendingAdd*>());
         newRows[parent].append(row);
-        for (int colIndex = 0; colIndex < columns.length(); ++colIndex) {
-            auto i = index(rowIndex, colIndex, parent);
-            auto message = columns[colIndex]->isValid(i);
-            if (!message.isNull()) errors.insert(i, message);
-        }
+        validateRow(rowIndex, parent);
         endInsertRows();
-        return rowIndex;
+        return index(rowIndex, 0, parent);
     }
 
     bool enableDelete(const QModelIndex &index) const override {
@@ -125,85 +90,71 @@ public:
     }
 
     void queueDelete(const QModelIndex &index) override {
-        auto savedChildCount = childCount(index.parent());
-        if (newRows.contains(index.parent()) && index.row() >= savedChildCount) {
-            beginRemoveRows(index.parent(), index.row(), index.row());
-            delete newRows[index.parent()].takeAt(index.row() - savedChildCount);
-            if (newRows[index.parent()].isEmpty()) newRows.remove(index.parent());
-            QHash<QModelIndex, QString> updateErrors;
-            for (auto [key, value] : errors.asKeyValueRange()) {
-                if (key.parent() != index.parent() || key.row() < index.row()) updateErrors.insert(key, value);
-                else if (key.row() > index.row()) updateErrors.insert(key.siblingAtRow(key.row()-1), value);
-            }
-            errors.clear();
-            errors.insert(updateErrors);
+        auto parent = index.parent();
+        auto indexRow = index.row();
+        if (isPendingAdd(index)) {
+            beginRemoveRows(parent, indexRow, indexRow);
+            delete newRows[parent].takeAt(indexRow - childCount(parent));
+            if (newRows[parent].isEmpty()) newRows.remove(parent);
             endRemoveRows();
+            adjustErrorIndexes(indexRow, parent, -1);
             removeStaleErrors();
         }
-        else if (!pendingDeletes.contains(getRow(index))) {
-            pendingDeletes.append(getRow(index));
-            rowChanged(index);
-        }
+        else AdapterItemModel::queueDelete(index);
     }
 
-    void undoChange(const QModelIndex &index) override {
-        if (pendingDeletes.removeAll(getRow(index)) > 0) rowChanged(index);
-        else if (changes.contains(index)) {
-            changes.remove(index);
-            emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-            revalidateRow(index);
-        }
+    bool hasUnsavedChanges() const override {
+        return !newRows.isEmpty() || AdapterItemModel::hasUnsavedChanges();
     }
 
-    int columnIndex(const QString name) const override {
-        for (int col = 0; col < columns.length(); ++col) {
-            if (columns[col]->title == name) return col;
-        }
-        return -1;
-    }
-
-    virtual bool hasUnsavedChanges() const override {
-        return !changes.isEmpty() || !newRows.isEmpty() || !pendingDeletes.isEmpty();
-    }
-
-    virtual bool isValid() const override {
-        return errors.isEmpty();
-    }
-
-    const QList<Row*> unsavedAdds() const {
-        QList<Row*> rows;
-        for (const auto &children : newRows) {
-            for (auto row : children) {
-                rows.append(new Row(*row));
-            }
+    /**
+     * @return Returns copies of the new rows.
+     */
+    QList<const PendingAdd*> unsavedAdds(int rowIndex = -1) const {
+        QList<const PendingAdd*> rows;
+        int i = childCount(QModelIndex{});
+        for (const auto row : pendingAdds()) {
+            if (rowIndex < 0 || i == rowIndex) rows.append(row);
+            i++;
         }
         return rows;
     }
 
-    const QList<Row*> unsavedChanges() { // TODO override in category model to handle parent change
+    /**
+     * @brief rowType For a table with multiple row types, `rowType` indicates which row
+     * type is at `index`.
+     * @return an `int` indicating the row type (defaults to 0).
+     */
+    virtual int rowType(const QModelIndex &index) const {
+        return ROOT_ROW_TYPE;
+    }
+
+    virtual QList<Row*> unsavedChanges(int rowIndex = -1) {
         QHash<const QList<int>, Row*> changeRows;
-        for (auto i = changes.cbegin(), end = changes.cend(); i != end; ++i) {
-            if (pendingDeletes.contains(getRow(i.key()))) continue;
+        for (auto [index, value] : changes.asKeyValueRange()) {
+            if (isPendingDelete(index) || rowType(index) != ROOT_ROW_TYPE || rowIndex >= 0 && index.row() != rowIndex) continue;
             Row *updated;
-            auto indexes = rowIndexes(i.key());
+            auto indexes = rowIndexes(index);
             if (changeRows.contains(indexes)) updated = changeRows[indexes];
             else {
-                updated = new Row(*getRow(i.key()));
+                updated = new Row(*getRow(index));
                 changeRows[indexes] = updated;
             }
-            setValue_(updated, i.key().column(), i.value());
+            setValue(updated, index.column(), value);
         }
         return changeRows.values();
     }
 
-    const QList<const Row*> unsavedDeletes() const {
-        return pendingDeletes;
+    virtual QList<const Row*> unsavedDeletes(int rowIndex = -1) const {
+        QList<const Row*> deletes{};
+        for (auto i : pendingDeletes) {
+            if (rowType(i) == ROOT_ROW_TYPE && (rowIndex < 0 || i.row() == rowIndex)) deletes.append(getRow(i));
+        }
+        return deletes;
     }
 
-    virtual void clearChanges() override {
-        changes.clear(); // TODO emit changes
-        pendingDeletes.clear(); // TODO emit changes
-        errors.clear();
+    void clearChanges() override {
+        AdapterItemModel::clearChanges();
         if (!newRows.isEmpty()) {
             for (auto [key, rows] : newRows.asKeyValueRange()) {
                 auto count = childCount(key);
@@ -219,62 +170,10 @@ public:
         return columns.count();
     }
 
-    QVariant data(const QModelIndex &index, int role) const override {
-        switch (role) {
-        case Qt::DisplayRole:
-        case Qt::EditRole:
-            if (changes.contains(index)) return value_(index, role, changes.value(index));
-            break;
-        case finances::ValidationMessageRole:
-            if (errors.contains(index)) return errors[index];
-            break;
-        case finances::UnsavedRole:
-            if (pendingDeletes.contains(getRow(index))) return finances::Delete;
-            if (index.row() >= childCount(index.parent()) || changes.contains(index)) return finances::AddUpdate;
-        }
-        return value_(index, role);
-    }
-
     Qt::ItemFlags flags(const QModelIndex &index) const override {
         if (!index.isValid()) return Qt::NoItemFlags;
-        bool pendingDelete = pendingDeletes.contains(getRow(index));
+        bool pendingDelete = pendingDeletes.contains(index.siblingAtColumn(0));
         return AdapterItemModel::flags(index) | columns[index.column()]->flags(getRow(index), !pendingDelete);
-    }
-
-    bool setData(const QModelIndex &index, const QVariant &value, int role) override {
-        if (role == Qt::EditRole) {
-            errors.remove(index); // editor must have accepted the value
-            auto savedRows = childCount(index.parent());
-            if (index.row() >= savedRows) {
-                setValue_(newRows[index.parent()][index.row()-savedRows], index.column(), value);
-                emit dataChanged(index, index, QList<int>(Qt::DisplayRole));
-                revalidateRow(index);
-                return true;
-            }
-            auto column = columns[index.column()];
-            auto original = value_(index, Qt::EditRole);
-            if (column->isEqual(original, value)) {
-                if (changes.contains(index)) {
-                    changes.remove(index);
-                    emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-                    revalidateRow(index);
-                    return true;
-                }
-            } else if (!changes.contains(index) || !column->isEqual(value, changes[index])) {
-                changes.insert(index, value);
-                emit dataChanged(index, index, QList<int>(Qt::DisplayRole, finances::UnsavedRole));
-                revalidateRow(index);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
-        if (role == Qt::DisplayRole && orientation == Qt::Horizontal && section >= 0 && section < columns.count()) {
-            return columns[section]->title;
-        }
-        return QVariant{};
     }
 };
 

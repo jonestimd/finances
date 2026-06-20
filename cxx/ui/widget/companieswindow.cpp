@@ -2,6 +2,7 @@
 
 #include "settings.h"
 #include "dialog.h"
+#include "statusmessage.h"
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QPushButton>
@@ -12,46 +13,42 @@
 CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     : QDialog(parent)
     , layout{this}
-    , store{dataStore->accountStore->companyStore}
-    , model{dataStore->accountStore->companyStore, this}
-    , tableSort{this, &model, itemView, &statusBar, tr("Company"), tr("Name"), SLOT(saveCompanies()), SLOT(loadCompanies())}
+    , store{&dataStore->accountStore->companyStore}
+    , model{&dataStore->accountStore->companyStore, this}
+    , entityView{this, &model, itemView, tr("Company")}
 {
     setWindowTitle(tr("Companies[*]"));
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
 
-    layout.addWidget(&tableSort.toolbar);
+    layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
-    layout.addWidget(&statusBar);
+    layout.addWidget(&entityView.statusBar);
     layout.setSpacing(0);
     layout.setContentsMargins(0, 0, 0, 0);
-
-    tableSort.setColumnResize({0});
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
 }
 
 void CompaniesWindow::enableUi() {
-    tableSort.enableUi();
+    entityView.enableUi();
 }
 
-void CompaniesWindow::loadCompanies() {
+void CompaniesWindow::loadData() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
-    itemView->setEnabled(false); // TODO save/restore selection
-    statusBar.showMessage(tr("Loading companies..."));
-    store->load(this, true);
+    itemView->setEnabled(false);
+    store->load(&entityView, tr(LOADING_COMPANIES), true);
 }
 
-void CompaniesWindow::saveCompanies() {
-    statusBar.showMessage(tr("Saving companies..."));
+void CompaniesWindow::saveData() {
+    entityView.disableUi(tr("Saving companies..."));
     itemView->setEnabled(false);
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+    store->update(this, &model);
 }
 
 void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
     model.setRows(companyIds);
-    statusBar.showMessage(tr("Done loading"), 1500);
-    itemView->setEnabled(true);
+    entityView.enableUi();
 }
 
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
@@ -67,11 +64,10 @@ bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
 }
 
 void CompaniesWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(SETTINGS_GROUP, this);
+    entityView.confirmClose(event, SETTINGS_GROUP);
 }
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, &model)) return;
-    if (!tableSort.focusFilter(event)) QDialog::keyPressEvent(event);
+    if (!entityView.focusFilter(event)) QDialog::keyPressEvent(event);
 }

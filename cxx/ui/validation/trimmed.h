@@ -5,7 +5,6 @@
 #include <QValidator>
 
 class TrimmedValidatorFactory : public ValidatorFactory {
-    Q_OBJECT
 public:
     TrimmedValidatorFactory();
 

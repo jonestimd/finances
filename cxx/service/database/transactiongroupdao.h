@@ -4,15 +4,13 @@
 #include "entitydao.h"
 #include "service/model/transactiongroup.h"
 
-class TransactionGroupDao : public EntityDao<TransactionGroup> {
+class TransactionGroupDao : public NamedEntityDao<TransactionGroup> {
 public:
-    TransactionGroupDao();
+    TransactionGroupDao(const QString &dbType);
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, TransactionGroup *entity) override;
 };
-
-static TransactionGroupDao transactionGroupDao;
 
 #endif // TRANSACTIONGROUPDAO_H

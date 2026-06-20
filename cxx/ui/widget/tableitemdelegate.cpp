@@ -1,29 +1,45 @@
 #include "tableitemdelegate.h"
 #include "../finances.h"
 #include "../validation/validatorfactory.h"
+#include "dateedit.h"
 #include "enumcombobox.h"
 #include "qcombobox.h"
 #include "relationeditor.h"
 #include <QCompleter>
+#include <QDateEdit>
 #include <QItemEditorFactory>
 #include <QPainter>
 #include <ui/model/comboboxmodel.h>
+
+#define ICON_WIDTH 15
 
 TableItemDelegate::TableItemDelegate(QObject *parent, QStatusBar *statusBar)
     : QStyledItemDelegate{parent}, statusBar{statusBar}
 {}
 
+static QFont bold(const QFont src) {
+    QFont font{src};
+    font.setBold(true);
+    return font;
+}
+
 void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     QStyledItemDelegate::initStyleOption(option, index);
     QVariant highlight = index.data(finances::TextHighlightRole);
     if (highlight.isValid() && highlight.toBool()) {
-        auto brush = option->palette.accent();
+        auto value = highlight.value<finances::TextHighlight>();
+        QBrush brush(option->palette.text());
+        if (value & finances::Accent) brush = option->palette.accent();
+        if (value & finances::Dimmed) {
+            auto color = brush.color();
+            brush.setColor(QColor(color.red(), color.green(), color.blue(), 160));
+        }
         option->palette.setBrush(QPalette::Text, brush);
         option->palette.setBrush(QPalette::HighlightedText, brush);
     }
     QVariant unsaved = index.data(finances::UnsavedRole);
     if (unsaved.isValid()) {
-        if (unsaved.toInt() == finances::AddUpdate) {
+        if (unsaved.toInt() & (finances::Add | finances::Update)) {
             auto brush = option->palette.brush(QPalette::Base).color();
             int h, s, v;
             brush.getHsv(&h, &s, &v);
@@ -38,21 +54,57 @@ void TableItemDelegate::initStyleOption(QStyleOptionViewItem *option, const QMod
     QVariant value = index.data();
     if (value.typeId() == QMetaType::Bool) {
         option->font = finances::iconFont->font();
-        option->text = QChar(value.toBool() ? finances::Checked : finances::Unchecked);
+        option->text = QChar(uint(value.toBool() ? finances::Checked : finances::Unchecked));
         option->displayAlignment = Qt::AlignCenter;
     }
+    auto decoration = index.data(Qt::DecorationRole);
+    if (decoration.isValid()) {
+        auto icon = decoration.value<finances::FontIcon>();
+        option->icon = finances::materialIcon(icon, option->widget->palette().text().color());
+    }
+    auto altDisplay = index.data(finances::AltDisplayRole);
+    if (altDisplay.isValid()) {
+        if (option->displayAlignment & Qt::AlignTrailing) {
+            QFont font = bold(option->font);
+            QFontMetrics fontMetrics{font, option->widget};
+            auto width = fontMetrics.horizontalAdvance(altDisplay.toString()) + fontMetrics.horizontalAdvance(" ()");
+            option->rect.adjust(0, 0, -width, 0);
+        }
+    }
+    if (!index.data(finances::ValidationMessageRole).toString().isEmpty()) {
+        if (option->displayAlignment & Qt::AlignTrailing) {
+            option->rect.adjust(0, 0, -ICON_WIDTH, 0);
+        }
+    }
+}
+
+static QRect clippingRect(QPainter *p, const QStyleOptionViewItem &opt) {
+    const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
+    return clipRegion.boundingRect();
 }
 
 void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &index) const {
     QStyledItemDelegate::paint(p, opt, index);
     auto validationMessage = index.data(finances::ValidationMessageRole);
-    if (!validationMessage.isNull()) {
-        const QRegion clipRegion = p->hasClipping() ? (p->clipRegion() & opt.rect) : opt.rect;
-        QRect rect = clipRegion.boundingRect();
+    auto altDisplay = index.data(finances::AltDisplayRole);
+    QRect rect = clippingRect(p, opt);
+    if (validationMessage.isValid()) {
         auto image = QImage(":/images/invalid.svg");
+        rect.adjust(0, 0, -image.width(), 0);
         auto y = rect.y() + (rect.height() - image.rect().height()) / 2;
-        auto x = rect.right() - image.width();
-        p->drawImage(x, y, image);
+        p->drawImage(rect.right(), y, image);
+    }
+    if (altDisplay.isValid()) {
+        QStyleOptionViewItem option = opt;
+        initStyleOption(&option, index);
+        QStyle *style = opt.widget ? opt.widget->style() : QApplication::style();
+        auto displayValue = QString("(%0)").arg(altDisplay.toString());
+        auto margin = style->pixelMetric(QStyle::PM_FocusFrameHMargin, nullptr, opt.widget) + 1;
+        rect.adjust(option.rect.width(), 0, 0, 0);
+        p->setFont(bold(option.font));
+        p->fillRect(rect, option.backgroundBrush);
+        rect.adjust(0, 0, -margin, 0);
+        style->drawItemText(p, rect, Qt::AlignRight, option.palette, opt.state & Qt::ItemIsEnabled, displayValue, QPalette::Text);
     }
 }
 
@@ -65,6 +117,8 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
     } else if (data.canConvert<const EnumValue*>()) {
         auto options = index.data(finances::OptionsRole).value<QHash<QString, const EnumValue*>>();
         editor = new EnumComboBox(options, parent);
+    } else if (data.metaType().id() == QMetaType::QDate) {
+        editor= new DateEdit(parent);
     } else {
         editor = QStyledItemDelegate::createEditor(parent, option, index);
         auto lineEdit = qobject_cast<QLineEdit*>(editor);
@@ -80,6 +134,14 @@ QWidget *TableItemDelegate::createEditor(QWidget *parent, const QStyleOptionView
     }
     emit openEditor(editor);
     return editor;
+}
+
+void TableItemDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    QStyledItemDelegate::updateEditorGeometry(editor, option, index);
+    if (index.data(finances::ValidationMessageRole).isValid()) {
+        // cover cell error marker
+        editor->setGeometry(editor->geometry().adjusted(0, 0, ICON_WIDTH, 0));
+    }
 }
 
 bool TableItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) {

@@ -9,33 +9,37 @@
 
 class Connection;
 
+struct ConnectionSettings {
+    const QString dbType;
+    const QString host;
+    const int port;
+    const QString schema;
+    const QString user;
+    const QString password;
+
+    QString makeName() const;
+    QString displayName() const;
+
+    bool openDatabase(QSqlDatabase &db) const;
+};
+
 class ConnectionPool {
     friend Connection;
 
     const QString name;
-    const char *const dbType;
-    const char *const host;
-    const int port;
-    const char *const schema;
-    const char *const user;
-    const char *const password;
-    QThreadStorage<QString> nameStore;
-    QMutex poolMutex;
-    int openConnections;
+    const ConnectionSettings settings;
+    QThreadStorage<QString> nameStore{};
+    QMutex poolMutex{};
+    int openConnections{0};
 
     QSqlDatabase acquire();
 
 public:
     const QString displayName;
 
-    ConnectionPool(
-        const char *const dbType,
-        const char *const host,
-        const int port,
-        const char *const schema,
-        const char *const user,
-        const char *const password
-    );
+    ConnectionPool(const ConnectionSettings &settings);
+
+    const QString &dbType() const;
 };
 
 class Connection {

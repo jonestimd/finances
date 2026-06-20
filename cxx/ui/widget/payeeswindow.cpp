@@ -1,61 +1,54 @@
 #include "payeeswindow.h"
-#include "dialog.h"
 #include "settings.h"
 #include "entityselectiondialog.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
+#include "settings.h"
+#include "statusmessage.h"
 #include <ui/model/comboboxmodel.h>
 
-#define LOADING_PAYEES "Loading payees..."
-#define SAVING_PAYEES "Saving payees..."
 #define SETTINGS_GROUP "payees"
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
-    : StatusWindow()
+    : AppWindow{tr("Payee"), new PayeeTableModel(dataStore->payeeStore), new QTableView()}
     , store{dataStore->payeeStore}
-    , model{dataStore->payeeStore, this}
-    , tableSort{this, &model, itemView, &statusBar, tr("Payee"), tr("Name"), SLOT(savePayees()), SLOT(loadPayees())}
+    , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Payees"), tr("ctrl+y", "merge payee"), this, SLOT(merge()), false)}
 {
-    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Payees[*]").arg(dataStore->connectionName()));
 
-    addToolBar(&tableSort.toolbar);
-
-    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Payees"), tr("ctrl+y", "merge payee"), this, SLOT(merge()));
-    mergeAction->setEnabled(false);
-    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], mergeAction);
+    entityView.insertAction(2, mergeAction);
 
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
-    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
-    if (store->load(this)) model.setRows(store->ids());
-    else statusBar.addMessage(tr(LOADING_PAYEES));
+    if (store->load(&entityView, tr(LOADING_PAYEES))) model()->setRows(store->ids());
 
-    tableSort.setColumnResize({0});
-
-    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
 
-void PayeesWindow::loadPayees() {
-    if (tableSort.confirmLoadData(tr(LOADING_PAYEES))) store->load(this, true);
+PayeesWindow::~PayeesWindow() {
+    delete model();
 }
 
-void PayeesWindow::savePayees() {
-    disableUi(tr(SAVING_PAYEES));
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+PayeeTableModel *PayeesWindow::model() const {
+    return entityView.model<PayeeTableModel>();
+}
+
+void PayeesWindow::loadData() {
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_PAYEES), true);
+}
+
+void PayeesWindow::saveData() {
+    entityView.disableUi(tr(SAVING_PAYEES));
+    store->update(this, model());
 }
 
 void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
-    model.setRows(payeeIds);
-    statusBar.removeMessage(tr(LOADING_PAYEES));
-    statusBar.removeMessage(tr(SAVING_PAYEES));
-    itemView->setEnabled(true);
+    model()->setRows(payeeIds);
+    entityView.enableUi();
 }
 
 void PayeesWindow::merge() {
-    auto payee = model.getRow(tableSort.selectedIndex());
+    auto payee = model()->getRow(entityView.selectedIndex());
     QList<const NamedEntity*> options;
     for (auto id : store->ids()) {
         auto option = store->value(id);
@@ -67,21 +60,16 @@ void PayeesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            disableUi(tr(SAVING_PAYEES));
+            entityView.disableUi(tr(SAVING_PAYEES));
             store->mergePayees(this, payee, selectedId);
         }
     }
 }
 
 void PayeesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
-    mergeAction->setEnabled(tableSort.selectedIndex().isValid());
+    mergeAction->setEnabled(entityView.selectedIndex().isValid());
 }
 
-void PayeesWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
-}
-
-void PayeesWindow::keyPressEvent(QKeyEvent *event) {
-    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
+const char *PayeesWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }

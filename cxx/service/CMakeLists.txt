@@ -8,7 +8,11 @@ target_sources(finances
   ${CMAKE_CURRENT_LIST_DIR}/groupservice.h ${CMAKE_CURRENT_LIST_DIR}/groupservice.cpp
   ${CMAKE_CURRENT_LIST_DIR}/payeeservice.h ${CMAKE_CURRENT_LIST_DIR}/payeeservice.cpp
   ${CMAKE_CURRENT_LIST_DIR}/securityservice.h ${CMAKE_CURRENT_LIST_DIR}/securityservice.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/transactiondetailservice.h ${CMAKE_CURRENT_LIST_DIR}/transactiondetailservice.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/transactionservice.h ${CMAKE_CURRENT_LIST_DIR}/transactionservice.cpp
 )
 
 add_subdirectory(model/)
 add_subdirectory(database/)
+
+add_subdirectory(tests/)

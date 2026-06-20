@@ -4,7 +4,7 @@
 QList<const EnumValue *> EnumComboBox::sortedOptions(const QHash<QString, const EnumValue*> valueMap) {
     QList<const EnumValue*> options;
     options.append(valueMap.values());
-    std::sort(options.begin(), options.end(), &EnumValue::less);
+    std::stable_sort(options.begin(), options.end(), &EnumValue::less);
     return options;
 }
 

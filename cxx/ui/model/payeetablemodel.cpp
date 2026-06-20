@@ -5,13 +5,12 @@
 
 #define PAYEE_NAME_COLUMN 0
 
-PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore, QObject *parent)
+PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore)
     : PodTableModel<Payee, PayeeService> {
         payeeStore,
         QList<ColumnAdapter<Payee>*>{
             new ColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
             new NumberColumnAdapter<Payee>(tr("Transactions"), &Payee::transactions),
         },
-        parent,
     }
 {}

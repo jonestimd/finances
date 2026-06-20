@@ -7,7 +7,7 @@
 
 class GroupTableModel : public PodTableModel<TransactionGroup, GroupService> {
 public:
-    GroupTableModel(GroupStore *groupStore, QObject *parent = nullptr);
+    GroupTableModel(GroupStore *groupStore);
 };
 
 #endif // GROUPTABLEMODEL_H

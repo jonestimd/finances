@@ -1,4 +1,5 @@
 #include "basedomain.h"
+#include "category.h"
 #include <QDate>
 #include <QSqlField>
 
@@ -18,14 +19,31 @@ NamedEntity::NamedEntity(const QSqlRecord &record, const char *nameColumn)
 
 NamedEntity::NamedEntity(const QString &name) : BaseDomain{}, name{name} {}
 
-QVariant NamedEntity::getId(const QVariant &value) {
-    auto entity = value.value<const NamedEntity*>();
-    return entity ? entity->id : QVariant{};
-}
-
 QString NamedEntity::getName(const NamedEntity *entity) {
     return entity->name.toString();
 }
+
+TransactionType::TransactionType(bool transfer) : NamedEntity{}, transfer{transfer} {}
+
+TransactionType::TransactionType(bool transfer, const QSqlRecord &record, const char *nameColumn)
+    : NamedEntity{record, nameColumn}
+    , transfer{transfer}
+{}
+
+const TransactionType *TransactionType::get(const QVariant &value) {
+    return value.isValid() ? static_cast<const TransactionType*>(value.value<const NamedEntity*>()) : nullptr;
+}
+
+const Category *TransactionType::getCategory(const QVariant &value) {
+    auto entity = get(value);
+    return entity && !entity->transfer ? static_cast<const Category*>(entity) : nullptr;
+}
+
+TransactionTypeId::TransactionTypeId(bool transfer, QVariant id) : transfer{transfer}, id{id} {}
+
+TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}
+
+TransactionTypeId::TransactionTypeId(const TransactionType *tt) : transfer{tt->transfer}, id{tt->id} {}
 
 EnumValue::EnumValue(const char *code, const QString name)
     : code{code}, name{name} {}

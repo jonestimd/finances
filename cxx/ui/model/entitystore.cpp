@@ -1,5 +1,5 @@
 #include "entitystore.h"
 
-EntityStoreSignals::EntityStoreSignals(QObject *parent) : QObject(parent) {}
+AbstractEntityStore::AbstractEntityStore(QObject *parent) : QObject(parent) {}
 
-const QString EntityStoreSignals::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};
+const QString AbstractEntityStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};

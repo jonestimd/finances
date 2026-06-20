@@ -54,6 +54,7 @@ void FilterInput::paintEvent(QPaintEvent *event) {
 
 void FilterInput::onTextChanged(const QString &text) {
     if (hasAcceptableInput()) {
+        // TODO debounce
         emit filterChanged(QRegularExpression(text, QRegularExpression::CaseInsensitiveOption));
     }
     style()->unpolish(this);

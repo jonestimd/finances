@@ -3,5 +3,5 @@
 /out/
 /.cache/
 /CMakeCache.txt
-/CMakeLists.txt.user
+/.qtcreator
 .*.swp

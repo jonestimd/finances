@@ -1,21 +1,28 @@
 #include "categorystore.h"
+#include "datastore.h"
 
-CategoryStore::CategoryStore(CategoryService *service) : EntityStore(service) {}
+Q_STATIC_LOGGING_CATEGORY(logger, "store.category")
+
+CategoryStore::CategoryStore(CategoryService* service, DataStore* dataStore)
+    : EntityStore(service)
+    , dataStore{dataStore}
+{}
 
 const QSet<qlonglong> CategoryStore::rootIds() const {
     return rootIds_;
 }
 
 QString CategoryStore::displayName(qlonglong categoryId) const {
-    return displayName(value(categoryId));
-}
-
-QString CategoryStore::displayName(const Category *category) const {
-    auto name = category->name.toString();
-    if (category->parentId.isValid()) {
-        return displayName(category->parentId.toLongLong()) + "\u25ba" + name;
+    auto category = value(categoryId);
+    if (category) {
+        auto name = category->name.toString();
+        if (category->parentId.isValid()) {
+            return displayName(category->parentId.toLongLong()) + "\u25ba" + name;
+        }
+        return name;
     }
-    return name;
+    else qCDebug(logger, "displayName: category not loaded: %lld", categoryId);
+    return "";
 }
 
 bool CategoryStore::movable(qlonglong categoryId) const {
@@ -32,7 +39,7 @@ bool CategoryStore::isAncestor(qlonglong categoryId, const QVariant parentId) co
 bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
     auto category = value(categoryId);
     auto lowerName = name.toString().toLower();
-    for (auto childId : category->childIds) {
+    for (const auto &childId : category->childIds) {
         if (value(childId.toLongLong())->name.toString().toLower() == lowerName) return true;
     }
     return false;
@@ -41,7 +48,7 @@ bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
 void CategoryStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
     doInBackground(source, [this, category, parentId] {
         auto categories = service->setParent(category, parentId, user);
-        update(categories);
+        update(categories.values());
         emit valuesLoaded(ids());
     });
 }
@@ -49,7 +56,8 @@ void CategoryStore::setParent(QWidget *source, const Category *category, const Q
 void CategoryStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
-        update(categories, QList{category});
+        dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
+        update(categories.values(), QList{category});
         emit valuesLoaded(ids());
     });
 }
@@ -64,7 +72,7 @@ void CategoryStore::update(const QList<const Category *> &updates, const QList<c
     }
 }
 
-void CategoryStore::setValues(QList<const Category *> values) {
+void CategoryStore::setValues(QHash<qlonglong, const Category*> values) {
     EntityStore::setValues(values);
     rootIds_.clear();
     for (auto id : ids()) {

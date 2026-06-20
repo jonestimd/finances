@@ -5,8 +5,10 @@
 #include "entitystore.h"
 
 class PayeeStore : public EntityStore<Payee, PayeeService> {
+    const DataStore* dataStore;
+
 public:
-    PayeeStore(PayeeService *service);
+    PayeeStore(PayeeService *service, DataStore* dataStore);
 
     void mergePayees(QWidget *source, const Payee *payee, const QVariant destinationId);
 };

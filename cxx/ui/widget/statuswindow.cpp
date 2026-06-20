@@ -9,7 +9,12 @@ void StatusWindow::enableUi() {
     statusBar.clear();
 }
 
-void StatusWindow::disableUi(const QString &message) {
+void StatusWindow::addMessage(const QString &message) {
     statusBar.addMessage(message);
     centralWidget()->setEnabled(false);
+}
+
+void StatusWindow::removeMessage(const QString &message) {
+    statusBar.removeMessage(message);
+    if (statusBar.isEmpty() && centralWidget()) centralWidget()->setEnabled(true);
 }

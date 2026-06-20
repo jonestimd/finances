@@ -1,7 +1,7 @@
 #ifndef BACKGROUND_H
 #define BACKGROUND_H
 
-#include <QtConcurrent>
+#include <QWidget>
 
 typedef std::function<void()> Runnable;
 

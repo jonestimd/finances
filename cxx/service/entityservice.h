@@ -5,15 +5,14 @@
 #include "model/bulkupdate.h"
 
 template<class Entity, class Dao>
-class EntityService
-{
+class EntityService {
 protected:
     Dao &dao;
     ConnectionPool *connectionPool;
 public:
     EntityService(ConnectionPool *connectionPool, Dao &dao) : dao{dao}, connectionPool{connectionPool} {}
 
-    QList<const Entity*> getAll() {
+    QHash<qlonglong, const Entity*> getAll() {
         auto conn = Connection(connectionPool);
         return dao.getAll(conn.db);
     }
@@ -47,7 +46,8 @@ public:
     }
 
 protected:
-    QList<const Entity*> doInTransaction(std::function<QList<const Entity*>(QSqlDatabase&)> update) {
+    template<typename Result>
+    Result doInTransaction(std::function<Result(QSqlDatabase&)> update) {
         auto conn = Connection(connectionPool);
         try {
             return update(conn.db);

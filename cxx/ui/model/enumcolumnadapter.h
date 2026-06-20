@@ -16,11 +16,11 @@ public:
     typedef std::function<bool(const T*, const V*)> IsCompatible;
 
 private:
-    QHash<QString, const V*> *values;
+    QHash<const QString, const V*> *values;
     IsCompatible isCompatible;
 
 public:
-    EnumColumnAdapter(QString title, QVariant T::*field, QHash<QString, const V*> *values,
+    EnumColumnAdapter(QString title, QVariant T::*field, QHash<const QString, const V*> *values,
                       ValidatorFactory *factory, bool editable = true, IsCompatible isCompatible = nullptr)
         : ColumnAdapter<T>(title, field, editable, factory), values{values}, isCompatible{isCompatible} {}
 
@@ -32,7 +32,7 @@ public:
             if (enumValue) return enumValue->name;
         } else if (role == Qt::EditRole) {
             if (current.isValid()) return current;
-            const EnumValue *enumValue = values->value(value .toString(), nullptr);
+            const EnumValue *enumValue = values->value(value.toString(), nullptr);
             if (enumValue) return QVariant::fromValue(enumValue);
         } else if (role == finances::OptionsRole) {
             QHash<QString, const EnumValue*> options;
@@ -44,13 +44,13 @@ public:
         return QVariant{};
     }
 
-    virtual bool isEqual(const QVariant &value1, const QVariant &value2) override {
+    virtual bool isEqual(const QVariant &value1, const QVariant &value2) const override {
         auto e1 = value1.value<const EnumValue*>(), e2 = value2.value<const EnumValue*>();
         if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->name, e2->name);
         return !e2;
     }
 
-    virtual void setValue(T *row, QVariant value) override {
+    virtual void setValue(T *row, QVariant value) const override {
         auto entity = value.value<const EnumValue*>();
         ColumnAdapter<T>::setValue(row, entity ? entity->code: QVariant{});
     }

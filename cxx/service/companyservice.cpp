@@ -1,3 +1,4 @@
 #include "companyservice.h"
 
-CompanyService::CompanyService(ConnectionPool *connectionPool) : EntityService(connectionPool, companyDao) {}
+CompanyService::CompanyService(ConnectionPool *connectionPool, CompanyDao &dao)
+    : EntityService(connectionPool, dao) {}

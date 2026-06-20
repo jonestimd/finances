@@ -39,7 +39,7 @@ public:
             auto id = rowIds.value(index.row());
             return store->value(id);
         }
-        return this->pendingAdds()[index.row() - i];
+        return this->pendingAdds().at(index.row() - i);
     }
 
     // QAbstractItemModel interface

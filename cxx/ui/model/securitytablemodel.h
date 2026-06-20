@@ -9,7 +9,7 @@ class SecurityTableModel : public PodTableModel<Security, SecurityService> {
     Q_OBJECT
 
 public:
-    SecurityTableModel(SecurityStore *store, QObject *parent);
+    SecurityTableModel(SecurityStore *store);
 };
 
 #endif // SECURITYTABLEMODEL_H

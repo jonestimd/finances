@@ -3,5 +3,8 @@
 #include <QSqlField>
 
 QVariant decimalValue(const QSqlRecord &record, const char* name) {
-    return QVariant::fromValue(QDecNumber(record.field(name).value().toByteArray().constData()));
+    if (record.contains(name) && !record.isNull(name)) {
+        return QVariant::fromValue(QDecNumber(record.field(name).value().toByteArray().constData()));
+    }
+    return QVariant{};
 }

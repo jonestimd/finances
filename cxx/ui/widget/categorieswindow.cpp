@@ -1,74 +1,64 @@
 #include "categorieswindow.h"
 #include "entityselectiondialog.h"
-#include "dialog.h"
 #include "settings.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
+#include "treeview.h"
+#include "statusmessage.h"
 
-#define LOADING_CATEGORIES "Loading categories..."
-#define SAVING_CATEGORIES "Saving categories..."
-#define CATEGORY_SETTINGS "categories"
+#define SETTINGS_GROUP "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : StatusWindow()
+    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView()}
     , store{dataStore->categoryStore}
-    , model{dataStore, this}
-    , tableSort{this, &model, itemView, &statusBar, tr("Categories"), tr("Name"), SLOT(saveCategories()), SLOT(loadCategories())}
+    , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
+    , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
     , getName{[this](const NamedEntity* entity) {
         return store->displayName(entity->id.toLongLong());
     }}
 {
-    setCentralWidget(itemView);
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
 
-    addToolBar(&tableSort.toolbar);
     // TODO disable with pending changes
-    moveAction = finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()));
-    moveAction->setEnabled(false);
-    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[2], moveAction);
+    entityView.insertAction(2, moveAction);
+    entityView.insertAction(3, mergeAction);
 
-    mergeAction = finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()));
-    mergeAction->setEnabled(false);
-    tableSort.toolbar.insertAction(tableSort.toolbar.actions()[3], mergeAction);
-
-    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
-
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
     connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
 
-    if (store->load(this)) model.setRows(store->ids());
-    else statusBar.addMessage(tr(LOADING_CATEGORIES));
+    if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
-    tableSort.enableColumnResize();
-
-    settings::restoreWindowState(CATEGORY_SETTINGS, this, QSize{600, 500}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{600, 500}, &entityView);
 }
 
-void CategoriesWindow::loadCategories() {
-    if (tableSort.confirmLoadData(tr(LOADING_CATEGORIES))) store->load(this, true);
+CategoriesWindow::~CategoriesWindow() {
+    delete model();
 }
 
-void CategoriesWindow::saveCategories() {
-    disableUi(tr(SAVING_CATEGORIES));
-    store->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+CategoryTableModel *CategoriesWindow::model() {
+    return entityView.model<CategoryTableModel>();
+}
+
+void CategoriesWindow::loadData() {
+    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_CATEGORIES), true);
+}
+
+void CategoriesWindow::saveData() {
+    entityView.disableUi(tr(SAVING_CATEGORIES));
+    store->update(this, model());
 }
 
 void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
-    model.setRows(categoryIds);
-    statusBar.removeMessage(tr(LOADING_CATEGORIES));
-    statusBar.removeMessage(tr(SAVING_CATEGORIES));
-    itemView->setEnabled(true);
+    model()->setRows(categoryIds);
+    entityView.enableUi();
 }
 
 void CategoriesWindow::reparent() {
-    auto category = model.getRow(tableSort.selectedIndex());
+    auto category = model()->getRow(entityView.selectedIndex());
     auto name = category->name.toString();
     QList<const NamedEntity*> options;
     QHash<qlonglong, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
-        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString()).arg(name);
+        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);
         if (option != category && !store->isAncestor(id, category->id)) {
             options.append(option);
             if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.toLongLong(), message);
@@ -81,14 +71,14 @@ void CategoriesWindow::reparent() {
     if (result == QDialog::Accepted) {
         auto parentId = dialog.selectedId();
         if (category->parentId != dialog.selectedId()) {
-            disableUi(tr(SAVING_CATEGORIES));
+            entityView.disableUi(tr(SAVING_CATEGORIES));
             store->setParent(this, category, parentId);
         }
     }
 }
 
 void CategoriesWindow::merge() {
-    auto category = model.getRow(tableSort.selectedIndex());
+    auto category = model()->getRow(entityView.selectedIndex());
     QList<const NamedEntity*> options;
     for (auto id : store->ids()) {
         auto option = store->value(id);
@@ -100,22 +90,17 @@ void CategoriesWindow::merge() {
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
         if (!selectedId.isNull()) {
-            disableUi(tr(SAVING_CATEGORIES));
+            entityView.disableUi(tr(SAVING_CATEGORIES));
             store->mergeCategories(this, category, selectedId);
         }
     }
 }
 
-void CategoriesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
-    moveAction->setEnabled(model.movable(tableSort.selectedIndex()));
-    mergeAction->setEnabled(tableSort.selectedIndex().isValid());
+void CategoriesWindow::selectionChanged() {
+    moveAction->setEnabled(model()->movable(entityView.selectedIndex()));
+    mergeAction->setEnabled(entityView.selectedIndex().isValid());
 }
 
-void CategoriesWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(CATEGORY_SETTINGS, this, &tableSort);
-}
-
-void CategoriesWindow::keyPressEvent(QKeyEvent *event) {
-    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
+const char *CategoriesWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }

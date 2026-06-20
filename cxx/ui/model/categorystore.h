@@ -6,15 +6,15 @@
 #include "service/categoryservice.h"
 
 class CategoryStore : public EntityStore<Category, CategoryService> {
+    DataStore* const dataStore;
     QSet<qlonglong> rootIds_;
 
 public:
-    CategoryStore(CategoryService *service);
+    CategoryStore(CategoryService *service, DataStore* dataStore);
 
     const QSet<qlonglong> rootIds() const;
 
     QString displayName(qlonglong categoryId) const;
-    QString displayName(const Category *category) const;
     bool movable(qlonglong categoryId) const;
     /**
      * @return `true` if `parentId` is an ancestor of `categoryId`.
@@ -29,7 +29,7 @@ public:
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;
-    virtual void setValues(QList<const Category*> values) override;
+    virtual void setValues(QHash<qlonglong, const Category*> values) override;
 };
 
 #endif // CATEGORYSTORE_H

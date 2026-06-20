@@ -23,7 +23,7 @@ protected:
     }
 };
 
-CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
+CategoryTableModel::CategoryTableModel(DataStore *ds)
     : PodItemModel<Category> {
         QList<ColumnAdapter<Category>*>{
             new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
@@ -33,7 +33,6 @@ CategoryTableModel::CategoryTableModel(DataStore *ds, QObject *parent)
             new ColumnAdapter<Category>(tr("Income"), &Category::income),
             new ColumnAdapter<Category>(tr("Security"), &Category::security),
         },
-        parent,
     }
     , store{ds->categoryStore}
 {}
@@ -77,7 +76,7 @@ QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &pa
             auto rowId = rootIds.value(row);
             return createIndex(row, column, store->value(rowId));
         }
-        auto category = newRows[parent][row - rootIds.length()];
+        auto category = newRows.value(parent).at(row - rootIds.length());
         return createIndex(row, column, category);
     }
     return QModelIndex{};

@@ -1,12 +1,17 @@
 #include "amounttype.h"
 
-QHash<QString, const AmountType*> AmountType::values;
+QHash<const QString, const AmountType*> AmountType::values;
 
-AmountType::AmountType(const char *code, const QString name, bool affectsBalance)
-    : EnumValue(code, name), affectsBalance{affectsBalance}
+AmountType::AmountType(const char *code, const QString name, bool affectsBalance, bool sharesRequired)
+    : EnumValue(code, name), affectsBalance{affectsBalance}, sharesRequied{sharesRequired}
 {
-    values[code] = this;
+    values.insert(code, this);
 }
 
-const AmountType AmountType::debitDeposit(DEBIT_DEPOSIT, tr("Debit/despoit"), true);
-const AmountType AmountType::assetValue(ASSET_VALUE, tr("Asset value"), false);
+const AmountType *AmountType::valueOf(const QVariant &value) {
+    return values.value(value.toString());
+}
+
+const AmountType AmountType::debitDeposit(DEBIT_DEPOSIT, tr("Debit/despoit"), true, false);
+const AmountType AmountType::assetValue(ASSET_VALUE, tr("Asset value"), false, true);
+const AmountType AmountType::assetExchange(ASSET_EXCHANGE, tr("Asset Exchange"), true, true);

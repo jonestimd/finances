@@ -21,7 +21,7 @@ public:
     static const AccountType loan;
     static const AccountType _401k;
 
-    static QHash<QString, const AccountType*> values;
+    static QHash<const QString, const AccountType*> values;
 
     static bool isCompatible(const Account* account, const AccountType *type);
 };

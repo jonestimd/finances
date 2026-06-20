@@ -1,81 +1,91 @@
 #include "entityview.h"
 #include "dialog.h"
 #include "tableitemdelegate.h"
+#include "entityrowaction.h"
+#include "ui/widget/settings.h"
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QLayout>
 #include <QTableWidget>
 #include <QTimer>
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader,
-            StatusBar *statusBar, const QString entityName, const QString defaultSort,
-            const char *saveSlot, const char *loadSlot, QList<QAction*> actions)
+
+class ViewFocusFilter : public QObject {
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override {
+        if (event->type() == QEvent::EnabledChange) {
+            auto widget = qobject_cast<QWidget*>(watched);
+            widget->removeEventFilter(this);
+            widget->setFocus();
+            deleteLater();
+        }
+        return false;
+    }
+};
+
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
-    , model{model}
     , sortModel{window}
     , itemView{itemView}
     , viewHeader{viewHeader}
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), &sortModel, window)}
-    , defaultSort{defaultSort}
     , toolbar{window}
-    , statusBar{statusBar}
-    , itemDelegate{window, statusBar}
-    , saveAction{finances::iconAction(finances::Save, tr("Save"), QKeySequence::Save, window, saveSlot, false)}
+    , itemDelegate{window, &statusBar}
+    , saveAction{finances::saveAction(window)}
 {
     sortModel.setSourceModel(model);
     sortModel.setSortRole(finances::SortRole);
     sortModel.setFilterKeyColumn(-1);
     sortModel.setSortCaseSensitivity(Qt::CaseInsensitive);
 
+    itemView->setProperty("sortingEnabled", true);
     itemView->setModel(&sortModel);
     itemView->setItemDelegate(&itemDelegate);
     itemView->setAlternatingRowColors(true);
 
-    toolbar.setMovable(false);
-    toolbar.addAction(addAction(tr("Add %1").arg(entityName.toLower())));
-    toolbar.addAction(deleteAction(tr("Delete %1").arg(entityName.toLower()), [model](const QModelIndex &index) {
-        return model->enableDelete(index);
-    }));
-    toolbar.addAction(undoAction());
-    toolbar.addAction(saveAction);
-    toolbar.addAction(finances::iconAction(finances::Refresh, tr("Reload"), QKeySequence::Refresh, window, loadSlot));
+    viewHeader->setSectionsMovable(true);
+    viewHeader->setSortIndicatorShown(true);
+    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 
-    if (!actions.isEmpty()) {
-        toolbar.addSeparator();
-        for (auto action : actions) {
-            toolbar.addAction(action);
-        }
-    }
+    toolbar.setMovable(false);
+    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, itemView, this));
+    toolbar.addAction(new DeleteRowAction(entityName, &sortModel, itemView, this));
+    toolbar.addAction(new UndoChangeAction(&sortModel, itemView, this));
+    toolbar.addAction(saveAction);
+    toolbar.addAction(finances::reloadAction(window));
     toolbar.addWidget(filterInput);
 
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(modelReset()), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(&sortModel, SIGNAL(modelReset()), this, SLOT(dataChanged()));
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
 
-    itemView->selectionModel()->select(sortModel.index(0, 0), QItemSelectionModel::Select);
+    finances::setColumnResize(viewHeader);
 }
 
-int EntityView::columnIndex(const QString name) const {
-    return model->columnIndex(name);
+void EntityView::addActions(const QList<QAction *> &actions) {
+    if (!actions.isEmpty()) {
+        auto filterAction = toolbar.actions().constLast();
+        toolbar.insertSeparator(filterAction);
+        for (auto action : actions) {
+            toolbar.insertAction(filterAction, action);
+        }
+    }
+}
+
+void EntityView::insertAction(qsizetype index, QAction *action) {
+    toolbar.insertAction(toolbar.actions().at(index), action);
 }
 
 QModelIndex EntityView::selectedIndex() {
-    return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
-}
-
-void EntityView::enableColumnResize() {
-    viewHeader->setStretchLastSection(true);
-}
-
-void EntityView::setColumnResize(const std::vector<int> stretchColumns) {
-    viewHeader->setSectionResizeMode(QHeaderView::ResizeToContents);
-    for (int i : stretchColumns) {
-        viewHeader->setSectionResizeMode(i, QHeaderView::Stretch);
+    if (itemView->selectionModel()->hasSelection()) {
+        return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
     }
+    return QModelIndex{};
 }
 
 bool EntityView::focusFilter(QKeyEvent *event) {
@@ -86,150 +96,65 @@ bool EntityView::focusFilter(QKeyEvent *event) {
     return false;
 }
 
-void EntityView::saveSort(QSettings *settings) {
-    if (viewHeader->sortIndicatorSection() >= 0) {
-        settings->setValue("sort.column", model->headerData(viewHeader->sortIndicatorSection(), Qt::Horizontal));
-        settings->setValue("sort.order", viewHeader->sortIndicatorOrder());
-    }
+bool EntityView::confirmLoadData() {
+    return dialog::confirmDiscardChanges(window, model());
 }
 
-void EntityView::saveSizes(QString group, QSettings *settings) {
-    settings->beginGroup(QString(group).append(".columns"));
-    for (int section = 0; section < viewHeader->count(); ++section) {
-        auto name = model->headerData(section, Qt::Horizontal).toString();
-        auto width = viewHeader->sectionSize(section);
-        settings->setValue(name + ".width", width);
-        settings->setValue(name + ".pos", viewHeader->visualIndex(section));
-    }
-    settings->endGroup();
+void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
+    if (!dialog::confirmDiscardChanges(window, model())) event->ignore();
+    else settings::saveWindowState(settingsGroup, window, model(), viewHeader);
 }
 
-void EntityView::restore(QString group, QSettings *settings) {
-    auto model = itemView->model();
-    auto sortColumn = settings->value(group + "/sort.column", defaultSort).toString();
-    if (!sortColumn.isEmpty()) {
-        auto sortOrder = settings->value(group + "/sort.order", 0).toInt();
-        auto index = columnIndex(sortColumn);
-        viewHeader->setSortIndicator(index, static_cast<Qt::SortOrder>(sortOrder));
+void EntityView::restoreSelection() {
+    if (!lastSelection.isEmpty()) {
+        QModelIndex index;
+        for (int row : std::as_const(lastSelection)) index = sortModel.index(row, 0, index);
+        itemView->setCurrentIndex(index);
     }
-    for (int section = 0; section < viewHeader->count(); ++section) {
-        bool ok;
-        auto name = model->headerData(section, Qt::Horizontal, Qt::DisplayRole).toString();
-        QString column = group + ".columns/" + name;
-        auto width = settings->value(column + ".width").toInt(&ok);
-        if (ok) viewHeader->resizeSection(section, width);
-        auto pos = settings->value(column + ".pos").toInt(&ok);
-        if (ok) viewHeader->moveSection(viewHeader->visualIndex(section), pos);
-    }
-}
-
-bool selectEditColumn(QModelIndex &index) {
-    auto columnCount = index.model()->columnCount();
-    while (index.column() < columnCount) {
-        if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
-        index = index.sibling(index.row(), index.column()+1);
-    }
-    return false;
-}
-
-void EntityView::startEdit(int rowIndex) {
-    auto index = sortModel.index(rowIndex, 0);
-    if (selectEditColumn(index)) {
-        itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-        itemView->edit(index);
-    }
-}
-
-bool EntityView::confirmLoadData(QString loadingMessage) {
-    if (dialog::confirmDiscardChanges(window, model)) {
-        itemView->setEnabled(false); // TODO save/restore selection
-        statusBar->addMessage(loadingMessage);
-        return true;
-    }
-    return false;
 }
 
 void EntityView::enableUi() {
-    statusBar->clear();
+    statusBar.clear();
     itemView->setEnabled(true);
+    restoreSelection();
 }
 
-QAction *EntityView::addAction(const QString text) {
-    auto addAction = finances::iconAction(finances::AddCircle, text, QKeySequence::New, this, SLOT(addRow()));
-    connect(&itemDelegate, &TableItemDelegate::openEditor, addAction, [=]() { addAction->setEnabled(false); });
-    connect(&itemDelegate, &TableItemDelegate::closeEditor, addAction, [=]() { addAction->setEnabled(true); });
-    return addAction;
+void EntityView::disableUi(const QString &message) {
+    lastSelection.clear();
+    for (auto i = itemView->currentIndex(); i.isValid(); i = i.parent()) lastSelection.insert(0, i.row());
+    statusBar.addMessage(message);
+    itemView->setEnabled(false);
 }
 
-QAction *EntityView::deleteAction(const QString text, std::function<bool(const QModelIndex &)> enableDelete) {
-    auto action = finances::iconAction(finances::Trash, text, QKeySequence::Delete, this, SLOT(queueDeletes()));
-    auto setEnabled = [=, this]() {
-        auto indexes = sortModel.mapSelectionToSource(itemView->selectionModel()->selection()).indexes();
-        bool enabled = !indexes.empty();
-        for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= enableDelete(*i);
-        action->setEnabled(enabled);
-    };
-    setEnabled();
-    connect(itemView->selectionModel(), &QItemSelectionModel::selectionChanged, this, setEnabled);
-    return action;
+void EntityView::removeMessage(const QString &message) {
+    statusBar.removeMessage(message);
+    if (statusBar.isEmpty()) {
+        itemView->setEnabled(true);
+        restoreSelection();
+    }
 }
 
-QAction *EntityView::undoAction() {
-    auto undoAction = finances::iconAction(finances::Undo, tr("Undo"), QKeySequence::Undo, this, SLOT(undoChanges()));
-    return undoAction;
+void EntityView::focusItemView() {
+    if (itemView->isEnabled()) itemView->setFocus();
+    else itemView->installEventFilter(new ViewFocusFilter);
 }
 
 void EntityView::dataChanged() {
-    saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
-    window->setWindowModified(model->hasUnsavedChanges());
-}
-
-void EntityView::addRow() {
-    int rowIndex = sortModel.mapFromSource(model->index(model->queueAdd(), 0)).row();
-    startEdit(rowIndex);
-}
-
-void EntityView::queueDeletes() {
-    auto selection = sortModel.mapSelectionToSource(itemView->selectionModel()->selection());
-    for (auto i : selection.indexes()) model->queueDelete(i);
-}
-
-void EntityView::undoChanges() {
-    auto selection = sortModel.mapSelectionToSource(itemView->selectionModel()->selection());
-    for (auto i : selection.indexes()) model->undoChange(i);
+    saveAction->setEnabled(model()->hasUnsavedChanges() && model()->isValid());
+    window->setWindowModified(model()->hasUnsavedChanges());
 }
 
 void EntityView::showValidation(const QModelIndex &index) {
     // make sure index is in selection
     if (!itemView->selectionModel()->hasSelection()) itemView->selectionModel()->select(index, QItemSelectionModel::Select);
     auto message = index.data(finances::ValidationMessageRole);
-    if (!message.isNull()) statusBar->showMessage(message.toString());
-    else statusBar->clearMessage();
+    if (!message.isNull()) statusBar.showMessage(message.toString());
+    else statusBar.clearMessage();
 }
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, StatusBar *statusBar, const QString filterLabel,
-                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, view, view->horizontalHeader(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
+EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, const QString &entityName)
+    : EntityView(window, model, view, view->horizontalHeader(), entityName)
 {
     view->resizeColumnsToContents();
-    view->setSortingEnabled(true);
     // view->verticalHeader()->setDefaultSectionSize(5); // minimize row height
-
-    viewHeader->setSectionsMovable(true);
-    viewHeader->setSortIndicatorShown(true);
-    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
-}
-
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTreeView *view, StatusBar *statusBar, const QString filterLabel,
-                       const QString defaultSort, const char *saveSlot, const char *loadSlot, QList<QAction *> actions)
-    : EntityView(window, model, view, view->header(), statusBar, filterLabel, defaultSort, saveSlot, loadSlot, actions)
-{
-    using enum QAbstractItemView::EditTrigger;
-    view->setSortingEnabled(true);
-    view->setSelectionBehavior(QAbstractItemView::SelectItems);
-    view->setEditTriggers(AllEditTriggers ^ CurrentChanged);
-
-    viewHeader->setSectionsMovable(true);
-    viewHeader->setSortIndicatorShown(true);
-    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 }

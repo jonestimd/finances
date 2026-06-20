@@ -4,7 +4,7 @@ QTreeView {
     background: #ffffffff;
     alternate-background-color: rgb(230, 242, 255);
     gridline-color: rgb(225, 225, 225);
-    border: 1px solid gridline-color;
+    border: 1px solid palette(dark);
     selection-color: #ff000000;
     selection-background-color: rgb(0, 212, 232);
     color: #ff000000;
@@ -17,18 +17,14 @@ QTreeView:disabled {
     color: #ff404040;
 }
 
-QTableView::item:focus,
-QTreeView::item:focus {
-    border: 1 solid rgb(100, 100, 255);
-}
-
 QTreeView::item:selected {
     color: #ff000000;
     background-color: rgb(0, 212, 232);
 }
 
 QTableView QLineEdit,
-QTreeView QLineEdit {
+QTreeView QLineEdit,
+QTreeView QDateEdit {
     background: #ffffffff;
     selection-color: #ff000000;
     selection-background-color: rgb(0, 212, 232);

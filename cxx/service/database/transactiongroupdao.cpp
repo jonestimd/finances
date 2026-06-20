@@ -1,4 +1,20 @@
 #include "transactiongroupdao.h"
+#include "dbdialect.h"
+
+#define CREATE_TABLE_QUERY(idtype) \
+    "create table tx_group (\n" \
+    "    id " idtype ",\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    description text,\n" \
+    "    name varchar(50) not null,\n" \
+    "    constraint tx_group_ak unique (name)\n" \
+    ")"
+
+static const auto pgCreateTableSql = CREATE_TABLE_QUERY(PG_ID_TYPE);
+static const auto mysqlCreateTableSql = CREATE_TABLE_QUERY(MYSQL_ID_TYPE);
+static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -20,18 +36,34 @@ static const auto insertQuery = R"(
 insert into tx_group (name, description, version, change_user, change_date)
 values (:name, :description, 0, :user, current_timestamp))";
 
-static const auto deleteQuery = "delete from tx_group where id = :id";
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = getAllQuery,\
+    .updateSql = updateQuery,\
+    .insertSql = insertQuery,\
+    .deleteSql =  "delete from tx_group where id = :id",
 
-TransactionGroupDao::TransactionGroupDao()
-    : EntityDao<TransactionGroup>{getAllQuery, updateQuery, insertQuery, deleteQuery, "TransactionGroupDao",
-                                  QObject::tr("Groups have been modified.  Please reload and try again.")} {}
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
+};
+
+TransactionGroupDao::TransactionGroupDao(const QString &dbType)
+    : NamedEntityDao<TransactionGroup>{DB_TYPE_QUERY(dbType, Queries), "TransactionGroupDao",
+                                       QObject::tr("Groups have been modified.  Please reload and try again.")}
+{}
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {
-    EntityDao::bindUpdateValues(query, entity);
+    NamedEntityDao::bindUpdateValues(query, entity);
     query.bindValue(":description", entity->description);
 }
 
 void TransactionGroupDao::bindInsertValues(QSqlQuery &query, TransactionGroup *entity) {
-    EntityDao::bindInsertValues(query, entity);
+    NamedEntityDao::bindInsertValues(query, entity);
     query.bindValue(":description", entity->description);
 }

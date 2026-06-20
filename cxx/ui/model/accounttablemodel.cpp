@@ -14,43 +14,57 @@
 #define COMPANY_COLUMN 1
 #define NAME_COLUMN 2
 
-class AccountValidatorFactory : public UniqueValidatorFactory {
-public:
-    AccountValidatorFactory() : UniqueValidatorFactory{NAME_COLUMN} {}
+namespace accounttablemodel {
+    class AccountValidatorFactory : public UniqueValidatorFactory {
+    public:
+        AccountValidatorFactory() : UniqueValidatorFactory{NAME_COLUMN} {}
 
-protected:
-    virtual QStringList rowValues(const QString value, const QModelIndex &index) const override {
-        auto values = UniqueValidatorFactory::rowValues(value, index);
-        values.append(index.siblingAtColumn(COMPANY_COLUMN).data().toString());
-        return values;
-    }
+    protected:
+        virtual QStringList rowValues(const QString value, const QModelIndex &index) const override {
+            auto values = UniqueValidatorFactory::rowValues(value, index);
+            values.append(index.siblingAtColumn(COMPANY_COLUMN).data().toString());
+            return values;
+        }
 
-    virtual bool isValidated(int columnIndex) const override {
-        return UniqueValidatorFactory::isValidated(columnIndex) || columnIndex == COMPANY_COLUMN;
-    }
-};
+        virtual bool isValidated(int columnIndex) const override {
+            return UniqueValidatorFactory::isValidated(columnIndex) || columnIndex == COMPANY_COLUMN;
+        }
+    };
 
-AccountTableModel::AccountTableModel(AccountStore *store, QObject *parent, AddCompany addCompany)
+    class BalanceColumnAdapter : public AmountColumnAdapter<Account> {
+    public:
+        BalanceColumnAdapter(QString title) : AmountColumnAdapter{title, &Account::balance, moneyFormat, false} {}
+
+        virtual QVariant value(const Account *row, const QModelIndex &index, const QVariant current, int role) const override {
+            auto value = AmountColumnAdapter::value(row, index, current, role);
+            if (role == Qt::DisplayRole) return row->currency.toString().append(value.toString());
+            return value;
+        }
+    };
+}
+
+using namespace accounttablemodel;
+
+AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
     : PodTableModel<Account, AccountService>{
         store,
         QList<ColumnAdapter<Account>*>{
             new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company, CompanyService>(tr("Company"), &Account::companyId, store->companyStore, addCompany),
+            new RelationColumnAdapter<Account, Company, CompanyStore>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
             new ColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
             new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
             new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
             new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
-            new AmountColumnAdapter<Account>(tr("Balance"), &Account::balance, accountBalance, false),
+            new BalanceColumnAdapter(tr("Balance")),
         },
-        parent,
     }
 {}
 
 void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
-            auto account = children[i];
+            auto account = children.at(i);
             if (!companyIds.contains(account->companyId.toLongLong())) {
                 setData(index(rowIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }

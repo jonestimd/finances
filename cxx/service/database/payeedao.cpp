@@ -1,4 +1,15 @@
 #include "payeedao.h"
+#include "dbdialect.h"
+
+#define CREATE_TABLE_QUERY(idtype) \
+    "create table payee (\n" \
+    "    id " idtype ",\n" \
+    "    name varchar(200) not null,\n" \
+    "    change_date timestamp not null default current_timestamp,\n" \
+    "    change_user varchar(50) not null,\n" \
+    "    version bigint not null,\n" \
+    "    constraint payee_ak unique (name)\n" \
+    ")"
 
 static const auto getAllQuery = R"(
 with summary as (
@@ -21,8 +32,24 @@ values (:name, 0, :user, current_timestamp))";
 
 static const auto deleteQuery = "delete from payee where id = :id";
 
-PayeeDao::PayeeDao()
-    : EntityDao<Payee>{getAllQuery, updateQuery, insertQuery, deleteQuery, "PayeeDao",
-                       QObject::tr("Payees have been modified.  Please reload and try again.")}
-{}
+#define DAO_QUERIES(idtype) \
+    .createTableSql = CREATE_TABLE_QUERY(idtype),\
+    .getAllSql = getAllQuery,\
+    .updateSql = updateQuery,\
+    .insertSql = insertQuery,\
+    .deleteSql = deleteQuery,
 
+static const DaoQueries pgQueries{
+    DAO_QUERIES(PG_ID_TYPE)
+};
+static const DaoQueries mysqlQueries{
+    DAO_QUERIES(MYSQL_ID_TYPE)
+};
+static const DaoQueries sqliteQueries{
+    DAO_QUERIES(SQLITE_ID_TYPE)
+};
+
+PayeeDao::PayeeDao(const QString &dbType)
+    : NamedEntityDao<Payee>{DB_TYPE_QUERY(dbType, Queries), "PayeeDao",
+                            QObject::tr("Payees have been modified.  Please reload and try again.")}
+{}

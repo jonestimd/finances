@@ -1,77 +1,73 @@
 #include "accountswindow.h"
 #include "settings.h"
-#include "ui/widget/dialog.h"
-#include <QtSql>
-#include <QtWidgets>
-#include <QtConcurrent>
+#include "statusmessage.h"
+#include "ui/uicontext.h"
 
-#define LOADING_ACCOUNTS "Loading accounts..."
-#define SAVING_ACCOUNTS "Saving accounts..."
-#define LOADING_COMPANIES "Loading companies..."
-#define SAVING_COMPANY "Saving company..."
 #define SETTINGS_GROUP "accounts"
 
-using namespace std::placeholders;
 using namespace finances;
 
-AccountsWindow::AccountsWindow(DataStore *dataStore)
-    : StatusWindow()
-    , dataStore{dataStore}
-    , model(dataStore->accountStore, this, std::bind(&AccountsWindow::addCompany, this, _1))
-    , tableSort{this, &model, itemView, &statusBar, tr("Account"), tr("Name"), SLOT(saveAccounts()), SLOT(loadAccounts()), QList{
-        iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
-        iconAction(FontIcon::Person, tr("Payees"), tr("alt+p", "payees"), this, SLOT(showPayees())),
-        iconAction(FontIcon::Category, tr("Categories"), tr("alt+k", "categories"), this, SLOT(showCategories())),
-        iconAction(FontIcon::Workspaces, tr("Groups"), tr("alt+g", "groups"), this, SLOT(showGroups())),
-        iconAction(FontIcon::AreaChart, tr("Securities"), tr("alt+s", "securities"), this, SLOT(showSecurities())),
-    }}
+AccountsWindow::AccountsWindow(UiContext *context)
+    : AppWindow{
+        tr("Account"),
+        new AccountTableModel(context->dataStore->accountStore, std::bind_front(&AccountsWindow::addCompany, this)),
+        new QTableView()
+    }
+    , context{context}
+    , dataStore{context->dataStore}
+    , showAccount{iconAction(FontIcon::Table, tr("Transactions"), tr("alt+t", "transactions"), this, SLOT(showTransactions()), false)}
 {
-    setCentralWidget(itemView);
+    entityView.addActions({
+        iconAction(FontIcon::AccountBalance, tr("Companies"), tr("alt+c", "companies"), this, SLOT(showCompanies())),
+        context->payeesAction(),
+        context->categoriesAction(),
+        context->groupsAction(),
+        context->securitiesAction(),
+        showAccount,
+    });
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
-    // QMetaObject::connectSlotsByName(this);
 
-    addToolBar(&tableSort.toolbar);
-
-    auto companyStore = dataStore->accountStore->companyStore;
+    auto companyStore = &dataStore->accountStore->companyStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setAccounts(QList<qlonglong>)));
     connect(companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
 
-    if (dataStore->accountStore->load(this)) model.setRows(dataStore->accountStore->ids());
-    else statusBar.addMessage(tr(LOADING_ACCOUNTS));
-    if (!companyStore->load(this)) statusBar.addMessage(tr(LOADING_COMPANIES));
 
-    tableSort.enableColumnResize();
+    if (dataStore->accountStore->load(&entityView)) {
+        model()->setRows(dataStore->accountStore->ids());
+        model()->companiesLoaded(dataStore->accountStore->companyStore.ids());
+    }
 
-    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &tableSort);
+    settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
 
 AccountsWindow::~AccountsWindow() {
+    delete model();
     if (companiesDialog) delete companiesDialog;
-    if (payeesWindow) delete payeesWindow;
-    if (categoriesWindow) delete categoriesWindow;
-    if (groupsWindow) delete groupsWindow;
-    if (securitiesWindow) delete securitiesWindow;
 }
 
-void AccountsWindow::loadAccounts() {
-    if (tableSort.confirmLoadData(tr(LOADING_ACCOUNTS))) dataStore->accountStore->load(this, true);
+AccountTableModel *AccountsWindow::model() {
+    return entityView.model<AccountTableModel>();
 }
 
-void AccountsWindow::saveAccounts() {
-    disableUi(tr(SAVING_ACCOUNTS));
-    dataStore->accountStore->update(this, model.unsavedChanges(), model.unsavedAdds(), model.unsavedDeletes());
+void AccountsWindow::loadData() {
+    if (entityView.confirmLoadData()) dataStore->accountStore->load(&entityView, true);
+}
+
+void AccountsWindow::saveData() {
+    entityView.disableUi(tr(SAVING_ACCOUNTS));
+    dataStore->accountStore->update(this, model());
 }
 
 void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
-    statusBar.removeMessage(tr(LOADING_COMPANIES));
-    model.companiesLoaded(companyIds);
+    entityView.removeMessage(tr(LOADING_COMPANIES));
+    model()->companiesLoaded(companyIds);
 }
 
 void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {
-    model.setRows(accountIds);
-    statusBar.removeMessage(tr(LOADING_ACCOUNTS));
-    statusBar.removeMessage(tr(SAVING_ACCOUNTS));
-    itemView->setEnabled(true);
+    model()->setRows(accountIds);
+    entityView.removeMessage(tr(LOADING_ACCOUNTS));
+    entityView.removeMessage(tr(SAVING_ACCOUNTS));
 }
 
 void AccountsWindow::showCompanies() {
@@ -82,46 +78,32 @@ void AccountsWindow::showCompanies() {
     companiesDialog->show();
 }
 
-void AccountsWindow::showPayees() {
-    if (!payeesWindow) payeesWindow = new PayeesWindow(dataStore);
-    payeesWindow->show();
+void AccountsWindow::showTransactions() {
+    if (entityView.selectedIndex().isValid()) {
+        auto accountId = model()->getRow(entityView.selectedIndex())->id.toLongLong();
+        context->showTransactions(accountId);
+    }
 }
 
-void AccountsWindow::showCategories() {
-    if (!categoriesWindow) categoriesWindow = new CategoriesWindow(dataStore);
-    categoriesWindow->show();
-}
-
-void AccountsWindow::showGroups() {
-    if (!groupsWindow) groupsWindow = new GroupsWindow(dataStore);
-    groupsWindow->show();
-}
-
-void AccountsWindow::showSecurities() {
-    if (!securitiesWindow) securitiesWindow = new SecuritiesWindow(dataStore);
-    securitiesWindow->show();
-}
-
-void AccountsWindow::closeEvent(QCloseEvent *event) {
-    if (!dialog::confirmDiscardChanges(this, &model)) event->ignore();
-    else settings::saveWindowState(SETTINGS_GROUP, this, &tableSort);
-}
-
-void AccountsWindow::keyPressEvent(QKeyEvent *event) {
-    if (!tableSort.focusFilter(event)) QMainWindow::keyPressEvent(event);
+void AccountsWindow::selectionChanged() {
+    showAccount->setEnabled(entityView.selectedIndex().isValid());
 }
 
 void AccountsWindow::addCompany(const QString &name) {
-    disableUi(tr(SAVING_COMPANY));
-    dataStore->accountStore->companyStore->addCompany(this, name, "newCompany");
+    entityView.disableUi(tr(SAVING_COMPANY));
+    dataStore->accountStore->companyStore.addCompany(this, name, "newCompany");
 }
 
 void AccountsWindow::newCompany(const Company *company) {
     if (company) {
-        auto index = tableSort.selectedIndex();
-        model.setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
+        auto index = entityView.selectedIndex();
+        model()->setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
     }
-    statusBar.removeMessage(tr(SAVING_COMPANY));
-    itemView->setEnabled(true);
-    itemView->setFocus(Qt::ActiveWindowFocusReason);
+    entityView.removeMessage(tr(SAVING_COMPANY));
+    // entityView.itemView->setEnabled(true);
+    entityView.itemView->setFocus(Qt::ActiveWindowFocusReason);
+}
+
+const char *AccountsWindow::settingsGroup() const {
+    return SETTINGS_GROUP;
 }

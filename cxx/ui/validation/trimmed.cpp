@@ -1,12 +1,12 @@
 #include "trimmed.h"
 #include <QModelIndex>
 
-TrimmedValidatorFactory::TrimmedValidatorFactory() {}
+TrimmedValidatorFactory::TrimmedValidatorFactory() : ValidatorFactory{false, true} {}
 
 const QString TrimmedValidatorFactory::isValid(const QModelIndex &index, QString &value) const {
     if (value.length() > 0) {
-        if ((value.front().isSpace())) return formatMessage(tr("%1 contains leading whitespace"), index);
-        if ((value.back().isSpace())) return formatMessage(tr("%1 contains trailing whitespace"), index);
+        if ((value.front().isSpace())) return tr("%1 contains leading whitespace").arg(columnHeader(index));
+        if ((value.back().isSpace())) return tr("%1 contains trailing whitespace").arg(columnHeader(index));
     }
     return nullptr;
 }

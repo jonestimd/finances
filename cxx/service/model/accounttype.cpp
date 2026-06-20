@@ -1,7 +1,7 @@
 #include "accounttype.h"
 #include "account.h"
 
-QHash<QString, const AccountType*> AccountType::values;
+QHash<const QString, const AccountType*> AccountType::values;
 
 AccountType::AccountType(const char *code, const QString name, bool security)
     : EnumValue(code, name), security{security}

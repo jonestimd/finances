@@ -3,17 +3,20 @@
 
 #include "database/connectionpool.h"
 #include "database/categorydao.h"
+#include "database/transactiondetaildao.h"
 #include "entityservice.h"
 
-class CategoryService : public EntityService<Category, CategoryDao>
-{
+class CategoryService : public EntityService<Category, CategoryDao> {
+    TransactionDetailDao &detailDao;
+
 public:
-    CategoryService(ConnectionPool *connectionPool);
+    CategoryService(ConnectionPool *connectionPool, CategoryDao &dao, TransactionDetailDao &detailDao);
 
     virtual QList<const Category*> update(BulkUpdate<Category> &changes, const QString &user) override;
 
-    QList<const Category*> setParent(const Category *category, const QVariant parentId, const QString &user);
-    QList<const Category*> merge(const Category *category, const QVariant destinationId, const QString &user);
+    QHash<qlonglong, const Category*> setParent(const Category *category, const QVariant parentId, const QString &user);
+    // TODO return updated tx details?
+    QHash<qlonglong, const Category *> merge(const Category *category, const QVariant destinationId, const QString &user);
 };
 
 #endif // CATEGORY_SERVICE_H

@@ -1,11 +1,16 @@
 #include "payeestore.h"
+#include "datastore.h"
 
-PayeeStore::PayeeStore(PayeeService *service) : EntityStore{service} {}
+PayeeStore::PayeeStore(PayeeService *service, DataStore *dataStore)
+    : EntityStore{service}
+    , dataStore{dataStore}
+{}
 
 void PayeeStore::mergePayees(QWidget *source, const Payee *payee, const QVariant destinationId) {
     doInBackground(source, [this, payee, destinationId] {
         auto payees = service->merge(payee, destinationId, user);
-        update(payees, QList{payee});
+        dataStore->transactionStore->replacePayee(payee->id, destinationId);
+        update(payees.values(), QList{payee});
         emit valuesLoaded(ids());
     });
 }

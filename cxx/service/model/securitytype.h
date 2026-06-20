@@ -16,7 +16,7 @@ public:
     static const SecurityType mutualFund;
     static const SecurityType stock;
 
-    static QHash<QString, const SecurityType*> values;
+    static QHash<const QString, const SecurityType*> values;
 };
 
 #endif // SECURITYTYPE_H

@@ -3,7 +3,7 @@
 # $ cmake --build build -v
 # $ cmake --build build --target update_translations
 # env:
-# CMAKE_PREFIX_PATH=/opt/Qt/6.7.2/gcc_64/lib/cmake
+# CMAKE_PREFIX_PATH=/opt/Qt/6.11.0/gcc_64/lib/cmake
 cmake_minimum_required(VERSION 3.27)
 
 project(finances VERSION 0.1 LANGUAGES CXX)
@@ -13,39 +13,70 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(CTest)
 include(ExternalProject)
+
+find_file(MAKE make ${PATH})
+find_file(COPY cp ${PATH})
+
+ExternalProject_Add(sqlite3
+    GIT_REPOSITORY git@github.com:sqlite/sqlite.git
+    GIT_TAG release
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure --disable-tcl
+    BUILD_IN_SOURCE true
+    BUILD_COMMAND
+        ${MAKE} sqlite3.c && ${CMAKE_C_COMPILER} -g -I. -fPIC -shared ext/misc/decimal.c -o decimal.so
+    BUILD_BYPRODUCTS
+        <SOURCE_DIR>/decimal.so
+    INSTALL_COMMAND ""
+)
+ExternalProject_Get_Property(sqlite3 SOURCE_DIR)
+set(SQLITE_EXTENSION_DIR ${SOURCE_DIR})
+add_custom_target(decimal.so
+    DEPENDS sqlite3
+    COMMAND ${COPY} ${SQLITE_EXTENSION_DIR}/decimal.so .
+)
 
 ExternalProject_Add(qdecimal
     GIT_REPOSITORY git@github.com:semihc/qdecimal.git
-    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} -DCMAKE_C_FLAGS=-fPIC
     INSTALL_COMMAND ""
     BUILD_BYPRODUCTS
         <BINARY_DIR>/decnumber/libdecnumber.a
         <BINARY_DIR>/src/libqdecimal.a
 )
 ExternalProject_Get_Property(qdecimal SOURCE_DIR BINARY_DIR)
+set(QDECIMAL_SOURCE_DIR ${SOURCE_DIR})
+set(QDECIMAL_BINARY_DIR ${BINARY_DIR})
 add_library(libdecnumber STATIC IMPORTED)
 add_dependencies(libdecnumber qdecimal)
 set_target_properties(libdecnumber
-    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/decnumber/libdecnumber.a
+    PROPERTIES IMPORTED_LOCATION ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
 )
 add_library(libqdecimal STATIC IMPORTED)
 add_dependencies(libqdecimal qdecimal)
 set_target_properties(libqdecimal
-    PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/src/libqdecimal.a
+    PROPERTIES IMPORTED_LOCATION ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
 )
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgetsl)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgetsl)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test LinguistTools)
 
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)
 
+add_library(qtcommon OBJECT
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/qtcommon.cpp ${CMAKE_CURRENT_LIST_DIR}/cxx/qtcommon.h
+)
+target_include_directories(qtcommon PRIVATE
+    $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
+)
+
 set(PROJECT_RESOURCES
-    cxx/ui/resources/finances.qrc
-    cxx/ui/resources/finances.svg
-    cxx/ui/resources/finances.qss
-    cxx/ui/resources/minimal-dark.qss
-    cxx/ui/resources/minimal-light.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qrc
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.svg
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-dark.qss
+    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-light.qss
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -53,8 +84,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_RESOURCES}
     )
-    add_dependencies(finances libdecnumber libqdecimal)
-    add_subdirectory(cxx/)
+    add_dependencies(finances libdecnumber libqdecimal decimal.so)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET finances APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -73,9 +103,15 @@ else()
     endif()
 endif()
 
-target_include_directories(finances PRIVATE
-    ${SOURCE_DIR}/src
-    ${SOURCE_DIR}/decnumber
+set(QT_SQLITE_INCLUDE_DIR "${CMAKE_PREFIX_PATH}/../Src/qtbase/src/3rdparty/sqlite")
+file(GLOB_RECURSE QT_SQLITE_OBJ_FILE
+    ${CMAKE_PREFIX_PATH}/../Src/sqlite3.c.o
+)
+
+target_include_directories(finances PUBLIC
+    ${QDECIMAL_SOURCE_DIR}/src
+    ${QDECIMAL_SOURCE_DIR}/decnumber
+    ${QT_SQLITE_INCLUDE_DIR}
     ${CMAKE_HOME_DIRECTORY}/cxx
 )
 
@@ -83,10 +119,14 @@ target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Concurrent
+    ${QT_SQLITE_OBJ_FILE}
+    $<TARGET_OBJECTS:qtcommon>
     # comment out next 2 lines for initial build with Ninja
     libqdecimal
     libdecnumber
 )
+
+add_subdirectory(cxx/)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

@@ -7,8 +7,8 @@
 
 class ComboBoxModel : public QAbstractListModel {
 public:
-    typedef std::function<QString(const NamedEntity *)> GetName;
-    typedef std::function<void(const QString &)> CreateValue;
+    typedef std::function<QString(const NamedEntity*)> GetName;
+    typedef std::function<void(const QString&)> CreateValue;
 
     class Validator : public QValidator {
         friend ComboBoxModel;
@@ -28,13 +28,10 @@ private:
 public:
     explicit ComboBoxModel(const QList<const NamedEntity*> values, GetName getName, CreateValue newValue = nullptr);
 
-    const NamedEntity *valueOf(const QString &name) const;
-
     void addOption(const QString &name);
 
     // QAbstractItemModel interface
     int rowCount(const QModelIndex &parent) const override;
-    int columnCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
 };
 

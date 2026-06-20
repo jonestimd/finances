@@ -11,24 +11,22 @@
 #include <QStatusBar>
 #include <QTableView>
 
-class CompaniesWindow : public QDialog
-{
+class CompaniesWindow : public QDialog {
     Q_OBJECT
     QVBoxLayout layout;
-    StatusBar statusBar{};
     CompanyStore *store;
     CompanyTableModel model;
     QTableView *itemView{new QTableView(this)};
-    EntityView tableSort;
+    EntityView entityView;
 
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
+    Q_INVOKABLE void loadData();
+    Q_INVOKABLE void saveData();
     Q_INVOKABLE void enableUi();
 
 protected Q_SLOTS:
-    void loadCompanies();
-    void saveCompanies();
     void setCompanies(const QList<qlonglong> companyIds);
 
 protected:

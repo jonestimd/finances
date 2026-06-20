@@ -2,27 +2,40 @@
 #define ENTITYSTORE_H
 
 #include "background.h"
+#include "comboboxmodel.h"
 #include "service/model/bulkupdate.h"
+#include "ui/widget/entityview.h"
 #include <QHash>
 #include <QWidget>
 
 class DataStore;
 
-class EntityStoreSignals : public QObject {
+class AbstractEntityStore : public QObject {
     Q_OBJECT
 
 protected:
     static const QString user;
 
 public:
-    EntityStoreSignals(QObject *parent = nullptr);
+    AbstractEntityStore(QObject *parent = nullptr);
 
 Q_SIGNALS:
     void valuesLoaded(QList<qlonglong> ids);
 };
 
-template<typename T, class Service>
-class EntityStore : public EntityStoreSignals {
+/**
+ * @brief Template for a class that stores database entities (rows).
+ * @details The `EntityStore` assumes ownership of the database entities and is responsible
+ * for deleting them.
+ * @tparam T The class that represents a row in the database table.
+ * @tparam Service the class that provides access to the database table.
+ * The class must provide the following methods:
+ *   - `getAll`: retrieves entities from the database
+ *   - `update`: saves changes to the database
+ * @tparam GetAllArgs Types for the arguments used to retrieve data for a UI view (usually empty).
+ */
+template<typename T, class Service, typename... GetAllArgs>
+class EntityStore : public AbstractEntityStore {
     QHash<qlonglong, const T*> byId{};
     bool loaded{false};
 protected:
@@ -43,24 +56,49 @@ public:
         return byId.size();
     }
 
-    const T *value(qlonglong id) const {
-        return byId.value(id);
+    const T *value(const QVariant &id) const {
+        return byId.value(id.toLongLong());
     }
 
-    bool contains(qlonglong id) const {
-        return byId.contains(id);
+    bool contains(const QVariant &id) const {
+        return byId.contains(id.toLongLong());
     }
 
-    bool load(QWidget *source, bool reload = false) {
+    void forEachEntry(std::function<void(qlonglong, const T*)> func) const {
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) func(i.key(), i.value());
+    }
+
+    template<class V>
+    void appendValues(QList<const V*> &values, QList<qlonglong> excludeIds = QList<qlonglong>{}) const {
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) {
+            if (!excludeIds.contains(i.key())) values.append(i.value());
+        }
+    }
+
+    ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const {
+        QList<const NamedEntity*> options;
+        for (auto i = byId.cbegin(); i != byId.cend(); i++) options.append(i.value());
+        return new ComboBoxModel(options, NamedEntity::getName, createValue);
+    }
+
+    /**
+     * @return Returns `true` if the data is already loaded or `false` if the data is loading in the background.
+     */
+    bool load(EntityView *view, const QString &statusMessage, GetAllArgs... args, bool reload = false) {
         if (!reload && loaded) return true;
-        doInBackground(source, [=, this]() {
-            setValues(service->getAll());
+        view->disableUi(statusMessage);
+        doInBackground(view->statusBar.parentWidget(), [=, this]() {
+            setValues(args..., service->getAll(args...));
+            QMetaObject::invokeMethod(view, "removeMessage", statusMessage);
             emit valuesLoaded(ids());
         });
         return false;
     }
 
-    void update(QWidget *source, const QList<T*> updates, const QList<T*> adds, const QList<const T*> deletes) {
+    /**
+     * @brief update Call service to persist changes and update stored entities.
+     */
+    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes) {
         doInBackground(source, [=, this]() {
             auto changes = BulkUpdate{updates, adds, deletes};
             update(service->update(changes, user), deletes);
@@ -68,7 +106,17 @@ public:
         });
     }
 
+    template<class Model>
+    void update(QWidget *source, Model *model) {
+        update(source, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes());
+    }
+
 protected:
+    /**
+     * @brief update Update entities with persisted changes from service.
+     * @param updates Added/updated entities.  Replaced entities are deleted.
+     * @param deletes Entities that have been removed from database.
+     */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
         for (auto updated : updates) {
             auto id = updated->id.toLongLong();
@@ -76,21 +124,26 @@ protected:
             byId[id] = updated;
             if (oldValue) delete oldValue;
         }
-        for (auto i : deletes) delete byId.take(i->id.toLongLong());
+        for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
     }
 
-    virtual void setValues(QList<const T*> values) {
-        QList<qlonglong> ids;
-        for (auto value : values) {
-            auto id = value->id.toLongLong();
-            auto oldValue = byId.value(id);
-            ids.append(id);
-            byId.insert(id, value);
-            if (oldValue) delete oldValue;
+    void removeValues(const QList<qlonglong> &ids) {
+        for (auto id : ids) {
+            auto oldEntity = byId.take(id);
+            if (oldEntity) delete oldEntity;
         }
-        erase_if(byId, [ids](QHash<qlonglong, const T*>::iterator i) {
-            return !ids.contains(i.key());
-        });
+    }
+
+    /**
+     * @brief setValues Add/replace entities in the store.
+     * @details Replaced entities are deleted.
+     */
+    virtual void setValues(GetAllArgs... args, const QHash<qlonglong, const T*> values) {
+        for (auto [id, entity] : values.asKeyValueRange()) {
+            auto oldEntity = byId.take(id);
+            byId.insert(id, entity);
+            if (oldEntity) delete oldEntity;
+        }
         this->loaded = true;
     }
 };

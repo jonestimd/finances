@@ -3,36 +3,34 @@
 
 #include "../model/datastore.h"
 #include "../model/categorytablemodel.h"
-#include "entityview.h"
-#include "statuswindow.h"
+#include "appwindow.h"
 #include <QMainWindow>
 #include <QTableView>
 #include <ui/model/comboboxmodel.h>
 
-class CategoriesWindow : public StatusWindow {
+class CategoriesWindow : public AppWindow {
     Q_OBJECT
     CategoryStore *store;
-    CategoryTableModel model;
-    QTreeView *itemView{new QTreeView(this)};
-    EntityView tableSort;
     QAction *moveAction;
     QAction *mergeAction;
     ComboBoxModel::GetName getName;
 
 public:
     CategoriesWindow(DataStore *dataStore);
+    ~CategoriesWindow();
+
+    CategoryTableModel *model();
+
+    void loadData() override;
+    void saveData() override;
 
 public Q_SLOTS:
-    void loadCategories();
-    void saveCategories();
     void setCategories(const QList<qlonglong> categoryIds);
     void reparent();
     void merge();
-    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void selectionChanged();
 
-    // QWidget interface
 protected:
-    void closeEvent(QCloseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
+    const char *settingsGroup() const override;
 };
 #endif // CATEGORIES_WINDOW_H

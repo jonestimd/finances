@@ -5,15 +5,15 @@
 #include "../model/account.h"
 #include <QtSql/QSqlDatabase>
 
-class AccountDao : public EntityDao<Account> {
+class AccountDao : public NamedEntityDao<Account> {
 public:
-    AccountDao();
+    AccountDao(const QString &dbType);
+
+    using NamedEntityDao::getAll;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Account *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Account *entity) override;
 };
-
-static AccountDao accountDao;
 
 #endif // ACCOUNT_DAO_H

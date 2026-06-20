@@ -5,19 +5,18 @@
 #include "../model/category.h"
 #include <QtSql/QSqlDatabase>
 
-class CategoryDao : public EntityDao<Category> {
-
+class CategoryDao : public NamedEntityDao<Category> {
 public:
-    CategoryDao();
+    CategoryDao(const QString &dbType);
 
-    QList<const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
-    void moveChildren(QSqlDatabase &db, const Category* category, const QVariant destinationId, const QString user);
+    virtual void createTable(const QSqlDatabase &db) const override;
+
+    QHash<qlonglong, const Category*> setParent(QSqlDatabase &db, const Category* category, const QVariant parentId, const QString user);
+    void moveChildren(QSqlDatabase &db, const Category* category, const QVariant destinationId, const QString user) const;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Category *entity) override;
     virtual void bindInsertValues(QSqlQuery &query, Category *entity) override;
 };
-
-static CategoryDao categoryDao;
 
 #endif // CATEGORY_DAO_H

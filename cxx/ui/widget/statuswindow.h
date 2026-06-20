@@ -14,9 +14,8 @@ public:
     explicit StatusWindow();
 
     Q_INVOKABLE void enableUi();
-
-protected:
-    void disableUi(const QString &message);
+    Q_INVOKABLE void addMessage(const QString &message);
+    Q_INVOKABLE void removeMessage(const QString &message);
 };
 
 #endif // STATUSWINDOW_H
