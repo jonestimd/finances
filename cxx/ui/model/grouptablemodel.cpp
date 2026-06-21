@@ -11,7 +11,7 @@ GroupTableModel::GroupTableModel(GroupStore *groupStore)
         QList<ColumnAdapter<TransactionGroup>*>{
             new ColumnAdapter<TransactionGroup>(tr("Name"), &TransactionGroup::name, true, new UniqueValidatorFactory(GROUP_NAME_COLUMN)),
             new ColumnAdapter<TransactionGroup>(tr("Description"), &TransactionGroup::description),
-            new NumberColumnAdapter<TransactionGroup>(tr("Transactions"), &TransactionGroup::transactions),
+            new NumberColumnAdapter<TransactionGroup>(tr("Transactions"), &TransactionGroup::details),
         },
     }
 {}

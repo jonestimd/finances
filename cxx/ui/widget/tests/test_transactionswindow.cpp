@@ -17,6 +17,7 @@
 #define ALT_PAYEE_NAME "Payee 2"
 #define CATEGORY_NAME "Category 1"
 #define ALT_CATEGORY_NAME "Category 2"
+#define GROUP_NAME "Group 1"
 
 #define INITIAL_TRANSACTION_COUNT 3
 #define ALT_INITIAL_TRANSACTION_COUNT 1
@@ -88,6 +89,7 @@ class TestTransactionsWindow : public QObject {
     QVariant securityAccountId;
     QVariant payeeId;
     QVariant categoryId;
+    QVariant groupId;
 
     QSignalSpy *accountUpdatedSpy;
 
@@ -141,11 +143,13 @@ private:
         enterText(holder.view, description);
     }
 
-    void fillDetail(TxWindowHolder& holder, const char* category, const char* amount = nullptr) {
+    void fillDetail(TxWindowHolder& holder, const char* category, const char* amount = nullptr, const char* group = nullptr) {
         if (holder.window->focusWidget() != holder.view) holder.focusWindow();
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
         if (!holder.view->currentIndex().parent().isValid()) QTest::keyClick(holder.view, Qt::Key_Down);
-        QTest::keySequence(holder.view, {Qt::Key_Home, Qt::Key_Tab, Qt::Key_Tab});
+        QTest::keySequence(holder.view, {Qt::Key_Home, Qt::Key_Tab});
+        if (group) selectValue(holder.view, group);
+        QTest::keyClick(holder.view, Qt::Key_Tab);
         selectValue(holder.view, category);
         if (amount) {
             QTest::keySequence(holder.view, {Qt::Key_Tab, Qt::Key_Tab});
@@ -191,9 +195,11 @@ private:
         QTest::keyClick(refHolder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(updateSpy.wait());
 
-        QCOMPARE(modelSpy.size(), 1);
-        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
-        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
+        QVERIFY(!modelSpy.isEmpty());
+        for (const auto& args : std::as_const(modelSpy)) {
+            QCOMPARE(args.at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
+            QCOMPARE(args.at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
+        }
     }
 
     template<class Holder, class Store>
@@ -224,13 +230,14 @@ private slots:
         securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id;
         payeeId = dbTestCase.addPayee(driver, PAYEE_NAME);
         categoryId = dbTestCase.addCategory(driver, CATEGORY_NAME);
+        groupId = dbTestCase.addGroup(driver, GROUP_NAME);
     }
 
     void init() {
         dataStore = new DataStore(&services);
         uiContext = new UiContext(dataStore);
         dbTestCase.resetDatabase(driver);
-        dbTestCase.saveTransaction(driver, factory::transaction(accountId, payeeId), {"23.45"});
+        dbTestCase.saveTransaction(driver, factory::transaction(accountId, payeeId), {factory::detail("23.45", categoryId)});
         dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"34.56"});
         dbTestCase.saveTransfer(driver, altAccountId, accountId, {"78.90", "567.89"});
         accountUpdatedSpy = new QSignalSpy(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)));
@@ -240,9 +247,13 @@ private slots:
     void addTransaction() {
         TxWindowHolder holder(openWindow(accountId));
         QCOMPARE(holder.window->focusWidget(), holder.view);
-        fillTransaction(holder, "123", PAYEE_NAME, "description");
-        fillDetail(holder, CATEGORY_NAME, "12.34");
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+        auto groupDetailCount = dataStore->groupStore->value(groupId)->details.toInt();
 
+        fillTransaction(holder, "123", PAYEE_NAME, "description");
+        fillDetail(holder, CATEGORY_NAME, "12.34", GROUP_NAME);
         QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
@@ -255,6 +266,11 @@ private slots:
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
+        // should update counts
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount+1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
+        QCOMPARE(dataStore->groupStore->value(groupId)->details.toInt(), groupDetailCount+1);
     }
 
     void deleteTransaction_adjustsErrors() {
@@ -263,6 +279,9 @@ private slots:
         fillDetail(holder, CATEGORY_NAME);
         QCOMPARE(holder.window->model()->isValid(), false);
         holder.view->setCurrentIndex(holder.index(0, 0));
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
@@ -271,6 +290,9 @@ private slots:
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount-1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount-1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
     }
 
     void addTransfer_updatesRelatedWindows() {
@@ -279,12 +301,15 @@ private slots:
         holder.focusWindow();
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->focusWidget(), holder.view);
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
+        auto altAccountTxCount = dataStore->accountStore->value(altAccountId)->transactions.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, ALT_ACCOUNT_NAME, "2.34");
         addDetail(holder.view);
         fillDetail(holder, CATEGORY_NAME, "321.43");
         if (holder.window->focusWidget() != holder.view) holder.focusWindow(); // FIXME why is focus moving to filter input?
-
         QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
@@ -295,17 +320,21 @@ private slots:
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
+        QCOMPARE(dataStore->accountStore->value(altAccountId)->transactions.toInt(), altAccountTxCount+1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
     }
 
     void updateDetail_updatesRelatedWindows() {
         TxWindowHolder holder(openWindow(accountId));
         TxWindowHolder holder2(openWindow(altAccountId));
         holder.focusWindow();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+
         holder.view->setCurrentIndex(holder.index(0, 0));
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillDetail(holder, ALT_ACCOUNT_NAME, "98.76");
         if (holder.window->focusWidget() != holder.view) holder.focusWindow(); // FIXME why is focus moving to filter input?
-
         QTest::keyClick(holder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
@@ -315,6 +344,7 @@ private slots:
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
     }
 
     void deleteTransfer_updatesRelatedWindows() {

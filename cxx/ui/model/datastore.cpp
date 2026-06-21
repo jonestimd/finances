@@ -9,7 +9,18 @@ DataStore::DataStore(ServiceContext *services)
     , groupStore{new GroupStore{&services->groupService}}
     , securityStore{new SecurityStore{&services->securityService}}
     , transactionStore{new TransactionStore{services, categoryStore}}
-{}
+{
+    connect(transactionStore, SIGNAL(transactionsUpdated(const QList<TransactionChange>)),
+            accountStore, SLOT(transactionsUpdated(const QList<TransactionChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(const QList<TransactionChange>)),
+            payeeStore, SLOT(transactionsUpdated(const QList<TransactionChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(const QList<TransactionChange>)),
+            securityStore, SLOT(transactionsUpdated(const QList<TransactionChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(detailsUpdated(const QList<DetailChange>)),
+            categoryStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(detailsUpdated(const QList<DetailChange>)),
+            groupStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
+}
 
 DataStore::~DataStore() {
     delete accountStore;

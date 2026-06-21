@@ -48,6 +48,8 @@ Q_SIGNALS:
     void transactionAdded(qlonglong accountId, int index);
     void transactionRemoved(qlonglong accountId, int index);
     void transactionUpdated(qlonglong accountId, int index, int oldDetailCount);
+    void transactionsUpdated(const QList<TransactionChange> changes);
+    void detailsUpdated(const QList<DetailChange> changes);
 
 protected:
     void setValues(qlonglong accountId, const QHash<qlonglong, const Transaction*> values) override;
@@ -56,6 +58,8 @@ protected:
 
 private:
     void sortTransactionIds(QList<qlonglong> &ids) const;
+    void emitTransactionsUpdated(const QList<const Transaction*> deletes, const TransactionsData& updates);
+    void emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates);
 };
 
 #endif // TRANSACTIONSTORE_H

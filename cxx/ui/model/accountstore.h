@@ -8,6 +8,7 @@
 class AccountTableModel;
 
 class AccountStore : public EntityStore<Account, AccountService> {
+    Q_OBJECT
 public:
     CompanyStore companyStore;
 
@@ -18,6 +19,9 @@ public:
     void update(QWidget *source, AccountTableModel *model);
 
     QString qualifiedName(const QVariant &accountId, QChar delimiter) const;
+
+public slots:
+    void transactionsUpdated(const QList<TransactionChange> changes);
 
 protected:
     void update(QWidget *source, QList<Account*> updates, const QList<const Account*> adds, const QList<const Account*> deletes);

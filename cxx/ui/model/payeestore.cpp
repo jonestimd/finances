@@ -14,3 +14,9 @@ void PayeeStore::mergePayees(QWidget *source, const Payee *payee, const QVariant
         emit valuesLoaded(ids());
     });
 }
+
+void PayeeStore::transactionsUpdated(const QList<TransactionChange> changes) {
+    if (updateTransactionCounts(changes, &Transaction::payeeId)) {
+        emit valuesLoaded(ids());
+    }
+}

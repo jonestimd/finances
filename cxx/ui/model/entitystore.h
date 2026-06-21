@@ -4,6 +4,7 @@
 #include "background.h"
 #include "comboboxmodel.h"
 #include "service/model/bulkupdate.h"
+#include "service/model/transaction.h"
 #include "ui/widget/entityview.h"
 #include <QHash>
 #include <QWidget>
@@ -145,6 +146,48 @@ protected:
             if (oldEntity) delete oldEntity;
         }
         this->loaded = true;
+    }
+
+    bool updateTransactionCounts(const QList<TransactionChange> changes, QVariant Transaction::* txField) {
+        QSet<qlonglong> updateIds;
+        for (auto change : changes) {
+            auto oldTx = change.oldTransaction;
+            auto newTx = change.newTransaction;
+            auto oldTxValue = oldTx ? oldTx->*txField : QVariant{};
+            auto newTxValue = newTx ? newTx->*txField : QVariant{};
+            if (oldTxValue.isValid() && newTxValue != oldTxValue) {
+                auto refValue = value(oldTxValue);
+                refValue->transactions = refValue->transactions.toInt() - 1;
+                updateIds.insert(oldTxValue.toLongLong());
+            }
+            if (newTxValue.isValid() && newTxValue != oldTxValue) {
+                auto refValue = value(newTxValue);
+                refValue->transactions = refValue->transactions.toInt() + 1;
+                updateIds.insert(newTxValue.toLongLong());
+            }
+        }
+        return !updateIds.isEmpty();
+    }
+
+    bool updateDetailCounts(const QList<DetailChange> changes, QVariant TransactionDetail::* detailField) {
+        QSet<qlonglong> updateIds;
+        for (auto change : changes) {
+            auto oldDetail = change.oldDetail;
+            auto newDetail = change.newDetail;
+            auto oldDetailValue = oldDetail ? oldDetail->*detailField : QVariant{};
+            auto newDetailValue = newDetail ? newDetail->*detailField : QVariant{};
+            if (oldDetailValue.isValid() && newDetailValue != oldDetailValue) {
+                auto refValue = value(oldDetailValue);
+                refValue->details = refValue->details.toInt() - 1;
+                updateIds.insert(oldDetailValue.toLongLong());
+            }
+            if (newDetailValue.isValid() && newDetailValue != oldDetailValue) {
+                auto refValue = value(newDetailValue);
+                refValue->details = refValue->details.toInt() + 1;
+                updateIds.insert(newDetailValue.toLongLong());
+            }
+        }
+        return !updateIds.isEmpty();
     }
 };
 

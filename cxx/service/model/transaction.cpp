@@ -67,7 +67,7 @@ TransactionUpdate::TransactionUpdate(
     QList<const TransactionDetail*> detailDeletes)
     : BulkUpdate{updates, adds, deletes}
     , detailUpdates{detailUpdates}
-    , detailAdds{model::copy(detailAdds)}
+    , detailAdds{domain::copy(detailAdds)}
     , detailDeletes{detailDeletes}
 {}
 
@@ -92,3 +92,9 @@ TransactionsData::TransactionsData(
     , deletedIds(deletedIds)
     , deletedDetailIds(deletedDetailIds)
 {}
+
+TransactionChange::TransactionChange(const Transaction *oldTx, const Transaction *newTx)
+    : oldTransaction{oldTx}, newTransaction{newTx} {}
+
+DetailChange::DetailChange(const TransactionDetail *oldDetail, const TransactionDetail *newDetail)
+    : oldDetail{oldDetail}, newDetail{newDetail} {}

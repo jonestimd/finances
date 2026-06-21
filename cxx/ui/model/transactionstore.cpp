@@ -66,6 +66,8 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, int
         TransactionUpdate changes{model->unsavedChanges(txRow), adds, deletes,
                                   model->unsavedDetailChanges(txRow), model->unsavedDetailAdds(txRow), detailDeletes};
         auto updateData = service->update(changes, user);
+        emitTransactionsUpdated(changes.deletes, updateData);
+        emitDetailsUpdated(changes, updateData);
         if (!adds.isEmpty()) emit transactionsSaved(adds);
         for (const auto& id : std::as_const(updateData.deletedIds)) {
             if (contains(id)) deletes.append(value(id));
@@ -178,4 +180,27 @@ void TransactionStore::update(const QList<const Transaction*>& updates, const QL
             }
         }
     }
+}
+
+void TransactionStore::emitTransactionsUpdated(const QList<const Transaction*> deletes, const TransactionsData& updates) {
+    QList<TransactionChange> deltas;
+    for (auto tx : deletes) deltas.append(TransactionChange{tx, nullptr});
+    for (auto tx : std::as_const(updates.transactions)) deltas.append(TransactionChange{value(tx->id), tx});
+    for (const auto& txId : std::as_const(updates.deletedIds)) deltas.append(TransactionChange{value(txId), nullptr});
+    emit transactionsUpdated(deltas);
+}
+
+void TransactionStore::emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates) {
+    QList<DetailChange> deltas;
+    for (auto tx : change.deletes) {
+        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
+    }
+    for (const auto& txId : updates.deletedIds) {
+        auto tx = value(txId);
+        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
+    }
+    for (auto detail : change.detailDeletes) deltas.append(DetailChange{detail, nullptr});
+    for (auto detail : std::as_const(updates.details)) deltas.append(DetailChange{detailStore.value(detail->id), detail});
+    for (const auto& detailId : std::as_const(updates.deletedDetailIds)) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
+    emit detailsUpdated(deltas);
 }

@@ -4,15 +4,14 @@
 
 TransactionGroup::TransactionGroup() : NamedEntity() {}
 
-TransactionGroup::TransactionGroup(const QSqlRecord &record) : NamedEntity(record) {
-    name = record.field("name").value();
-    description = sql::getValue(record, "description");
-    transactions = record.field("transactions").value();
-    details = sql::getValue(record, "details");
-}
+TransactionGroup::TransactionGroup(const QSqlRecord &record)
+    : NamedEntity(record)
+    , description{sql::getValue(record, "description")}
+    , details{sql::getValue(record, "details")}
+{}
 
 TransactionGroup::TransactionGroup(const QString &name) : NamedEntity{name} {}
 
 bool TransactionGroup::deletable() const {
-    return transactions.toInt() == 0;
+    return details.toInt() == 0;
 }

@@ -2,15 +2,7 @@
 #define BULKUPDATE_H
 
 #include <QList>
-
-namespace model {
-    template<class T>
-    QList<T*> copy(const QList<const T*> entities) {
-        QList<T*> copies;
-        for (const T* entity : entities) copies.append(new T(*entity));
-        return copies;
-    }
-}
+#include "basedomain.h"
 
 template<class T, class Add = T>
 class BulkUpdate {
@@ -24,7 +16,7 @@ public:
 
     BulkUpdate(const QList<T*> updates, const QList<const Add*> adds, QList<const T*> deletes)
         : updates{updates}
-        , adds{model::copy(adds)}
+        , adds{domain::copy(adds)}
         , deletes{deletes} {}
 
     virtual void onError() {

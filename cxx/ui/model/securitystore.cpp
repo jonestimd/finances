@@ -15,6 +15,12 @@ QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate
     return adjusted;
 }
 
+void SecurityStore::transactionsUpdated(const QList<TransactionChange> changes) {
+    if (updateTransactionCounts(changes, &Transaction::securityId)) {
+        emit valuesLoaded(ids());
+    }
+}
+
 void SecurityStore::setValues(const QHash<qlonglong, const Security *> values) {
     for (auto i = securitySplits.begin(); i != securitySplits.end(); i = securitySplits.erase(i)) {
         delete i.value();

@@ -14,8 +14,7 @@ public:
     QVariant security{false};
     QVariant parentId;
     QList<QVariant> childIds{};
-    QVariant transactions{0};
-    QVariant details{0};
+    mutable QVariant details{0};
 
     Category();
     Category(const QSqlRecord &record);

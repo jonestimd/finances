@@ -14,6 +14,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/detailcolumnadapter.h ${CMAKE_CURRENT_LIST_DIR}/detailcolumnadapter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entitystore.h ${CMAKE_CURRENT_LIST_DIR}/entitystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/formats.h ${CMAKE_CURRENT_LIST_DIR}/formats.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/groupstore.h ${CMAKE_CURRENT_LIST_DIR}/groupstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/grouptablemodel.h ${CMAKE_CURRENT_LIST_DIR}/grouptablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeestore.h ${CMAKE_CURRENT_LIST_DIR}/payeestore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeetablemodel.h ${CMAKE_CURRENT_LIST_DIR}/payeetablemodel.cpp

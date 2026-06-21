@@ -6,6 +6,8 @@
 #include "service/categoryservice.h"
 
 class CategoryStore : public EntityStore<Category, CategoryService> {
+    Q_OBJECT
+
     DataStore* const dataStore;
     QSet<qlonglong> rootIds_;
 
@@ -26,6 +28,9 @@ public:
     void mergeCategories(QWidget *source, const Category *category, const QVariant destinationId);
 
     using EntityStore::update;
+
+public slots:
+    void detailsUpdated(const QList<DetailChange> changes);
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;
