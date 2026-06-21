@@ -14,7 +14,7 @@ public:
     QVariant type{AccountType::bank.code};
     QVariant accountNumber;
     QVariant closed{false};
-    QVariant transactions{0};
+    mutable QVariant transactions{0};
     QVariant balance{QVariant::fromValue(QDEC_ZERO)};
     QVariant currency;
 

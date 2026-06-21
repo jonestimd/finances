@@ -42,3 +42,9 @@ QString AccountStore::qualifiedName(const QVariant &accountId, QChar delimiter) 
     else qCDebug(logger, "qualifiedName: account not loaded: %lld", accountId.toLongLong());
     return accountId.toString();
 }
+
+void AccountStore::transactionsUpdated(const QList<TransactionChange> changes) {
+    if (updateTransactionCounts(changes, &Transaction::accountId)) {
+        emit valuesLoaded(ids());
+    }
+}

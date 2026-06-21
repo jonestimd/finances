@@ -16,20 +16,7 @@ void PayeeStore::mergePayees(QWidget *source, const Payee *payee, const QVariant
 }
 
 void PayeeStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    QSet<qlonglong> updateIds;
-    for (auto change : changes) {
-        auto oldTx = change.oldTransaction;
-        auto newTx = change.newTransaction;
-        if (oldTx && oldTx->payeeId.isValid() && (!newTx || newTx->payeeId != oldTx->payeeId)) {
-            auto oldPayee = value(oldTx->payeeId);
-            oldPayee->transactions = oldPayee->transactions.toInt() - 1;
-            updateIds.insert(oldPayee->id.toLongLong());
-        }
-        if (newTx && newTx->payeeId.isValid() && (!oldTx || newTx->payeeId != oldTx->payeeId)) {
-            auto newPayee = value(newTx->payeeId);
-            newPayee->transactions = newPayee->transactions.toInt() + 1;
-            updateIds.insert(newPayee->id.toLongLong());
-        }
+    if (updateTransactionCounts(changes, &Transaction::payeeId)) {
+        emit valuesLoaded(ids());
     }
-    if (!updateIds.isEmpty()) emit valuesLoaded(ids());;
 }

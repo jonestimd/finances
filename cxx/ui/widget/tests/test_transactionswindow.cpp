@@ -244,6 +244,7 @@ private slots:
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, CATEGORY_NAME, "12.34");
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
         auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
 
         QTest::keyClick(holder.view, Qt::Key_Enter);
@@ -258,6 +259,7 @@ private slots:
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
         QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount+1);
     }
 
@@ -267,7 +269,8 @@ private slots:
         fillDetail(holder, CATEGORY_NAME);
         QCOMPARE(holder.window->model()->isValid(), false);
         holder.view->setCurrentIndex(holder.index(0, 0));
-        auto txCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
@@ -276,7 +279,8 @@ private slots:
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
-        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), txCount-1);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount-1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount-1);
     }
 
     void addTransfer_updatesRelatedWindows() {
@@ -285,6 +289,8 @@ private slots:
         holder.focusWindow();
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->focusWidget(), holder.view);
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
+        auto altAccountTxCount = dataStore->accountStore->value(altAccountId)->transactions.toInt();
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, ALT_ACCOUNT_NAME, "2.34");
         addDetail(holder.view);
@@ -301,6 +307,8 @@ private slots:
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
+        QCOMPARE(dataStore->accountStore->value(altAccountId)->transactions.toInt(), altAccountTxCount+1);
     }
 
     void updateDetail_updatesRelatedWindows() {
