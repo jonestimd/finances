@@ -18,6 +18,8 @@ DataStore::DataStore(ServiceContext *services)
             securityStore, SLOT(transactionsUpdated(const QList<TransactionChange>)), Qt::DirectConnection);
     connect(transactionStore, SIGNAL(detailsUpdated(const QList<DetailChange>)),
             categoryStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(detailsUpdated(const QList<DetailChange>)),
+            groupStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
 }
 
 DataStore::~DataStore() {

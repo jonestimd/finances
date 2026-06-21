@@ -18,11 +18,11 @@ static const auto sqliteCreateTableSql = CREATE_TABLE_QUERY(SQLITE_ID_TYPE);
 
 static const auto getAllQuery = R"(
 with summary as (
-  select td.tx_group_id, count(distinct td.tx_id) transactions, count(*) details
+  select td.tx_group_id, count(*) details
   from tx_detail td
   group by td.tx_group_id
 )
-select g.*, coalesce(s.transactions, 0) transactions, coalesce(s.details, 0) details
+select g.*, coalesce(s.details, 0) details
 from tx_group g
 left join summary s on g.id = s.tx_group_id)";
 

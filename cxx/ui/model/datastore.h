@@ -5,14 +5,12 @@
 #include "accountstore.h"
 #include "categorystore.h"
 #include "companystore.h"
+#include "groupstore.h"
 #include "payeestore.h"
 #include "securitystore.h"
 #include "transactionstore.h"
 
-typedef EntityStore<TransactionGroup, GroupService> GroupStore;
-
-class DataStore : public QObject
-{
+class DataStore : public QObject {
     Q_OBJECT
     ServiceContext *services;
 
