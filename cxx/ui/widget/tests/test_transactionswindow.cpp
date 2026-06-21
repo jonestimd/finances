@@ -191,9 +191,11 @@ private:
         QTest::keyClick(refHolder.view, Qt::Key_S, Qt::ControlModifier);
         QVERIFY(updateSpy.wait());
 
-        QCOMPARE(modelSpy.size(), 1);
-        QCOMPARE(modelSpy.at(0).at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
-        QCOMPARE(modelSpy.at(0).at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
+        QVERIFY(!modelSpy.isEmpty());
+        for (const auto& args : std::as_const(modelSpy)) {
+            QCOMPARE(args.at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
+            QCOMPARE(args.at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
+        }
     }
 
     template<class Holder, class Store>
@@ -242,6 +244,7 @@ private slots:
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, CATEGORY_NAME, "12.34");
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
 
         QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
@@ -255,6 +258,7 @@ private slots:
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount+1);
     }
 
     void deleteTransaction_adjustsErrors() {
@@ -263,6 +267,7 @@ private slots:
         fillDetail(holder, CATEGORY_NAME);
         QCOMPARE(holder.window->model()->isValid(), false);
         holder.view->setCurrentIndex(holder.index(0, 0));
+        auto txCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
@@ -271,6 +276,7 @@ private slots:
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), txCount-1);
     }
 
     void addTransfer_updatesRelatedWindows() {

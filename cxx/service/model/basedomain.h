@@ -4,6 +4,15 @@
 #include <QSqlRecord>
 #include <QVariant>
 
+namespace domain {
+    template<class T>
+    QList<T*> copy(const QList<const T*> entities) {
+        QList<T*> copies;
+        for (const T* entity : entities) copies.append(new T(*entity));
+        return copies;
+    }
+}
+
 class BaseDomain {
 public:
     QVariant id;

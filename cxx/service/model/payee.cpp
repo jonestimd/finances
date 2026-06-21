@@ -3,10 +3,10 @@
 
 Payee::Payee() : NamedEntity() {}
 
-Payee::Payee(const QSqlRecord &record) : NamedEntity(record) {
-    name = record.field("name").value();
-    transactions = record.field("transactions").value();
-}
+Payee::Payee(const QSqlRecord &record)
+    : NamedEntity(record)
+    , transactions{record.field("transactions").value()}
+{}
 
 Payee::Payee(const QString &name) : NamedEntity{name} {}
 

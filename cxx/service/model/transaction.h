@@ -79,4 +79,11 @@ struct TransactionsData {
     );
 };
 
+struct TransactionChange {
+    const Transaction* const oldTransaction;
+    const Transaction* const newTransaction;
+
+    TransactionChange(const Transaction* oldTx, const Transaction* newTx);
+};
+
 #endif // TRANSACTION_H
