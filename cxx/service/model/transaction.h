@@ -86,4 +86,11 @@ struct TransactionChange {
     TransactionChange(const Transaction* oldTx, const Transaction* newTx);
 };
 
+struct DetailChange {
+    const TransactionDetail* const oldDetail;
+    const TransactionDetail* const newDetail;
+
+    DetailChange(const TransactionDetail* oldTx, const TransactionDetail* newTx);
+};
+
 #endif // TRANSACTION_H

@@ -95,3 +95,6 @@ TransactionsData::TransactionsData(
 
 TransactionChange::TransactionChange(const Transaction *oldTx, const Transaction *newTx)
     : oldTransaction{oldTx}, newTransaction{newTx} {}
+
+DetailChange::DetailChange(const TransactionDetail *oldDetail, const TransactionDetail *newDetail)
+    : oldDetail{oldDetail}, newDetail{newDetail} {}

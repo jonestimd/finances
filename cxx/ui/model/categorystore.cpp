@@ -62,6 +62,12 @@ void CategoryStore::mergeCategories(QWidget *source, const Category *category, c
     });
 }
 
+void CategoryStore::detailsUpdated(const QList<DetailChange> changes) {
+    if (updateDetailCounts(changes, &TransactionDetail::categoryId)) {
+        emit valuesLoaded(ids());
+    }
+}
+
 void CategoryStore::update(const QList<const Category *> &updates, const QList<const Category *> deletes) {
     for (auto category : deletes) rootIds_.remove(category->id.toLongLong());
     EntityStore::update(updates, deletes);

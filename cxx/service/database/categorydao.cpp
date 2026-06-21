@@ -23,7 +23,7 @@ static const auto uniqueIndexQuery = "create unique index unique_category on tx_
 
 #define GET_ALL_QUERY(jsonArrayAgg) \
     "with summary as (\n" \
-    "  select td.tx_category_id, count(distinct td.tx_id) transactions, count(*) details\n" \
+    "  select td.tx_category_id, count(*) details\n" \
     "  from tx_detail td\n" \
     "  group by td.tx_category_id\n" \
     "), children as (\n" \
@@ -32,7 +32,7 @@ static const auto uniqueIndexQuery = "create unique index unique_category on tx_
     "  where parent_id is not null\n" \
     "  group by parent_id\n" \
     ")\n" \
-    "select c.*, coalesce(s.transactions, 0) transactions, coalesce(s.details, 0) details, ch.child_ids\n" \
+    "select c.*, coalesce(s.details, 0) details, ch.child_ids\n" \
     "from tx_category c\n" \
     "left join summary s on c.id = s.tx_category_id\n" \
     "left join children ch on c.id = ch.parent_id"

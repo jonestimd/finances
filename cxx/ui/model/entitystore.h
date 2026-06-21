@@ -168,6 +168,27 @@ protected:
         }
         return !updateIds.isEmpty();
     }
+
+    bool updateDetailCounts(const QList<DetailChange> changes, QVariant TransactionDetail::* detailField) {
+        QSet<qlonglong> updateIds;
+        for (auto change : changes) {
+            auto oldDetail = change.oldDetail;
+            auto newDetail = change.newDetail;
+            auto oldDetailValue = oldDetail ? oldDetail->*detailField : QVariant{};
+            auto newDetailValue = newDetail ? newDetail->*detailField : QVariant{};
+            if (oldDetailValue.isValid() && newDetailValue != oldDetailValue) {
+                auto refValue = value(oldDetailValue);
+                refValue->details = refValue->details.toInt() - 1;
+                updateIds.insert(oldDetailValue.toLongLong());
+            }
+            if (newDetailValue.isValid() && newDetailValue != oldDetailValue) {
+                auto refValue = value(newDetailValue);
+                refValue->details = refValue->details.toInt() + 1;
+                updateIds.insert(newDetailValue.toLongLong());
+            }
+        }
+        return !updateIds.isEmpty();
+    }
 };
 
 #endif // ENTITYSTORE_H
