@@ -43,7 +43,6 @@ private:
 
 private Q_SLOTS:
     void accountsLoaded();
-    void accountUpdated(qlonglong accountId);
     void companiesLoaded();
     void transactionsLoaded();
     void newWindow();

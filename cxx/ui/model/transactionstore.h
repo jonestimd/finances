@@ -27,12 +27,12 @@ class TransactionStore : public EntityStore<Transaction, TransactionService, qlo
 public:
     TransactionDetailStore detailStore;
 
-    TransactionStore(ServiceContext* serviceContext, CategoryStore* categoryStore);
+    TransactionStore(ServiceContext* serviceContext, DataStore* dataStore);
     ~TransactionStore();
 
     bool load(EntityView *view, qlonglong accountId, bool reload = false);
 
-    void update(QWidget *source, TransactionTableModel *model, int txRow = -1);
+    void update(QWidget *source, TransactionTableModel *model, const QString message, int txRow = -1);
     void replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId);
 
     const QList<qlonglong> transactionIds(qlonglong accountId) const;

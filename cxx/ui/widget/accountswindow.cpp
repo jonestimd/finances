@@ -11,7 +11,8 @@ AccountsWindow::AccountsWindow(UiContext *context)
     : AppWindow{
         tr("Account"),
         new AccountTableModel(context->dataStore->accountStore, std::bind_front(&AccountsWindow::addCompany, this)),
-        new QTableView()
+        new QTableView(),
+        &context->dataStore->messageStore
     }
     , context{context}
     , dataStore{context->dataStore}
@@ -55,19 +56,15 @@ void AccountsWindow::loadData() {
 }
 
 void AccountsWindow::saveData() {
-    entityView.disableUi(tr(SAVING_ACCOUNTS));
     dataStore->accountStore->update(this, model());
 }
 
 void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
-    entityView.removeMessage(tr(LOADING_COMPANIES));
     model()->companiesLoaded(companyIds);
 }
 
 void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {
     model()->setRows(accountIds);
-    entityView.removeMessage(tr(LOADING_ACCOUNTS));
-    entityView.removeMessage(tr(SAVING_ACCOUNTS));
 }
 
 void AccountsWindow::showCompanies() {
@@ -90,7 +87,6 @@ void AccountsWindow::selectionChanged() {
 }
 
 void AccountsWindow::addCompany(const QString &name) {
-    entityView.disableUi(tr(SAVING_COMPANY));
     dataStore->accountStore->companyStore.addCompany(this, name, "newCompany");
 }
 
@@ -99,8 +95,6 @@ void AccountsWindow::newCompany(const Company *company) {
         auto index = entityView.selectedIndex();
         model()->setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
     }
-    entityView.removeMessage(tr(SAVING_COMPANY));
-    // entityView.itemView->setEnabled(true);
     entityView.itemView->setFocus(Qt::ActiveWindowFocusReason);
 }
 

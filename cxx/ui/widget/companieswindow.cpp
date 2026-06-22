@@ -15,7 +15,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     , layout{this}
     , store{&dataStore->accountStore->companyStore}
     , model{&dataStore->accountStore->companyStore, this}
-    , entityView{this, &model, itemView, tr("Company")}
+    , entityView{this, &dataStore->messageStore, &model, itemView, tr("Company")}
 {
     setWindowTitle(tr("Companies[*]"));
 
@@ -30,10 +30,6 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
 }
 
-void CompaniesWindow::enableUi() {
-    entityView.enableUi();
-}
-
 void CompaniesWindow::loadData() {
     if (!dialog::confirmDiscardChanges(this, &model)) return;
     itemView->setEnabled(false);
@@ -41,14 +37,11 @@ void CompaniesWindow::loadData() {
 }
 
 void CompaniesWindow::saveData() {
-    entityView.disableUi(tr("Saving companies..."));
-    itemView->setEnabled(false);
-    store->update(this, &model);
+    store->update(this, &model, tr("Saving companies..."));
 }
 
 void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
     model.setRows(companyIds);
-    entityView.enableUi();
 }
 
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {

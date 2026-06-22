@@ -15,6 +15,7 @@ class DataStore : public QObject {
     ServiceContext *services;
 
 public:
+    StatusMessageStore messageStore;
     AccountStore *const accountStore;
     PayeeStore *const payeeStore;
     CategoryStore *const categoryStore;

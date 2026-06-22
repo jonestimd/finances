@@ -2,9 +2,9 @@
 #define ENTITY_VIEW_H
 
 #include "filterinput.h"
-#include "statusbar.h"
 #include "tableitemdelegate.h"
-#include "../model/adapteritemmodel.h"
+#include "ui/model/adapteritemmodel.h"
+#include "ui/model/statusmessagestore.h"
 #include <QStatusBar>
 #include <QTableView>
 #include <QTreeView>
@@ -14,10 +14,11 @@ class EntityView : public QObject {
     Q_OBJECT
     QWidget *const window;
     TableItemDelegate itemDelegate;
+    /** @brief Indexes of the last selected row and its parents. */
     QList<int> lastSelection;
 
 public:
-    StatusBar statusBar{};
+    QStatusBar statusBar{};
     QHeaderView *const viewHeader;
     QAbstractItemView *const itemView;
     SortFilterProxyModel sortModel;
@@ -25,8 +26,8 @@ public:
     QToolBar toolbar;
     QAction *const saveAction;
 
-    EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
-    EntityView(QWidget *window, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
+    EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
+    EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
 
     template<class T = AdapterItemModel>
     T *model() const {
@@ -43,10 +44,11 @@ public:
     bool confirmLoadData();
     void confirmClose(QCloseEvent *event, const char *settingsGroup);
 
-    void enableUi();
-    void disableUi(const QString &message);
-    Q_INVOKABLE void removeMessage(const QString &message);
+public Q_SLOTS:
+    void showStatusMessage(const QString message);
+    void clearStatusMessage();
 
+public:
     void focusItemView();
 
 private:

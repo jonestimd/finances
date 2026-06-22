@@ -10,7 +10,7 @@ class TransactionDetailStore : public EntityStore<TransactionDetail, Transaction
     QList<qlonglong> loadedAccounts{};
 
 public:
-    TransactionDetailStore(TransactionDetailService *service);
+    TransactionDetailStore(TransactionDetailService *service, StatusMessageStore* messageStore);
 
     void load(qlonglong accountId);
 

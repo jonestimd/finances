@@ -1,7 +1,7 @@
 #include "securitystore.h"
 
-SecurityStore::SecurityStore(SecurityService *service)
-    : EntityStore{service}
+SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore)
+    : EntityStore{service, messageStore}
 {}
 
 QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const {

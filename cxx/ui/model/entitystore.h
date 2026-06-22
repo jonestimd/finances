@@ -5,6 +5,7 @@
 #include "comboboxmodel.h"
 #include "service/model/bulkupdate.h"
 #include "service/model/transaction.h"
+#include "statusmessagestore.h"
 #include "ui/widget/entityview.h"
 #include <QHash>
 #include <QWidget>
@@ -40,10 +41,11 @@ class EntityStore : public AbstractEntityStore {
     QHash<qlonglong, const T*> byId{};
     bool loaded{false};
 protected:
-    Service *service;
+    Service* const service;
+    StatusMessageStore* const messageStore;
 
 public:
-    EntityStore(Service *service) : service{service} {};
+    EntityStore(Service *service, StatusMessageStore* messageStore) : service{service}, messageStore{messageStore} {};
     ~EntityStore() {
         qDeleteAll(byId);
         byId.clear();
@@ -87,11 +89,11 @@ public:
      */
     bool load(EntityView *view, const QString &statusMessage, GetAllArgs... args, bool reload = false) {
         if (!reload && loaded) return true;
-        view->disableUi(statusMessage);
+        messageStore->addMessage(statusMessage);
         doInBackground(view->statusBar.parentWidget(), [=, this]() {
             setValues(args..., service->getAll(args...));
-            QMetaObject::invokeMethod(view, "removeMessage", statusMessage);
             emit valuesLoaded(ids());
+            QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, statusMessage);
         });
         return false;
     }
@@ -99,17 +101,19 @@ public:
     /**
      * @brief update Call service to persist changes and update stored entities.
      */
-    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes) {
+    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes, const QString message) {
+        messageStore->addMessage(message);
         doInBackground(source, [=, this]() {
             auto changes = BulkUpdate{updates, adds, deletes};
             update(service->update(changes, user), deletes);
             emit valuesLoaded(ids());
+            QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, message);
         });
     }
 
     template<class Model>
-    void update(QWidget *source, Model *model) {
-        update(source, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes());
+    void update(QWidget *source, Model *model, const QString message) {
+        update(source, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes(), message);
     }
 
 protected:

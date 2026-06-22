@@ -12,7 +12,7 @@ class SecurityStore : public EntityStore<Security, SecurityService> {
     QMultiHash<qlonglong, const StockSplit*>securitySplits{};
 
 public:
-    SecurityStore(SecurityService *service);
+    SecurityStore(SecurityService *service, StatusMessageStore* messageStore);
 
     QDecNumber adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const;
 

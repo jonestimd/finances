@@ -24,7 +24,6 @@ public:
 
     Q_INVOKABLE void loadData();
     Q_INVOKABLE void saveData();
-    Q_INVOKABLE void enableUi();
 
 protected Q_SLOTS:
     void setCompanies(const QList<qlonglong> companyIds);

@@ -10,7 +10,7 @@ class CompanyStore : public EntityStore<Company, CompanyService> {
     friend AccountStore;
 
 public:
-    CompanyStore(CompanyService *service);
+    CompanyStore(CompanyService *service, StatusMessageStore* messageStore);
 
     void addCompany(QWidget *source, const QString &name, const char *callback);
 };

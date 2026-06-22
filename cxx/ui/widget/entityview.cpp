@@ -23,7 +23,7 @@ public:
     }
 };
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
+EntityView::EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
     , sortModel{window}
@@ -63,6 +63,8 @@ EntityView::EntityView(QWidget *window, AdapterItemModel *model, QAbstractItemVi
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
+    connect(messageStore, SIGNAL(statusMessage(QString)), this, SLOT(showStatusMessage(QString)));
+    connect(messageStore, SIGNAL(isReady()), this, SLOT(clearStatusMessage()));
 
     finances::setColumnResize(viewHeader);
 }
@@ -105,32 +107,31 @@ void EntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
     else settings::saveWindowState(settingsGroup, window, model(), viewHeader);
 }
 
-void EntityView::restoreSelection() {
-    if (!lastSelection.isEmpty()) {
-        QModelIndex index;
-        for (int row : std::as_const(lastSelection)) index = sortModel.index(row, 0, index);
-        itemView->setCurrentIndex(index);
+void EntityView::showStatusMessage(const QString message) {
+    if (itemView->isEnabled()) {
+        lastSelection.clear();
+        for (auto i = itemView->currentIndex(); i.isValid(); i = i.parent()) lastSelection.insert(0, i.row());
+        itemView->setEnabled(false);
     }
+    statusBar.showMessage(message);
 }
 
-void EntityView::enableUi() {
-    statusBar.clear();
+void EntityView::clearStatusMessage() {
+    statusBar.clearMessage();
+    statusBar.showMessage(tr("Ready"), 1500);
     itemView->setEnabled(true);
+    itemView->setFocus();
     restoreSelection();
 }
 
-void EntityView::disableUi(const QString &message) {
-    lastSelection.clear();
-    for (auto i = itemView->currentIndex(); i.isValid(); i = i.parent()) lastSelection.insert(0, i.row());
-    statusBar.addMessage(message);
-    itemView->setEnabled(false);
-}
-
-void EntityView::removeMessage(const QString &message) {
-    statusBar.removeMessage(message);
-    if (statusBar.isEmpty()) {
-        itemView->setEnabled(true);
-        restoreSelection();
+void EntityView::restoreSelection() {
+    if (!lastSelection.isEmpty()) {
+        QModelIndex index;
+        for (int row : std::as_const(lastSelection)) {
+            int count = sortModel.rowCount(index);
+            index = sortModel.index(row < count ? row : count-1, 0, index);
+        }
+        itemView->setCurrentIndex(index);
     }
 }
 
@@ -152,8 +153,8 @@ void EntityView::showValidation(const QModelIndex &index) {
     else statusBar.clearMessage();
 }
 
-EntityView::EntityView(QWidget *window, AdapterItemModel *model, QTableView *view, const QString &entityName)
-    : EntityView(window, model, view, view->horizontalHeader(), entityName)
+EntityView::EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QTableView *view, const QString &entityName)
+    : EntityView(window, messageStore, model, view, view->horizontalHeader(), entityName)
 {
     view->resizeColumnsToContents();
     // view->verticalHeader()->setDefaultSectionSize(5); // minimize row height

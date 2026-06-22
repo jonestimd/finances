@@ -9,7 +9,7 @@ class GroupStore : public EntityStore<TransactionGroup, GroupService> {
     Q_OBJECT
 
 public:
-    GroupStore(GroupService *service);
+    GroupStore(GroupService *service, StatusMessageStore* messageStore);
 
 public slots:
     void detailsUpdated(const QList<DetailChange> changes);
