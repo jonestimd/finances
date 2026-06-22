@@ -1,10 +1,11 @@
 #include "categorystore.h"
 #include "datastore.h"
+#include "ui/widget/statusmessage.h"
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.category")
 
 CategoryStore::CategoryStore(CategoryService* service, DataStore* dataStore)
-    : EntityStore(service)
+    : EntityStore(service, &dataStore->messageStore)
     , dataStore{dataStore}
 {}
 
@@ -46,19 +47,23 @@ bool CategoryStore::hasChild(qlonglong categoryId, const QVariant &name) const {
 }
 
 void CategoryStore::setParent(QWidget *source, const Category *category, const QVariant parentId) {
+    messageStore->addMessage(tr(SAVING_CATEGORIES));
     doInBackground(source, [this, category, parentId] {
         auto categories = service->setParent(category, parentId, user);
         update(categories.values());
         emit valuesLoaded(ids());
+        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_CATEGORIES));
     });
 }
 
 void CategoryStore::mergeCategories(QWidget *source, const Category *category, const QVariant destinationId) {
+    messageStore->addMessage(tr(SAVING_CATEGORIES));
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
         dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
         update(categories.values(), QList{category});
         emit valuesLoaded(ids());
+        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_CATEGORIES));
     });
 }
 

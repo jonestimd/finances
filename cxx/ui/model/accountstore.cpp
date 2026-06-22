@@ -4,9 +4,9 @@
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.account")
 
-AccountStore::AccountStore(ServiceContext *services)
-    : EntityStore{&services->accountService}
-    , companyStore{&services->companyService} {}
+AccountStore::AccountStore(ServiceContext *services, StatusMessageStore* messageStore)
+    : EntityStore{&services->accountService, messageStore}
+    , companyStore{&services->companyService, messageStore} {}
 
 bool AccountStore::load(EntityView *view, bool reload) {
     bool loaded = EntityStore::load(view, QObject::tr(LOADING_ACCOUNTS), reload);
@@ -19,6 +19,7 @@ void AccountStore::update(QWidget* source, AccountTableModel* model) {
 }
 
 void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<const Account*> adds, const QList<const Account*> deletes) {
+    messageStore->addMessage(tr(SAVING_ACCOUNTS));
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
         QHash<qlonglong, const Company*> companies;
@@ -27,6 +28,7 @@ void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<
         companyStore.update(companies.values());
         emit valuesLoaded(ids());
         emit companyStore.valuesLoaded(companyStore.ids());
+        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_ACCOUNTS));
     });
 }
 

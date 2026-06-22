@@ -7,7 +7,7 @@
 #define SETTINGS_GROUP "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView()}
+    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView(), &dataStore->messageStore}
     , store{dataStore->categoryStore}
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
@@ -42,13 +42,11 @@ void CategoriesWindow::loadData() {
 }
 
 void CategoriesWindow::saveData() {
-    entityView.disableUi(tr(SAVING_CATEGORIES));
-    store->update(this, model());
+    store->update(this, model(), tr(SAVING_CATEGORIES));
 }
 
 void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
     model()->setRows(categoryIds);
-    entityView.enableUi();
 }
 
 void CategoriesWindow::reparent() {
@@ -70,10 +68,7 @@ void CategoriesWindow::reparent() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto parentId = dialog.selectedId();
-        if (category->parentId != dialog.selectedId()) {
-            entityView.disableUi(tr(SAVING_CATEGORIES));
-            store->setParent(this, category, parentId);
-        }
+        if (category->parentId != dialog.selectedId()) store->setParent(this, category, parentId);
     }
 }
 
@@ -89,10 +84,7 @@ void CategoriesWindow::merge() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
-        if (!selectedId.isNull()) {
-            entityView.disableUi(tr(SAVING_CATEGORIES));
-            store->mergeCategories(this, category, selectedId);
-        }
+        if (!selectedId.isNull()) store->mergeCategories(this, category, selectedId);
     }
 }
 

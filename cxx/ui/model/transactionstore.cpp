@@ -39,10 +39,10 @@ public:
     }
 };
 
-TransactionStore::TransactionStore(ServiceContext* serviceContext, CategoryStore* categoryStore)
-    : EntityStore{&serviceContext->transationService}
-    , categoryStore{categoryStore}
-    , detailStore{&serviceContext->transationDetailService}
+TransactionStore::TransactionStore(ServiceContext* serviceContext, DataStore *dataStore)
+    : EntityStore{&serviceContext->transationService, &dataStore->messageStore}
+    , categoryStore{dataStore->categoryStore}
+    , detailStore{&serviceContext->transationDetailService, &dataStore->messageStore}
     , sorter{new TransactionSorter(this)}
 {}
 
@@ -57,7 +57,8 @@ bool TransactionStore::load(EntityView *view, qlonglong accountId, bool reload) 
     return true;
 }
 
-void TransactionStore::update(QWidget *source, TransactionTableModel *model, int txRow) {
+void TransactionStore::update(QWidget *source, TransactionTableModel *model, const QString message, int txRow) {
+    messageStore->addMessage(message);
     doInBackground(source, [=, this]() {
         auto adds = model->unsavedAdds(txRow);
         adds.removeIf([](const PendingTransaction* tx) -> bool { return tx->isEmpty(); });
@@ -84,6 +85,7 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, int
         // TODO filter tx's for unloaded accounts
         update(updateData.transactions, deletes);
         for (auto accountId : accountIds) emit accountUpdated(accountId);
+        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, message);
     });
 }
 

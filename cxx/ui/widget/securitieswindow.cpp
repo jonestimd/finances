@@ -6,7 +6,7 @@
 #define SETTINGS_GROUP "securities"
 
 SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
-    : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView()}
+    : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView(), &dataStore->messageStore}
     , store{dataStore->securityStore}
 {
     entityView.addActions({hideZeroAction});
@@ -32,13 +32,11 @@ void SecuritiesWindow::loadData() {
 }
 
 void SecuritiesWindow::saveData() {
-    entityView.disableUi(tr(SAVING_SECURITIES));
-    store->update(this, model());
+    store->update(this, model(), tr(SAVING_SECURITIES));
 }
 
 void SecuritiesWindow::setSecurities(const QList<qlonglong> ids) {
     model()->setRows(ids);
-    entityView.enableUi();
 }
 
 void SecuritiesWindow::toggleZeroShares(bool hide) {

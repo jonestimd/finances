@@ -12,7 +12,7 @@ class AccountStore : public EntityStore<Account, AccountService> {
 public:
     CompanyStore companyStore;
 
-    AccountStore(ServiceContext *services);
+    AccountStore(ServiceContext *services, StatusMessageStore* messageStore);
 
     bool load(EntityView *source, bool reload = false);
 

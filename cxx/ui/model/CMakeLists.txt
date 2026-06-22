@@ -24,6 +24,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/securitystore.h ${CMAKE_CURRENT_LIST_DIR}/securitystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.h ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/statusmessagestore.h ${CMAKE_CURRENT_LIST_DIR}/statusmessagestore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiondetailstore.h ${CMAKE_CURRENT_LIST_DIR}/transactiondetailstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiontablemodel.h ${CMAKE_CURRENT_LIST_DIR}/transactiontablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactionstore.h ${CMAKE_CURRENT_LIST_DIR}/transactionstore.cpp

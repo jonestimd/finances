@@ -26,7 +26,7 @@ namespace transactionwindow {
 using namespace transactionwindow;
 
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
-    : AppWindow{tr("Detail"), model, new TreeView()}
+    : AppWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
@@ -58,7 +58,6 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(companiesLoaded()));
-    connect(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)), this, SLOT(accountUpdated(qlonglong)));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -118,8 +117,7 @@ void TransactionsWindow::loadData() {
 }
 
 void TransactionsWindow::saveData() {
-    entityView.disableUi(tr(SAVING_TRANSACTIONS));
-    store()->update(this, model());
+    store()->update(this, model(), tr(SAVING_TRANSACTIONS));
 }
 
 void TransactionsWindow::modelReset() {
@@ -171,14 +169,6 @@ void TransactionsWindow::accountsLoaded() {
     }
 }
 
-void TransactionsWindow::accountUpdated(qlonglong accountId) {
-    if (accountId == model()->accountId) {
-        entityView.removeMessage(SAVING_TRANSACTION);
-        entityView.removeMessage(SAVING_TRANSACTIONS);
-        entityView.focusItemView();
-    }
-}
-
 void TransactionsWindow::companiesLoaded() {
     setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
 }
@@ -211,8 +201,7 @@ void TransactionsWindow::keyPressEvent(QKeyEvent *event) {
         auto index = entityView.sortModel.mapToSource(entityView.itemView->currentIndex());
         if (model()->transactionHasChanges(index) && model()->transactionIsValid(index)) {
             auto txRow = index.parent().isValid() ? index.parent().row() : index.row();
-            entityView.disableUi(tr(SAVING_TRANSACTION));
-            store()->update(this, model(), txRow);
+            store()->update(this, model(), tr(SAVING_TRANSACTION), txRow);
         }
     }
     AppWindow::keyPressEvent(event);

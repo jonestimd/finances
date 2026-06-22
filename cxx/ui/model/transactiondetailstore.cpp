@@ -1,8 +1,8 @@
 #include "transactiondetailstore.h"
 #include "service/model/transaction.h"
 
-TransactionDetailStore::TransactionDetailStore(TransactionDetailService *service)
-    : EntityStore{service}
+TransactionDetailStore::TransactionDetailStore(TransactionDetailService *service, StatusMessageStore* messageStore)
+    : EntityStore{service, messageStore}
 {}
 
 void TransactionDetailStore::load(qlonglong accountId) {

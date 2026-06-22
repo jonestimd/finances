@@ -1,7 +1,7 @@
 #include "groupstore.h"
 
-GroupStore::GroupStore(GroupService *service)
-    : EntityStore{service}
+GroupStore::GroupStore(GroupService *service, StatusMessageStore* messageStore)
+    : EntityStore{service, messageStore}
 {}
 
 void GroupStore::detailsUpdated(const QList<DetailChange> changes) {

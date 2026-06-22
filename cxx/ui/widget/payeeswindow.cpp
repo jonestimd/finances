@@ -3,12 +3,12 @@
 #include "entityselectiondialog.h"
 #include "settings.h"
 #include "statusmessage.h"
-#include <ui/model/comboboxmodel.h>
+#include "ui/model/comboboxmodel.h"
 
 #define SETTINGS_GROUP "payees"
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
-    : AppWindow{tr("Payee"), new PayeeTableModel(dataStore->payeeStore), new QTableView()}
+    : AppWindow{tr("Payee"), new PayeeTableModel(dataStore->payeeStore), new QTableView(), &dataStore->messageStore}
     , store{dataStore->payeeStore}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Payees"), tr("ctrl+y", "merge payee"), this, SLOT(merge()), false)}
 {
@@ -38,13 +38,11 @@ void PayeesWindow::loadData() {
 }
 
 void PayeesWindow::saveData() {
-    entityView.disableUi(tr(SAVING_PAYEES));
-    store->update(this, model());
+    store->update(this, model(), tr(SAVING_PAYEES));
 }
 
 void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
     model()->setRows(payeeIds);
-    entityView.enableUi();
 }
 
 void PayeesWindow::merge() {
@@ -59,10 +57,7 @@ void PayeesWindow::merge() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
-        if (!selectedId.isNull()) {
-            entityView.disableUi(tr(SAVING_PAYEES));
-            store->mergePayees(this, payee, selectedId);
-        }
+        if (!selectedId.isNull()) store->mergePayees(this, payee, selectedId);
     }
 }
 
