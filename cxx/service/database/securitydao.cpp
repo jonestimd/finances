@@ -174,7 +174,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     QSqlQuery query(db);
     query.prepare(insertSecurityQuery);
     for (auto security : std::as_const(result)) {
-        query.bindValue(":id", security->id);
+        query.bindValue(":id", security->id.value());
         query.bindValue(":type", security->securityType);
         sql::exec(query, className, "insert security");
     }
@@ -186,7 +186,7 @@ void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securiti
     QSqlQuery query(db);
     query.prepare("delete from asset where id = :id");
     for (auto security : securities) {
-        query.bindValue(":id", security->id);
+        query.bindValue(":id", security->id.value());
         sql::exec(query, className, "remove asset");
     }
 }
@@ -196,7 +196,7 @@ QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Securit
     QSqlQuery query(db);
     query.prepare(updateSecuritySql);
     for (auto security : securities) {
-        query.bindValue(":id", security->id);
+        query.bindValue(":id", security->id.value());
         query.bindValue(":securityType", security->securityType);
     }
     return updates;

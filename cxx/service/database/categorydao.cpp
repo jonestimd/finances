@@ -89,12 +89,12 @@ void CategoryDao::createTable(const QSqlDatabase &db) const {
 
 QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
     QSqlQuery query(db);
-    QVariantList ids{category->id};
+    QVariantList ids{category->id.value()};
     if (!category->parentId.isNull()) ids.append(category->parentId.toLongLong());
-    if (!parentId.isNull()) ids.append(parentId);
+    if (!parentId.isNull()) ids.append(parentId.toLongLong());
     query.prepare(setParentSql);
     query.bindValue(":user", user);
-    query.bindValue(":id", category->id);
+    query.bindValue(":id", category->id.value());
     query.bindValue(":version", category->version);
     query.bindValue(":parentId", parentId);
     sql::exec(query, className, "setParent");
@@ -108,7 +108,7 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
         query.prepare(setParentsSql);
         query.bindValue(":user", user);
         query.bindValue(":parentId", destinationId);
-        query.bindValue(":oldParentId", category->id);
+        query.bindValue(":oldParentId", category->id.value());
         sql::exec(query, className, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
     }

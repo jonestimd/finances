@@ -25,12 +25,12 @@ void TransactionDetailStore::replaceCategory(const QVariant oldCategoryId, const
 void TransactionDetailStore::update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes) {
     auto allDeletes = QList<const TransactionDetail*>{deletes};
     for (auto& detailId : updates.deletedDetailIds) {
-        if (contains(detailId)) allDeletes.append(value(detailId));
+        if (contains(detailId.toLongLong())) allDeletes.append(value(detailId.toLongLong()));
     }
     for (auto tx : txDeletes) {
         for (auto& detailId : tx->detailIds) {
-            if (contains(detailId)) {
-                auto detail = value(detailId);
+            if (contains(detailId.toLongLong())) {
+                auto detail = value(detailId.toLongLong());
                 allDeletes.append(detail);
             }
         }

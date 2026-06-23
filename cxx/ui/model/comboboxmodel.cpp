@@ -25,7 +25,7 @@ int ComboBoxModel::rowCount(const QModelIndex &parent) const {
 
 QVariant ComboBoxModel::data(const QModelIndex &index, int role) const {
     if (role == Qt::DisplayRole) return getName(options.at(index.row()));
-    if (role == finances::EntityIdRole) return options.at(index.row())->id;
+    if (role == finances::EntityIdRole) return options.at(index.row())->id.value();
     if (role == finances::EntityPtrRole) return QVariant::fromValue(options.at(index.row()));
     return QVariant{};
 }

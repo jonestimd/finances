@@ -10,7 +10,7 @@ AccountType::AccountType(const char *code, const QString name, bool security)
 }
 
 bool AccountType::isCompatible(const Account *account, const AccountType *type) {
-    return !account->id.isValid() || !account->type.isValid() || account->transactions == 0
+    return !account->id.has_value() || !account->type.isValid() || account->transactions == 0
            || values.value(account->type.toString())->security == type->security;
 }
 

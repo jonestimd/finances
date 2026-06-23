@@ -57,7 +57,7 @@ void PayeesWindow::merge() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
-        if (!selectedId.isNull()) store->mergePayees(this, payee, selectedId);
+        if (selectedId.has_value()) store->mergePayees(this, payee, selectedId.value());
     }
 }
 

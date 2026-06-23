@@ -181,12 +181,12 @@ void DbTestCase::createDatabases() {
     }
 }
 
-QVariant DbTestCase::addCompany(const QString &driver, const QString &name) {
+qlonglong DbTestCase::addCompany(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Company company{};
     company.name = name;
     companyDao(driver).add(conn.db, QList{&company}, TEST_USER);
-    return company.id;
+    return company.id.value();
 }
 
 template<typename Entity, typename Dao, Dao &(DbTestCase::*dao)(const QString &)>
@@ -213,11 +213,11 @@ const Entity* load(DbTestCase *test, const QString &driver, const QVariant &id, 
     return rows.value(id.toLongLong());
 }
 
-QVariant DbTestCase::addPayee(const QString &driver, const QString &name) {
+qlonglong DbTestCase::addPayee(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Payee payee{name};
     payeeDao(driver).add(conn.db, QList{&payee}, TEST_USER);
-    return payee.id;
+    return payee.id.value();
 }
 
 Security* DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
@@ -228,20 +228,20 @@ Security* DbTestCase::addSecurity(const QString &driver, const QString &name, co
     return security;
 }
 
-QVariant DbTestCase::addCategory(const QString &driver, const QString &name) {
+qlonglong DbTestCase::addCategory(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Category category;
     category.name = name;
     categoryDao(driver).add(conn.db, QList{&category}, TEST_USER);
-    return category.id;
+    return category.id.value();
 }
 
-QVariant DbTestCase::addGroup(const QString &driver, const QString &name) {
+qlonglong DbTestCase::addGroup(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     TransactionGroup group;
     group.name = name;
     groupDao(driver).add(conn.db, QList{&group}, TEST_USER);
-    return group.id;
+    return group.id.value();
 }
 
 const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {
@@ -280,13 +280,13 @@ QList<DbTestCase::TxDetails> DbTestCase::saveTransfer(const QString& driver, con
     detail->transferAccountId = altAccountId;
     auto relatedDetail = GET_DETAILS(relatedTx).at(0);
     relatedDetail->transferAccountId = accountId;
-    detail->relatedDetailId = relatedDetail->id;
-    relatedDetail->relatedDetailId = detail->id;
+    detail->relatedDetailId = relatedDetail->id.value();
+    relatedDetail->relatedDetailId = detail->id.value();
 
     auto &detailDao = this->detailDao(driver);
     Connection conn(connectionPool(driver));
-    detailDao.setRelatedDetailIds(conn.db, {{relatedDetail, detail->id.toLongLong()}});
-    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail->id.toLongLong()}});
+    detailDao.setRelatedDetailIds(conn.db, {{relatedDetail, detail->id.value()}});
+    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail->id.value()}});
     return QList{tx, relatedTx};
 }
 
@@ -311,7 +311,7 @@ DbTestCase::TxDetails DbTestCase::saveTransaction(const QString &driver, const T
 void DbTestCase::saveTransaction(const QString &driver, Transaction *tx, const QList<TransactionDetail *> details) {
     Connection conn(connectionPool(driver));
     transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
-    for (auto detail : details) detail->transactionId = tx->id;
+    for (auto detail : details) detail->transactionId = tx->id.value();
     detailDao(driver).add(conn.db, details, TEST_USER);
     tx->detailIds = getEntityIds(details);
     this->transactions.append(tx);

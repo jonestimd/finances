@@ -11,7 +11,7 @@ QList<const Category *> CategoryService::update(BulkUpdate<Category> &changes, c
     if (!changes.deletes.isEmpty()) {
          // TODO add tests for updated parent returned with updated children
         QVariantList updatedIds;
-        for (auto category : changes.updates) updatedIds += category->id;
+        for (auto category : changes.updates) updatedIds += category->id.value();
         QVariantList parentIds;
         for (auto category : changes.deletes) {
             auto parentId = category->parentId;

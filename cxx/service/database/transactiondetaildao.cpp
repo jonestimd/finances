@@ -145,8 +145,8 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
     SQL_BIND_VALUE(query, ":user", user);
     bindInsertValues(query, &relatedDetail);
     sql::exec(query, className, "insert");
-    auto id = query.lastInsertId();
-    return get(db, {id}).value(id.toLongLong());
+    auto id = query.lastInsertId().toLongLong();
+    return get(db, {id}).value(id);
 }
 
 QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds) {
@@ -173,7 +173,7 @@ void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *cat
     query.prepare(setCategorySql);
     SQL_BIND_VALUE(query, ":user", user);
     SQL_BIND_VALUE(query, ":categoryId", newCategoryId);
-    SQL_BIND_VALUE(query, ":oldCategoryId", category->id);
+    SQL_BIND_VALUE(query, ":oldCategoryId", category->id.value());
     sql::exec(query, className, "setCategory");
     if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
 }
@@ -200,7 +200,7 @@ void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<Tra
     query.prepare(setRelatedDetailQuery);
     for (auto [detail, relatedId] : relatedIds.asKeyValueRange()) {
         detail->relatedDetailId = relatedId;
-        SQL_BIND_VALUE(query, ":id", detail->id);
+        SQL_BIND_VALUE(query, ":id", detail->id.value());
         SQL_BIND_VALUE(query, ":relatedId", detail->relatedDetailId);
         sql::exec(query, className, "setRelatedDetailId");
     }

@@ -32,18 +32,22 @@ void EntitySelectionDialog::setSelectedEntity(const NamedEntity *entity) {
     selectionInput->setEntity(entity);
 }
 
-QVariant EntitySelectionDialog::selectedId() const {
+std::optional<qlonglong> EntitySelectionDialog::selectedId() const {
     auto entity = selectionInput->entity();
-    return entity ? entity->id : QVariant{};
+    return entity ? entity->id : std::optional<qlonglong>{};
+}
+
+QVariant EntitySelectionDialog::qSelectedId() const {
+    auto entity = selectionInput->entity();
+    return entity ? entity->id.value() : QVariant{};
 }
 
 void EntitySelectionDialog::inputChanged() {
     auto id = selectedId();
-    if (id.isValid() && disabledOptions.contains(id.toLongLong())) {
-        errorMessage->setText(disabledOptions.value(id.toLongLong()));
+    if (id.has_value() && disabledOptions.contains(*id)) {
+        errorMessage->setText(disabledOptions.value(*id));
         saveButton->setEnabled(false);
-    }
-    else {
+    } else {
         errorMessage->clear();
         saveButton->setEnabled(selectionInput->hasAcceptableInput());
     }

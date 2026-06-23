@@ -31,13 +31,13 @@ protected:
         QHash<qlonglong, const Entity*> entities;
         while (query.next()) {
             auto entity = new Entity(query.record());
-            entities.insert(entity->id.toLongLong(), entity);
+            entities.insert(entity->id.value(), entity);
         }
         return entities;
     }
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) {
-        SQL_BIND_VALUE(query, ":id", entity->id);
+        SQL_BIND_VALUE(query, ":id", entity->id.value());
         SQL_BIND_VALUE(query, ":version", entity->version);
     }
 
@@ -106,7 +106,7 @@ public:
         for (auto entity : entities) {
             bindInsertValues(query, entity);
             sql::exec(query, className, "insert");
-            entity->id = query.lastInsertId();
+            entity->id = query.lastInsertId().toLongLong();
             entity->changeUser = user;
             result.append(entity);
         }
@@ -124,7 +124,7 @@ public:
         QSqlQuery query(db);
         query.prepare(deleteSql);
         for (auto entity : entities) {
-            SQL_BIND_VALUE(query, ":id", entity->id);
+            SQL_BIND_VALUE(query, ":id", entity->id.value());
             sql::exec(query, className, "remove");
             // TODO check version
         }

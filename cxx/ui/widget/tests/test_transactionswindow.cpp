@@ -83,13 +83,13 @@ class TestTransactionsWindow : public QObject {
     DataStore* dataStore;
     UiContext* uiContext;
 
-    QVariant companyId;
-    QVariant accountId;
-    QVariant altAccountId;
-    QVariant securityAccountId;
-    QVariant payeeId;
-    QVariant categoryId;
-    QVariant groupId;
+    qlonglong companyId;
+    qlonglong accountId;
+    qlonglong altAccountId;
+    qlonglong securityAccountId;
+    qlonglong payeeId;
+    qlonglong categoryId;
+    qlonglong groupId;
 
     QSignalSpy *accountUpdatedSpy;
 
@@ -101,8 +101,8 @@ private:
         QTRY_VERIFY(win->findChild<TreeView*>()->isEnabled());
     }
 
-    TransactionsWindow* openWindow(const QVariant &accountId) {
-        TransactionsWindow* window = uiContext->showTransactions(accountId.toLongLong());
+    TransactionsWindow* openWindow(qlonglong accountId) {
+        TransactionsWindow* window = uiContext->showTransactions(accountId);
         waitForDataLoaded(window);
         return window;
     }
@@ -163,7 +163,7 @@ private:
         QCOMPARE(tx->memo, description);
     }
 
-    void verifyDetail(QVariant detailId, QVariant categoryId, QVariant transferAccountId, QVariant amount) {
+    void verifyDetail(qlonglong detailId, QVariant categoryId, QVariant transferAccountId, QVariant amount) {
         verifyDetail(dataStore->transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
     }
 
@@ -182,7 +182,7 @@ private:
     }
 
     template<class Holder>
-    void testRenameTxReference(const QVariant accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
+    void testRenameTxReference(qlonglong accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
         TxWindowHolder holder(openWindow(accountId));
         QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
         QVERIFY(modelSpy.isValid());
@@ -225,9 +225,9 @@ private slots:
     void initTestCase_data() {
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
-        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id;
-        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, AccountType::bank.code, companyId)->id;
-        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id;
+        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
+        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
+        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id.value();
         payeeId = dbTestCase.addPayee(driver, PAYEE_NAME);
         categoryId = dbTestCase.addCategory(driver, CATEGORY_NAME);
         groupId = dbTestCase.addGroup(driver, GROUP_NAME);
@@ -258,11 +258,11 @@ private slots:
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
-        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).size(), INITIAL_TRANSACTION_COUNT+1);
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId).size(), INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder.window->model()->getRow(holder.index(INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, "123", payeeId, "description");
-        verifyDetail(tx->detailIds.at(0), categoryId, QVariant{}, "12.34");
+        verifyDetail(tx->detailIds.at(0).toLongLong(), categoryId, QVariant{}, "12.34");
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
@@ -289,7 +289,7 @@ private slots:
         auto model = holder.window->model();
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
-        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId).count(), INITIAL_TRANSACTION_COUNT-1);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount-1);
         QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount-1);
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
@@ -317,7 +317,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
-        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
+        verifyDetail(tx->detailIds.at(0).toLongLong(), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
@@ -343,7 +343,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
-        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
+        verifyDetail(tx->detailIds.at(0).toLongLong(), QVariant{}, accountId, "-98.76");
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
     }
 
@@ -359,7 +359,7 @@ private slots:
         auto model = holder.window->model();
         QVERIFY(model->isPendingAdd(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
-        QCOMPARE(dataStore->transactionStore->transactionIds(accountId.toLongLong()).count(), INITIAL_TRANSACTION_COUNT-1);
+        QCOMPARE(dataStore->transactionStore->transactionIds(accountId).count(), INITIAL_TRANSACTION_COUNT-1);
         auto model2 = holder2.model();
         QCOMPARE(model2->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(model2->rowCount(model2->index(0, 0)), 1);
@@ -378,8 +378,8 @@ private slots:
         QCOMPARE(updateSpy.size(), 1);
         QCOMPARE(updateSpy.at(0).at(0), accountId);
         QVERIFY(!dataStore->payeeStore->contains(altPayeeId));
-        QCOMPARE(dataStore->transactionStore->value(tx->id)->payeeId, payeeId);
-        QCOMPARE(dataStore->transactionStore->value(tx->id)->version, tx->version.toLongLong()+1);
+        QCOMPARE(dataStore->transactionStore->value(tx->id.value())->payeeId, payeeId);
+        QCOMPARE(dataStore->transactionStore->value(tx->id.value())->version, tx->version.toLongLong()+1);
     }
 
     void renamePayee_updatesTransactions() {
@@ -389,7 +389,7 @@ private slots:
 
     void renameSecurity_updatesTransactions() {
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
-        dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, QVariant{}, securityId), {"123.45"});
+        dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, QVariant{}, securityId.value()), {"123.45"});
         SecurityWindowHolder securityHolder(new SecuritiesWindow(dataStore));
         testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }
@@ -404,8 +404,8 @@ private slots:
         doMerge<CategoryWindowHolder, CategoryStore>(categoryId, dataStore->categoryStore);
 
         QVERIFY(!dataStore->categoryStore->contains(altCategoryId));
-        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->categoryId, categoryId);
-        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id)->version, detail->version.toLongLong()+1);
+        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id.value())->categoryId, categoryId);
+        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id.value())->version, detail->version.toLongLong()+1);
     }
 
     void renameAccount_updatesTransactionDetails() {

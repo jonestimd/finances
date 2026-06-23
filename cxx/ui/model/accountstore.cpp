@@ -32,8 +32,8 @@ void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<
     });
 }
 
-QString AccountStore::qualifiedName(const QVariant &accountId, QChar delimiter) const {
-    auto account = value(accountId.toLongLong());
+QString AccountStore::qualifiedName(qlonglong accountId, QChar delimiter) const {
+    auto account = value(accountId);
     if (account) {
         auto name = account->name.toString();
         if (account->companyId.isNull()) return name;
@@ -41,8 +41,8 @@ QString AccountStore::qualifiedName(const QVariant &accountId, QChar delimiter) 
         if (company) return company->name.toString().append(delimiter).append(name);
         else qCDebug(logger, "qualifiedName: company not loaded: %lld", account->companyId.toLongLong());
     }
-    else qCDebug(logger, "qualifiedName: account not loaded: %lld", accountId.toLongLong());
-    return accountId.toString();
+    else qCDebug(logger, "qualifiedName: account not loaded: %lld", accountId);
+    return QString::number(accountId);
 }
 
 void AccountStore::transactionsUpdated(const QList<TransactionChange> changes) {

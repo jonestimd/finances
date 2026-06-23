@@ -35,7 +35,7 @@ public:
     }
 
     void add(Transaction* tx) {
-        transactions.insert(tx->id.toLongLong(), tx);
+        transactions.insert(tx->id.value(), tx);
     }
 
     void add(const QList<const Transaction*> transactions) {
@@ -44,7 +44,7 @@ public:
 
     void add(const QList<TransactionDetail*> details) {
         for (auto detail : details) {
-            this->details.insert(detail->id.toLongLong(), detail);
+            this->details.insert(detail->id.value(), detail);
         }
     }
 
@@ -88,13 +88,13 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
             QHash<TransactionDetail*, qlonglong> relatedIds{};
             detailDao.add(conn.db, detailAdds, user);
             for (auto detail : std::as_const(detailAdds)) {
-                if (auto tx = session.getTransaction(detail->transactionId)) (*tx)->detailIds.append(detail->id);
+                if (auto tx = session.getTransaction(detail->transactionId)) (*tx)->detailIds.append(detail->id.value());
                 else txIds.append(detail->transactionId);
                 if (!detail->transferAccountId.isNull()) {
                     auto relatedTransaction = dao.addRelatedTransaction(conn.db, detail, user);
-                    auto relatedDetail = detailDao.addRelatedDetail(conn.db, relatedTransaction->id, detail, user);
-                    relatedTransaction->detailIds.append(relatedDetail->id);
-                    relatedIds.insert(detail, relatedDetail->id.toLongLong());
+                    auto relatedDetail = detailDao.addRelatedDetail(conn.db, relatedTransaction->id.value(), detail, user);
+                    relatedTransaction->detailIds.append(relatedDetail->id.value());
+                    relatedIds.insert(detail, relatedDetail->id.value());
                     session.add(relatedTransaction);
                     session.add({relatedDetail}); // TODO delete on error
                 }
@@ -110,7 +110,7 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
             }
             session.add(detailDao.update(conn.db, changes.detailUpdates, user)); // TODO delete related details on error
             for (auto detail : changes.detailUpdates) {
-                auto savedIds = relatedDetailIds.value(detail->id.toLongLong());
+                auto savedIds = relatedDetailIds.value(detail->id.value());
                 if (detail->transferAccountId.isNull()) {
                     if (!savedIds.relatedDetailId.isNull()) {
                         deletedDetailIds.append(savedIds.relatedDetailId);
@@ -119,10 +119,10 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
                 } else if (savedIds.relatedDetailId.isNull()) {
                     auto transaction = dao.addRelatedTransaction(conn.db, detail, user);
                     session.add(transaction);
-                    auto relatedDetail = detail->newTransfer(savedIds.accountId, transaction->id);
+                    auto relatedDetail = detail->newTransfer(savedIds.accountId, transaction->id.value());
                     session.add(detailDao.add(conn.db, {relatedDetail}, user)); // TODO delete on error
-                    transaction->detailIds.append(relatedDetail->id);
-                    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail->id.toLongLong()}});
+                    transaction->detailIds.append(relatedDetail->id.value());
+                    detailDao.setRelatedDetailIds(conn.db, {{detail, relatedDetail->id.value()}});
                 } else if (detail->transferAccountId.toLongLong() != savedIds.transferAccountId) {
                     dao.setAccountId(conn.db, savedIds.relatedTransactionId, savedIds.transferAccountId, detail->transferAccountId, user);
                     txIds.append(savedIds.relatedTransactionId);

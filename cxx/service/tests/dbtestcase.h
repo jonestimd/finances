@@ -86,13 +86,13 @@ public:
     TransactionDetailDao &detailDao(const QString &driver);
     
     void createDatabases();
-
-    QVariant addCompany(const QString &driver, const QString &name);
+    
+    qlonglong addCompany(const QString &driver, const QString &name);
     Account *addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
-    QVariant addPayee(const QString &driver, const QString &name);
+    qlonglong addPayee(const QString &driver, const QString &name);
     Security* addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
-    QVariant addCategory(const QString &driver, const QString &name);
-    QVariant addGroup(const QString &driver, const QString &name);
+    qlonglong addCategory(const QString &driver, const QString &name);
+    qlonglong addGroup(const QString &driver, const QString &name);
 
     const Account *loadAccount(const QString &driver, QVariant id);
     const Security *loadSecurity(const QString &driver, QVariant id);

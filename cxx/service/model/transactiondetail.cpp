@@ -33,14 +33,14 @@ bool TransactionDetail::isEmpty() const {
 
 TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
     auto relatedDetail = new TransactionDetail(*this);
-    relatedDetail->id = QVariant{};
+    relatedDetail->id.reset();
     initTransfer(transactionId, *relatedDetail);
     relatedDetail->transferAccountId = transferAccountId;
     return relatedDetail;
 }
 
 void TransactionDetail::initTransfer(const QVariant &transactionId, TransactionDetail &relatedDetail) const {
-    relatedDetail.relatedDetailId = id;
+    relatedDetail.relatedDetailId = id.value();
     relatedDetail.transactionId = transactionId;
     relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
     if (!relatedDetail.assetQuantity.isNull()) {

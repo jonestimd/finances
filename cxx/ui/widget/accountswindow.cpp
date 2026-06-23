@@ -1,6 +1,5 @@
 #include "accountswindow.h"
 #include "settings.h"
-#include "statusmessage.h"
 #include "ui/uicontext.h"
 
 #define SETTINGS_GROUP "accounts"
@@ -77,7 +76,7 @@ void AccountsWindow::showCompanies() {
 
 void AccountsWindow::showTransactions() {
     if (entityView.selectedIndex().isValid()) {
-        auto accountId = model()->getRow(entityView.selectedIndex())->id.toLongLong();
+        auto accountId = model()->getRow(entityView.selectedIndex())->id.value();
         context->showTransactions(accountId);
     }
 }

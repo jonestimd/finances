@@ -123,7 +123,7 @@ const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QLi
     for (auto tx : adds) txAdds.append(tx);
     EntityDao::add(db, txAdds, user);
     for (auto tx : adds) {
-        for (auto detail : std::as_const(tx->details)) detail->transactionId = tx->id;
+        for (auto detail : std::as_const(tx->details)) detail->transactionId = tx->id.value();
     }
     return adds;
 }
@@ -144,7 +144,7 @@ void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, co
     query.prepare(setPayeeQuery);
     SQL_BIND_VALUE(query, ":user", user);
     SQL_BIND_VALUE(query, ":payeeId", newPayeeId);
-    SQL_BIND_VALUE(query, ":oldPayeeId", payee->id);
+    SQL_BIND_VALUE(query, ":oldPayeeId", payee->id.value());
     sql::exec(query, className, "setPayee");
     if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
 }
@@ -162,7 +162,7 @@ Transaction *TransactionDao::addRelatedTransaction(QSqlDatabase &db, Transaction
     QSqlQuery query(db);
     query.prepare(insertRelatedQuery);
     SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":detailId", detail->id);
+    SQL_BIND_VALUE(query, ":detailId", detail->id.value());
     SQL_BIND_VALUE(query, ":accountId", detail->transferAccountId);
     sql::exec(query, className, "addRelatedTransaction");
     if (query.numRowsAffected() != 1) throw QString("failed to insert transaction");

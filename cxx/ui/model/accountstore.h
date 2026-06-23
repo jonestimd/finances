@@ -18,7 +18,7 @@ public:
 
     void update(QWidget *source, AccountTableModel *model);
 
-    QString qualifiedName(const QVariant &accountId, QChar delimiter) const;
+    QString qualifiedName(qlonglong accountId, QChar delimiter) const;
 
 public slots:
     void transactionsUpdated(const QList<TransactionChange> changes);

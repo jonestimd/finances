@@ -66,9 +66,9 @@ struct TransactionsData {
     QList<const Transaction*> transactions{};
     QList<const TransactionDetail*> details{};
     /** @brief deletedIds IDs of transactions deleted due to changes to transfer details. */
-    QList<QVariant> deletedIds{};
+    QList<QVariant> deletedIds{}; // TODO QList<qlonglong>
     /** @brief deletedDetailIds IDs of deleted related details. */
-    QList<QVariant> deletedDetailIds{};
+    QList<QVariant> deletedDetailIds{}; // TODO QList<qlonglong>
 
     TransactionsData() = default;
     TransactionsData(

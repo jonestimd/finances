@@ -19,16 +19,17 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     switch (role) {
     case Qt::DisplayRole:
         if (current.isValid() && current.isNull()) return "";
-        if (value.isValid() && !value.isNull()) {
-            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id, ':'); // .prepend("\u279c ");
-            if (typeId.id.isValid()) return dataStore->categoryStore->displayName(typeId.id.toLongLong());
+        if (typeId.id.has_value()) {
+            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id.value(), ':'); // .prepend("\u279c ");
+            return dataStore->categoryStore->displayName(typeId.id.value());
         }
         break;
     case Qt::EditRole:
         if (current.isValid()) return current;
         if (value.isValid() && !value.isNull()) {
-            if (typeId.transfer) return QVariant::fromValue<const NamedEntity*>(dataStore->accountStore->value(typeId.id));
-            return QVariant::fromValue<const NamedEntity*>(dataStore->categoryStore->value(typeId.id));
+            if (!typeId.id.has_value()) return QVariant::fromValue<const NamedEntity*>(nullptr);
+            if (typeId.transfer) return QVariant::fromValue<const NamedEntity*>(dataStore->accountStore->value(typeId.id.value()));
+            return QVariant::fromValue<const NamedEntity*>(dataStore->categoryStore->value(typeId.id.value()));
         }
         break;
     case finances::OptionsRole:
@@ -50,10 +51,10 @@ void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant val
     if (value.value<const NamedEntity*>()) {
         auto typeId = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
         if (typeId->transfer) {
-            row->transferAccountId = typeId->id;
+            row->transferAccountId = typeId->id.value();
             row->categoryId = QVariant{};
         } else {
-            row->categoryId = typeId->id;
+            row->categoryId = typeId->id.value();
             row->transferAccountId = QVariant{};
         }
     } else {
@@ -69,8 +70,8 @@ QVariant TransactionTypeColumnAdapter::getId(const QVariant &value) const {
 
 QString TransactionTypeColumnAdapter::optionText(const NamedEntity* option) const {
     auto type = static_cast<const TransactionType*>(option);
-    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id, ':');
-    return dataStore->categoryStore->displayName(option->id.toLongLong());
+    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id.value(), ':');
+    return dataStore->categoryStore->displayName(option->id.value());
 }
 
 ComboBoxModel *TransactionTypeColumnAdapter::getOptions() const {

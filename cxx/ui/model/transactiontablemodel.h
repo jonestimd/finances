@@ -53,8 +53,8 @@ protected:
 
 public:
     void setRows(const QList<qlonglong> transactionIds);
-
-    QVariant balance(const QVariant &transactionId) const;
+    
+    QVariant balance(const std::optional<qlonglong> &transactionId) const;
     QDecNumber clearedBalance() const;
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;

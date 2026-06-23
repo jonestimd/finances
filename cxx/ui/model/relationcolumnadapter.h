@@ -8,8 +8,8 @@
 
 template<class T, NameAndId V, class Store>
     requires requires(Store *s, QVariant id, ComboBoxModel::CreateValue createValue) {
-        { s->value(id) } -> std::convertible_to<const V*>;
-        { s->contains(id) } -> std::convertible_to<bool>;
+        { s->value(id.toLongLong()) } -> std::convertible_to<const V*>;
+        { s->contains(id.toLongLong()) } -> std::convertible_to<bool>;
         { s->newComboBoxModel(createValue) } -> std::convertible_to<ComboBoxModel*>;
     }
 class RelationColumnAdapter : public ColumnAdapter<T> {
@@ -34,13 +34,13 @@ public:
         if (role == finances::SortRole && value.isNull()) return "";
         if (role == Qt::DisplayRole || role == finances::SortRole) {
             if (current.isValid() && current.isNull()) return "";
-            if (value.isValid() && store->contains(value)) {
-                return store->value(value)->name;
+            if (value.isValid() && store->contains(value.toLongLong())) {
+                return store->value(value.toLongLong())->name;
             }
         }
         if (role == Qt::EditRole) {
             if (current.isValid()) return current;
-            const NamedEntity *v = store->value(value);
+            const NamedEntity *v = store->value(value.toLongLong());
             return QVariant::fromValue(v);
         }
         if (role == finances::OptionsRole) {
@@ -51,18 +51,18 @@ public:
 
     virtual QVariant getId(const QVariant &row) const {
         auto entity = row.value<const NamedEntity*>();
-        return entity ? entity->id : QVariant{};
+        return entity ? entity->id.value() : QVariant{};
     }
 
     virtual bool isEqual(const QVariant &value1, const QVariant &value2) const override {
         auto e1 = value1.value<const NamedEntity*>(), e2 = value2.value<const NamedEntity*>();
-        if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->id, e2->id);
+        if (e1) return e2 && ColumnAdapter<T>::isEqual(e1->id.value(), e2->id.value());
         return !e2;
     }
 
     virtual void setValue(T *row, QVariant value) const override {
         auto entity = value.value<const NamedEntity*>();
-        ColumnAdapter<T>::setValue(row, entity ? entity->id : QVariant{});
+        ColumnAdapter<T>::setValue(row, entity ? entity->id.value() : QVariant{});
     }
 };
 

@@ -13,9 +13,9 @@ class TestCategoryService : public QObject {
         auto testName = QTest::currentTestFunction();
         Category *category = new Category;
         category->name = QString("%0:%1").arg(testName, name);
-        category->parentId = parent ? parent->id : QVariant{};
+        category->parentId = parent ? parent->id.value() : QVariant{};
         dbTestCase.categoryDao(driver).add(conn.db, {category}, TEST_USER);
-        if (parent) parent->childIds.append(category->id);
+        if (parent) parent->childIds.append(category->id.value());
         this->categories.append(category);
         return category;
     }
@@ -42,9 +42,9 @@ private slots:
         auto result = service->setParent(child, QVariant{}, TEST_USER);
 
         QCOMPARE(result.size(), 2);
-        QCOMPARE(result.value(parent->id.toLongLong())->name, parent->name);
-        QCOMPARE(result.value(parent->id.toLongLong())->childIds, {});
-        QCOMPARE(result.value(child->id.toLongLong())->parentId, QVariant{});
+        QCOMPARE(result.value(parent->id.value())->name, parent->name);
+        QCOMPARE(result.value(parent->id.value())->childIds, {});
+        QCOMPARE(result.value(child->id.value())->parentId, QVariant{});
     }
 
     void setParent_returnsOldAndNewParents() {
@@ -54,14 +54,14 @@ private slots:
         auto child = addCategory(driver, "child", parent);
         auto newParent = addCategory(driver, "new parent");
 
-        auto result = service->setParent(child, newParent->id, TEST_USER);
+        auto result = service->setParent(child, newParent->id.value(), TEST_USER);
 
         QCOMPARE(result.size(), 3);
-        QCOMPARE(result.value(parent->id.toLongLong())->name, parent->name);
-        QCOMPARE(result.value(parent->id.toLongLong())->childIds, {});
-        QCOMPARE(result.value(newParent->id.toLongLong())->name, newParent->name);
-        QCOMPARE(result.value(newParent->id.toLongLong())->childIds, {child->id});
-        QCOMPARE(result.value(child->id.toLongLong())->parentId, newParent->id);
+        QCOMPARE(result.value(parent->id.value())->name, parent->name);
+        QCOMPARE(result.value(parent->id.value())->childIds, {});
+        QCOMPARE(result.value(newParent->id.value())->name, newParent->name);
+        QCOMPARE(result.value(newParent->id.value())->childIds, QVariantList{child->id.value()});
+        QCOMPARE(result.value(child->id.value())->parentId.toLongLong(), newParent->id.value());
     }
 
     void merge_updatesChildren() {
@@ -72,14 +72,14 @@ private slots:
         auto toMerge = addCategory(driver, "other parent");
         auto otherChild = addCategory(driver, "other child", toMerge);
 
-        auto result = service->merge(toMerge, parent->id, TEST_USER);
+        auto result = service->merge(toMerge, parent->id.value(), TEST_USER);
 
         QCOMPARE(result.size(), 2);
-        QCOMPARE(result.value(parent->id.toLongLong())->name, parent->name);
-        QCOMPARE(result.value(otherChild->id.toLongLong())->name, otherChild->name);
-        QCOMPARE(result.value(otherChild->id.toLongLong())->parentId, parent->id);
-        QVariantList childIds{child->id, otherChild->id};
-        QCOMPARE(result.value(parent->id.toLongLong())->childIds, childIds);
+        QCOMPARE(result.value(parent->id.value())->name, parent->name);
+        QCOMPARE(result.value(otherChild->id.value())->name, otherChild->name);
+        QCOMPARE(result.value(otherChild->id.value())->parentId, parent->id);
+        QVariantList childIds{child->id.value(), otherChild->id.value()};
+        QCOMPARE(result.value(parent->id.value())->childIds, childIds);
     }
 
     void cleanup() {

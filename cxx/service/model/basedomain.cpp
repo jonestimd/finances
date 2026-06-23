@@ -6,7 +6,7 @@
 BaseDomain::BaseDomain() {}
 
 BaseDomain::BaseDomain(const QSqlRecord &record)
-    : id{record.field("id").value()}
+    : id{record.field("id").value().toLongLong()}
     , version{record.field("version").value()}
     , changeUser{record.field("change_user").value()}
     , changeDate{record.field("change_date").value()}
@@ -39,7 +39,10 @@ const Category *TransactionType::getCategory(const QVariant &value) {
     return entity && !entity->transfer ? static_cast<const Category*>(entity) : nullptr;
 }
 
-TransactionTypeId::TransactionTypeId(bool transfer, QVariant id) : transfer{transfer}, id{id} {}
+TransactionTypeId::TransactionTypeId(bool transfer, QVariant id)
+    : transfer{transfer}
+    , id{id.isValid() ? id.toLongLong() : std::optional<qlonglong>{}}
+{}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}
 

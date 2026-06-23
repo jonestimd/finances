@@ -60,7 +60,7 @@ void CategoryStore::mergeCategories(QWidget *source, const Category *category, c
     messageStore->addMessage(tr(SAVING_CATEGORIES));
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
-        dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
+        dataStore->transactionStore->detailStore.replaceCategory(category->id.value(), destinationId);
         update(categories.values(), QList{category});
         emit valuesLoaded(ids());
         QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_CATEGORIES));
@@ -74,10 +74,10 @@ void CategoryStore::detailsUpdated(const QList<DetailChange> changes) {
 }
 
 void CategoryStore::update(const QList<const Category *> &updates, const QList<const Category *> deletes) {
-    for (auto category : deletes) rootIds_.remove(category->id.toLongLong());
+    for (auto category : deletes) rootIds_.remove(category->id.value());
     EntityStore::update(updates, deletes);
     for (auto category : updates) {
-        auto id = category->id.toLongLong();
+        auto id = category->id.value();
         if (category->parentId.isNull()) rootIds_.insert(id);
         else rootIds_.remove(id);
     }

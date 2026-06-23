@@ -18,7 +18,8 @@ public:
                           QHash<qlonglong, QString> disabledOptions = QHash<qlonglong, QString>{});
 
     void setSelectedEntity(const NamedEntity *category);
-    QVariant selectedId() const;
+    std::optional<qlonglong> selectedId() const;
+    QVariant qSelectedId() const;
 
 private Q_SLOTS:
     void inputChanged();

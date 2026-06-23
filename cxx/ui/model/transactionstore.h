@@ -36,8 +36,8 @@ public:
     void replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId);
 
     const QList<qlonglong> transactionIds(qlonglong accountId) const;
-
-    QDecNumber amount(const QVariant &transactionId) const;
+    
+    QDecNumber amount(qlonglong transactionId) const;
 
     void clearData(qlonglong accountId);
 

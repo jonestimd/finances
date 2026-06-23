@@ -32,9 +32,13 @@ namespace transactiontablemodel {
 
     public:
         TxAmountColumnAdapter(QString title, TransactionTableModel *model)
-            : AmountColumnAdapter(title, &Transaction::id, dollarFormat, false)
+            : AmountColumnAdapter(title, nullptr, dollarFormat, false)
             , model{model}
         {}
+
+        virtual QVariant fieldValue(const Transaction *row) const override {
+            return row->id.value();
+        }
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             switch (role) {
@@ -59,7 +63,7 @@ namespace transactiontablemodel {
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (role == finances::SortRole) {
-                return QString("%1:%2").arg(row->date.toDate().toString(Qt::ISODate)).arg(row->id.toLongLong(), 16, 16);
+                return QString("%1:%2").arg(row->date.toDate().toString(Qt::ISODate)).arg(row->id.value(), 16, 16);
             }
             return FormatColumnAdapter::value(row, index, current, role);
         }
@@ -70,11 +74,14 @@ namespace transactiontablemodel {
 
     public:
         BalanceColumnAdapter(const QString &title, const TransactionTableModel *model)
-            : AmountColumnAdapter{title, &Transaction::id, dollarFormat, false}
+            : AmountColumnAdapter{title, nullptr, dollarFormat, false}
             , model{model}
         {}
 
-    public:
+        virtual QVariant fieldValue(const Transaction *row) const override {
+            return row->id.has_value() ? row->id.value() : QVariant{};
+        }
+
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (!index.parent().isValid()) {
                 switch (role) {
@@ -226,8 +233,8 @@ void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     emit clearedBalanceChanged(clearedBalance_);
 }
 
-QVariant TransactionTableModel::balance(const QVariant &transactionId) const {
-    return balances.value(transactionId.toLongLong());
+QVariant TransactionTableModel::balance(const std::optional<qlonglong> &transactionId) const {
+    return transactionId.has_value() ? balances.value(transactionId.value()) : QVariant{};
 }
 
 QDecNumber TransactionTableModel::clearedBalance() const {
@@ -277,7 +284,7 @@ const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &ind
     }
     auto txDetailIds = getRow(index.parent())->detailIds;
     if (index.row() < txDetailIds.length()) {
-        return store->detailStore.value(txDetailIds.at(index.row()));
+        return store->detailStore.value(txDetailIds.at(index.row()).toLongLong());
     }
     return newDetails[index.parent().row()].at(index.row() - txDetailIds.length());
 }
@@ -614,7 +621,7 @@ QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {
             pendingTransaction(parent)->details.append(new TransactionDetail);
         } else {
             if (!newDetails.contains(parent.row())) newDetails.insert(parent.row(), QList<TransactionDetail*>());
-            newDetails[parent.row()].append(new TransactionDetail(getRow(parent)->id));
+            newDetails[parent.row()].append(new TransactionDetail(getRow(parent)->id.value()));
         }
         validateRow(rowIndex, parent);
         endInsertRows();

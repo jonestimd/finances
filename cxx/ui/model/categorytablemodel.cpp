@@ -62,14 +62,14 @@ int CategoryTableModel::rowCount(const QModelIndex &parent) const {
 
 bool CategoryTableModel::movable(const QModelIndex &index) {
     auto row = getRow(index);
-    return row->id.isValid() && store->movable(row->id.toLongLong());
+    return row->id.has_value() && store->movable(row->id.value());
 }
 
 QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (hasIndex(row, column, parent)) {
         if (parent.isValid()) {
             auto p = static_cast<const Category*>(parent.internalPointer());
-            auto rowId = store->value(p->id.toLongLong())->childIds[row].toLongLong();
+            auto rowId = store->value(p->id.value())->childIds[row].toLongLong();
             return createIndex(row, column, store->value(rowId));
         }
         if (row < rootIds.length()) {

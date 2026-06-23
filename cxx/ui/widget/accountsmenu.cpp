@@ -25,7 +25,7 @@ namespace accountsmenu {
         {
             setText(account->name.toString().replace('&', "&&"));
             connect(this, &QAction::triggered, this, [=]() {
-                window->showAccount(account->id.toLongLong());
+                window->showAccount(account->id.value());
             });
         }
     };
@@ -75,10 +75,10 @@ void AccountsMenu::updateMenu() {
         } else {
             QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
             if (!companyMenu) {
-                auto company = store->companyStore.value(account->companyId);
+                auto company = store->companyStore.value(account->companyId.toLongLong());
                 if (company) {
                     companyMenu = new QMenu(company->name.toString().replace('&', "&&"), this);
-                    companyMenus.insert(company->id.toLongLong(), companyMenu);
+                    companyMenus.insert(company->id.value(), companyMenu);
                     insertByName(this, companyMenu);
                 }
             }

@@ -13,9 +13,11 @@ namespace domain {
     }
 }
 
+// typedef std::optional<qlonglong> domain_id;
+
 class BaseDomain {
 public:
-    QVariant id;
+    std::optional<qlonglong> id{};
     QVariant version{0};
     QVariant changeUser;
     QVariant changeDate;
@@ -27,7 +29,7 @@ public:
 template<class T>
 QVariantList getEntityIds(const QList<T*> items) {
     QVariantList ids{};
-    for (auto item : items) ids.append(item->id);
+    for (auto item : items) ids.append(item->id.value());
     return ids;
 }
 
@@ -62,9 +64,9 @@ Q_DECLARE_METATYPE(const TransactionType*)
 
 struct TransactionTypeId {
     const bool transfer;
-    const QVariant id;
+    const std::optional<qlonglong> id;
 
-    TransactionTypeId(bool transfer = false, QVariant id = QVariant{});
+    TransactionTypeId(bool transfer = false, QVariant id = {});
     TransactionTypeId(const TransactionType &tt);
     TransactionTypeId(const TransactionType *tt);
 };

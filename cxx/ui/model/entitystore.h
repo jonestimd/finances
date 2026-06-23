@@ -59,12 +59,12 @@ public:
         return byId.size();
     }
 
-    const T *value(const QVariant &id) const {
-        return byId.value(id.toLongLong());
+    const T *value(qlonglong id) const {
+        return byId.value(id);
     }
 
-    bool contains(const QVariant &id) const {
-        return byId.contains(id.toLongLong());
+    bool contains(qlonglong id) const {
+        return byId.contains(id);
     }
 
     void forEachEntry(std::function<void(qlonglong, const T*)> func) const {
@@ -124,12 +124,12 @@ protected:
      */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
         for (auto updated : updates) {
-            auto id = updated->id.toLongLong();
+            auto id = updated->id.value();
             auto oldValue = byId.value(id);
             byId[id] = updated;
             if (oldValue) delete oldValue;
         }
-        for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
+        for (auto entity : deletes) delete byId.take(entity->id.value());
     }
 
     void removeValues(const QList<qlonglong> &ids) {
@@ -160,12 +160,12 @@ protected:
             auto oldTxValue = oldTx ? oldTx->*txField : QVariant{};
             auto newTxValue = newTx ? newTx->*txField : QVariant{};
             if (oldTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(oldTxValue);
+                auto refValue = value(oldTxValue.toLongLong());
                 refValue->transactions = refValue->transactions.toInt() - 1;
                 updateIds.insert(oldTxValue.toLongLong());
             }
             if (newTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(newTxValue);
+                auto refValue = value(newTxValue.toLongLong());
                 refValue->transactions = refValue->transactions.toInt() + 1;
                 updateIds.insert(newTxValue.toLongLong());
             }
@@ -181,12 +181,12 @@ protected:
             auto oldDetailValue = oldDetail ? oldDetail->*detailField : QVariant{};
             auto newDetailValue = newDetail ? newDetail->*detailField : QVariant{};
             if (oldDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(oldDetailValue);
+                auto refValue = value(oldDetailValue.toLongLong());
                 refValue->details = refValue->details.toInt() - 1;
                 updateIds.insert(oldDetailValue.toLongLong());
             }
             if (newDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(newDetailValue);
+                auto refValue = value(newDetailValue.toLongLong());
                 refValue->details = refValue->details.toInt() + 1;
                 updateIds.insert(newDetailValue.toLongLong());
             }

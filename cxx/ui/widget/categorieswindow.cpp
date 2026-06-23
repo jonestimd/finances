@@ -12,7 +12,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
     , getName{[this](const NamedEntity* entity) {
-        return store->displayName(entity->id.toLongLong());
+        return store->displayName(entity->id.value());
     }}
 {
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
@@ -57,9 +57,9 @@ void CategoriesWindow::reparent() {
     for (auto id : store->ids()) {
         auto option = store->value(id);
         auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);
-        if (option != category && !store->isAncestor(id, category->id)) {
+        if (option != category && !store->isAncestor(id, category->id.value())) {
             options.append(option);
-            if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.toLongLong(), message);
+            if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.value(), message);
         }
     }
     auto model = new ComboBoxModel(options, getName);
@@ -67,8 +67,8 @@ void CategoriesWindow::reparent() {
     if (!category->parentId.isNull()) dialog.setSelectedEntity(store->value(category->parentId.toLongLong()));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
-        auto parentId = dialog.selectedId();
-        if (category->parentId != dialog.selectedId()) store->setParent(this, category, parentId);
+        auto parentId = dialog.qSelectedId();
+        if (category->parentId != parentId) store->setParent(this, category, parentId);
     }
 }
 
@@ -83,7 +83,7 @@ void CategoriesWindow::merge() {
     EntitySelectionDialog dialog(this, model, tr("Merge Categories"), tr("Select destination category:"));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
-        auto selectedId = dialog.selectedId();
+        auto selectedId = dialog.qSelectedId();
         if (!selectedId.isNull()) store->mergeCategories(this, category, selectedId);
     }
 }
