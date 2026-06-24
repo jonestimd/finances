@@ -13,22 +13,20 @@ and must be installed separately.
 When using `SQLite`, the database runs as part of the application
 and does not require a separate installation.
 
-### Compiling MySql QT plugin
+## Compile MySql and SQLite3 QT plugins
 
 * Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
-* Configure the build (`QT_DIR` is set to the QT version install directory, e.g. `/opt/Qt/<version>`)
+* Install `libsqlite3-dev`.
+* Compile and install the drivers:
+
 ```sh
-cd $QT_DIR/Src/qtbase
-./configure -sql-mysql
-```
-* Compile QT
-```sh
-cmake . --build . --parallel
-```
-* Install the plugin
-```sh
-cd $QT_DIR/gcc_64/plugins/sqldrivers
-ln -s $QT_DIR/Src/qtbase/plugins/sqldrivers/libqsqlmysql.so .
+# set QT_DIR to the base directory of the QT version, e.g. /opt/Qt/6.11.1
+cd $QT_DIR/Src/qtbase/src/plugins/sqldrivers
+mkdir build
+cd build
+cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_DIR -DCMAKE_INSTALL_PREFIX=$QT_DIR/gcc_64 -DFEATURE_system_sqlite=ON
+cmake --build .
+cmake --install .
 ```
 
 ## Compiling the Application
@@ -41,13 +39,16 @@ Prerequisites for building:
 * Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
 * Install `CMake`
 * Set the `CMAKE_PREFIX_PATH` env variable to the location of the Qt `cmake` executable
+* If using Ninja
+  * install Ninja
+  * or add Qt's ninja to your `PATH` (e.g. `alias ninja=${QT_DIR}/../Tools/Ninja/ninja`)
 ```sh
 export CMAKE_PREFIX_PATH=/opt/Qt/6.11.0/gcc_64/lib/cmake
 ```
 
 Run the following commands in the project root directory.
 ```sh
-cmake -S . -B out
+cmake -S . -B out -G Ninja
 cmake --build out -v
 ```
 

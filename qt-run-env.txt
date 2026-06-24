@@ -1,0 +1,5 @@
+TEST_PSQL_CONNECTION=hydra|5432|test_finances|test_finances|test_finances
+TEST_MYSQL_CONNECTION=127.0.0.1|3306|test_finances|test_finances|test_finances
+QT_LOGGING_RULES=sql.debug=false;sql.info=false;
+#QT_DEBUG_PLUGINS=1
+#QT_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt6/plugins

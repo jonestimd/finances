@@ -8,6 +8,16 @@ cmake_minimum_required(VERSION 3.27)
 
 project(finances VERSION 0.1 LANGUAGES CXX)
 
+if (NOT DEFINED CMAKE_PREFIX_PATH)
+    message(WARNING "CMAKE_PREFIX_PATH not defined, using env value")
+    set(CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
+endif()
+
+if (NOT DEFINED CMAKE_C_COMPILER)
+    message(WARNING "CMAKE_C_COMPILER not defined, using gcc")
+    set(CMAKE_C_COMPILER gcc)
+endif()
+
 set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -61,6 +71,7 @@ set_target_properties(libqdecimal
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgetsl)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test LinguistTools)
+find_package(SQLite3 REQUIRED)
 
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)
 
@@ -70,6 +81,7 @@ add_library(qtcommon OBJECT
 target_include_directories(qtcommon PRIVATE
     $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
 )
+add_dependencies(qtcommon libdecnumber)
 
 set(PROJECT_RESOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qrc
@@ -84,7 +96,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_RESOURCES}
     )
-    add_dependencies(finances libdecnumber libqdecimal decimal.so)
+    add_dependencies(finances libdecnumber qdecimal decimal.so)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET finances APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -103,15 +115,10 @@ else()
     endif()
 endif()
 
-set(QT_SQLITE_INCLUDE_DIR "${CMAKE_PREFIX_PATH}/../Src/qtbase/src/3rdparty/sqlite")
-file(GLOB_RECURSE QT_SQLITE_OBJ_FILE
-    ${CMAKE_PREFIX_PATH}/../Src/sqlite3.c.o
-)
-
 target_include_directories(finances PUBLIC
     ${QDECIMAL_SOURCE_DIR}/src
     ${QDECIMAL_SOURCE_DIR}/decnumber
-    ${QT_SQLITE_INCLUDE_DIR}
+    ${SQLite3_INCLUDE_DIR}
     ${CMAKE_HOME_DIRECTORY}/cxx
 )
 
@@ -119,7 +126,7 @@ target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Concurrent
-    ${QT_SQLITE_OBJ_FILE}
+    ${SQLite3_LIBRARY}
     $<TARGET_OBJECTS:qtcommon>
     # comment out next 2 lines for initial build with Ninja
     libqdecimal

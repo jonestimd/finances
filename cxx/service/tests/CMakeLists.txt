@@ -15,7 +15,7 @@ target_link_libraries(dbtestcase
     Qt${QT_VERSION_MAJOR}::Sql
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
-    ${QT_SQLITE_OBJ_FILE}
+    ${SQLite3_LIBRARY}
     $<TARGET_OBJECTS:qtcommon>
 )
 
