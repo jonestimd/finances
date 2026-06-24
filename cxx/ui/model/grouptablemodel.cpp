@@ -9,8 +9,8 @@ GroupTableModel::GroupTableModel(GroupStore *groupStore)
     : PodTableModel<TransactionGroup, GroupService>{
         groupStore,
         QList<ColumnAdapter<TransactionGroup>*>{
-            new ColumnAdapter<TransactionGroup>(tr("Name"), &TransactionGroup::name, true, new UniqueValidatorFactory(GROUP_NAME_COLUMN)),
-            new ColumnAdapter<TransactionGroup>(tr("Description"), &TransactionGroup::description),
+            new FieldColumnAdapter<TransactionGroup>(tr("Name"), &TransactionGroup::name, true, new UniqueValidatorFactory(GROUP_NAME_COLUMN)),
+            new FieldColumnAdapter<TransactionGroup>(tr("Description"), &TransactionGroup::description),
             new NumberColumnAdapter<TransactionGroup>(tr("Transactions"), &TransactionGroup::details),
         },
     }

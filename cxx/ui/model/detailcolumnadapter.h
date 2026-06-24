@@ -20,12 +20,10 @@ public:
     TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId);
 
     QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
-    QVariant fieldValue(const TransactionDetail *row) const override;
-
+    QVariant rowValue(const TransactionDetail *row) const override;
     void setValue(TransactionDetail *model, QVariant value) const override;
 
 private:
-
     QVariant getId(const QVariant &value) const;
 
     QString optionText(const NamedEntity* option) const;
@@ -57,7 +55,8 @@ public:
 class EmptyColumnAdapter : public ColumnAdapter<TransactionDetail> {
 public:
     EmptyColumnAdapter();
-    QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;;
+
+    virtual QVariant rowValue(const TransactionDetail* row) const override;
 };
 
 #endif // DETAILCOLUMNADAPTER_H

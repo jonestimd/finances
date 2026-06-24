@@ -8,7 +8,7 @@
 // TransactionTypeColumnAdapter //
 
 TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId)
-    : ColumnAdapter(title, &TransactionDetail::categoryId, true)
+    : ColumnAdapter(title, true)
     , dataStore{dataStore}
     , accountId{accountId}
 {}
@@ -40,11 +40,11 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     return QVariant{};
 }
 
-QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) const {
+QVariant TransactionTypeColumnAdapter::rowValue(const TransactionDetail *row) const {
     if (!row->transferAccountId.isNull()) {
         return QVariant::fromValue(TransactionTypeId(true, row->transferAccountId));
     }
-    return QVariant::fromValue(TransactionTypeId(false, ColumnAdapter::fieldValue(row)));
+    return QVariant::fromValue(TransactionTypeId(false, row->categoryId));
 }
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant value) const {
@@ -118,8 +118,8 @@ QVariant DetailAmountColumnAdapter::value(const TransactionDetail *row, const QM
 
 // EmptyColumnAdapter //
 
-EmptyColumnAdapter::EmptyColumnAdapter() : ColumnAdapter{"", nullptr, false} {}
+EmptyColumnAdapter::EmptyColumnAdapter() : ColumnAdapter{"", false} {}
 
-QVariant EmptyColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
+QVariant EmptyColumnAdapter::rowValue(const TransactionDetail *row) const {
     return QVariant{};
 }

@@ -49,12 +49,12 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
     : PodTableModel<Account, AccountService>{
         store,
         QList<ColumnAdapter<Account>*>{
-            new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
+            new FieldColumnAdapter<Account>(tr("Closed"), &Account::closed),
             new RelationColumnAdapter<Account, Company, CompanyStore>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
-            new ColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
+            new FieldColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
-            new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
-            new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
+            new FieldColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
+            new FieldColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
             new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
             new BalanceColumnAdapter(tr("Balance")),
         },

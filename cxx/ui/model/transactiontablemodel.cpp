@@ -36,7 +36,7 @@ namespace transactiontablemodel {
             , model{model}
         {}
 
-        virtual QVariant fieldValue(const Transaction *row) const override {
+        virtual QVariant rowValue(const Transaction *row) const override {
             return row->id.value();
         }
 
@@ -78,7 +78,7 @@ namespace transactiontablemodel {
             , model{model}
         {}
 
-        virtual QVariant fieldValue(const Transaction *row) const override {
+        virtual QVariant rowValue(const Transaction *row) const override {
             return row->id.has_value() ? row->id.value() : QVariant{};
         }
 
@@ -103,12 +103,12 @@ using namespace transactiontablemodel;
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
     : PodItemModel{{
         new TxDateColumnAdapter{tr(DATE_TITLE)},
-        new ColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
+        new FieldColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
-        new ColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
+        new FieldColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
-        new ColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
+        new FieldColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
         new BalanceColumnAdapter(tr(BALANCE_TITLE), this),
     }}
     , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore, accountId)}
@@ -116,7 +116,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
         new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
-        new ColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
+        new FieldColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
         new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),
         new DetailAmountColumnAdapter(tr("Amount")),
         new EmptyColumnAdapter(),

@@ -26,12 +26,12 @@ protected:
 CategoryTableModel::CategoryTableModel(DataStore *ds)
     : PodItemModel<Category> {
         QList<ColumnAdapter<Category>*>{
-            new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
-            new ColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
+            new FieldColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
+            new FieldColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
             new EnumColumnAdapter<Category, AmountType>(tr("Amount Type"), &Category::amountType, &AmountType::values, requiredValidatorFactory, true),
             new NumberColumnAdapter<Category>(tr("Transactions"), &Category::details),
-            new ColumnAdapter<Category>(tr("Income"), &Category::income),
-            new ColumnAdapter<Category>(tr("Security"), &Category::security),
+            new FieldColumnAdapter<Category>(tr("Income"), &Category::income),
+            new FieldColumnAdapter<Category>(tr("Security"), &Category::security),
         },
     }
     , store{ds->categoryStore}

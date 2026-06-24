@@ -30,15 +30,15 @@ class ColumnAdapter : public AbstractColumnAdapter {
 protected:
     typedef std::function<bool(const T*)> IsEditable;
 
-    QVariant T::* field;
     const IsEditable isEditable;
 public:
-    ColumnAdapter(QString title, QVariant T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
-        : ColumnAdapter(title, field, [editable](const T *r) { return editable; }, factory) {}
+    ColumnAdapter(QString title, bool editable = true, ValidatorFactory *factory = nullptr)
+        : ColumnAdapter(title, [editable](const T *r) { return editable; }, factory) {}
 
-    ColumnAdapter(QString title, QVariant T::* field, IsEditable isEditable, ValidatorFactory *factory = nullptr)
+    ColumnAdapter(QString title, IsEditable isEditable, ValidatorFactory *factory = nullptr)
         : AbstractColumnAdapter{factory, title}
-        , field{field}, isEditable{isEditable} {}
+        , isEditable{isEditable}
+    {}
 
     /**
      * @param current unsaved value if cell has been modified
@@ -49,7 +49,7 @@ public:
         case Qt::EditRole:
         case finances::SortRole:
         case finances::EntityIdRole:
-            return current.isValid() ? current : fieldValue(row);
+            return current.isValid() ? current : rowValue(row);
         case finances::ValidatorFactoryRole:
             if (validatorFactory) return QVariant::fromValue(validatorFactory->factory(index));
             break;
@@ -57,17 +57,33 @@ public:
         return QVariant{};
     };
 
-    virtual QVariant fieldValue(const T *row) const {
-        return row->*(this->field);
-    }
+    virtual QVariant rowValue(const T *row) const = 0;
 
-    virtual void setValue(T *row, QVariant value) const {
-        if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
-        row->*(this->field) = value;
-    }
+    virtual void setValue(T *row, QVariant value) const  {}
 
     virtual Qt::ItemFlags flags(const T *row, bool allowEdit) const {
         return allowEdit && (!isEditable || isEditable(row)) ? Qt::ItemIsEditable : Qt::NoItemFlags;
+    }
+};
+
+template<class T, class Value = QVariant>
+class FieldColumnAdapter : public ColumnAdapter<T> {
+    Value T::* const field;
+
+public:
+    FieldColumnAdapter(QString title, Value T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
+        : ColumnAdapter<T>(title, [editable](const T *r) { return editable; }, factory), field{field} {}
+
+    FieldColumnAdapter(QString title, Value T::* field, ColumnAdapter<T>::IsEditable isEditable, ValidatorFactory *factory = nullptr)
+        : ColumnAdapter<T>{factory, title, isEditable, factory}, field{field} {}
+
+    virtual QVariant rowValue(const T* row) const override {
+        if (std::is_same_v<Value, QVariant>) return row->*field;
+    }
+
+    virtual void setValue(T *row, QVariant value) const  override {
+        if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
+        row->*field = value;
     }
 };
 
