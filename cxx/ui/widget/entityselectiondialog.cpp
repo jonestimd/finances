@@ -37,11 +37,6 @@ std::optional<qlonglong> EntitySelectionDialog::selectedId() const {
     return entity ? entity->id : std::optional<qlonglong>{};
 }
 
-QVariant EntitySelectionDialog::qSelectedId() const {
-    auto entity = selectionInput->entity();
-    return entity ? entity->id.value() : QVariant{};
-}
-
 void EntitySelectionDialog::inputChanged() {
     auto id = selectedId();
     if (id.has_value() && disabledOptions.contains(*id)) {

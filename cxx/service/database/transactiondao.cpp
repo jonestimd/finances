@@ -131,10 +131,10 @@ const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QLi
 void TransactionDao::setAccountId(const QSqlDatabase &db, const QVariant &transactionId, const QVariant &oldAccountId, const QVariant &newAccountId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setAccountQuery);
-    SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":id", transactionId);
-    SQL_BIND_VALUE(query, ":oldAccountId", oldAccountId);
-    SQL_BIND_VALUE(query, ":newAccountId", newAccountId);
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":id", transactionId);
+    sql::bindValue(query, ":oldAccountId", oldAccountId);
+    sql::bindValue(query, ":newAccountId", newAccountId);
     sql::exec(query, className, "setCategory");
     if (query.numRowsAffected() != 1) throw staleDataMessage;
 }
@@ -142,9 +142,9 @@ void TransactionDao::setAccountId(const QSqlDatabase &db, const QVariant &transa
 void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setPayeeQuery);
-    SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":payeeId", newPayeeId);
-    SQL_BIND_VALUE(query, ":oldPayeeId", payee->id.value());
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":payeeId", newPayeeId);
+    sql::bindValue(query, ":oldPayeeId", payee->id);
     sql::exec(query, className, "setPayee");
     if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
 }
@@ -161,36 +161,36 @@ QList<QVariant> TransactionDao::removeEmpty(QSqlDatabase &db) {
 Transaction *TransactionDao::addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
     query.prepare(insertRelatedQuery);
-    SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":detailId", detail->id.value());
-    SQL_BIND_VALUE(query, ":accountId", detail->transferAccountId);
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":detailId", detail->id);
+    sql::bindValue(query, ":accountId", detail->transferAccountId);
     sql::exec(query, className, "addRelatedTransaction");
     if (query.numRowsAffected() != 1) throw QString("failed to insert transaction");
     auto relatedId = query.lastInsertId();
     query.prepare(getOneQuery);
-    SQL_BIND_VALUE(query, ":id", relatedId);
+    sql::bindValue(query, ":id", relatedId);
     sql::exec(query, className, "getRelatedTransaction");
     if (!query.next()) throw QString("failed to load new transaction");
     return new Transaction(query.record());
 }
 
 void TransactionDao::bindInsertValues(QSqlQuery &query, Transaction *transaction) {
-    SQL_BIND_VALUE(query, ":accountId", transaction->accountId);
-    SQL_BIND_VALUE(query, ":date", transaction->date); // TODO conversion?
-    SQL_BIND_VALUE(query, ":referenceNo", transaction->referenceNumber);
-    SQL_BIND_VALUE(query, ":memo", transaction->memo);
-    SQL_BIND_VALUE(query, ":payeeId", transaction->payeeId);
-    SQL_BIND_VALUE(query, ":securityId", transaction->securityId);
-    SQL_BIND_VALUE(query, ":cleared", mapping::toYesNo(transaction->cleared));
+    sql::bindValue(query, ":accountId", transaction->accountId);
+    sql::bindValue(query, ":date", transaction->date); // TODO conversion?
+    sql::bindValue(query, ":referenceNo", transaction->referenceNumber);
+    sql::bindValue(query, ":memo", transaction->memo);
+    sql::bindValue(query, ":payeeId", transaction->payeeId);
+    sql::bindValue(query, ":securityId", transaction->securityId);
+    sql::bindValue(query, ":cleared", mapping::toYesNo(transaction->cleared));
 }
 
 void TransactionDao::bindUpdateValues(QSqlQuery &query, Transaction *transaction) {
     EntityDao::bindUpdateValues(query, transaction);
-    SQL_BIND_VALUE(query, ":accountId", transaction->accountId);
-    SQL_BIND_VALUE(query, ":date", transaction->date); // TODO conversion?
-    SQL_BIND_VALUE(query, ":referenceNo", transaction->referenceNumber);
-    SQL_BIND_VALUE(query, ":memo", transaction->memo);
-    SQL_BIND_VALUE(query, ":payeeId", transaction->payeeId);
-    SQL_BIND_VALUE(query, ":securityId", transaction->securityId);
-    SQL_BIND_VALUE(query, ":cleared", mapping::toYesNo(transaction->cleared));
+    sql::bindValue(query, ":accountId", transaction->accountId);
+    sql::bindValue(query, ":date", transaction->date); // TODO conversion?
+    sql::bindValue(query, ":referenceNo", transaction->referenceNumber);
+    sql::bindValue(query, ":memo", transaction->memo);
+    sql::bindValue(query, ":payeeId", transaction->payeeId);
+    sql::bindValue(query, ":securityId", transaction->securityId);
+    sql::bindValue(query, ":cleared", mapping::toYesNo(transaction->cleared));
 }

@@ -39,20 +39,20 @@ class TestTransactionService : public QObject {
         return dbTestCase.saveTransfer(driver, accountId, altAccountId, amounts);
     }
 
-    const Transaction* loadTransaction(const QVariant id) {
+    const Transaction* loadTransaction(const qlonglong id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.transactionDao(driver).get(conn.db, QList{id});
         dbTestCase.transactions.append(result.values());
-        return result.value(id.toLongLong());
+        return result.value(id);
     }
 
-    const TransactionDetail* loadDetail(const QVariant id) {
+    const TransactionDetail* loadDetail(const qlonglong id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.detailDao(driver).get(conn.db, QList{id});
         dbTestCase.details.append(result.values());
-        return result.value(id.toLongLong());
+        return result.value(id);
     }
 
     PendingTransaction* unsavedTransaction(QList<const char*> amounts) {

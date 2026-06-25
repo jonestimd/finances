@@ -47,15 +47,15 @@ StockSplitDao::StockSplitDao(const QString &dbType)
 {}
 
 void StockSplitDao::bindInsertValues(QSqlQuery &query, StockSplit *split) {
-    SQL_BIND_VALUE(query, ":securityId", split->securityId);
-    SQL_BIND_VALUE(query, ":date", split->date);
-    SQL_BIND_VALUE(query, ":sharesIn", split->sharesIn);
-    SQL_BIND_VALUE(query, ":sharesOut", split->sharesOut);
+    sql::bindValue(query, ":securityId", split->securityId);
+    sql::bindValue(query, ":date", split->date);
+    sql::bindValue(query, ":sharesIn", split->sharesIn);
+    sql::bindValue(query, ":sharesOut", split->sharesOut);
 }
 
 void StockSplitDao::bindUpdateValues(QSqlQuery &query, StockSplit *split) {
     EntityDao::bindUpdateValues(query, split);
-    SQL_BIND_VALUE(query, ":date", split->date);
-    SQL_BIND_VALUE(query, ":sharesIn", split->sharesIn);
-    SQL_BIND_VALUE(query, ":sharesOut", split->sharesOut);
+    sql::bindValue(query, ":date", split->date);
+    sql::bindValue(query, ":sharesIn", split->sharesIn);
+    sql::bindValue(query, ":sharesOut", split->sharesOut);
 }

@@ -8,18 +8,18 @@
 
 Q_DECLARE_LOGGING_CATEGORY(sqlLogger)
 
-#define SQL_BIND_VALUE(query, name, value) \
-    query.bindValue((name), (value)); \
-    qCDebug(sqlLogger) << "-" << (name) << "=" << (value);
-
-#define SQL_BIND_LIST(query, name, values) \
-    sql::bindList(query, name, values); \
-    qCDebug(sqlLogger) << "-" << (name) << "=" << (values);
-
 namespace sql {
     QVariant getValue(QSqlRecord record, const char *name, QVariant defaultValue = {});
 
+    std::optional<qlonglong> getInt(QSqlRecord record, const char *name);
+
     QVariant yesNoValue(QSqlRecord record, const char *name);
+
+    void bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value);
+
+    void bindValue(QSqlQuery &query, const char *name, const QVariant &value);
+
+    void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 
     void bindList(QSqlQuery &query, const char *name, const QVariantList &values);
 

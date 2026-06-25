@@ -12,8 +12,8 @@ public:
     QVariant description;
     QVariant income{false};
     QVariant security{false};
-    QVariant parentId;
-    QList<QVariant> childIds{};
+    std::optional<qlonglong> parentId{};
+    QList<qlonglong> childIds{};
     mutable QVariant details{0};
 
     Category();

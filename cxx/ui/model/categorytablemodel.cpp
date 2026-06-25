@@ -18,7 +18,7 @@ protected:
     virtual QStringList rowValues(const QString value, const QModelIndex &index) const override {
         auto values = UniqueValidatorFactory::rowValues(value, index);
         auto parentId = static_cast<const Category*>(index.internalPointer())->parentId;
-        values.append(parentId.toString());
+        if (parentId.has_value()) values.append(QString::number(parentId.value()));
         return values;
     }
 };
@@ -69,7 +69,7 @@ QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &pa
     if (hasIndex(row, column, parent)) {
         if (parent.isValid()) {
             auto p = static_cast<const Category*>(parent.internalPointer());
-            auto rowId = store->value(p->id.value())->childIds[row].toLongLong();
+            auto rowId = store->value(p->id.value())->childIds[row];
             return createIndex(row, column, store->value(rowId));
         }
         if (row < rootIds.length()) {
@@ -87,11 +87,11 @@ QModelIndex CategoryTableModel::parent(const QModelIndex &index) const {
         // TODO pending child add or parent change?
         auto child = static_cast<const Category*>(index.internalPointer());
         auto parentId = child->parentId;
-        if (!parentId.isNull()) {
-            auto parent = store->value(parentId.toLongLong());
+        if (parentId.has_value()) {
+            auto parent = store->value(parentId.value());
             auto gpId = parent->parentId;
-            if (!gpId.isNull()) {
-                auto gp = store->value(gpId.toLongLong());
+            if (gpId.has_value()) {
+                auto gp = store->value(gpId.value());
                 auto row = gp->childIds.indexOf(child->id);
                 return createIndex(row, 0, gp);
             }

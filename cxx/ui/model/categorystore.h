@@ -21,11 +21,11 @@ public:
     /**
      * @return `true` if `parentId` is an ancestor of `categoryId`.
      */
-    bool isAncestor(qlonglong categoryId, const QVariant parentId) const;
+    bool isAncestor(qlonglong categoryId, const qlonglong parentId) const;
     bool hasChild(qlonglong categoryId, const QVariant &name) const;
 
-    void setParent(QWidget *source, const Category *category, const QVariant parentId);
-    void mergeCategories(QWidget *source, const Category *category, const QVariant destinationId);
+    void setParent(QWidget *source, const Category *category, const std::optional<qlonglong> &parentId);
+    void mergeCategories(QWidget *source, const Category *category, const qlonglong destinationId);
 
     using EntityStore::update;
 

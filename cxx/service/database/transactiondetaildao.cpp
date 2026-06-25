@@ -132,7 +132,7 @@ TransactionDetailDao::TransactionDetailDao(const QString &dbType)
 QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, const QVariant &accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountQuery);
-    SQL_BIND_VALUE(query, ":accountId", accountId);
+    sql::bindValue(query, ":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);
 }
@@ -142,17 +142,17 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
     query.prepare(insertQuery);
     TransactionDetail relatedDetail;
     detail->initTransfer(txId, relatedDetail);
-    SQL_BIND_VALUE(query, ":user", user);
+    sql::bindValue(query, ":user", user);
     bindInsertValues(query, &relatedDetail);
     sql::exec(query, className, "insert");
     auto id = query.lastInsertId().toLongLong();
-    return get(db, {id}).value(id);
+    return get(db, QList<qlonglong>{id}).value(id);
 }
 
 QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
-    SQL_BIND_LIST(query, ":txIds", getEntityIds(transactions));
+    sql::bindList(query, ":txIds", getEntityIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
     QVariantList ids{}, relatedDetailIds{};
     while (query.next()) {
@@ -171,9 +171,9 @@ QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const Q
 void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setCategorySql);
-    SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":categoryId", newCategoryId);
-    SQL_BIND_VALUE(query, ":oldCategoryId", category->id.value());
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":categoryId", newCategoryId);
+    sql::bindValue(query, ":oldCategoryId", category->id);
     sql::exec(query, className, "setCategory");
     if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
 }
@@ -187,8 +187,8 @@ QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, 
     if (!relatedIds.isEmpty()) {
         QSqlQuery query(db);
         query.prepare(updateTransferAmountSql);
-        SQL_BIND_LIST(query, ":ids", relatedIds);
-        SQL_BIND_VALUE(query, ":user", user);
+        sql::bindList(query, ":ids", relatedIds);
+        sql::bindValue(query, ":user", user);
         sql::exec(query, className, "updateTransferAmount");
         updates.append(get(db, relatedIds).values()); // TODO assumes related details are not in entities
     }
@@ -200,8 +200,8 @@ void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<Tra
     query.prepare(setRelatedDetailQuery);
     for (auto [detail, relatedId] : relatedIds.asKeyValueRange()) {
         detail->relatedDetailId = relatedId;
-        SQL_BIND_VALUE(query, ":id", detail->id.value());
-        SQL_BIND_VALUE(query, ":relatedId", detail->relatedDetailId);
+        sql::bindValue(query, ":id", detail->id);
+        sql::bindValue(query, ":relatedId", detail->relatedDetailId);
         sql::exec(query, className, "setRelatedDetailId");
     }
 }
@@ -210,7 +210,7 @@ QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
     QSqlQuery query(db);
     auto ids = getEntityIds(updates);
     query.prepare(getRelatedIdsSql);
-    SQL_BIND_LIST(query, ":ids", ids);
+    sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "getRelatedDetailIds");
     QHash<qlonglong, RelatedDetailIds> relatedIds{};
     while (query.next()) {
@@ -228,30 +228,30 @@ void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const Transactio
 }
 
 void TransactionDetailDao::bindInsertValues(QSqlQuery &query, TransactionDetail *detail) {
-    SQL_BIND_VALUE(query, ":txId", detail->transactionId);
-    SQL_BIND_VALUE(query, ":amount", detail->amount);
-    SQL_BIND_VALUE(query, ":assetQuantity", detail->assetQuantity);
-    SQL_BIND_VALUE(query, ":memo", detail->memo);
-    SQL_BIND_VALUE(query, ":categoryId", detail->categoryId);
-    SQL_BIND_VALUE(query, ":groupId", detail->groupId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", detail->relatedDetailId);
+    sql::bindValue(query, ":txId", detail->transactionId);
+    sql::bindValue(query, ":amount", detail->amount);
+    sql::bindValue(query, ":assetQuantity", detail->assetQuantity);
+    sql::bindValue(query, ":memo", detail->memo);
+    sql::bindValue(query, ":categoryId", detail->categoryId);
+    sql::bindValue(query, ":groupId", detail->groupId);
+    sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
 void TransactionDetailDao::bindUpdateValues(QSqlQuery &query, TransactionDetail *detail) {
     EntityDao::bindUpdateValues(query, detail);
-    SQL_BIND_VALUE(query, ":txId", detail->transactionId);
-    SQL_BIND_VALUE(query, ":amount", detail->amount);
-    SQL_BIND_VALUE(query, ":assetQuantity", detail->assetQuantity);
-    SQL_BIND_VALUE(query, ":memo", detail->memo);
-    SQL_BIND_VALUE(query, ":categoryId", detail->categoryId);
-    SQL_BIND_VALUE(query, ":groupId", detail->groupId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", detail->relatedDetailId);
+    sql::bindValue(query, ":txId", detail->transactionId);
+    sql::bindValue(query, ":amount", detail->amount);
+    sql::bindValue(query, ":assetQuantity", detail->assetQuantity);
+    sql::bindValue(query, ":memo", detail->memo);
+    sql::bindValue(query, ":categoryId", detail->categoryId);
+    sql::bindValue(query, ":groupId", detail->groupId);
+    sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
 void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QVariantList ids) {
     QSqlQuery query(db);
     query.prepare(deleteByIdsSql);
-    SQL_BIND_LIST(query, ":ids", ids);
+    sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "deleteByIds");
 }
 

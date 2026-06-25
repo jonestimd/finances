@@ -64,10 +64,10 @@ void CategoriesWindow::reparent() {
     }
     auto model = new ComboBoxModel(options, getName);
     EntitySelectionDialog dialog(this, model, tr("Move Category"), tr("Select parent category for \"%1\":").arg(name), disabledOptions);
-    if (!category->parentId.isNull()) dialog.setSelectedEntity(store->value(category->parentId.toLongLong()));
+    if (category->parentId.has_value()) dialog.setSelectedEntity(store->value(category->parentId.value()));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
-        auto parentId = dialog.qSelectedId();
+        auto parentId = dialog.selectedId();
         if (category->parentId != parentId) store->setParent(this, category, parentId);
     }
 }
@@ -83,8 +83,8 @@ void CategoriesWindow::merge() {
     EntitySelectionDialog dialog(this, model, tr("Merge Categories"), tr("Select destination category:"));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
-        auto selectedId = dialog.qSelectedId();
-        if (!selectedId.isNull()) store->mergeCategories(this, category, selectedId);
+        auto selectedId = dialog.selectedId();
+        if (selectedId.has_value()) store->mergeCategories(this, category, selectedId.value());
     }
 }
 

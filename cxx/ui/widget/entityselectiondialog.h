@@ -19,7 +19,6 @@ public:
 
     void setSelectedEntity(const NamedEntity *category);
     std::optional<qlonglong> selectedId() const;
-    QVariant qSelectedId() const;
 
 private Q_SLOTS:
     void inputChanged();

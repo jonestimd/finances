@@ -7,7 +7,7 @@ PayeeStore::PayeeStore(PayeeService *service, DataStore *dataStore)
     , dataStore{dataStore}
 {}
 
-void PayeeStore::mergePayees(QWidget *source, const Payee *payee, const QVariant destinationId) {
+void PayeeStore::mergePayees(QWidget *source, const Payee *payee, qlonglong destinationId) {
     messageStore->addMessage(tr(SAVING_PAYEES));
     doInBackground(source, [this, payee, destinationId] {
         auto payees = service->merge(payee, destinationId, user);

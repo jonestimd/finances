@@ -37,8 +37,8 @@ protected:
     }
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) {
-        SQL_BIND_VALUE(query, ":id", entity->id.value());
-        SQL_BIND_VALUE(query, ":version", entity->version);
+        sql::bindValue(query, ":id", entity->id);
+        sql::bindValue(query, ":version", entity->version);
     }
 
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
@@ -66,6 +66,13 @@ public:
         return load(query);
     }
 
+    QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QList<qlonglong> ids) {
+        QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
+        sql::exec(query, className, "getByIds");
+        return load(query);
+    }
+
+    /** @deprecated */
     QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
         QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
@@ -81,7 +88,7 @@ public:
         QList<const Entity*> result;
         result.reserve(entities.length());
         query.prepare(updateSql);
-        SQL_BIND_VALUE(query, ":user", user);
+        sql::bindValue(query, ":user", user);
         for (auto entity : entities) {
             bindUpdateValues(query, entity);
             sql::exec(query, className, "update");
@@ -102,7 +109,7 @@ public:
         QList<const Entity*> result;
         result.reserve(entities.length());
         query.prepare(insertSql);
-        SQL_BIND_VALUE(query, ":user", user);
+        sql::bindValue(query, ":user", user);
         for (auto entity : entities) {
             bindInsertValues(query, entity);
             sql::exec(query, className, "insert");
@@ -116,7 +123,7 @@ public:
     virtual void remove(QSqlDatabase &db, const QVariant id) {
         QSqlQuery query(db);
         query.prepare(deleteSql);
-        SQL_BIND_VALUE(query, ":id", id);
+        sql::bindValue(query, ":id", id);
         sql::exec(query, className, "remove");
     }
 
@@ -124,7 +131,7 @@ public:
         QSqlQuery query(db);
         query.prepare(deleteSql);
         for (auto entity : entities) {
-            SQL_BIND_VALUE(query, ":id", entity->id.value());
+            sql::bindValue(query, ":id", entity->id);
             sql::exec(query, className, "remove");
             // TODO check version
         }
@@ -143,11 +150,11 @@ public:
 
     virtual void bindUpdateValues(QSqlQuery &query, Entity *entity) override {
         EntityDao<Entity>::bindUpdateValues(query, entity);
-        SQL_BIND_VALUE(query,":name", entity->name);
+        sql::bindValue(query,":name", entity->name);
     }
 
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) override {
-        SQL_BIND_VALUE(query, ":name", entity->name);
+        sql::bindValue(query, ":name", entity->name);
     }
 };
 

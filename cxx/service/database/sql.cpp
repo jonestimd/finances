@@ -16,12 +16,39 @@ QVariant sql::getValue(QSqlRecord record, const char *name, QVariant defaultValu
     return value;
 }
 
+std::optional<qlonglong> sql::getInt(QSqlRecord record, const char *name) {
+    auto field = record.field(name);
+    if (field.isNull()) return {};
+    return field.value().toLongLong();
+}
+
 QVariant sql::yesNoValue(QSqlRecord record, const char *name) {
     return getValue(record, name).toString() == "Y";
 }
 
+void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value) {
+    bindValue(query, name, value.has_value() ? value.value() : QVariant{});
+}
+
+void sql::bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
+    query.bindValue(name, value);
+    qCDebug(sqlLogger) << "-" << name << "=" << (value);
+}
+
+static void bindList(QSqlQuery &query, const char *name, const QJsonArray &array) {
+    query.bindValue(name, QString::fromUtf8(QJsonDocument(array).toJson()));
+}
+
+void sql::bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values) {
+    QJsonArray array;
+    for (const auto& value : values) array.append(QJsonValue(value));
+    bindList(query, name, array);
+    qCDebug(sqlLogger) << "-" << name << "=" << values;
+}
+
 void sql::bindList(QSqlQuery &query, const char *name, const QVariantList &values) {
-    query.bindValue(name, QString::fromUtf8(QJsonDocument(QJsonArray::fromVariantList(values)).toJson()));
+    bindList(query, name, QJsonArray::fromVariantList(values));
+    qCDebug(sqlLogger) << "-" << name << "=" << values;
 }
 
 static void logAndThrowError(const QSqlQuery &query, const QString &className, const char *queryName) {
