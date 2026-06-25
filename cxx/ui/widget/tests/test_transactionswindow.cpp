@@ -163,7 +163,7 @@ private:
         QCOMPARE(tx->memo, description);
     }
 
-    void verifyDetail(qlonglong detailId, QVariant categoryId, QVariant transferAccountId, QVariant amount) {
+    void verifyDetail(qlonglong detailId, QVariant categoryId, std::optional<qlonglong> transferAccountId, QVariant amount) {
         verifyDetail(dataStore->transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
     }
 
@@ -171,10 +171,10 @@ private:
         auto pendingTx = window->model()->unsavedAdds().at(0);
         verifyTransaction(pendingTx, QVariant{}, QVariant{}, QVariant{});
         QCOMPARE(pendingTx->details.size(), 1);
-        verifyDetail(pendingTx->details.at(0), QVariant{}, QVariant{}, QVariant{});
+        verifyDetail(pendingTx->details.at(0), QVariant{}, {}, QVariant{});
     }
 
-    void verifyDetail(const TransactionDetail* detail, QVariant categoryId, QVariant transferAccountId, QVariant amount) {
+    void verifyDetail(const TransactionDetail* detail, QVariant categoryId, std::optional<qlonglong> transferAccountId, QVariant amount) {
         QCOMPARE(detail->categoryId, categoryId);
         QCOMPARE(detail->transferAccountId, transferAccountId);
         if (amount.isNull()) QVERIFY(detail->amount.isNull());
@@ -262,7 +262,7 @@ private slots:
         QCOMPARE(holder.window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder.window->model()->getRow(holder.index(INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, "123", payeeId, "description");
-        verifyDetail(tx->detailIds.at(0).toLongLong(), categoryId, QVariant{}, "12.34");
+        verifyDetail(tx->detailIds.at(0), categoryId, {}, "12.34");
         QVERIFY(holder.window->model()->unsavedDetailAdds().isEmpty());
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
@@ -317,7 +317,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
-        verifyDetail(tx->detailIds.at(0).toLongLong(), QVariant{}, accountId, "-2.34");
+        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
@@ -343,7 +343,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
-        verifyDetail(tx->detailIds.at(0).toLongLong(), QVariant{}, accountId, "-98.76");
+        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
     }
 

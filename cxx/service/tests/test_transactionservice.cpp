@@ -17,8 +17,8 @@ T *find(qlonglong id, QList<T*> list) {
     return nullptr;
 }
 
-template<class T>
-T *findBy(QVariant id, QVariant (std::remove_cv<T>::type::*field), QList<T*> list) {
+template<class T, class IdType = QVariant>
+T *findBy(IdType id, IdType (std::remove_cv<T>::type::*field), QList<T*> list) {
     for (auto item : list) if (item->*field == id) return item;
     return nullptr;
 }
@@ -113,8 +113,8 @@ private slots:
         QVERIFY(tx->id.has_value());
         QVERIFY(tx->detailIds.contains(result.details.at(0)->id.value()));
         QVERIFY(tx->detailIds.contains(result.details.at(1)->id.value()));
-        QCOMPARE(result.details.at(0)->transactionId.toLongLong(), tx->id.value());
-        QCOMPARE(result.details.at(0)->transactionId.toLongLong(), tx->id.value());
+        QCOMPARE(result.details.at(0)->transactionId, tx->id.value());
+        QCOMPARE(result.details.at(0)->transactionId, tx->id.value());
     }
 
     void update_addsNewTransfer() {
@@ -214,7 +214,7 @@ private slots:
         QCOMPARE(result.details.size(), 2);
         QCOMPARE(result.details.at(0)->id, detail->id);
         auto relatedDetail = result.details.at(1);
-        QCOMPARE(result.transactions.at(0)->detailIds, QVariantList{relatedDetail->id.value()});
+        QCOMPARE(result.transactions.at(0)->detailIds, QList<qlonglong>{relatedDetail->id.value()});
         QCOMPARE(detail->relatedDetailId, relatedDetail->id);
         QCOMPARE(relatedDetail->relatedDetailId, detail->id);
         QCOMPARE(relatedDetail->amount.toString(), "-2.34");
@@ -247,7 +247,7 @@ private slots:
         auto transfer = saveTransfer({"1.23", "2.34"});
         auto [tx, details] = transfer.at(0);
         auto [relatedTx, relatedDetails] = transfer.at(1);
-        details.at(0)->transferAccountId = QVariant{};
+        details.at(0)->transferAccountId = {};
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(), TX_DELETES(relatedTx),
             DETAIL_UPDATES(), DETAIL_ADDS(), DETAIL_DELETES(),
@@ -273,7 +273,7 @@ private slots:
         auto transfer = saveTransfer({"1.23"});
         auto [tx, details] = transfer.at(0);
         auto [relatedTx, relatedDetails] = transfer.at(1);
-        details.at(0)->transferAccountId = QVariant{};
+        details.at(0)->transferAccountId = {};
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(), TX_DELETES(),
             DETAIL_UPDATES(details), DETAIL_ADDS(), DETAIL_DELETES(),

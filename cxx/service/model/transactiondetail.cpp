@@ -5,11 +5,11 @@
 
 TransactionDetail::TransactionDetail() {}
 
-TransactionDetail::TransactionDetail(const QVariant &transactionId) : transactionId{transactionId} {}
+TransactionDetail::TransactionDetail(qlonglong transactionId) : transactionId{transactionId} {}
 
 TransactionDetail::TransactionDetail(const QSqlRecord &record)
     : BaseDomain{record}
-    , transactionId{record.field("tx_id").value()}
+    , transactionId{record.field("tx_id").value().toLongLong()}
     , categoryId{sql::getValue(record, "tx_category_id")}
     , relatedDetailId{sql::getValue(record, "related_detail_id")}
     , groupId{sql::getValue(record, "tx_group_id")}
@@ -17,13 +17,13 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , amount{decimalValue(record, "amount")}
     , assetQuantity{decimalValue(record, "asset_quantity")}
     , memo{sql::getValue(record, "memo")}
-    , transferAccountId{sql::getValue(record, "transfer_account_id")}
+    , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}
 
 bool TransactionDetail::isEmpty() const {
     return categoryId.isNull()
            && relatedDetailId.isNull()
-           && transferAccountId.isNull()
+           && !transferAccountId.has_value()
            && groupId.isNull()
            && exchangeAssetId.isNull()
            && memo.isNull()
@@ -31,7 +31,7 @@ bool TransactionDetail::isEmpty() const {
            && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
 }
 
-TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
+TransactionDetail *TransactionDetail::newTransfer(const std::optional<qlonglong> &transferAccountId, qlonglong transactionId) const {
     auto relatedDetail = new TransactionDetail(*this);
     relatedDetail->id.reset();
     initTransfer(transactionId, *relatedDetail);
@@ -39,7 +39,7 @@ TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccoun
     return relatedDetail;
 }
 
-void TransactionDetail::initTransfer(const QVariant &transactionId, TransactionDetail &relatedDetail) const {
+void TransactionDetail::initTransfer(qlonglong transactionId, TransactionDetail &relatedDetail) const {
     relatedDetail.relatedDetailId = id.value();
     relatedDetail.transactionId = transactionId;
     relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));

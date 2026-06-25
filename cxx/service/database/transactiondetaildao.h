@@ -8,10 +8,10 @@
 #include <QSqlDatabase>
 
 struct RelatedDetailIds {
-    QVariant accountId;
-    QVariant relatedDetailId;
-    QVariant relatedTransactionId;
-    QVariant transferAccountId;
+    qlonglong accountId;
+    std::optional<qlonglong> relatedDetailId;
+    std::optional<qlonglong> relatedTransactionId;
+    std::optional<qlonglong> transferAccountId;
 
     RelatedDetailIds() = default;
     RelatedDetailIds(QSqlRecord& record);
@@ -26,15 +26,15 @@ class TransactionDetailDao : public EntityDao<TransactionDetail> {
 public:
     TransactionDetailDao(const QString &dbType);
 
-    QHash<qlonglong, const TransactionDetail*> getAll(const QSqlDatabase &db, const QVariant &accountId);
-
-    const TransactionDetail* addRelatedDetail(QSqlDatabase& db, const QVariant& txId, const TransactionDetail* detail, const QString& user);
+    QHash<qlonglong, const TransactionDetail*> getAll(const QSqlDatabase &db, qlonglong accountId);
+    
+    const TransactionDetail* addRelatedDetail(QSqlDatabase& db, qlonglong txId, const TransactionDetail* detail, const QString& user);
 
     /**
      *  @param relatedTransactionIds Output list for IDs of related transactions.
      *  @returns IDs of deleted related transaction details.
      */
-    QVariantList removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds);
+    QList<qlonglong> removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<qlonglong> &relatedTransactionIds);
 
     void replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user);
 
@@ -56,7 +56,7 @@ protected:
     virtual void bindUpdateValues(QSqlQuery &query, TransactionDetail *entity) override;
 
 private:
-    void removeByIds(QSqlDatabase &db, const QVariantList ids);
+    void removeByIds(QSqlDatabase &db, const QList<qlonglong> ids);
 };
 
 #endif // TRANSACTIONDETAILDAO_H

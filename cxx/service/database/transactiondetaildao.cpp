@@ -129,7 +129,7 @@ TransactionDetailDao::TransactionDetailDao(const QString &dbType)
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
 {}
 
-QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, const QVariant &accountId) {
+QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, qlonglong accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountQuery);
     sql::bindValue(query, ":accountId", accountId);
@@ -137,7 +137,7 @@ QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QS
     return load(query);
 }
 
-const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, const QVariant &txId, const TransactionDetail *detail, const QString &user) {
+const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, qlonglong txId, const TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
     query.prepare(insertQuery);
     TransactionDetail relatedDetail;
@@ -149,19 +149,19 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
     return get(db, QList<qlonglong>{id}).value(id);
 }
 
-QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds) {
+QList<qlonglong> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<qlonglong>& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
     sql::bindList(query, ":txIds", getEntityIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
-    QVariantList ids{}, relatedDetailIds{};
+    QList<qlonglong> ids{}, relatedDetailIds{};
     while (query.next()) {
         auto record = query.record();
-        ids.append(sql::getValue(record, "id"));
-        auto relatedId = record.field("related_detail_id");
-        if (!relatedId.isNull()) {
+        ids.append(sql::getValue(record, "id").toLongLong());
+        auto relatedId = sql::getInt(record, "related_detail_id");
+        if (relatedId.has_value()) {
             relatedDetailIds.append(relatedId.value());
-            relatedTransactionIds.append(record.field("related_tx_id").value());
+            relatedTransactionIds.append(sql::getValue(record, "related_tx_id").toLongLong());
         }
     }
     removeByIds(db, ids + relatedDetailIds);
@@ -223,7 +223,7 @@ QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
 void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const TransactionDetail*> details) {
     QSqlQuery query(db);
     auto ids = getEntityIds(details);
-    for (auto detail : details) if (!detail->relatedDetailId.isNull()) ids.append(detail->relatedDetailId);
+    for (auto detail : details) if (!detail->relatedDetailId.isNull()) ids.append(detail->relatedDetailId.toLongLong());
     removeByIds(db, ids);
 }
 
@@ -248,7 +248,7 @@ void TransactionDetailDao::bindUpdateValues(QSqlQuery &query, TransactionDetail 
     sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
-void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QVariantList ids) {
+void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QList<qlonglong> ids) {
     QSqlQuery query(db);
     query.prepare(deleteByIdsSql);
     sql::bindList(query, ":ids", ids);
@@ -256,8 +256,8 @@ void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QVariantList ids)
 }
 
 RelatedDetailIds::RelatedDetailIds(QSqlRecord &record)
-    : accountId{record.value("account_id")}
-    , relatedDetailId{sql::getValue(record, "related_detail_id")}
-    , relatedTransactionId{sql::getValue(record, "related_tx_id")}
-    , transferAccountId{sql::getValue(record, "transfer_account_id")}
+    : accountId{record.value("account_id").toLongLong()}
+    , relatedDetailId{sql::getInt(record, "related_detail_id")}
+    , relatedTransactionId{sql::getInt(record, "related_tx_id")}
+    , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}

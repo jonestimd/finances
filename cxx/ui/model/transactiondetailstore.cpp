@@ -25,14 +25,11 @@ void TransactionDetailStore::replaceCategory(const QVariant oldCategoryId, const
 void TransactionDetailStore::update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes) {
     auto allDeletes = QList<const TransactionDetail*>{deletes};
     for (auto& detailId : updates.deletedDetailIds) {
-        if (contains(detailId.toLongLong())) allDeletes.append(value(detailId.toLongLong()));
+        if (contains(detailId)) allDeletes.append(value(detailId));
     }
     for (auto tx : txDeletes) {
         for (auto& detailId : tx->detailIds) {
-            if (contains(detailId.toLongLong())) {
-                auto detail = value(detailId.toLongLong());
-                allDeletes.append(detail);
-            }
+            if (contains(detailId)) allDeletes.append(value(detailId));
         }
     }
     EntityStore::update(updates.details, allDeletes);

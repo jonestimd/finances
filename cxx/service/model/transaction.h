@@ -11,22 +11,22 @@ class TransactionDetailUpdate;
 
 class Transaction : public BaseDomain {
 public:
-    QVariant accountId;
+    qlonglong accountId;
     QVariant date;
     QVariant payeeId;
     QVariant securityId;
     QVariant referenceNumber;
     QVariant memo;
     QVariant cleared{false};
-    QList<QVariant> detailIds{};
+    QList<qlonglong> detailIds{};
 
     Transaction();
-    Transaction(const QVariant &accountId);
+    Transaction(qlonglong accountId);
     Transaction(const QSqlRecord &record);
 
     bool deletable() const;
 
-    Transaction *newTransfer(const QVariant &accountId) const;
+    Transaction *newTransfer(qlonglong accountId) const;
 
     QString toString() const;
 };
@@ -36,7 +36,7 @@ public:
     QList<TransactionDetail*> details{};
 
     PendingTransaction();
-    PendingTransaction(const QVariant &accountId);
+    PendingTransaction(qlonglong accountId);
     PendingTransaction(const PendingTransaction &that);
     ~PendingTransaction();
 
@@ -66,16 +66,16 @@ struct TransactionsData {
     QList<const Transaction*> transactions{};
     QList<const TransactionDetail*> details{};
     /** @brief deletedIds IDs of transactions deleted due to changes to transfer details. */
-    QList<QVariant> deletedIds{}; // TODO QList<qlonglong>
+    QList<qlonglong> deletedIds{};
     /** @brief deletedDetailIds IDs of deleted related details. */
-    QList<QVariant> deletedDetailIds{}; // TODO QList<qlonglong>
+    QList<qlonglong> deletedDetailIds{};
 
     TransactionsData() = default;
     TransactionsData(
         QList<const Transaction*> transactions,
         QList<const TransactionDetail*> details,
-        const QList<QVariant> deletedIds,
-        const QList<QVariant> deletedDetailIds
+        const QList<qlonglong> deletedIds,
+        const QList<qlonglong> deletedDetailIds
     );
 };
 

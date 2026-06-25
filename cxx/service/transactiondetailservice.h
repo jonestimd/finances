@@ -8,8 +8,8 @@
 class TransactionDetailService : public EntityService<TransactionDetail, TransactionDetailDao> {
 public:
     TransactionDetailService(ConnectionPool *pool, TransactionDetailDao &transactionDetailDao);
-
-    QHash<qlonglong, const TransactionDetail*> getAll(const QVariant &accountId);
+    
+    QHash<qlonglong, const TransactionDetail*> getAll(qlonglong accountId);
 };
 
 #endif // TRANSACTIONDETAILSERVICE_H

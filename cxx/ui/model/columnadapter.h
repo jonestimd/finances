@@ -78,7 +78,7 @@ public:
         : ColumnAdapter<T>{factory, title, isEditable, factory}, field{field} {}
 
     virtual QVariant rowValue(const T* row) const override {
-        if (std::is_same_v<Value, QVariant>) return row->*field;
+        if constexpr (std::is_same_v<Value, QVariant>) return row->*field;
     }
 
     virtual void setValue(T *row, QVariant value) const  override {

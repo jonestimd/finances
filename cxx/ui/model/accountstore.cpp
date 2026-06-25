@@ -46,7 +46,7 @@ QString AccountStore::qualifiedName(qlonglong accountId, QChar delimiter) const 
 }
 
 void AccountStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    if (updateTransactionCounts(changes, &Transaction::accountId)) {
+    if (updateTransactionCounts<qlonglong>(changes, &Transaction::accountId)) {
         emit valuesLoaded(ids());
     }
 }

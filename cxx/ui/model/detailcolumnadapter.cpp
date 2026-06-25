@@ -41,7 +41,7 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
 }
 
 QVariant TransactionTypeColumnAdapter::rowValue(const TransactionDetail *row) const {
-    if (!row->transferAccountId.isNull()) {
+    if (row->transferAccountId.has_value()) {
         return QVariant::fromValue(TransactionTypeId(true, row->transferAccountId));
     }
     return QVariant::fromValue(TransactionTypeId(false, row->categoryId));
@@ -55,11 +55,11 @@ void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant val
             row->categoryId = QVariant{};
         } else {
             row->categoryId = typeId->id.value();
-            row->transferAccountId = QVariant{};
+            row->transferAccountId = {};
         }
     } else {
         row->categoryId = QVariant{};
-        row->transferAccountId = QVariant{};;
+        row->transferAccountId = {};;
     }
 }
 

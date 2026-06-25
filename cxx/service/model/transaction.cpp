@@ -5,32 +5,32 @@
 
 Transaction::Transaction() {}
 
-Transaction::Transaction(const QVariant &accountId) : accountId{accountId} {}
+Transaction::Transaction(qlonglong accountId) : accountId{accountId} {}
 
 Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
-    , accountId{record.field("account_id").value()}
+    , accountId{record.field("account_id").value().toLongLong()}
     , date{record.field("date").value()}
     , payeeId{sql::getValue(record, "payee_id")}
     , securityId{sql::getValue(record, "security_id")}
     , referenceNumber{sql::getValue(record, "reference_number")}
     , memo{sql::getValue(record, "memo")}
     , cleared{sql::yesNoValue(record, "cleared")}
-    , detailIds(mapping::jsonToList(record.field("detail_ids").value()))
+    , detailIds(mapping::jsonToIntList(record.field("detail_ids").value()))
 {}
 
 bool Transaction::deletable() const {
     return true;
 }
 
-Transaction *Transaction::newTransfer(const QVariant &accountId) const {
+Transaction *Transaction::newTransfer(qlonglong accountId) const {
     auto relatedTransaction = new Transaction(*this);
     relatedTransaction->accountId = accountId;
     return relatedTransaction;
 }
 
 QString Transaction::toString() const {
-    return QString("accountId{") % accountId.toString()
+    return QString("accountId{") % QString::number(accountId)
            % "},date{" % date.toString()
            % "},referenceNumber{" % referenceNumber.toString()
            % "},payeeId{" % payeeId.toString()
@@ -41,7 +41,7 @@ QString Transaction::toString() const {
 
 PendingTransaction::PendingTransaction() {}
 
-PendingTransaction::PendingTransaction(const QVariant &accountId) : Transaction{accountId} {
+PendingTransaction::PendingTransaction(qlonglong accountId) : Transaction{accountId} {
     details.append(new TransactionDetail);
 }
 
@@ -84,8 +84,8 @@ void TransactionUpdate::onError() {
 TransactionsData::TransactionsData(
     QList<const Transaction*> transactions,
     QList<const TransactionDetail*> details,
-    const QList<QVariant> deletedIds,
-    const QList<QVariant> deletedDetailIds
+    const QList<qlonglong> deletedIds,
+    const QList<qlonglong> deletedDetailIds
 )
     : transactions{transactions}
     , details{details}

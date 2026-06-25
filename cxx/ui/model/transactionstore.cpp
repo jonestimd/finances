@@ -71,17 +71,17 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
         emitDetailsUpdated(changes, updateData);
         if (!adds.isEmpty()) emit transactionsSaved(adds);
         for (const auto& id : std::as_const(updateData.deletedIds)) {
-            if (contains(id.toLongLong())) deletes.append(value(id.toLongLong()));
+            if (contains(id)) deletes.append(value(id));
         }
         QSet<qlonglong> accountIds;
         // TODO filter details for unloaded accounts
         detailStore.update(updateData, detailDeletes, deletes);
         for (auto detail: std::as_const(updateData.details)) {
-            auto tx = value(detail->transactionId.toLongLong());
-            if (tx) accountIds.insert(tx->accountId.toLongLong());
+            auto tx = value(detail->transactionId);
+            if (tx) accountIds.insert(tx->accountId);
         }
         // TODO use shared status bar model
-        for (auto tx : updateData.transactions + deletes) accountIds.insert(tx->accountId.toLongLong());
+        for (auto tx : updateData.transactions + deletes) accountIds.insert(tx->accountId);
         // TODO filter tx's for unloaded accounts
         update(updateData.transactions, deletes);
         for (auto accountId : accountIds) emit accountUpdated(accountId);
@@ -126,7 +126,7 @@ void TransactionStore::clearData(qlonglong accountId) {
         const auto transactionIds = idsByAccountId.take(accountId);
         QList<qlonglong> detailIds;
         for (auto txId : transactionIds) {
-            for (auto& detailId : std::as_const(value(txId)->detailIds)) detailIds.append(detailId.toLongLong());
+            for (auto& detailId : std::as_const(value(txId)->detailIds)) detailIds.append(detailId);
         }
         removeValues(transactionIds);
         detailStore.removeValues(detailIds);
@@ -140,7 +140,7 @@ void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, con
     detailStore.load(accountId);
     QList<qlonglong> accountTxIds{};
     for (auto [id, tx] : values.asKeyValueRange()) {
-        if (tx->accountId.toLongLong() == accountId) accountTxIds.append(tx->id.value());
+        if (tx->accountId == accountId) accountTxIds.append(tx->id.value());
     }
     sorter->sort(accountTxIds);
     idsByAccountId.insert(accountId, accountTxIds);
@@ -149,7 +149,7 @@ void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, con
 
 void TransactionStore::update(const QList<const Transaction*>& updates, const QList<const Transaction*> deletes) {
     for (auto tx : deletes) {
-        auto accountId = tx->accountId.toLongLong();
+        auto accountId = tx->accountId;
         if (idsByAccountId.contains(accountId)) {
             auto& txIds = idsByAccountId[accountId];
             auto index = txIds.indexOf(tx->id.value());
@@ -165,7 +165,7 @@ void TransactionStore::update(const QList<const Transaction*>& updates, const QL
     }
     EntityStore::update(updates, deletes);
     for (auto tx : updates) {
-        auto accountId = tx->accountId.toLongLong();
+        auto accountId = tx->accountId;
         if (idsByAccountId.contains(accountId)) {
             auto& txIds = idsByAccountId[accountId];
             auto txId = tx->id.value();
@@ -188,21 +188,21 @@ void TransactionStore::emitTransactionsUpdated(const QList<const Transaction*> d
     QList<TransactionChange> deltas;
     for (auto tx : deletes) deltas.append(TransactionChange{tx, nullptr});
     for (auto tx : std::as_const(updates.transactions)) deltas.append(TransactionChange{value(tx->id.value()), tx});
-    for (const auto& txId : std::as_const(updates.deletedIds)) deltas.append(TransactionChange{value(txId.toLongLong()), nullptr});
+    for (const auto& txId : std::as_const(updates.deletedIds)) deltas.append(TransactionChange{value(txId), nullptr});
     emit transactionsUpdated(deltas);
 }
 
 void TransactionStore::emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates) {
     QList<DetailChange> deltas;
     for (auto tx : change.deletes) {
-        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId.toLongLong()), nullptr});
+        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
     }
     for (const auto& txId : updates.deletedIds) {
-        auto tx = value(txId.toLongLong());
-        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId.toLongLong()), nullptr});
+        auto tx = value(txId);
+        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
     }
     for (auto detail : change.detailDeletes) deltas.append(DetailChange{detail, nullptr});
     for (auto detail : std::as_const(updates.details)) deltas.append(DetailChange{detailStore.value(detail->id.value()), detail});
-    for (const auto& detailId : std::as_const(updates.deletedDetailIds)) deltas.append(DetailChange{detailStore.value(detailId.toLongLong()), nullptr});
+    for (const auto& detailId : std::as_const(updates.deletedDetailIds)) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
     emit detailsUpdated(deltas);
 }

@@ -27,8 +27,8 @@ public:
 };
 
 template<class T>
-QVariantList getEntityIds(const QList<T*> items) {
-    QVariantList ids{};
+QList<qlonglong> getEntityIds(const QList<T*> items) {
+    QList<qlonglong> ids{};
     for (auto item : items) ids.append(item->id.value());
     return ids;
 }
@@ -66,7 +66,9 @@ struct TransactionTypeId {
     const bool transfer;
     const std::optional<qlonglong> id;
 
-    TransactionTypeId(bool transfer = false, QVariant id = {});
+    TransactionTypeId(bool transfer = false, const std::optional<qlonglong>& id = {});
+    /** @deprecated */
+    TransactionTypeId(bool transfer, const QVariant& id = {});
     TransactionTypeId(const TransactionType &tt);
     TransactionTypeId(const TransactionType *tt);
 };

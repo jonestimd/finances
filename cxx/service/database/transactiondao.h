@@ -22,12 +22,12 @@ public:
      * @return `adds` with updated details.
      */
     const QList<PendingTransaction*> add(QSqlDatabase &db, const QList<PendingTransaction*> adds, const QString &user);
-
-    void setAccountId(const QSqlDatabase& db, const QVariant& transactionId, const QVariant& oldAccountId, const QVariant& newAccountId, const QString& user);
+    
+    void setAccountId(const QSqlDatabase& db, qlonglong transactionId, qlonglong oldAccountId, qlonglong newAccountId, const QString& user);
 
     void replacePayee(const QSqlDatabase& db, const Payee* payee, const QVariant newPayeeId, const QString& user);
-
-    QList<QVariant> removeEmpty(QSqlDatabase &db);
+    
+    QList<qlonglong> removeEmpty(QSqlDatabase &db);
     
     Transaction *addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user);
 

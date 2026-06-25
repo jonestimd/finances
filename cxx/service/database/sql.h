@@ -19,6 +19,10 @@ namespace sql {
 
     void bindValue(QSqlQuery &query, const char *name, const QVariant &value);
 
+    inline void bindValue(QSqlQuery &query, const char *name, qlonglong value) {
+        bindValue(query, name, QVariant{value});
+    }
+
     void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 
     void bindList(QSqlQuery &query, const char *name, const QVariantList &values);
@@ -27,7 +31,7 @@ namespace sql {
 
     void exec(QSqlQuery &query, const char *className, const char *queryName);
 
-    QList<QVariant> loadValues(QSqlQuery& query, const char* column);
+    QList<qlonglong> loadValues(QSqlQuery& query, const char* column);
 }
 
 #endif // SQL_H

@@ -107,7 +107,7 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
         QSqlQuery query(db);
         query.prepare(setParentsSql);
         sql::bindValue(query, ":user", user);
-        sql::bindValue(query, ":parentId", QVariant{destinationId});
+        sql::bindValue(query, ":parentId", destinationId);
         sql::bindValue(query, ":oldParentId", category->id);
         sql::exec(query, className, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;

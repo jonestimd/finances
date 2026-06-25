@@ -70,8 +70,8 @@ void sql::exec(QSqlQuery &query, const char *className, const char *queryName) {
     if (!query.exec()) logAndThrowError(query, className, queryName);
 }
 
-QList<QVariant> sql::loadValues(QSqlQuery &query, const char *column) {
-    QList<QVariant> result;
-    while (query.next()) result.append(query.value(column));
+QList<qlonglong> sql::loadValues(QSqlQuery &query, const char *column) {
+    QList<qlonglong> result;
+    while (query.next()) result.append(query.value(column).toLongLong());
     return result;
 }

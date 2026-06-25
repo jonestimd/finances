@@ -49,8 +49,8 @@ struct Daos {
 };
 
 namespace factory {
-    Transaction *transaction(QVariant accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    PendingTransaction *pendingTransaction(QVariant accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    Transaction *transaction(qlonglong accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    PendingTransaction *pendingTransaction(qlonglong accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
     TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{}, const QVariant& groupId = QVariant{});
 }
 
@@ -97,7 +97,7 @@ public:
     const Account *loadAccount(const QString &driver, QVariant id);
     const Security *loadSecurity(const QString &driver, QVariant id);
 
-    QList<TxDetails> saveTransfer(const QString& driver, const QVariant& accountId, const QVariant& altAccountId, QList<const char*> amounts);
+    QList<TxDetails> saveTransfer(const QString& driver, qlonglong accountId, qlonglong altAccountId, QList<const char*> amounts);
     TxDetails saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
     TxDetails saveTransaction(const QString& driver, const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
     void saveTransaction(const QString& driver, Transaction* unsaved, const QList<TransactionDetail*> details);

@@ -284,7 +284,7 @@ const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &ind
     }
     auto txDetailIds = getRow(index.parent())->detailIds;
     if (index.row() < txDetailIds.length()) {
-        return store->detailStore.value(txDetailIds.at(index.row()).toLongLong());
+        return store->detailStore.value(txDetailIds.at(index.row()));
     }
     return newDetails[index.parent().row()].at(index.row() - txDetailIds.length());
 }

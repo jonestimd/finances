@@ -128,7 +128,7 @@ const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QLi
     return adds;
 }
 
-void TransactionDao::setAccountId(const QSqlDatabase &db, const QVariant &transactionId, const QVariant &oldAccountId, const QVariant &newAccountId, const QString &user) {
+void TransactionDao::setAccountId(const QSqlDatabase &db, qlonglong transactionId, qlonglong oldAccountId, qlonglong newAccountId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setAccountQuery);
     sql::bindValue(query, ":user", user);
@@ -149,11 +149,11 @@ void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, co
     if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
 }
 
-QList<QVariant> TransactionDao::removeEmpty(QSqlDatabase &db) {
+QList<qlonglong> TransactionDao::removeEmpty(QSqlDatabase &db) {
     QSqlQuery query(db);
     query.prepare(findEmptyQuery);
     sql::exec(query, className, "findEmpty");
-    QList<QVariant> ids = sql::loadValues(query, "id");
+    QList<qlonglong> ids = sql::loadValues(query, "id");
     for (const auto& id : std::as_const(ids)) remove(db, id);
     return ids;
 }

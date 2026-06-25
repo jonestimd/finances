@@ -10,6 +10,10 @@
 #include <QHash>
 #include <QWidget>
 
+#define EXTRACT_ID(IdType, field) \
+    std::is_same_v<IdType, QVariant> ? (field).toLongLong() : \
+    std::is_same_v<IdType, std::optional<qlonglong>> ? (field).value() : (field)
+
 class DataStore;
 
 class AbstractEntityStore : public QObject {
@@ -152,22 +156,39 @@ protected:
         this->loaded = true;
     }
 
-    bool updateTransactionCounts(const QList<TransactionChange> changes, QVariant Transaction::* txField) {
+    template<class Entity>
+    static inline std::optional<qlonglong> getRelatedId(const Entity* entity, QVariant Entity::* idField) {
+        auto id = entity->*idField;
+        return id.isValid() ? id.toLongLong() : std::optional<qlonglong>{};
+    }
+
+    template<class Entity>
+    static inline std::optional<qlonglong> getRelatedId(const Entity* entity, std::optional<qlonglong> Entity::* idField) {
+        return entity->*idField;
+    }
+
+    template<class Entity>
+    static inline std::optional<qlonglong> getRelatedId(const Entity* entity, qlonglong Entity::* idField) {
+        return entity->*idField;
+    }
+
+    template<class IdType>
+    bool updateTransactionCounts(const QList<TransactionChange> changes, IdType Transaction::* txField) {
         QSet<qlonglong> updateIds;
         for (auto change : changes) {
             auto oldTx = change.oldTransaction;
             auto newTx = change.newTransaction;
-            auto oldTxValue = oldTx ? oldTx->*txField : QVariant{};
-            auto newTxValue = newTx ? newTx->*txField : QVariant{};
-            if (oldTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(oldTxValue.toLongLong());
+            auto oldTxValue = oldTx ? getRelatedId(oldTx, txField) : std::optional<qlonglong>{};
+            auto newTxValue = newTx ? getRelatedId(newTx, txField) : std::optional<qlonglong>{};
+            if (oldTxValue.has_value() && oldTxValue != newTxValue) {
+                auto refValue = value(oldTxValue.value());
                 refValue->transactions = refValue->transactions.toInt() - 1;
-                updateIds.insert(oldTxValue.toLongLong());
+                updateIds.insert(oldTxValue.value());
             }
-            if (newTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(newTxValue.toLongLong());
+            if (newTxValue.has_value() && oldTxValue != newTxValue) {
+                auto refValue = value(newTxValue.value());
                 refValue->transactions = refValue->transactions.toInt() + 1;
-                updateIds.insert(newTxValue.toLongLong());
+                updateIds.insert(newTxValue.value());
             }
         }
         return !updateIds.isEmpty();
@@ -178,17 +199,17 @@ protected:
         for (auto change : changes) {
             auto oldDetail = change.oldDetail;
             auto newDetail = change.newDetail;
-            auto oldDetailValue = oldDetail ? oldDetail->*detailField : QVariant{};
-            auto newDetailValue = newDetail ? newDetail->*detailField : QVariant{};
-            if (oldDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(oldDetailValue.toLongLong());
+            auto oldDetailValue = oldDetail ? getRelatedId(oldDetail, detailField) : std::optional<qlonglong>{};
+            auto newDetailValue = newDetail ? getRelatedId(newDetail, detailField) : std::optional<qlonglong>{};
+            if (oldDetailValue.has_value() && newDetailValue != oldDetailValue) {
+                auto refValue = value(oldDetailValue.value());
                 refValue->details = refValue->details.toInt() - 1;
-                updateIds.insert(oldDetailValue.toLongLong());
+                updateIds.insert(oldDetailValue.value());
             }
-            if (newDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(newDetailValue.toLongLong());
+            if (newDetailValue.has_value() && newDetailValue != oldDetailValue) {
+                auto refValue = value(newDetailValue.value());
                 refValue->details = refValue->details.toInt() + 1;
-                updateIds.insert(newDetailValue.toLongLong());
+                updateIds.insert(newDetailValue.value());
             }
         }
         return !updateIds.isEmpty();
