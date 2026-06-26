@@ -49,8 +49,8 @@ struct Daos {
 };
 
 namespace factory {
-    Transaction *transaction(qlonglong accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    PendingTransaction *pendingTransaction(qlonglong accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    Transaction *transaction(domain_id accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    PendingTransaction *pendingTransaction(domain_id accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
     TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{}, const QVariant& groupId = QVariant{});
 }
 
@@ -87,17 +87,17 @@ public:
     
     void createDatabases();
     
-    qlonglong addCompany(const QString &driver, const QString &name);
+    domain_id addCompany(const QString &driver, const QString &name);
     Account *addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
-    qlonglong addPayee(const QString &driver, const QString &name);
+    domain_id addPayee(const QString &driver, const QString &name);
     Security* addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
-    qlonglong addCategory(const QString &driver, const QString &name);
-    qlonglong addGroup(const QString &driver, const QString &name);
+    domain_id addCategory(const QString &driver, const QString &name);
+    domain_id addGroup(const QString &driver, const QString &name);
 
     const Account *loadAccount(const QString &driver, QVariant id);
     const Security *loadSecurity(const QString &driver, QVariant id);
 
-    QList<TxDetails> saveTransfer(const QString& driver, qlonglong accountId, qlonglong altAccountId, QList<const char*> amounts);
+    QList<TxDetails> saveTransfer(const QString& driver, domain_id accountId, domain_id altAccountId, QList<const char*> amounts);
     TxDetails saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
     TxDetails saveTransaction(const QString& driver, const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});
     void saveTransaction(const QString& driver, Transaction* unsaved, const QList<TransactionDetail*> details);

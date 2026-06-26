@@ -39,14 +39,14 @@ const Category *TransactionType::getCategory(const QVariant &value) {
     return entity && !entity->transfer ? static_cast<const Category*>(entity) : nullptr;
 }
 
-TransactionTypeId::TransactionTypeId(bool transfer, const std::optional<qlonglong>& id)
+TransactionTypeId::TransactionTypeId(bool transfer, const optional_id& id)
     : transfer{transfer}
     , id{id}
 {}
 
 TransactionTypeId::TransactionTypeId(bool transfer, const QVariant& id)
     : transfer{transfer}
-    , id{id.isValid() ? std::optional<qlonglong>{id.toLongLong()} : std::optional<qlonglong>{}}
+    , id{id.isValid() ? optional_id{id.toLongLong()} : optional_id{}}
 {}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}

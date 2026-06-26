@@ -38,8 +38,8 @@ AccountsMenu::AccountsMenu(TransactionsWindow *window, UiContext *context)
     , store{context->dataStore->accountStore}
     , accountsAction{context->accountsAction()}
 {
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
-    connect(&store->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateMenu()));
+    connect(&store->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateMenu()));
     updateMenu();
 }
 
@@ -67,8 +67,8 @@ void AccountsMenu::updateMenu() {
     auto hideClosed = hideClosedAction->isChecked();
     clear();
     connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
-    QHash<qlonglong, QMenu*> companyMenus{};
-    store->forEachEntry([&](qlonglong id, const Account* account) {
+    QHash<domain_id, QMenu*> companyMenus{};
+    store->forEachEntry([&](domain_id id, const Account* account) {
         if (hideClosed && account->closed.toBool()) return;
         if (account->companyId.isNull()) {
             insertByName(this, new AccountAction(this, window, account));

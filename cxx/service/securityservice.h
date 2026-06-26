@@ -11,7 +11,7 @@ class SecurityService : public EntityService<Security, SecurityDao> {
 public:
     SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao, StockSplitDao &stockSplitDao);
 
-    QHash<qlonglong, const StockSplit*> getSplits();
+    QHash<domain_id, const StockSplit*> getSplits();
 };
 
 #endif // SECURITYSERVICE_H

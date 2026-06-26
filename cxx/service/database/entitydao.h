@@ -27,8 +27,8 @@ protected:
     const char* const className;
     const QString staleDataMessage;
 
-    QHash<qlonglong, const Entity*> load(QSqlQuery &query) {
-        QHash<qlonglong, const Entity*> entities;
+    QHash<domain_id, const Entity*> load(QSqlQuery &query) {
+        QHash<domain_id, const Entity*> entities;
         while (query.next()) {
             auto entity = new Entity(query.record());
             entities.insert(entity->id.value(), entity);
@@ -59,21 +59,21 @@ public:
         sql::exec(db, createTableSql, className, "createTable");
     }
 
-    virtual QHash<qlonglong, const Entity*> getAll(QSqlDatabase &db) {
+    virtual QHash<domain_id, const Entity*> getAll(QSqlDatabase &db) {
         QSqlQuery query(db);
         query.prepare(getAllSql);
         sql::exec(query, className, "getAll");
         return load(query);
     }
 
-    QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QList<qlonglong> ids) {
+    QHash<domain_id, const Entity*> get(QSqlDatabase &db, QList<domain_id> ids) {
         QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
         return load(query);
     }
 
     /** @deprecated */
-    QHash<qlonglong, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
+    QHash<domain_id, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
         QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
         return load(query);

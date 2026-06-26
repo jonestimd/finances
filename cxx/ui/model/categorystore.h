@@ -9,23 +9,23 @@ class CategoryStore : public EntityStore<Category, CategoryService> {
     Q_OBJECT
 
     DataStore* const dataStore;
-    QSet<qlonglong> rootIds_;
+    QSet<domain_id> rootIds_;
 
 public:
     CategoryStore(CategoryService *service, DataStore* dataStore);
 
-    const QSet<qlonglong> rootIds() const;
+    const QSet<domain_id> rootIds() const;
 
-    QString displayName(qlonglong categoryId) const;
-    bool movable(qlonglong categoryId) const;
+    QString displayName(domain_id categoryId) const;
+    bool movable(domain_id categoryId) const;
     /**
      * @return `true` if `parentId` is an ancestor of `categoryId`.
      */
-    bool isAncestor(qlonglong categoryId, const qlonglong parentId) const;
-    bool hasChild(qlonglong categoryId, const QVariant &name) const;
+    bool isAncestor(domain_id categoryId, const domain_id parentId) const;
+    bool hasChild(domain_id categoryId, const QVariant &name) const;
 
-    void setParent(QWidget *source, const Category *category, const std::optional<qlonglong> &parentId);
-    void mergeCategories(QWidget *source, const Category *category, const qlonglong destinationId);
+    void setParent(QWidget *source, const Category *category, const optional_id &parentId);
+    void mergeCategories(QWidget *source, const Category *category, const domain_id destinationId);
 
     using EntityStore::update;
 
@@ -34,7 +34,7 @@ public slots:
 
 protected:
     virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;
-    virtual void setValues(QHash<qlonglong, const Category*> values) override;
+    virtual void setValues(QHash<domain_id, const Category*> values) override;
 };
 
 #endif // CATEGORYSTORE_H

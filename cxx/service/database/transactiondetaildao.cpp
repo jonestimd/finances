@@ -129,7 +129,7 @@ TransactionDetailDao::TransactionDetailDao(const QString &dbType)
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
 {}
 
-QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, qlonglong accountId) {
+QHash<domain_id, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, domain_id accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountQuery);
     sql::bindValue(query, ":accountId", accountId);
@@ -137,7 +137,7 @@ QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QS
     return load(query);
 }
 
-const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, qlonglong txId, const TransactionDetail *detail, const QString &user) {
+const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, domain_id txId, const TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
     query.prepare(insertQuery);
     TransactionDetail relatedDetail;
@@ -146,15 +146,15 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
     bindInsertValues(query, &relatedDetail);
     sql::exec(query, className, "insert");
     auto id = query.lastInsertId().toLongLong();
-    return get(db, QList<qlonglong>{id}).value(id);
+    return get(db, QList<domain_id>{id}).value(id);
 }
 
-QList<qlonglong> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<qlonglong>& relatedTransactionIds) {
+QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id>& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
     sql::bindList(query, ":txIds", getEntityIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
-    QList<qlonglong> ids{}, relatedDetailIds{};
+    QList<domain_id> ids{}, relatedDetailIds{};
     while (query.next()) {
         auto record = query.record();
         ids.append(sql::getValue(record, "id").toLongLong());
@@ -195,7 +195,7 @@ QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, 
     return updates;
 }
 
-void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail *, qlonglong> relatedIds) {
+void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail *, domain_id> relatedIds) {
     QSqlQuery query(db);
     query.prepare(setRelatedDetailQuery);
     for (auto [detail, relatedId] : relatedIds.asKeyValueRange()) {
@@ -206,13 +206,13 @@ void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<Tra
     }
 }
 
-QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
+QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
     QSqlQuery query(db);
     auto ids = getEntityIds(updates);
     query.prepare(getRelatedIdsSql);
     sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "getRelatedDetailIds");
-    QHash<qlonglong, RelatedDetailIds> relatedIds{};
+    QHash<domain_id, RelatedDetailIds> relatedIds{};
     while (query.next()) {
         auto record = query.record();
         relatedIds.insert(record.value("id").toLongLong(), RelatedDetailIds{record});
@@ -248,7 +248,7 @@ void TransactionDetailDao::bindUpdateValues(QSqlQuery &query, TransactionDetail 
     sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
-void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QList<qlonglong> ids) {
+void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QList<domain_id> ids) {
     QSqlQuery query(db);
     query.prepare(deleteByIdsSql);
     sql::bindList(query, ":ids", ids);

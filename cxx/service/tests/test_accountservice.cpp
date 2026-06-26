@@ -52,7 +52,7 @@ private slots:
         account->closed = true;
         BulkUpdate<Account> changes{{account}, {}, {}};
 
-        QHash<qlonglong, const Company*> companies{};
+        QHash<domain_id, const Company*> companies{};
         auto result = service->update(changes, TEST_USER, companies);
 
         auto updated = dbTestCase.loadAccount(driver, account->id.value());

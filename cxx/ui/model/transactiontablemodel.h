@@ -13,7 +13,7 @@ class TransactionTableModel : public PodItemModel<Transaction, PendingTransactio
 
     QHash<int, QList<TransactionDetail*>> newDetails{};
 
-    QHash<qlonglong, QVariant> balances{};
+    QHash<domain_id, QVariant> balances{};
     QDecNumber clearedBalance_{0};
 
 public:
@@ -24,17 +24,17 @@ public:
     const int clearedColumn;
     const int subtotalColumn;
     const int balanceColumn;
-    const qlonglong accountId;
+    const domain_id accountId;
 
 private:
     const QList<ColumnAdapter<TransactionDetail>*> detailColumns;
 
 public:
-    explicit TransactionTableModel(DataStore *dataStore, qlonglong accountId);
+    explicit TransactionTableModel(DataStore *dataStore, domain_id accountId);
     ~TransactionTableModel();
 
 protected:
-    const QList<qlonglong> transactionIds() const;
+    const QList<domain_id> transactionIds() const;
 
     QVariant value(const QModelIndex &index, int role, QVariant current) const override;
     void setValue(const QModelIndex &index, const QVariant &value) override;
@@ -52,9 +52,9 @@ protected:
     virtual PendingTransaction *newRow() override;
 
 public:
-    void setRows(const QList<qlonglong> transactionIds);
+    void setRows(const QList<domain_id> transactionIds);
     
-    QVariant balance(const std::optional<qlonglong> &transactionId) const;
+    QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
@@ -97,16 +97,16 @@ public:
     QList<const TransactionDetail*> unsavedDetailDeletes(int txRow = -1) const;
 
 private slots:
-    void accountLoaded(qlonglong accountId);
-    void accountUpdated(qlonglong accountId);
+    void accountLoaded(domain_id accountId);
+    void accountUpdated(domain_id accountId);
     void payeesUpdated();
     void securitiesUpdated();
     void accountsUpdated();
     void groupsUpdated();
     void transactionsSaved(const QList<const PendingTransaction*>& transactions);
-    void transactionAdded(qlonglong accountId, int index);
-    void transactionRemoved(qlonglong accountId, int index);
-    void transactionUpdated(qlonglong accountId, int index, int oldDetailCount);
+    void transactionAdded(domain_id accountId, int index);
+    void transactionRemoved(domain_id accountId, int index);
+    void transactionUpdated(domain_id accountId, int index, int oldDetailCount);
 
 private:
     void queueAddTransaction();

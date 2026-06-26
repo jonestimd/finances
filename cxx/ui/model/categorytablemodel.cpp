@@ -41,7 +41,7 @@ int CategoryTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->childIds.length() : rootIds.length();
 }
 
-void CategoryTableModel::setRows(QList<qlonglong> categoryIds) {
+void CategoryTableModel::setRows(QList<domain_id> categoryIds) {
     clearChanges();
     beginResetModel();
     rootIds.clear();

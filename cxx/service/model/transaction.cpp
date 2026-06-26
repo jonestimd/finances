@@ -5,7 +5,7 @@
 
 Transaction::Transaction() {}
 
-Transaction::Transaction(qlonglong accountId) : accountId{accountId} {}
+Transaction::Transaction(domain_id accountId) : accountId{accountId} {}
 
 Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
@@ -23,7 +23,7 @@ bool Transaction::deletable() const {
     return true;
 }
 
-Transaction *Transaction::newTransfer(qlonglong accountId) const {
+Transaction *Transaction::newTransfer(domain_id accountId) const {
     auto relatedTransaction = new Transaction(*this);
     relatedTransaction->accountId = accountId;
     return relatedTransaction;
@@ -41,7 +41,7 @@ QString Transaction::toString() const {
 
 PendingTransaction::PendingTransaction() {}
 
-PendingTransaction::PendingTransaction(qlonglong accountId) : Transaction{accountId} {
+PendingTransaction::PendingTransaction(domain_id accountId) : Transaction{accountId} {
     details.append(new TransactionDetail);
 }
 
@@ -84,8 +84,8 @@ void TransactionUpdate::onError() {
 TransactionsData::TransactionsData(
     QList<const Transaction*> transactions,
     QList<const TransactionDetail*> details,
-    const QList<qlonglong> deletedIds,
-    const QList<qlonglong> deletedDetailIds
+    const QList<domain_id> deletedIds,
+    const QList<domain_id> deletedDetailIds
 )
     : transactions{transactions}
     , details{details}

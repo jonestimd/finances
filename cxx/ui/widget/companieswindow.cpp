@@ -19,7 +19,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
 {
     setWindowTitle(tr("Companies[*]"));
 
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setCompanies(QList<domain_id>)));
 
     layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
@@ -40,7 +40,7 @@ void CompaniesWindow::saveData() {
     store->update(this, &model, tr("Saving companies..."));
 }
 
-void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
+void CompaniesWindow::setCompanies(const QList<domain_id> companyIds) {
     model.setRows(companyIds);
 }
 

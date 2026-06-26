@@ -87,9 +87,9 @@ void CategoryDao::createTable(const QSqlDatabase &db) const {
     if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
-QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const std::optional<qlonglong> &parentId, const QString user) {
+QHash<domain_id, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const optional_id &parentId, const QString user) {
     QSqlQuery query(db);
-    QList<qlonglong> ids{category->id.value()};
+    QList<domain_id> ids{category->id.value()};
     if (category->parentId.has_value()) ids.append(category->parentId.value());
     if (parentId.has_value()) ids.append(parentId.value());
     query.prepare(setParentSql);
@@ -102,7 +102,7 @@ QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const
     return get(db, ids);
 }
 
-void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const qlonglong destinationId, const QString user) const {
+void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const domain_id destinationId, const QString user) const {
     if (!category->childIds.isEmpty()) {
         QSqlQuery query(db);
         query.prepare(setParentsSql);

@@ -12,7 +12,7 @@ class PayeeStore : public EntityStore<Payee, PayeeService> {
 public:
     PayeeStore(PayeeService *service, DataStore* dataStore);
 
-    void mergePayees(QWidget *source, const Payee *payee, qlonglong destinationId);
+    void mergePayees(QWidget *source, const Payee *payee, domain_id destinationId);
 
 public slots:
     void transactionsUpdated(const QList<TransactionChange> changes);

@@ -71,7 +71,7 @@ QAction *UiContext::securitiesAction() {
     return &securitiesAction_;
 }
 
-TransactionsWindow *UiContext::showTransactions(qlonglong accountId) {
+TransactionsWindow *UiContext::showTransactions(domain_id accountId) {
     bool accountLoaded = transactionModels.contains(accountId);
     auto model = transactionsModel(accountId);
     auto window = new TransactionsWindow(this, model, !accountLoaded);
@@ -85,7 +85,7 @@ TransactionsWindow *UiContext::showTransactions(qlonglong accountId) {
     return window;
 }
 
-TransactionTableModel *UiContext::transactionsModel(qlonglong accountId) {
+TransactionTableModel *UiContext::transactionsModel(domain_id accountId) {
     auto model = transactionModels.value(accountId);
     if (!model) {
         model = new TransactionTableModel(dataStore, accountId);

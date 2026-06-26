@@ -7,22 +7,22 @@ Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
 
 class TransactionStore::TransactionSorter {
     const TransactionStore* const store;
-    std::function<bool(qlonglong, qlonglong)> compare = std::bind_front(&TransactionSorter::lessThan, this);
+    std::function<bool(domain_id, domain_id)> compare = std::bind_front(&TransactionSorter::lessThan, this);
 
 public:
     TransactionSorter(TransactionStore* const store) : store{store} {}
 
-    bool lessThan(qlonglong id1, qlonglong id2) const {
+    bool lessThan(domain_id id1, domain_id id2) const {
         auto d1 = store->value(id1)->date.toDate();
         auto d2 = store->value(id2)->date.toDate();
         return d1 == d2 ? id1 < id2 : d1 < d2;
     }
 
-    void sort(QList<qlonglong>& ids) const {
+    void sort(QList<domain_id>& ids) const {
         std::stable_sort(ids.begin(), ids.end(), compare);
     }
 
-    int insert(QList<qlonglong>& ids, qlonglong id) const {
+    int insert(QList<domain_id>& ids, domain_id id) const {
         for (int i = 0; i < ids.size(); i++) {
             if (lessThan(id, ids[i])) {
                 ids.insert(i, id);
@@ -33,7 +33,7 @@ public:
         return ids.size()-1;
     }
 
-    bool inOrder(QList<qlonglong>& ids, int index) const {
+    bool inOrder(QList<domain_id>& ids, int index) const {
         if (index > 0 && !lessThan(ids[index-1], ids[index])) return false;
         return index >= ids.size()-1 || lessThan(ids[index], ids[index+1]);
     }
@@ -50,9 +50,9 @@ TransactionStore::~TransactionStore() {
     delete sorter;
 }
 
-bool TransactionStore::load(EntityView *view, qlonglong accountId, bool reload) {
+bool TransactionStore::load(EntityView *view, domain_id accountId, bool reload) {
     if (reload || !loadedAccounts.contains(accountId)) {
-        return EntityStore<Transaction, TransactionService, qlonglong>::load(view, tr(LOADING_TRANSACTIONS), accountId, true);
+        return EntityStore<Transaction, TransactionService, domain_id>::load(view, tr(LOADING_TRANSACTIONS), accountId, true);
     }
     return true;
 }
@@ -73,7 +73,7 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
         for (const auto& id : std::as_const(updateData.deletedIds)) {
             if (contains(id)) deletes.append(value(id));
         }
-        QSet<qlonglong> accountIds;
+        QSet<domain_id> accountIds;
         // TODO filter details for unloaded accounts
         detailStore.update(updateData, detailDeletes, deletes);
         for (auto detail: std::as_const(updateData.details)) {
@@ -91,7 +91,7 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
 
 void TransactionStore::replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId) {
     QList<const Transaction*> updates;
-    forEachEntry([&](qlonglong id, const Transaction* tx) {
+    forEachEntry([&](domain_id id, const Transaction* tx) {
         if (tx->payeeId == oldPayeeId) {
             auto updatedTx = new Transaction(*tx);
             updatedTx->payeeId = newPayeeId;
@@ -102,11 +102,11 @@ void TransactionStore::replacePayee(const QVariant oldPayeeId, const QVariant ne
     if (!updates.isEmpty()) update(updates, {});
 }
 
-const QList<qlonglong> TransactionStore::transactionIds(qlonglong accountId) const {
+const QList<domain_id> TransactionStore::transactionIds(domain_id accountId) const {
     return idsByAccountId.value(accountId);
 }
 
-QDecNumber TransactionStore::amount(qlonglong transactionId) const {
+QDecNumber TransactionStore::amount(domain_id transactionId) const {
     QDecNumber total(0);
     auto tx = value(transactionId);
     for (const QVariant &detailId : tx->detailIds) {
@@ -121,10 +121,10 @@ QDecNumber TransactionStore::amount(qlonglong transactionId) const {
     return total;
 }
 
-void TransactionStore::clearData(qlonglong accountId) {
+void TransactionStore::clearData(domain_id accountId) {
     if (idsByAccountId.contains(accountId)) {
         const auto transactionIds = idsByAccountId.take(accountId);
-        QList<qlonglong> detailIds;
+        QList<domain_id> detailIds;
         for (auto txId : transactionIds) {
             for (auto& detailId : std::as_const(value(txId)->detailIds)) detailIds.append(detailId);
         }
@@ -134,11 +134,11 @@ void TransactionStore::clearData(qlonglong accountId) {
     }
 }
 
-void TransactionStore::setValues(qlonglong accountId, const QHash<qlonglong, const Transaction*> values) {
+void TransactionStore::setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) {
     loadedAccounts.append(accountId);
     EntityStore::setValues(accountId, values);
     detailStore.load(accountId);
-    QList<qlonglong> accountTxIds{};
+    QList<domain_id> accountTxIds{};
     for (auto [id, tx] : values.asKeyValueRange()) {
         if (tx->accountId == accountId) accountTxIds.append(tx->id.value());
     }
@@ -159,7 +159,7 @@ void TransactionStore::update(const QList<const Transaction*>& updates, const QL
             }
         }
     }
-    QHash<qlonglong, int> detailCounts;
+    QHash<domain_id, int> detailCounts;
     for (auto tx : updates) {
         if (contains(tx->id.value())) detailCounts.insert(tx->id.value(), value(tx->id.value())->detailIds.size());
     }

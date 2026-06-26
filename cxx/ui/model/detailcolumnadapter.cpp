@@ -7,7 +7,7 @@
 
 // TransactionTypeColumnAdapter //
 
-TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId)
+TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, domain_id accountId)
     : ColumnAdapter(title, true)
     , dataStore{dataStore}
     , accountId{accountId}

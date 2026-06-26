@@ -60,7 +60,7 @@ private slots:
         QCOMPARE(result.value(parent->id.value())->name, parent->name);
         QCOMPARE(result.value(parent->id.value())->childIds, {});
         QCOMPARE(result.value(newParent->id.value())->name, newParent->name);
-        QCOMPARE(result.value(newParent->id.value())->childIds, QList<qlonglong>{child->id.value()});
+        QCOMPARE(result.value(newParent->id.value())->childIds, QList<domain_id>{child->id.value()});
         QCOMPARE(result.value(child->id.value())->parentId.value(), newParent->id.value());
     }
 
@@ -78,7 +78,7 @@ private slots:
         QCOMPARE(result.value(parent->id.value())->name, parent->name);
         QCOMPARE(result.value(otherChild->id.value())->name, otherChild->name);
         QCOMPARE(result.value(otherChild->id.value())->parentId, parent->id);
-        QList<qlonglong> childIds{child->id.value(), otherChild->id.value()};
+        QList<domain_id> childIds{child->id.value(), otherChild->id.value()};
         QCOMPARE(result.value(parent->id.value())->childIds, childIds);
     }
 

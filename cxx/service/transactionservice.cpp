@@ -6,7 +6,7 @@ TransactionService::TransactionService(ConnectionPool *pool, TransactionDao &tra
     , detailDao{detailDao}
 {}
 
-QHash<qlonglong, const Transaction *> TransactionService::getAll(qlonglong accountId) {
+QHash<domain_id, const Transaction *> TransactionService::getAll(domain_id accountId) {
     Connection conn(connectionPool);
     return dao.getAll(conn.db, accountId);
 }
@@ -17,9 +17,9 @@ struct TxDetail {
 };
 
 class UpdateSession {
-    QHash<qlonglong, Transaction*> transactions{};
+    QHash<domain_id, Transaction*> transactions{};
     QList<const Transaction*> resultTransactions{};
-    QHash<qlonglong, TransactionDetail*> details{};
+    QHash<domain_id, TransactionDetail*> details{};
     QList<const TransactionDetail*> resultDetails{};
 
 public:
@@ -57,7 +57,7 @@ public:
         return std::nullopt;
     }
 
-    TransactionsData result(const QList<TransactionDetail*> detailAdds, const QList<qlonglong> deletedIds, const QList<qlonglong> deletedDetailIds) {
+    TransactionsData result(const QList<TransactionDetail*> detailAdds, const QList<domain_id> deletedIds, const QList<domain_id> deletedDetailIds) {
         TransactionsData data{resultTransactions, resultDetails, deletedIds, deletedDetailIds};
         resultTransactions.clear();
         for (auto i = transactions.cbegin(); i != transactions.cend(); i++) data.transactions.append(i.value());
@@ -72,7 +72,7 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
     Connection conn(connectionPool);
     try {
         UpdateSession session{changes};
-        QList<qlonglong> deletedDetailIds;
+        QList<domain_id> deletedDetailIds;
         QList<TransactionDetail*> detailAdds{changes.detailAdds};
         if (!changes.adds.isEmpty()) {
             dao.add(conn.db, changes.adds, user);
@@ -83,9 +83,9 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
             }
         }
 
-        QList<qlonglong> txIds{};
+        QList<domain_id> txIds{};
         if (!detailAdds.isEmpty()) {
-            QHash<TransactionDetail*, qlonglong> relatedIds{};
+            QHash<TransactionDetail*, domain_id> relatedIds{};
             detailDao.add(conn.db, detailAdds, user);
             for (auto detail : std::as_const(detailAdds)) {
                 if (auto tx = session.getTransaction(detail->transactionId)) (*tx)->detailIds.append(detail->id.value());

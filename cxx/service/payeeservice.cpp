@@ -6,8 +6,8 @@ PayeeService::PayeeService(ConnectionPool *connectionPool, PayeeDao &payeeDao, T
     , transactionDao{transactionDao}
 {}
 
-QHash<qlonglong, const Payee*> PayeeService::merge(const Payee *payee, qlonglong destinationId, const QString &user) {
-    return doInTransaction<QHash<qlonglong, const Payee*>>([=, this](QSqlDatabase &db) {
+QHash<domain_id, const Payee*> PayeeService::merge(const Payee *payee, domain_id destinationId, const QString &user) {
+    return doInTransaction<QHash<domain_id, const Payee*>>([=, this](QSqlDatabase &db) {
         transactionDao.replacePayee(db, payee, destinationId, user);
         dao.remove(db, QList{payee});
         return dao.get(db, QList{destinationId});

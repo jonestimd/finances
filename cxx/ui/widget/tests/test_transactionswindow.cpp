@@ -83,13 +83,13 @@ class TestTransactionsWindow : public QObject {
     DataStore* dataStore;
     UiContext* uiContext;
 
-    qlonglong companyId;
-    qlonglong accountId;
-    qlonglong altAccountId;
-    qlonglong securityAccountId;
-    qlonglong payeeId;
-    qlonglong categoryId;
-    qlonglong groupId;
+    domain_id companyId;
+    domain_id accountId;
+    domain_id altAccountId;
+    domain_id securityAccountId;
+    domain_id payeeId;
+    domain_id categoryId;
+    domain_id groupId;
 
     QSignalSpy *accountUpdatedSpy;
 
@@ -101,7 +101,7 @@ private:
         QTRY_VERIFY(win->findChild<TreeView*>()->isEnabled());
     }
 
-    TransactionsWindow* openWindow(qlonglong accountId) {
+    TransactionsWindow* openWindow(domain_id accountId) {
         TransactionsWindow* window = uiContext->showTransactions(accountId);
         waitForDataLoaded(window);
         return window;
@@ -163,7 +163,7 @@ private:
         QCOMPARE(tx->memo, description);
     }
 
-    void verifyDetail(qlonglong detailId, QVariant categoryId, std::optional<qlonglong> transferAccountId, QVariant amount) {
+    void verifyDetail(domain_id detailId, QVariant categoryId, optional_id transferAccountId, QVariant amount) {
         verifyDetail(dataStore->transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
     }
 
@@ -174,7 +174,7 @@ private:
         verifyDetail(pendingTx->details.at(0), QVariant{}, {}, QVariant{});
     }
 
-    void verifyDetail(const TransactionDetail* detail, QVariant categoryId, std::optional<qlonglong> transferAccountId, QVariant amount) {
+    void verifyDetail(const TransactionDetail* detail, QVariant categoryId, optional_id transferAccountId, QVariant amount) {
         QCOMPARE(detail->categoryId, categoryId);
         QCOMPARE(detail->transferAccountId, transferAccountId);
         if (amount.isNull()) QVERIFY(detail->amount.isNull());
@@ -182,13 +182,13 @@ private:
     }
 
     template<class Holder>
-    void testRenameTxReference(qlonglong accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
+    void testRenameTxReference(domain_id accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
         TxWindowHolder holder(openWindow(accountId));
         QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
         QVERIFY(modelSpy.isValid());
         refHolder.showWindow();
         refHolder.view->setCurrentIndex(refHolder.index(refRow, refNameColumn));
-        QSignalSpy updateSpy(refStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QSignalSpy updateSpy(refStore, SIGNAL(valuesLoaded(QList<domain_id>)));
         QVERIFY(updateSpy.isValid());
 
         enterText(refHolder.view, "new ref name");
@@ -207,7 +207,7 @@ private:
         Holder refHolder(new Holder::windowType(dataStore));
         refHolder.showWindow();
         refHolder.view->setCurrentIndex(refHolder.index(1, 0));
-        QSignalSpy mergeSpy(store, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QSignalSpy mergeSpy(store, SIGNAL(valuesLoaded(QList<domain_id>)));
         QVERIFY(mergeSpy.isValid());
 
         QTimer::singleShot(0, refHolder.window, [&]() {
@@ -240,7 +240,7 @@ private slots:
         dbTestCase.saveTransaction(driver, factory::transaction(accountId, payeeId), {factory::detail("23.45", categoryId)});
         dbTestCase.saveTransaction(driver, factory::transaction(accountId), {"34.56"});
         dbTestCase.saveTransfer(driver, altAccountId, accountId, {"78.90", "567.89"});
-        accountUpdatedSpy = new QSignalSpy(dataStore->transactionStore, SIGNAL(accountUpdated(qlonglong)));
+        accountUpdatedSpy = new QSignalSpy(dataStore->transactionStore, SIGNAL(accountUpdated(domain_id)));
         QVERIFY(accountUpdatedSpy->isValid());
     }
 
@@ -369,7 +369,7 @@ private slots:
         auto altPayeeId = dbTestCase.addPayee(driver, ALT_PAYEE_NAME);
         auto [tx, details] = dbTestCase.saveTransaction(driver, factory::transaction(accountId, altPayeeId), {"65.78"});
         TxWindowHolder holder(openWindow(accountId));
-        QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(qlonglong,int,int)));
+        QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(domain_id,int,int)));
         QVERIFY(updateSpy.isValid());
 
         doMerge<PayeeWindowHolder, PayeeStore>(payeeId, dataStore->payeeStore);
@@ -430,7 +430,7 @@ private slots:
         AccountWindowHolder accountHolder(new AccountsWindow(uiContext));
         accountHolder.showWindow();
         accountHolder.view->setCurrentIndex(accountHolder.index(1, 0));
-        QSignalSpy saveSpy(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)));
+        QSignalSpy saveSpy(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)));
         QVERIFY(saveSpy.isValid());
 
         QTimer::singleShot(0, accountHolder.window, [&]() {

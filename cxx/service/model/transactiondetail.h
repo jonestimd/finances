@@ -5,7 +5,7 @@
 
 class TransactionDetail : public BaseDomain {
 public:
-    qlonglong transactionId;
+    domain_id transactionId;
     QVariant categoryId;
     QVariant relatedDetailId;
     QVariant groupId;
@@ -14,16 +14,16 @@ public:
     QVariant assetQuantity;
     QVariant memo;
 
-    std::optional<qlonglong> transferAccountId;
+    optional_id transferAccountId;
 
     TransactionDetail();
-    TransactionDetail(qlonglong transactionId);
+    TransactionDetail(domain_id transactionId);
     TransactionDetail(const QSqlRecord &record);
 
     bool isEmpty() const;
 
-    TransactionDetail *newTransfer(const std::optional<qlonglong> &transferAccountId, qlonglong transactionId) const;
-    void initTransfer(qlonglong transactionId, TransactionDetail &relatedDetail) const;
+    TransactionDetail *newTransfer(const optional_id& transferAccountId, domain_id transactionId) const;
+    void initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const;
 
     static QVariantList transactionIds(const QList<const TransactionDetail*> details);
 };

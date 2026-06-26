@@ -9,7 +9,7 @@ private slots:
 };
 
 struct TestOption : NamedEntity {
-    TestOption(qlonglong id, QVariant name) {
+    TestOption(domain_id id, QVariant name) {
         this->id = id;
         this->name = name;
     };

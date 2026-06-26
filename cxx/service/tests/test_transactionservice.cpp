@@ -12,7 +12,7 @@
 #define DETAIL_DELETES(...) QList<const TransactionDetail*>{__VA_ARGS__}
 
 template<class T>
-T *find(qlonglong id, QList<T*> list) {
+T *find(domain_id id, QList<T*> list) {
     for (auto item : list) if (item->id.value() == id) return item;
     return nullptr;
 }
@@ -28,18 +28,18 @@ class TestTransactionService : public QObject {
     DbTestCase dbTestCase{};
 
     DbTestCase::TxDetails saveTransaction(QList<const char*> amounts) {
-        QFETCH_GLOBAL(qlonglong, accountId);
+        QFETCH_GLOBAL(domain_id, accountId);
         return dbTestCase.saveTransaction(factory::transaction(accountId), amounts);
     }
 
     QList<DbTestCase::TxDetails> saveTransfer(QList<const char*> amounts) {
         QFETCH_GLOBAL(QString, driver);
-        QFETCH_GLOBAL(qlonglong, accountId);
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         return dbTestCase.saveTransfer(driver, accountId, altAccountId, amounts);
     }
 
-    const Transaction* loadTransaction(const qlonglong id) {
+    const Transaction* loadTransaction(const domain_id id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.transactionDao(driver).get(conn.db, QList{id});
@@ -47,7 +47,7 @@ class TestTransactionService : public QObject {
         return result.value(id);
     }
 
-    const TransactionDetail* loadDetail(const qlonglong id) {
+    const TransactionDetail* loadDetail(const domain_id id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.detailDao(driver).get(conn.db, QList{id});
@@ -56,13 +56,13 @@ class TestTransactionService : public QObject {
     }
 
     PendingTransaction* unsavedTransaction(QList<const char*> amounts) {
-        QFETCH_GLOBAL(qlonglong, accountId);
-        QFETCH_GLOBAL(qlonglong, payeeId);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, payeeId);
         return factory::pendingTransaction(accountId, amounts, payeeId);
     }
 
     PendingTransaction* unsavedTransfer(QList<const char*> amounts) {
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         auto tx = unsavedTransaction(amounts);
         tx->details.at(0)->transferAccountId = altAccountId;
         return tx;
@@ -73,10 +73,10 @@ private slots:
         dbTestCase.createDatabases();
         QTest::addColumn<QString>("driver");
         QTest::addColumn<TransactionService*>("service");
-        QTest::addColumn<qlonglong>("accountId");
-        QTest::addColumn<qlonglong>("altAccountId");
-        QTest::addColumn<qlonglong>("altAccountId2");
-        QTest::addColumn<qlonglong>("payeeId");
+        QTest::addColumn<domain_id>("accountId");
+        QTest::addColumn<domain_id>("altAccountId");
+        QTest::addColumn<domain_id>("altAccountId2");
+        QTest::addColumn<domain_id>("payeeId");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &txDao = dbTestCase.transactionDao(driver);
             auto &detailDao = dbTestCase.detailDao(driver);
@@ -92,7 +92,7 @@ private slots:
 
     void getByAccount_queriesByAccountId() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, accountId);
+        QFETCH_GLOBAL(domain_id, accountId);
 
         service->getAll(accountId);
     }
@@ -119,8 +119,8 @@ private slots:
 
     void update_addsNewTransfer() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, accountId);
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(unsavedTransfer({"1.00"})), TX_DELETES(),
             DETAIL_UPDATES(), DETAIL_ADDS(), DETAIL_DELETES(),
@@ -198,7 +198,7 @@ private slots:
 
     void update_addsRelatedTransactionAndDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         auto [tx, details] = saveTransaction(QList{"1.00", "2.34"});
         auto detail = details.at(1);
         detail->transferAccountId = altAccountId;
@@ -214,7 +214,7 @@ private slots:
         QCOMPARE(result.details.size(), 2);
         QCOMPARE(result.details.at(0)->id, detail->id);
         auto relatedDetail = result.details.at(1);
-        QCOMPARE(result.transactions.at(0)->detailIds, QList<qlonglong>{relatedDetail->id.value()});
+        QCOMPARE(result.transactions.at(0)->detailIds, QList<domain_id>{relatedDetail->id.value()});
         QCOMPARE(detail->relatedDetailId, relatedDetail->id);
         QCOMPARE(relatedDetail->relatedDetailId, detail->id);
         QCOMPARE(relatedDetail->amount.toString(), "-2.34");
@@ -222,7 +222,7 @@ private slots:
 
     void update_updatesRelatedTransactionAccount() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, altAccountId2);
+        QFETCH_GLOBAL(domain_id, altAccountId2);
         auto transfer = saveTransfer({"1.00", "2.00"});
         auto [tx, details] = transfer.at(0);
         auto [relatedTx, relatedDetails] = transfer.at(1);
@@ -243,7 +243,7 @@ private slots:
 
     void update_removesRelatedDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         auto transfer = saveTransfer({"1.23", "2.34"});
         auto [tx, details] = transfer.at(0);
         auto [relatedTx, relatedDetails] = transfer.at(1);
@@ -269,7 +269,7 @@ private slots:
 
     void update_removesRelatedTransactionAndDetail() {
         QFETCH_GLOBAL(TransactionService*, service);
-        QFETCH_GLOBAL(qlonglong, altAccountId);
+        QFETCH_GLOBAL(domain_id, altAccountId);
         auto transfer = saveTransfer({"1.23"});
         auto [tx, details] = transfer.at(0);
         auto [relatedTx, relatedDetails] = transfer.at(1);

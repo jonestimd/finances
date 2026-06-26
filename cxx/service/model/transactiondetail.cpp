@@ -5,7 +5,7 @@
 
 TransactionDetail::TransactionDetail() {}
 
-TransactionDetail::TransactionDetail(qlonglong transactionId) : transactionId{transactionId} {}
+TransactionDetail::TransactionDetail(domain_id transactionId) : transactionId{transactionId} {}
 
 TransactionDetail::TransactionDetail(const QSqlRecord &record)
     : BaseDomain{record}
@@ -31,7 +31,7 @@ bool TransactionDetail::isEmpty() const {
            && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
 }
 
-TransactionDetail *TransactionDetail::newTransfer(const std::optional<qlonglong> &transferAccountId, qlonglong transactionId) const {
+TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAccountId, domain_id transactionId) const {
     auto relatedDetail = new TransactionDetail(*this);
     relatedDetail->id.reset();
     initTransfer(transactionId, *relatedDetail);
@@ -39,7 +39,7 @@ TransactionDetail *TransactionDetail::newTransfer(const std::optional<qlonglong>
     return relatedDetail;
 }
 
-void TransactionDetail::initTransfer(qlonglong transactionId, TransactionDetail &relatedDetail) const {
+void TransactionDetail::initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const {
     relatedDetail.relatedDetailId = id.value();
     relatedDetail.transactionId = transactionId;
     relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));

@@ -14,9 +14,9 @@ public:
 
     virtual QList<const Category*> update(BulkUpdate<Category> &changes, const QString &user) override;
 
-    QHash<qlonglong, const Category*> setParent(const Category *category, const std::optional<qlonglong>& parentId, const QString &user);
+    QHash<domain_id, const Category*> setParent(const Category *category, const optional_id& parentId, const QString &user);
     // TODO return updated tx details?
-    QHash<qlonglong, const Category *> merge(const Category *category, const qlonglong destinationId, const QString &user);
+    QHash<domain_id, const Category *> merge(const Category *category, const domain_id destinationId, const QString &user);
 };
 
 #endif // CATEGORY_SERVICE_H

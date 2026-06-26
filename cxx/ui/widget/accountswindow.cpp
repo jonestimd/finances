@@ -28,8 +28,8 @@ AccountsWindow::AccountsWindow(UiContext *context)
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
 
     auto companyStore = &dataStore->accountStore->companyStore;
-    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setAccounts(QList<qlonglong>)));
-    connect(companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setAccounts(QList<domain_id>)));
+    connect(companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setCompanies(QList<domain_id>)));
     connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
 
 
@@ -58,11 +58,11 @@ void AccountsWindow::saveData() {
     dataStore->accountStore->update(this, model());
 }
 
-void AccountsWindow::setCompanies(const QList<qlonglong> companyIds) {
+void AccountsWindow::setCompanies(const QList<domain_id> companyIds) {
     model()->companiesLoaded(companyIds);
 }
 
-void AccountsWindow::setAccounts(const QList<qlonglong> accountIds) {
+void AccountsWindow::setAccounts(const QList<domain_id> accountIds) {
     model()->setRows(accountIds);
 }
 

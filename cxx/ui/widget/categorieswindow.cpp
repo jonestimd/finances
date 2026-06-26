@@ -22,7 +22,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     entityView.insertAction(3, mergeAction);
 
     connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setCategories(QList<domain_id>)));
 
     if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
@@ -45,7 +45,7 @@ void CategoriesWindow::saveData() {
     store->update(this, model(), tr(SAVING_CATEGORIES));
 }
 
-void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
+void CategoriesWindow::setCategories(const QList<domain_id> categoryIds) {
     model()->setRows(categoryIds);
 }
 
@@ -53,7 +53,7 @@ void CategoriesWindow::reparent() {
     auto category = model()->getRow(entityView.selectedIndex());
     auto name = category->name.toString();
     QList<const NamedEntity*> options;
-    QHash<qlonglong, QString> disabledOptions;
+    QHash<domain_id, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
         auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);

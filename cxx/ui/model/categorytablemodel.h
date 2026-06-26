@@ -10,7 +10,7 @@
 class CategoryTableModel : public PodItemModel<Category> {
     Q_OBJECT
     const CategoryStore *store;
-    QList<qlonglong> rootIds;
+    QList<domain_id> rootIds;
 
 protected:
     int childCount(const QModelIndex &parent) const override;
@@ -18,7 +18,7 @@ protected:
 public:
     explicit CategoryTableModel(DataStore *datastore);
 
-    void setRows(QList<qlonglong> categoryIds);
+    void setRows(QList<domain_id> categoryIds);
     const Category* getRow(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     bool movable(const QModelIndex &index);

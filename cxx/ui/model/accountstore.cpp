@@ -22,7 +22,7 @@ void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<
     messageStore->addMessage(tr(SAVING_ACCOUNTS));
     doInBackground(source, [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
-        QHash<qlonglong, const Company*> companies;
+        QHash<domain_id, const Company*> companies;
         auto accounts = service->update(changes, user, companies);
         update(accounts, deletes);
         companyStore.update(companies.values());
@@ -32,7 +32,7 @@ void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<
     });
 }
 
-QString AccountStore::qualifiedName(qlonglong accountId, QChar delimiter) const {
+QString AccountStore::qualifiedName(domain_id accountId, QChar delimiter) const {
     auto account = value(accountId);
     if (account) {
         auto name = account->name.toString();
@@ -46,7 +46,7 @@ QString AccountStore::qualifiedName(qlonglong accountId, QChar delimiter) const 
 }
 
 void AccountStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    if (updateTransactionCounts<qlonglong>(changes, &Transaction::accountId)) {
+    if (updateTransactionCounts<domain_id>(changes, &Transaction::accountId)) {
         emit valuesLoaded(ids());
     }
 }

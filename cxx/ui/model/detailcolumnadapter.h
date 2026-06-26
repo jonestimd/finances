@@ -14,10 +14,10 @@ class TransactionTableModel;
  */
 class TransactionTypeColumnAdapter : public ColumnAdapter<TransactionDetail>  {
     DataStore *const dataStore;
-    const qlonglong accountId;
+    const domain_id accountId;
 
 public:
-    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId);
+    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, domain_id accountId);
 
     QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
     QVariant rowValue(const TransactionDetail *row) const override;

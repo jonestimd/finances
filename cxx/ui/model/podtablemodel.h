@@ -11,7 +11,7 @@ template<Copyable Row, class Service>
 class PodTableModel : public PodItemModel<Row>
 {
 protected:
-    QList<qlonglong> rowIds;
+    QList<domain_id> rowIds;
     const EntityStore<Row, Service> *const store;
 
     int childCount(const QModelIndex &index) const override {
@@ -25,7 +25,7 @@ public:
         , rowIds(store->ids())
     {}
 
-    void setRows(const QList<qlonglong> rowIds) {
+    void setRows(const QList<domain_id> rowIds) {
         this->clearChanges();
         this->beginResetModel();
         this->rowIds.clear();

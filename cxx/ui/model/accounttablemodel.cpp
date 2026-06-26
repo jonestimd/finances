@@ -61,7 +61,7 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
     }
 {}
 
-void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {
+void AccountTableModel::companiesLoaded(const QList<domain_id> companyIds) {
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
             auto account = children.at(i);

@@ -42,7 +42,7 @@ Daos::Daos(const QString &dbType)
 {};
 
 namespace factory {
-    Transaction* transaction(qlonglong accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
+    Transaction* transaction(domain_id accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
         Transaction* tx = new Transaction{accountId};
         tx->payeeId = payeeId;
         tx->securityId = securityId;
@@ -50,7 +50,7 @@ namespace factory {
         return tx;
     }
 
-    PendingTransaction* pendingTransaction(qlonglong accountId, QList<const char*> amounts, QVariant payeeId, QVariant securityId, const QDate &date) {
+    PendingTransaction* pendingTransaction(domain_id accountId, QList<const char*> amounts, QVariant payeeId, QVariant securityId, const QDate &date) {
         PendingTransaction *tx = new PendingTransaction;
         tx->accountId = accountId;
         tx->payeeId = payeeId;
@@ -181,7 +181,7 @@ void DbTestCase::createDatabases() {
     }
 }
 
-qlonglong DbTestCase::addCompany(const QString &driver, const QString &name) {
+domain_id DbTestCase::addCompany(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Company company{};
     company.name = name;
@@ -213,7 +213,7 @@ const Entity* load(DbTestCase *test, const QString &driver, const QVariant &id, 
     return rows.value(id.toLongLong());
 }
 
-qlonglong DbTestCase::addPayee(const QString &driver, const QString &name) {
+domain_id DbTestCase::addPayee(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Payee payee{name};
     payeeDao(driver).add(conn.db, QList{&payee}, TEST_USER);
@@ -228,7 +228,7 @@ Security* DbTestCase::addSecurity(const QString &driver, const QString &name, co
     return security;
 }
 
-qlonglong DbTestCase::addCategory(const QString &driver, const QString &name) {
+domain_id DbTestCase::addCategory(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     Category category;
     category.name = name;
@@ -236,7 +236,7 @@ qlonglong DbTestCase::addCategory(const QString &driver, const QString &name) {
     return category.id.value();
 }
 
-qlonglong DbTestCase::addGroup(const QString &driver, const QString &name) {
+domain_id DbTestCase::addGroup(const QString &driver, const QString &name) {
     auto conn = Connection(connectionPool(driver));
     TransactionGroup group;
     group.name = name;
@@ -271,7 +271,7 @@ void DbTestCase::resetDatabase(const QString& driver) {
     query.exec("delete from stock_split");
 }
 
-QList<DbTestCase::TxDetails> DbTestCase::saveTransfer(const QString& driver, qlonglong accountId, qlonglong altAccountId, QList<const char *> amounts) {
+QList<DbTestCase::TxDetails> DbTestCase::saveTransfer(const QString& driver, domain_id accountId, domain_id altAccountId, QList<const char *> amounts) {
     const char *transferAmount = amounts.at(0);
     QString relatedAmount = transferAmount[0] == '-' ? QString(transferAmount[1]) : QString(transferAmount).prepend('-');
     auto tx = saveTransaction(driver, factory::transaction(accountId), amounts);

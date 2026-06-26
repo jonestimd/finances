@@ -9,7 +9,7 @@ class TransactionDetailService : public EntityService<TransactionDetail, Transac
 public:
     TransactionDetailService(ConnectionPool *pool, TransactionDetailDao &transactionDetailDao);
     
-    QHash<qlonglong, const TransactionDetail*> getAll(qlonglong accountId);
+    QHash<domain_id, const TransactionDetail*> getAll(domain_id accountId);
 };
 
 #endif // TRANSACTIONDETAILSERVICE_H

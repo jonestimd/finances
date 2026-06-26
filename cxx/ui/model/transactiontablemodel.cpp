@@ -100,7 +100,7 @@ namespace transactiontablemodel {
 
 using namespace transactiontablemodel;
 
-TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
+TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id accountId)
     : PodItemModel{{
         new TxDateColumnAdapter{tr(DATE_TITLE)},
         new FieldColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
@@ -132,25 +132,25 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     , balanceColumn{columnIndex(tr(BALANCE_TITLE))}
     , accountId{accountId}
 {
-    connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
-    connect(store, SIGNAL(accountUpdated(qlonglong)), this, SLOT(accountUpdated(qlonglong)));
+    connect(store, SIGNAL(accountLoaded(domain_id)), this, SLOT(accountLoaded(domain_id)));
+    connect(store, SIGNAL(accountUpdated(domain_id)), this, SLOT(accountUpdated(domain_id)));
     connect(store, SIGNAL(transactionsSaved(QList<const PendingTransaction*>)), this, SLOT(transactionsSaved(QList<const PendingTransaction*>)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionAdded(qlonglong,int)), this, SLOT(transactionAdded(qlonglong,int)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionRemoved(qlonglong,int)), this, SLOT(transactionRemoved(qlonglong,int)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionUpdated(qlonglong,int,int)), this, SLOT(transactionUpdated(qlonglong,int,int)), Qt::DirectConnection);
-    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsUpdated()));
-    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsUpdated()));
-    connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(payeesUpdated()));
-    connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(securitiesUpdated()));
-    connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
-    connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(groupsUpdated()));
+    connect(store, SIGNAL(transactionAdded(domain_id,int)), this, SLOT(transactionAdded(domain_id,int)), Qt::DirectConnection);
+    connect(store, SIGNAL(transactionRemoved(domain_id,int)), this, SLOT(transactionRemoved(domain_id,int)), Qt::DirectConnection);
+    connect(store, SIGNAL(transactionUpdated(domain_id,int,int)), this, SLOT(transactionUpdated(domain_id,int,int)), Qt::DirectConnection);
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
+    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
+    connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(payeesUpdated()));
+    connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(securitiesUpdated()));
+    connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateBalances()));
+    connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(groupsUpdated()));
 }
 
 TransactionTableModel::~TransactionTableModel() {
     qDeleteAll(detailColumns);
 }
 
-const QList<qlonglong> TransactionTableModel::transactionIds() const {
+const QList<domain_id> TransactionTableModel::transactionIds() const {
     return store->transactionIds(accountId);
 }
 
@@ -223,7 +223,7 @@ PendingTransaction *TransactionTableModel::newRow() {
     return new PendingTransaction(accountId);
 }
 
-void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
+void TransactionTableModel::setRows(const QList<domain_id> transactionIds) {
     beginResetModel();
     clearChanges();
     updateBalances();
@@ -233,7 +233,7 @@ void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
     emit clearedBalanceChanged(clearedBalance_);
 }
 
-QVariant TransactionTableModel::balance(const std::optional<qlonglong> &transactionId) const {
+QVariant TransactionTableModel::balance(const optional_id &transactionId) const {
     return transactionId.has_value() ? balances.value(transactionId.value()) : QVariant{};
 }
 
@@ -455,11 +455,11 @@ QList<const TransactionDetail*> TransactionTableModel::unsavedDetailDeletes(int 
     return deletes;
 }
 
-void TransactionTableModel::accountLoaded(qlonglong accountId) {
+void TransactionTableModel::accountLoaded(domain_id accountId) {
     if (accountId == this->accountId) setRows(store->transactionIds(accountId));
 }
 
-void TransactionTableModel::accountUpdated(qlonglong accountId) {
+void TransactionTableModel::accountUpdated(domain_id accountId) {
     // force sort model to reset its state
     beginResetModel();
     endResetModel();
@@ -540,7 +540,7 @@ static void updateDeletes(QList<QModelIndex>& pendingDeletes, int rowIndex, int 
     }
 }
 
-void TransactionTableModel::transactionAdded(qlonglong accountId, int rowIndex) {
+void TransactionTableModel::transactionAdded(domain_id accountId, int rowIndex) {
     if (accountId == this->accountId) {
         beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
         // TODO adjust indexes of adds, deletes and changes
@@ -548,7 +548,7 @@ void TransactionTableModel::transactionAdded(qlonglong accountId, int rowIndex) 
     }
 }
 
-void TransactionTableModel::transactionRemoved(qlonglong accountId, int rowIndex) {
+void TransactionTableModel::transactionRemoved(domain_id accountId, int rowIndex) {
     if (accountId == this->accountId) {
         beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
         auto modelIndex = index(rowIndex, 0);
@@ -568,7 +568,7 @@ void TransactionTableModel::transactionRemoved(qlonglong accountId, int rowIndex
     }
 }
 
-void TransactionTableModel::transactionUpdated(qlonglong accountId, int rowIndex, int oldDetailCount) {
+void TransactionTableModel::transactionUpdated(domain_id accountId, int rowIndex, int oldDetailCount) {
     if (accountId == this->accountId) {
         auto txId = transactionIds().at(rowIndex);
         auto tx = store->value(txId);

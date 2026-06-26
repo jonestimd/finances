@@ -16,7 +16,7 @@ namespace dbDialect {
         else return QString("%0 member of (%1)").arg(column, placeholder);
     }
 
-    QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, const QList<qlonglong> ids, const char *idColumn) {
+    QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, const QList<domain_id> ids, const char *idColumn) {
         QSqlQuery query{db};
         QString sql = getAllSql;
         sql += "\nwhere " + inList(db, idColumn, ":ids");

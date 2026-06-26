@@ -32,10 +32,10 @@ private slots:
         dbTestCase.createDatabases();
         QTest::addColumn<QString>("driver");
         QTest::addColumn<SecurityService*>("service");
-        QTest::addColumn<qlonglong>("accountId");
-        QTest::addColumn<qlonglong>("accountId2");
-        QTest::addColumn<qlonglong>("securityId");
-        QTest::addColumn<qlonglong>("securityId2");
+        QTest::addColumn<domain_id>("accountId");
+        QTest::addColumn<domain_id>("accountId2");
+        QTest::addColumn<domain_id>("securityId");
+        QTest::addColumn<domain_id>("securityId2");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &dao = dbTestCase.securityDao(driver);
             auto accountId = dbTestCase.addAccount(driver, "account 1", AccountType::bank.code)->id.value();
@@ -52,10 +52,10 @@ private slots:
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(qlonglong, accountId);
-        QFETCH_GLOBAL(qlonglong, accountId2);
-        QFETCH_GLOBAL(qlonglong, securityId);
-        QFETCH_GLOBAL(qlonglong, securityId2);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, accountId2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
         dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-1.23", "-2.00"}, {"3"});
         dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-10.45"}, {"6"});
         dbTestCase.saveTransaction(factory::transaction(accountId2, QVariant{}, securityId2), {"-2.00"}, {"5"});
@@ -71,8 +71,8 @@ private slots:
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(qlonglong, accountId);
-        QFETCH_GLOBAL(qlonglong, securityId);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, securityId);
         QDate tx1Date{2010, 2, 15};
         QDate tx2Date = tx1Date.addDays(1);
         dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId, tx1Date), {"-1.00"}, {"3"});
@@ -88,8 +88,8 @@ private slots:
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(qlonglong, securityId);
-        QFETCH_GLOBAL(qlonglong, securityId2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
         addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
         addSplit(driver, securityId, QDate{2015, 12, 15}, 1, 3);
         addSplit(driver, securityId2, QDate{2019, 10, 31}, 3, 2);

@@ -6,7 +6,7 @@
 #include <QVBoxLayout>
 
 EntitySelectionDialog::EntitySelectionDialog(QWidget *parent, ComboBoxModel *model, const QString &title, const QString &label,
-    QHash<qlonglong, QString> disabledOptions)
+    QHash<domain_id, QString> disabledOptions)
     : QDialog{parent}
     , disabledOptions{disabledOptions}
 {
@@ -32,9 +32,9 @@ void EntitySelectionDialog::setSelectedEntity(const NamedEntity *entity) {
     selectionInput->setEntity(entity);
 }
 
-std::optional<qlonglong> EntitySelectionDialog::selectedId() const {
+optional_id EntitySelectionDialog::selectedId() const {
     auto entity = selectionInput->entity();
-    return entity ? entity->id : std::optional<qlonglong>{};
+    return entity ? entity->id : optional_id{};
 }
 
 void EntitySelectionDialog::inputChanged() {

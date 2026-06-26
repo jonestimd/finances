@@ -21,7 +21,7 @@ void SecurityStore::transactionsUpdated(const QList<TransactionChange> changes) 
     }
 }
 
-void SecurityStore::setValues(const QHash<qlonglong, const Security *> values) {
+void SecurityStore::setValues(const QHash<domain_id, const Security *> values) {
     for (auto i = securitySplits.begin(); i != securitySplits.end(); i = securitySplits.erase(i)) {
         delete i.value();
     }

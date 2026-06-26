@@ -14,7 +14,7 @@ class AccountTableModel : public PodTableModel<Account, AccountService> {
 public:
     explicit AccountTableModel(AccountStore *store, AddCompany addCompany = nullptr);
 
-    void companiesLoaded(const QList<qlonglong> companyIds);
+    void companiesLoaded(const QList<domain_id> companyIds);
 };
 
 #endif // ACCOUNTTABLEMODEL_H
