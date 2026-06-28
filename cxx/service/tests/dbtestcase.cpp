@@ -42,7 +42,7 @@ Daos::Daos(const QString &dbType)
 {};
 
 namespace factory {
-    Transaction* transaction(domain_id accountId, optional_id payeeId, QVariant securityId, const QDate &date) {
+    Transaction* transaction(domain_id accountId, optional_id payeeId, optional_id securityId, const QDate &date) {
         Transaction* tx = new Transaction{accountId};
         tx->payeeId = payeeId;
         tx->securityId = securityId;
@@ -50,7 +50,7 @@ namespace factory {
         return tx;
     }
 
-    PendingTransaction* pendingTransaction(domain_id accountId, QList<const char*> amounts, optional_id payeeId, QVariant securityId, const QDate &date) {
+    PendingTransaction* pendingTransaction(domain_id accountId, QList<const char*> amounts, optional_id payeeId, optional_id securityId, const QDate &date) {
         PendingTransaction *tx = new PendingTransaction;
         tx->accountId = accountId;
         tx->payeeId = payeeId;
@@ -301,7 +301,7 @@ DbTestCase::TxDetails DbTestCase::saveTransaction(const QString &driver, const T
     for (auto &amount : detailAmounts) {
         auto i = details.size();
         TransactionDetail *detail = factory::detail(amount);
-        if (tx->securityId.isValid() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
+        if (tx->securityId.has_value() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
         details.append(detail);
     }
     saveTransaction(driver, tx, details);

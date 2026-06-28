@@ -106,7 +106,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
         new FieldColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore, optional_id>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
         new FieldColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
-        new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
+        new RelationColumnAdapter<Transaction, Security, SecurityStore, optional_id>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
         new FieldColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
         new BalanceColumnAdapter(tr(BALANCE_TITLE), this),

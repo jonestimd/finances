@@ -14,7 +14,7 @@ public:
     domain_id accountId;
     QVariant date;
     optional_id payeeId;
-    QVariant securityId;
+    optional_id securityId;
     QVariant referenceNumber;
     QVariant memo;
     QVariant cleared{false};
