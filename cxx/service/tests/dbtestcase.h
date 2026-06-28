@@ -49,8 +49,8 @@ struct Daos {
 };
 
 namespace factory {
-    Transaction *transaction(domain_id accountId, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
-    PendingTransaction *pendingTransaction(domain_id accountId, QList<const char*> amounts, QVariant payeeId = QVariant{}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+Transaction *transaction(domain_id accountId, optional_id payeeId = {}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
+    PendingTransaction *pendingTransaction(domain_id accountId, QList<const char*> amounts, optional_id payeeId = {}, QVariant securityId = QVariant{}, const QDate &date = QDate::currentDate());
     TransactionDetail *detail(const char *amount = "1.00", const QVariant& categoryId = QVariant{}, const QVariant& groupId = QVariant{});
 }
 

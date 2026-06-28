@@ -4,6 +4,9 @@
 #include <QSqlRecord>
 #include <QVariant>
 
+typedef qlonglong domain_id;
+typedef std::optional<domain_id> optional_id;
+
 namespace domain {
     template<class T>
     QList<T*> copy(const QList<const T*> entities) {
@@ -11,10 +14,11 @@ namespace domain {
         for (const T* entity : entities) copies.append(new T(*entity));
         return copies;
     }
-}
 
-typedef qlonglong domain_id;
-typedef std::optional<domain_id> optional_id;
+    QVariant toQVaraint(const optional_id& id);
+    optional_id toOptionalId(const QVariant& id);
+    QString toString(const optional_id& id);
+}
 
 class BaseDomain {
 public:

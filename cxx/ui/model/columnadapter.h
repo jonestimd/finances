@@ -3,6 +3,7 @@
 
 #include "../finances.h"
 #include "../validation/validatorfactory.h"
+#include "service/model/basedomain.h"
 #include <QVariant>
 
 class AbstractColumnAdapter {
@@ -79,11 +80,14 @@ public:
 
     virtual QVariant rowValue(const T* row) const override {
         if constexpr (std::is_same_v<Value, QVariant>) return row->*field;
+        if constexpr (std::is_same_v<Value, optional_id>) return domain::toQVaraint(row->*field);
     }
 
     virtual void setValue(T *row, QVariant value) const  override {
         if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
-        row->*field = value;
+        if constexpr (std::is_same_v<Value, QVariant>) row->*field = value;
+        else if constexpr (std::is_same_v<Value, optional_id>) row->*field = domain::toOptionalId(value);
+        else static_assert(false, "unsupported value type for FieldColumnAdapter");
     }
 };
 

@@ -104,7 +104,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
     : PodItemModel{dataStore->transactionStore, {
         new TxDateColumnAdapter{tr(DATE_TITLE)},
         new FieldColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
-        new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
+        new RelationColumnAdapter<Transaction, Payee, PayeeStore, optional_id>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
         new FieldColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),

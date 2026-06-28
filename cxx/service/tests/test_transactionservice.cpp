@@ -154,7 +154,7 @@ private slots:
         auto [tx, details] = saveTransaction(QList{"1.00", "2.00"});
         auto newDetail = factory::detail("3.45");
         newDetail->transactionId = tx->id.value();
-        tx->payeeId = QVariant{};
+        tx->payeeId = {};
         tx->memo = "tx comment";
         auto detail0 = details.at(0);
         detail0->amount = DECIMAL_VARIANT("3.21");
@@ -172,7 +172,7 @@ private slots:
         QCOMPARE(result.transactions.at(0)->detailIds.size(), 3);
         QCOMPARE(result.transactions.at(0)->detailIds, detailIds);
         auto updatedTx = loadTransaction(tx->id.value());
-        QVERIFY(updatedTx->payeeId.isNull());
+        QVERIFY(!updatedTx->payeeId.has_value());
         QCOMPARE(updatedTx->memo, tx->memo);
         auto updatedDetail = loadDetail(detail0->id.value());
         QCOMPARE(updatedDetail->amount, detail0->amount);

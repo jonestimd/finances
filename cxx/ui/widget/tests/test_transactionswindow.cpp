@@ -158,7 +158,7 @@ private:
         }
     }
 
-    void verifyTransaction(const Transaction* tx, QVariant refNumber, QVariant payeeId, QVariant description) {
+    void verifyTransaction(const Transaction* tx, QVariant refNumber, const optional_id& payeeId, QVariant description) {
         QCOMPARE(tx->referenceNumber, refNumber);
         QCOMPARE(tx->payeeId, payeeId);
         QCOMPARE(tx->memo, description);
@@ -170,7 +170,7 @@ private:
 
     void verifyPendingTransaction(const TransactionsWindow *window) {
         auto pendingTx = window->model()->unsavedAdds().at(0);
-        verifyTransaction(pendingTx, QVariant{}, QVariant{}, QVariant{});
+        verifyTransaction(pendingTx, QVariant{}, {}, QVariant{});
         QCOMPARE(pendingTx->details.size(), 1);
         verifyDetail(pendingTx->details.at(0), QVariant{}, {}, QVariant{});
     }
@@ -204,7 +204,7 @@ private:
     }
 
     template<class Holder, class Store>
-    void doMerge(const QVariant destinationId, const Store* store) {
+    void doMerge(const domain_id destinationId, const Store* store) {
         Holder refHolder(new Holder::windowType(dataStore));
         refHolder.showWindow();
         refHolder.view->setCurrentIndex(refHolder.index(1, 0));
@@ -214,7 +214,7 @@ private:
         QTimer::singleShot(0, refHolder.window, [&]() {
             auto dialog = windowtest::findWindow<EntitySelectionDialog>();
             if (dialog) {
-                dialog->setSelectedEntity(dataStore->categoryStore->value(categoryId));
+                dialog->setSelectedEntity(store->value(destinationId));
                 dialog->accept();
             } else QFAIL("no selection dialog");
         });
@@ -406,7 +406,7 @@ private slots:
 
     void renameSecurity_updatesTransactions() {
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
-        dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, QVariant{}, securityId.value()), {"123.45"});
+        dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, {}, securityId.value()), {"123.45"});
         SecurityWindowHolder securityHolder(new SecuritiesWindow(dataStore));
         testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }

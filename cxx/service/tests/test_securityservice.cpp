@@ -56,10 +56,10 @@ private slots:
         QFETCH_GLOBAL(domain_id, accountId2);
         QFETCH_GLOBAL(domain_id, securityId);
         QFETCH_GLOBAL(domain_id, securityId2);
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-1.23", "-2.00"}, {"3"});
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-10.45"}, {"6"});
-        dbTestCase.saveTransaction(factory::transaction(accountId2, QVariant{}, securityId2), {"-2.00"}, {"5"});
-        dbTestCase.saveTransaction(factory::transaction(accountId2, QVariant{}, securityId2), {"20.00"}, {"-1"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-1.23", "-2.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-10.45"}, {"6"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"-2.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"20.00"}, {"-1"});
 
         auto result = service->getAll();
 
@@ -75,8 +75,8 @@ private slots:
         QFETCH_GLOBAL(domain_id, securityId);
         QDate tx1Date{2010, 2, 15};
         QDate tx2Date = tx1Date.addDays(1);
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId, tx1Date), {"-1.00"}, {"3"});
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId, tx2Date), {"-1.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId, tx1Date), {"-1.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId, tx2Date), {"-1.00"}, {"5"});
         addSplit(driver, securityId, tx1Date, 1, 2);
 
         auto result = service->getAll();

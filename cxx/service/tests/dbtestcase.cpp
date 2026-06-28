@@ -42,7 +42,7 @@ Daos::Daos(const QString &dbType)
 {};
 
 namespace factory {
-    Transaction* transaction(domain_id accountId, QVariant payeeId, QVariant securityId, const QDate &date) {
+    Transaction* transaction(domain_id accountId, optional_id payeeId, QVariant securityId, const QDate &date) {
         Transaction* tx = new Transaction{accountId};
         tx->payeeId = payeeId;
         tx->securityId = securityId;
@@ -50,7 +50,7 @@ namespace factory {
         return tx;
     }
 
-    PendingTransaction* pendingTransaction(domain_id accountId, QList<const char*> amounts, QVariant payeeId, QVariant securityId, const QDate &date) {
+    PendingTransaction* pendingTransaction(domain_id accountId, QList<const char*> amounts, optional_id payeeId, QVariant securityId, const QDate &date) {
         PendingTransaction *tx = new PendingTransaction;
         tx->accountId = accountId;
         tx->payeeId = payeeId;

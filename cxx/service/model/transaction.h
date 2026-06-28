@@ -13,7 +13,7 @@ class Transaction : public BaseDomain {
 public:
     domain_id accountId;
     QVariant date;
-    QVariant payeeId;
+    optional_id payeeId;
     QVariant securityId;
     QVariant referenceNumber;
     QVariant memo;

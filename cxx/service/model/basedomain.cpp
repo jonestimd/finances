@@ -3,6 +3,20 @@
 #include <QDate>
 #include <QSqlField>
 
+namespace domain {
+    QVariant toQVaraint(const optional_id& id) {
+        return id.has_value() ? QVariant{id.value()} : QVariant{};
+    }
+
+    optional_id toOptionalId(const QVariant& id) {
+        return id.isValid() ? optional_id{id.toLongLong()} : optional_id{};
+    }
+
+    QString toString(const optional_id& id) {
+        return id.has_value() ? QString::number(id.value()) : "";
+    }
+}
+
 BaseDomain::BaseDomain() {}
 
 BaseDomain::BaseDomain(const QSqlRecord &record)
@@ -46,7 +60,7 @@ TransactionTypeId::TransactionTypeId(bool transfer, const optional_id& id)
 
 TransactionTypeId::TransactionTypeId(bool transfer, const QVariant& id)
     : transfer{transfer}
-    , id{id.isValid() ? optional_id{id.toLongLong()} : optional_id{}}
+    , id{domain::toOptionalId(id)}
 {}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}

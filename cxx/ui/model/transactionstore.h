@@ -23,7 +23,7 @@ public:
     bool load(EntityView *view, domain_id accountId, bool reload = false);
 
     void update(QWidget *source, TransactionTableModel *model, const QString message, int txRow = -1);
-    void replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId);
+    void replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId);
 
     const QList<domain_id> transactionIds(domain_id accountId) const;
     

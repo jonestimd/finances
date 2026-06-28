@@ -50,10 +50,10 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
     });
 }
 
-void TransactionStore::replacePayee(const QVariant oldPayeeId, const QVariant newPayeeId) {
+void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId) {
     QList<const Transaction*> updates;
     forEachEntry([&](domain_id id, const Transaction* tx) {
-        if (tx->payeeId == oldPayeeId) {
+        if (tx->payeeId.has_value() && tx->payeeId.value() == oldPayeeId) {
             auto updatedTx = new Transaction(*tx);
             updatedTx->payeeId = newPayeeId;
             updatedTx->version = tx->version.toLongLong() + 1;

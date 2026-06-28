@@ -11,7 +11,7 @@ Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
     , accountId{record.field("account_id").value().toLongLong()}
     , date{record.field("date").value()}
-    , payeeId{sql::getValue(record, "payee_id")}
+    , payeeId{sql::getInt(record, "payee_id")}
     , securityId{sql::getValue(record, "security_id")}
     , referenceNumber{sql::getValue(record, "reference_number")}
     , memo{sql::getValue(record, "memo")}
@@ -33,7 +33,7 @@ QString Transaction::toString() const {
     return QString("accountId{") % QString::number(accountId)
            % "},date{" % date.toString()
            % "},referenceNumber{" % referenceNumber.toString()
-           % "},payeeId{" % payeeId.toString()
+           % "},payeeId{" % domain::toString(payeeId)
            % "},securityId{" % securityId.toString()
            % "},memo{" % memo.toString()
            % "},cleared{" % cleared.toString() % "}";
@@ -55,7 +55,7 @@ PendingTransaction::~PendingTransaction() {
 
 bool PendingTransaction::isEmpty() const {
     for (auto detail : std::as_const(details)) if (!detail->isEmpty()) return false;
-    return payeeId.isNull() && securityId.isNull() && referenceNumber.isNull() && memo.isNull();
+    return !payeeId.has_value() && securityId.isNull() && referenceNumber.isNull() && memo.isNull();
 }
 
 TransactionUpdate::TransactionUpdate(

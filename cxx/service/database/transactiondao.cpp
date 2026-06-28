@@ -139,7 +139,7 @@ void TransactionDao::setAccountId(const QSqlDatabase &db, domain_id transactionI
     if (query.numRowsAffected() != 1) throw staleDataMessage;
 }
 
-void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, const QVariant newPayeeId, const QString &user) {
+void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, const optional_id newPayeeId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setPayeeQuery);
     sql::bindValue(query, ":user", user);
