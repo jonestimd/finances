@@ -6,7 +6,7 @@
 #define GROUP_NAME_COLUMN 0
 
 GroupTableModel::GroupTableModel(GroupStore *groupStore)
-    : PodTableModel<TransactionGroup, GroupService>{
+    : PodTableModel<TransactionGroup, GroupStore>{
         groupStore,
         QList<ColumnAdapter<TransactionGroup>*>{
             new FieldColumnAdapter<TransactionGroup>(tr("Name"), &TransactionGroup::name, true, new UniqueValidatorFactory(GROUP_NAME_COLUMN)),

@@ -6,10 +6,10 @@
 #include "service/model/transaction.h"
 #include "ui/model/datastore.h"
 
-class TransactionTableModel : public PodItemModel<Transaction, PendingTransaction> {
+class TransactionTableModel : public PodItemModel<Transaction, TransactionStore, PendingTransaction> {
     Q_OBJECT
     TransactionTypeColumnAdapter *const transactionTypeAdapter;
-    const TransactionStore *const store;
+    // const TransactionStore *const store;
 
     QHash<int, QList<TransactionDetail*>> newDetails{};
 
@@ -34,8 +34,6 @@ public:
     ~TransactionTableModel();
 
 protected:
-    const QList<domain_id> transactionIds() const;
-
     QVariant value(const QModelIndex &index, int role, QVariant current) const override;
     void setValue(const QModelIndex &index, const QVariant &value) override;
     void setDetailValue(TransactionDetail* detail, int columnIndex, const QVariant &value);
@@ -45,14 +43,19 @@ protected:
     PendingTransaction *pendingTransaction(const QModelIndex &index) const;
     const QList<TransactionDetail*> pendingDetails(const QModelIndex &parent) const;
 
+    virtual qsizetype insertIndex(domain_id id) override;
+    virtual void updateIndexes(const QModelIndex& changeRow, int delta) override;
+
     void updateBalances(int fromRow, const QDecNumber &delta);
     Q_SLOT void updateBalances();
     void updateClearedBalance(const QDecNumber &delta);
 
     virtual PendingTransaction *newRow() override;
 
+    virtual void rootIdsChanged() override;
+
 public:
-    void setRows(const QList<domain_id> transactionIds);
+    void setRows(const QList<domain_id> transactionIds) override;
     
     QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;
@@ -63,7 +66,6 @@ public:
 
     virtual int rowType(const QModelIndex &index) const override;
 
-    const Transaction *getRow(const QModelIndex &index) const override;
     const TransactionDetail *getDetail(const QModelIndex &index) const;
 
     AbstractColumnAdapter *adapter(const QModelIndex &index) const override;
@@ -80,6 +82,8 @@ public:
     bool hasUnsavedChanges() const override;
     void clearChanges() override;
     bool enableDelete(const QModelIndex &index) const override;
+
+    void valuesAdded(const QList<domain_id>& ids) override;
 
     /**
      *  @brief transactionHasChanges Checks if the transaction associated with `index` has unsaved changes.
@@ -103,10 +107,10 @@ private slots:
     void securitiesUpdated();
     void accountsUpdated();
     void groupsUpdated();
-    void transactionsSaved(const QList<const PendingTransaction*>& transactions);
-    void transactionAdded(domain_id accountId, int index);
-    void transactionRemoved(domain_id accountId, int index);
-    void transactionUpdated(domain_id accountId, int index, int oldDetailCount);
+    void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
+    /** @brief Handle transfer transactions added in other accounts */
+    void transactionsUpdated(const QList<domain_id> txIds);
+    void detailsUpdated(const QList<domain_id> detailIds);
 
 private:
     void queueAddTransaction();

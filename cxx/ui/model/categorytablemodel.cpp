@@ -24,7 +24,8 @@ protected:
 };
 
 CategoryTableModel::CategoryTableModel(DataStore *ds)
-    : PodItemModel<Category> {
+    : PodItemModel<Category, CategoryStore> {
+        ds->categoryStore,
         QList<ColumnAdapter<Category>*>{
             new FieldColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
             new FieldColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
@@ -34,7 +35,6 @@ CategoryTableModel::CategoryTableModel(DataStore *ds)
             new FieldColumnAdapter<Category>(tr("Security"), &Category::security),
         },
     }
-    , store{ds->categoryStore}
 {}
 
 int CategoryTableModel::childCount(const QModelIndex &parent) const {
@@ -62,7 +62,7 @@ int CategoryTableModel::rowCount(const QModelIndex &parent) const {
 
 bool CategoryTableModel::movable(const QModelIndex &index) {
     auto row = getRow(index);
-    return row->id.has_value() && store->movable(row->id.value());
+    return row->id.has_value() && (row->parentId.has_value() || rootIds.size() > 1);
 }
 
 QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &parent) const {

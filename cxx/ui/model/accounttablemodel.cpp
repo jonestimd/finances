@@ -46,7 +46,7 @@ namespace accounttablemodel {
 using namespace accounttablemodel;
 
 AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
-    : PodTableModel<Account, AccountService>{
+    : PodTableModel<Account, AccountStore>{
         store,
         QList<ColumnAdapter<Account>*>{
             new FieldColumnAdapter<Account>(tr("Closed"), &Account::closed),
@@ -66,7 +66,7 @@ void AccountTableModel::companiesLoaded(const QList<domain_id> companyIds) {
         for (qsizetype i = 0; i < children.length(); i++) {
             auto account = children.at(i);
             if (!companyIds.contains(account->companyId.toLongLong())) {
-                setData(index(rowIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
+                setData(index(rootIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }
         }
     }

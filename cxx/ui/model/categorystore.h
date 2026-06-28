@@ -9,7 +9,6 @@ class CategoryStore : public EntityStore<Category, CategoryService> {
     Q_OBJECT
 
     DataStore* const dataStore;
-    QSet<domain_id> rootIds_;
 
 public:
     CategoryStore(CategoryService *service, DataStore* dataStore);
@@ -17,7 +16,6 @@ public:
     const QSet<domain_id> rootIds() const;
 
     QString displayName(domain_id categoryId) const;
-    bool movable(domain_id categoryId) const;
     /**
      * @return `true` if `parentId` is an ancestor of `categoryId`.
      */
@@ -31,10 +29,6 @@ public:
 
 public slots:
     void detailsUpdated(const QList<DetailChange> changes);
-
-protected:
-    virtual void update(const QList<const Category *> &updates, const QList<const Category *> deletes = QList<const Category*>{}) override;
-    virtual void setValues(QHash<domain_id, const Category*> values) override;
 };
 
 #endif // CATEGORYSTORE_H

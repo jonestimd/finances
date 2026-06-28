@@ -7,7 +7,7 @@
 #include "service/model/account.h"
 #include <QAbstractTableModel>
 
-class AccountTableModel : public PodTableModel<Account, AccountService> {
+class AccountTableModel : public PodTableModel<Account, AccountStore> {
     Q_OBJECT
     using AddCompany = ComboBoxModel::CreateValue;
 

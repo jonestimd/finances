@@ -1,3 +1,4 @@
+#include <QMenu>
 #include <QSignalSpy>
 #include <QTest>
 #include <QTimer>
@@ -244,6 +245,18 @@ private slots:
         QVERIFY(accountUpdatedSpy->isValid());
     }
 
+    void switchAccounts() {
+        TxWindowHolder holder(openWindow(accountId));
+        QCOMPARE(holder.window->focusWidget(), holder.view);
+        QSignalSpy loadSpy(dataStore->transactionStore, SIGNAL(accountLoaded(domain_id)));
+        QVERIFY(loadSpy.isValid());
+
+        holder.window->showAccount(securityAccountId);
+
+        QVERIFY(loadSpy.wait());
+        QCOMPARE(loadSpy.last().first(), securityAccountId);
+    }
+
     void addTransaction() {
         TxWindowHolder holder(openWindow(accountId));
         QCOMPARE(holder.window->focusWidget(), holder.view);
@@ -258,6 +271,7 @@ private slots:
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
+        QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId).size(), INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->model()->rowCount(), INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder.window->model()->getRow(holder.index(INITIAL_TRANSACTION_COUNT, 0));
@@ -314,6 +328,7 @@ private slots:
         QVERIFY(accountUpdatedSpy->wait());
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
+        QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
@@ -340,6 +355,7 @@ private slots:
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
         QTest::qWait(100);
 
+        QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
@@ -356,7 +372,8 @@ private slots:
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
 
-        auto model = holder.window->model();
+        auto model = holder.model();
+        QVERIFY(!model->hasUnsavedChanges());
         QVERIFY(model->isPendingAdd(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId).count(), INITIAL_TRANSACTION_COUNT-1);
@@ -369,14 +386,14 @@ private slots:
         auto altPayeeId = dbTestCase.addPayee(driver, ALT_PAYEE_NAME);
         auto [tx, details] = dbTestCase.saveTransaction(driver, factory::transaction(accountId, altPayeeId), {"65.78"});
         TxWindowHolder holder(openWindow(accountId));
-        QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(transactionUpdated(domain_id,int,int)));
+        QSignalSpy updateSpy(dataStore->transactionStore, SIGNAL(valuesUpdated(QList<domain_id>)));
         QVERIFY(updateSpy.isValid());
 
         doMerge<PayeeWindowHolder, PayeeStore>(payeeId, dataStore->payeeStore);
 
         if (updateSpy.isEmpty()) QVERIFY(updateSpy.wait());
         QCOMPARE(updateSpy.size(), 1);
-        QCOMPARE(updateSpy.at(0).at(0), accountId);
+        QCOMPARE(updateSpy.at(0).at(0).value<QList<domain_id>>(), QList<domain_id>{tx->id.value()});
         QVERIFY(!dataStore->payeeStore->contains(altPayeeId));
         QCOMPARE(dataStore->transactionStore->value(tx->id.value())->payeeId, payeeId);
         QCOMPARE(dataStore->transactionStore->value(tx->id.value())->version, tx->version.toLongLong()+1);

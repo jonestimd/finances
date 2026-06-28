@@ -2,10 +2,10 @@
 #define GROUPTABLEMODEL_H
 
 #include "podtablemodel.h"
-#include "service/groupservice.h"
-#include "ui/model/datastore.h"
+#include "service/model/transactiongroup.h"
+#include "ui/model/groupstore.h"
 
-class GroupTableModel : public PodTableModel<TransactionGroup, GroupService> {
+class GroupTableModel : public PodTableModel<TransactionGroup, GroupStore> {
 public:
     GroupTableModel(GroupStore *groupStore);
 };

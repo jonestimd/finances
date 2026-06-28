@@ -6,7 +6,7 @@
 #define PAYEE_NAME_COLUMN 0
 
 PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore)
-    : PodTableModel<Payee, PayeeService> {
+    : PodTableModel<Payee, PayeeStore> {
         payeeStore,
         QList<ColumnAdapter<Payee>*>{
             new FieldColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),

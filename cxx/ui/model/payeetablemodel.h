@@ -5,7 +5,7 @@
 #include "payeestore.h"
 #include "podtablemodel.h"
 
-class PayeeTableModel : public PodTableModel<Payee, PayeeService> {
+class PayeeTableModel : public PodTableModel<Payee, PayeeStore> {
 public:
     explicit PayeeTableModel(PayeeStore *payeeStore);
 };

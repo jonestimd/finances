@@ -85,8 +85,48 @@ void AdapterItemModel::undoChange(const QModelIndex &index) {
     }
 }
 
+void AdapterItemModel::valuesAdded(const QList<domain_id> &ids) {
+    for (auto id : ids) addRootId(id);
+}
+
+void AdapterItemModel::valuesToBeRemoved(const QList<domain_id> &ids) {
+    for (auto id : ids) removeRootId(id);
+}
+
 bool AdapterItemModel::isPendingDelete(const QModelIndex &index) const {
     return pendingDeletes.contains(index.siblingAtColumn(0));
+}
+
+void AdapterItemModel::addRootId(domain_id id) {
+    auto rowIndex = insertIndex(id);
+    beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
+    rootIds.insert(rowIndex, id);
+    updateIndexes(index(rowIndex, 0), 1);
+    endInsertRows();
+}
+
+void AdapterItemModel::removeRootId(domain_id id) {
+    auto rowIndex = rootIds.indexOf(id);
+    if (rowIndex >= 0) {
+        beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
+        rootIds.remove(rowIndex);
+        pendingDeletes.removeIf([=](const QModelIndex index) {
+            auto row = index.parent().isValid() ? index.parent().row() : index.row();
+            return row == rowIndex;
+        });
+        changes.removeIf([=](QHash<const QModelIndex, QVariant>::iterator i) -> bool {
+            for (auto n = i.key(); n.isValid(); n = n.parent()) {
+                if (!n.parent().isValid() && n.row() == rowIndex) return true;
+            }
+            return false;
+        });
+        updateIndexes(index(rowIndex, 0), -1);
+        endRemoveRows();
+    }
+}
+
+qsizetype AdapterItemModel::insertIndex(domain_id id) {
+    return rootIds.size();
 }
 
 void AdapterItemModel::rowsChanged(int from, int to, const QModelIndex &parent) {
@@ -97,22 +137,10 @@ void AdapterItemModel::rowChanged(const QModelIndex &index) {
     rowsChanged(index.row(), index.row(), index.parent());
 }
 
-void AdapterItemModel::adjustErrorIndexes(int rowIndex, const QModelIndex &parent, int delta) {
+void AdapterItemModel::adjustErrorIndexes(const QModelIndex &changeRow, int delta) {
     QHash<const QModelIndex, QString> updatedErrors;
-    for (auto [cellIndex, value] : errors.asKeyValueRange()) {
-        QList<QModelIndex> parents{cellIndex};
-        for (auto i = cellIndex.parent(); i.isValid() && i != parent; i = i.parent()) {
-            parents.append(i);
-        }
-        auto i = parents.takeLast();
-        if (i.parent() == parent) {
-            if (i.row() >= rowIndex) i = i.siblingAtRow(i.row() + delta);
-            while (!parents.isEmpty()) {
-                auto child = parents.takeLast();
-                i = child.model()->index(child.row(), child.column(), i);
-            }
-            updatedErrors.insert(i, value);
-        } else updatedErrors.insert(cellIndex, value);
+    for (auto [iIndex, message] : errors.asKeyValueRange()) {
+        updatedErrors.insert(adjustIndex(iIndex, changeRow, delta), message);
     }
     errors = updatedErrors;
 }
@@ -171,7 +199,41 @@ void AdapterItemModel::revalidateRow(const QModelIndex &index) {
     }
 }
 
-const QList<int> AdapterItemModel::rowIndexes(const QModelIndex &index) const {
+const QModelIndex AdapterItemModel::adjustIndex(const QModelIndex index, const QModelIndex& changeRow, int delta) {
+    QList<QModelIndex> nodes;
+    auto parent = changeRow.parent();
+    for (auto i = index; i.isValid() && i != parent; i = i.parent()) nodes.append(i);
+    auto newIndex = nodes.takeLast();
+    if (newIndex.parent() != parent || newIndex.row() < changeRow.row()) return index;
+    newIndex = newIndex.siblingAtRow(newIndex.row() + delta);
+    while (!nodes.isEmpty()) {
+        auto node = nodes.takeLast();
+        newIndex = newIndex.model()->index(node.row(), node.column(), newIndex);
+    }
+    return newIndex;
+}
+
+void AdapterItemModel::updateDeletes(QList<QModelIndex>& pendingDeletes, const QModelIndex& changeRow, int delta) {
+    for (auto i = pendingDeletes.begin(); i != pendingDeletes.end(); i++) {
+        *i = adjustIndex(*i, changeRow, delta);
+    }
+}
+
+void AdapterItemModel::updateIndexes(const QModelIndex& changeRow, int delta) {
+    updateDeletes(pendingDeletes, changeRow, delta);
+    changes = updateChanges(changes, changeRow, delta);
+    adjustErrorIndexes(changeRow, delta);
+}
+
+QHash<const QModelIndex, QVariant> AdapterItemModel::updateChanges(const QHash<const QModelIndex, QVariant> &changes, const QModelIndex& changeRow, int delta) {
+    QHash<const QModelIndex, QVariant> updatedChanges;
+    for (auto [index, value] : changes.asKeyValueRange()) {
+        updatedChanges.insert(adjustIndex(index, changeRow, delta), value);
+    }
+    return updatedChanges;
+}
+
+const QList<int> AdapterItemModel::rowIndexes(const QModelIndex &index) {
     QList<int> indexes{index.row()};
     auto parent = index.parent();
     while (parent.isValid()) {

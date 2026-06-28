@@ -23,6 +23,9 @@ public:
 
 Q_SIGNALS:
     void valuesLoaded(QList<domain_id> ids);
+    void valuesAdded(QList<domain_id> ids);
+    void valuesUpdated(QList<domain_id> ids);
+    void valuesToBeRemoved(QList<domain_id> ids);
 };
 
 /**
@@ -123,13 +126,23 @@ protected:
      * @param deletes Entities that have been removed from database.
      */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
+        QList<domain_id> updateIds, addIds;
         for (auto updated : updates) {
             auto id = updated->id.value();
             auto oldValue = byId.value(id);
             byId[id] = updated;
-            if (oldValue) delete oldValue;
+            if (oldValue) {
+                updateIds.append(id);
+                delete oldValue;
+            } else addIds.append(id);
         }
-        for (auto entity : deletes) delete byId.take(entity->id.value());
+        if (!updateIds.isEmpty()) emit valuesUpdated(updateIds);
+        if (!addIds.isEmpty()) emit valuesAdded(addIds);
+        if (!deletes.isEmpty()) {
+            auto ids = getEntityIds(deletes);
+            emit valuesToBeRemoved(ids);
+            for (auto entity : deletes) delete byId.take(entity->id.value());
+        }
     }
 
     void removeValues(const QList<domain_id> &ids) {

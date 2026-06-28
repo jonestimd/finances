@@ -1,24 +1,20 @@
 #ifndef CATEGORY_TABLE_MODEL_H
 #define CATEGORY_TABLE_MODEL_H
 
-#include "categorystore.h"
 #include "datastore.h"
 #include "poditemmodel.h"
 #include "service/model/category.h"
 #include <QAbstractTableModel>
 
-class CategoryTableModel : public PodItemModel<Category> {
+class CategoryTableModel : public PodItemModel<Category, CategoryStore> {
     Q_OBJECT
-    const CategoryStore *store;
-    QList<domain_id> rootIds;
-
 protected:
     int childCount(const QModelIndex &parent) const override;
 
 public:
     explicit CategoryTableModel(DataStore *datastore);
 
-    void setRows(QList<domain_id> categoryIds);
+    void setRows(QList<domain_id> categoryIds) override;
     const Category* getRow(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     bool movable(const QModelIndex &index);

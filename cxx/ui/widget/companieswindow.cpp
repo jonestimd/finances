@@ -28,6 +28,10 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     layout.setContentsMargins(0, 0, 0, 0);
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
+
+    if (store->load(&entityView, tr(LOADING_COMPANIES))) {
+        model.setRows(store->ids());
+    }
 }
 
 void CompaniesWindow::loadData() {
