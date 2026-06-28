@@ -106,7 +106,7 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
         if (!changes.detailUpdates.isEmpty()) {
             auto relatedDetailIds = detailDao.getRelatedDetailIds(conn.db, changes.detailUpdates);
             for (auto detail : changes.detailUpdates) {
-                if (!detail->transferAccountId.has_value()) detail->relatedDetailId = QVariant{};
+                if (!detail->transferAccountId.has_value()) detail->relatedDetailId.reset();
             }
             session.add(detailDao.update(conn.db, changes.detailUpdates, user)); // TODO delete related details on error
             for (auto detail : changes.detailUpdates) {

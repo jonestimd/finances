@@ -11,7 +11,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     : BaseDomain{record}
     , transactionId{record.field("tx_id").value().toLongLong()}
     , categoryId{sql::getInt(record, "tx_category_id")}
-    , relatedDetailId{sql::getValue(record, "related_detail_id")}
+    , relatedDetailId{sql::getInt(record, "related_detail_id")}
     , groupId{sql::getInt(record, "tx_group_id")}
     , exchangeAssetId{sql::getInt(record, "exchange_asset_id")}
     , amount{decimalValue(record, "amount")}
@@ -22,7 +22,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
 
 bool TransactionDetail::isEmpty() const {
     return !categoryId.has_value()
-           && relatedDetailId.isNull()
+           && !relatedDetailId.has_value()
            && !transferAccountId.has_value()
            && !groupId.has_value()
            && !exchangeAssetId.has_value()

@@ -192,7 +192,7 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.details.size(), 2);
-        auto resultDetail = find(details.at(0)->relatedDetailId.toLongLong(), result.details);
+        auto resultDetail = find(details.at(0)->relatedDetailId.value(), result.details);
         QCOMPARE(resultDetail->amount.toString(), "-3.45");
     }
 
@@ -287,7 +287,7 @@ private slots:
         QVERIFY(result.deletedDetailIds.contains(relatedDetails.at(0)->id));
         QCOMPARE(loadTransaction(relatedTx->id.value()), nullptr);
         QCOMPARE(loadDetail(relatedDetails.at(0)->id.value()), nullptr);
-        QCOMPARE(result.details.at(0)->relatedDetailId, QVariant{});
+        QCOMPARE(result.details.at(0)->relatedDetailId, {});
         QVERIFY(loadDetail(details.at(0)->id.value()) != nullptr);
     }
 

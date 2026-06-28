@@ -7,7 +7,7 @@ class TransactionDetail : public BaseDomain {
 public:
     domain_id transactionId;
     optional_id categoryId;
-    QVariant relatedDetailId;
+    optional_id relatedDetailId;
     optional_id groupId;
     optional_id exchangeAssetId;
     QVariant amount;

@@ -180,9 +180,9 @@ void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *cat
 
 QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, const QList<TransactionDetail *> details, const QString &user) {
     auto updates = EntityDao<TransactionDetail>::update(db, details, user);
-    QVariantList relatedIds{};
+    QList<domain_id> relatedIds{};
     for (auto detail : details) {
-        if (!detail->relatedDetailId.isNull()) relatedIds.append(detail->relatedDetailId);
+        if (detail->relatedDetailId.has_value()) relatedIds.append(detail->relatedDetailId.value());
     }
     if (!relatedIds.isEmpty()) {
         QSqlQuery query(db);
@@ -223,7 +223,7 @@ QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
 void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const TransactionDetail*> details) {
     QSqlQuery query(db);
     auto ids = getEntityIds(details);
-    for (auto detail : details) if (!detail->relatedDetailId.isNull()) ids.append(detail->relatedDetailId.toLongLong());
+    for (auto detail : details) if (detail->relatedDetailId.has_value()) ids.append(detail->relatedDetailId.value());
     removeByIds(db, ids);
 }
 
