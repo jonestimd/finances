@@ -14,7 +14,7 @@ public:
 
     void load(domain_id accountId);
 
-    void replaceCategory(const QVariant oldCategoryId, const QVariant newCategoryId);
+    void replaceCategory(const optional_id oldCategoryId, const optional_id newCategoryId);
 
     void update(const TransactionsData& updates, const QList<const TransactionDetail*>& deletes, const QList<const Transaction*>& txDeletes);
 

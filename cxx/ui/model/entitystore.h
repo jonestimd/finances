@@ -165,6 +165,7 @@ protected:
         this->loaded = true;
     }
 
+    /** @deprecated */
     template<class Entity>
     static inline optional_id getRelatedId(const Entity* entity, QVariant Entity::* idField) {
         auto id = entity->*idField;
@@ -203,7 +204,8 @@ protected:
         return !updateIds.isEmpty();
     }
 
-    bool updateDetailCounts(const QList<DetailChange> changes, QVariant TransactionDetail::* detailField) {
+    template<class IdType>
+    bool updateDetailCounts(const QList<DetailChange> changes, IdType TransactionDetail::* detailField) {
         QSet<domain_id> updateIds;
         for (auto change : changes) {
             auto oldDetail = change.oldDetail;

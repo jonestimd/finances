@@ -52,14 +52,14 @@ void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant val
         auto typeId = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
         if (typeId->transfer) {
             row->transferAccountId = typeId->id.value();
-            row->categoryId = QVariant{};
+            row->categoryId = {};
         } else {
             row->categoryId = typeId->id.value();
             row->transferAccountId = {};
         }
     } else {
-        row->categoryId = QVariant{};
-        row->transferAccountId = {};;
+        row->categoryId = {};
+        row->transferAccountId = {};
     }
 }
 

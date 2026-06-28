@@ -35,8 +35,8 @@ public:
      *  @returns IDs of deleted related transaction details.
      */
     QList<domain_id> removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id> &relatedTransactionIds);
-
-    void replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user);
+    
+    void replaceCategory(QSqlDatabase &db, const Category *category, const domain_id newCategoryId, const QString &user);
 
     /**
      * @brief update Saves `details` to the database and updates related details (transfer amounts).

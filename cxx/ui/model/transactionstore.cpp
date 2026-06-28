@@ -77,9 +77,9 @@ QDecNumber TransactionStore::amount(domain_id transactionId) const {
     auto tx = value(transactionId);
     for (const QVariant &detailId : tx->detailIds) {
         auto detail = detailStore.value(detailId.toLongLong());
-        if (!detail->categoryId.isNull()) {
-            auto category = categoryStore->value(detail->categoryId.toLongLong());
-            if (!category) qCDebug(logger, "amount: category not loaded: %lld", detail->categoryId.toLongLong());
+        if (detail->categoryId.has_value()) {
+            auto category = categoryStore->value(detail->categoryId.value());
+            if (!category) qCDebug(logger, "amount: category not loaded: %lld", detail->categoryId.value());
             else if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
         }
         total += detail->amount.value<QDecNumber>();

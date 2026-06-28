@@ -164,7 +164,7 @@ private:
         QCOMPARE(tx->memo, description);
     }
 
-    void verifyDetail(domain_id detailId, QVariant categoryId, optional_id transferAccountId, QVariant amount) {
+    void verifyDetail(domain_id detailId, optional_id categoryId, optional_id transferAccountId, QVariant amount) {
         verifyDetail(dataStore->transactionStore->detailStore.value(detailId), categoryId, transferAccountId, amount);
     }
 
@@ -172,10 +172,10 @@ private:
         auto pendingTx = window->model()->unsavedAdds().at(0);
         verifyTransaction(pendingTx, QVariant{}, {}, QVariant{});
         QCOMPARE(pendingTx->details.size(), 1);
-        verifyDetail(pendingTx->details.at(0), QVariant{}, {}, QVariant{});
+        verifyDetail(pendingTx->details.at(0), {}, {}, QVariant{});
     }
 
-    void verifyDetail(const TransactionDetail* detail, QVariant categoryId, optional_id transferAccountId, QVariant amount) {
+    void verifyDetail(const TransactionDetail* detail, optional_id categoryId, optional_id transferAccountId, QVariant amount) {
         QCOMPARE(detail->categoryId, categoryId);
         QCOMPARE(detail->transferAccountId, transferAccountId);
         if (amount.isNull()) QVERIFY(detail->amount.isNull());
@@ -332,7 +332,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, "description");
-        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
+        verifyDetail(tx->detailIds.at(0), {}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount+1);
@@ -359,7 +359,7 @@ private slots:
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
-        verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
+        verifyDetail(tx->detailIds.at(0), {}, accountId, "-98.76");
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount-1);
     }
 

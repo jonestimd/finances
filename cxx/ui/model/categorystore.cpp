@@ -59,7 +59,7 @@ void CategoryStore::mergeCategories(QWidget *source, const Category *category, c
     messageStore->addMessage(tr(SAVING_CATEGORIES));
     doInBackground(source, [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
-        dataStore->transactionStore->detailStore.replaceCategory(category->id.value(), destinationId);
+        dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
         update(categories.values(), QList{category});
         emit valuesLoaded(ids());
         QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_CATEGORIES));

@@ -9,7 +9,7 @@ void TransactionDetailStore::load(domain_id accountId) {
     setValues(accountId, service->getAll(accountId));
 }
 
-void TransactionDetailStore::replaceCategory(const QVariant oldCategoryId, const QVariant newCategoryId) {
+void TransactionDetailStore::replaceCategory(const optional_id oldCategoryId, const optional_id newCategoryId) {
     QList<const TransactionDetail*> updates;
     forEachEntry([&](domain_id id, const TransactionDetail* detail) {
         if (detail->categoryId == oldCategoryId) {

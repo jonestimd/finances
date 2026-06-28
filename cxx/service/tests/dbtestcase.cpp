@@ -60,7 +60,7 @@ namespace factory {
         return tx;
     }
 
-    TransactionDetail* detail(const char *amount, const QVariant &categoryId, const QVariant& groupId) {
+    TransactionDetail* detail(const char *amount, const optional_id &categoryId, const QVariant& groupId) {
         TransactionDetail* detail = new TransactionDetail;
         detail->amount = DECIMAL_VARIANT(amount);
         detail->categoryId = categoryId;

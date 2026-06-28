@@ -168,7 +168,7 @@ QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, con
     return relatedDetailIds;
 }
 
-void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user) {
+void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const domain_id newCategoryId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setCategorySql);
     sql::bindValue(query, ":user", user);
