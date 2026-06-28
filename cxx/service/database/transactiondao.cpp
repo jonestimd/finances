@@ -146,7 +146,7 @@ void TransactionDao::replacePayee(const QSqlDatabase &db, const Payee *payee, co
     sql::bindValue(query, ":payeeId", newPayeeId);
     sql::bindValue(query, ":oldPayeeId", payee->id);
     sql::exec(query, className, "setPayee");
-    if (query.numRowsAffected() != payee->transactions.toInt()) throw staleDataMessage;
+    if (query.numRowsAffected() != payee->transactions) throw staleDataMessage;
 }
 
 QList<domain_id> TransactionDao::removeEmpty(QSqlDatabase &db) {

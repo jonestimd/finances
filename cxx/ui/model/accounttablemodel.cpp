@@ -55,7 +55,7 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
             new FieldColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
             new FieldColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
-            new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
+            new NumberColumnAdapter<Account, int>(tr("Transactions"), &Account::transactions),
             new BalanceColumnAdapter(tr("Balance")),
         },
     }

@@ -12,9 +12,9 @@ Asset::Asset(const QSqlRecord &record)
     , type{record.field("type").value()}
     , scale{record.field("scale").value()}
     , symbol{record.field("symbol").value()}
-    , transactions{record.field("transactions").value()}
+    , transactions{record.field("transactions").value().toInt()}
 {}
 
 bool Asset::deletable() const {
-    return transactions.toInt() == 0;
+    return transactions == 0;
 }

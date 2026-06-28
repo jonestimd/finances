@@ -10,7 +10,7 @@ PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore)
         payeeStore,
         QList<ColumnAdapter<Payee>*>{
             new FieldColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
-            new NumberColumnAdapter<Payee>(tr("Transactions"), &Payee::transactions),
+            new NumberColumnAdapter<Payee, int>(tr("Transactions"), &Payee::transactions),
         },
     }
 {}

@@ -12,7 +12,7 @@ class TestSecurityService : public QObject {
     }
 
     void verifySecurity(const Security *security, int txCount, const char *shares, const char *costBasis) {
-        QCOMPARE(security->transactions.toInt(), txCount);
+        QCOMPARE(security->transactions, txCount);
         QCOMPARE(normalize(security, &Security::shares), shares);
         QCOMPARE(normalize(security, &Security::costBasis), costBasis);
     }

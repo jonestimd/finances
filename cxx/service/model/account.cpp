@@ -12,7 +12,7 @@ Account::Account(const QSqlRecord &record)
     , type{sql::getValue(record, "type", AccountType::bank.code)}
     , accountNumber{sql::getValue(record, "account_no")}
     , closed{sql::yesNoValue(record, "closed")}
-    , transactions{record.field("transactions").value()}
+    , transactions{record.field("transactions").value().toInt()}
     , balance{decimalValue(record, "balance")}
     , currency{record.field("currency").value()}
 {}
@@ -22,5 +22,5 @@ bool Account::security() const {
 }
 
 bool Account::deletable() const {
-    return transactions.toInt() == 0;
+    return transactions == 0;
 }

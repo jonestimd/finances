@@ -260,8 +260,8 @@ private slots:
     void addTransaction() {
         TxWindowHolder holder(openWindow(accountId));
         QCOMPARE(holder.window->focusWidget(), holder.view);
-        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
-        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions;
         auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
         auto groupDetailCount = dataStore->groupStore->value(groupId)->details.toInt();
 
@@ -281,8 +281,8 @@ private slots:
         // should reset the new transaction
         verifyPendingTransaction(holder.window);
         // should update counts
-        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
-        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount+1);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount+1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions, payeeTxCount+1);
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
         QCOMPARE(dataStore->groupStore->value(groupId)->details.toInt(), groupDetailCount+1);
     }
@@ -293,8 +293,8 @@ private slots:
         fillDetail(holder, CATEGORY_NAME);
         QCOMPARE(holder.window->model()->isValid(), false);
         holder.view->setCurrentIndex(holder.index(0, 0));
-        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
-        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions.toInt();
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
+        auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions;
         auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
@@ -304,8 +304,8 @@ private slots:
         QVERIFY(!model->transactionIsValid(model->index(model->rowCount()-1, 0)));
         QCOMPARE(model->rowCount(), INITIAL_TRANSACTION_COUNT);
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId).count(), INITIAL_TRANSACTION_COUNT-1);
-        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount-1);
-        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions.toInt(), payeeTxCount-1);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount-1);
+        QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions, payeeTxCount-1);
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
     }
 
@@ -315,8 +315,8 @@ private slots:
         holder.focusWindow();
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+1);
         QCOMPARE(holder.window->focusWidget(), holder.view);
-        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions.toInt();
-        auto altAccountTxCount = dataStore->accountStore->value(altAccountId)->transactions.toInt();
+        auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
+        auto altAccountTxCount = dataStore->accountStore->value(altAccountId)->transactions;
         auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
 
         fillTransaction(holder, "123", PAYEE_NAME, "description");
@@ -335,8 +335,8 @@ private slots:
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
-        QCOMPARE(dataStore->accountStore->value(accountId)->transactions.toInt(), accountTxCount+1);
-        QCOMPARE(dataStore->accountStore->value(altAccountId)->transactions.toInt(), altAccountTxCount+1);
+        QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount+1);
+        QCOMPARE(dataStore->accountStore->value(altAccountId)->transactions, altAccountTxCount+1);
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
     }
 

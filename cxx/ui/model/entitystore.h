@@ -191,12 +191,12 @@ protected:
             auto newTxValue = newTx ? getRelatedId(newTx, txField) : optional_id{};
             if (oldTxValue.has_value() && oldTxValue != newTxValue) {
                 auto refValue = value(oldTxValue.value());
-                refValue->transactions = refValue->transactions.toInt() - 1;
+                refValue->transactions = refValue->transactions - 1;
                 updateIds.insert(oldTxValue.value());
             }
             if (newTxValue.has_value() && oldTxValue != newTxValue) {
                 auto refValue = value(newTxValue.value());
-                refValue->transactions = refValue->transactions.toInt() + 1;
+                refValue->transactions = refValue->transactions + 1;
                 updateIds.insert(newTxValue.value());
             }
         }

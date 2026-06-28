@@ -9,7 +9,7 @@ public:
     QVariant type;
     QVariant scale;
     QVariant symbol{};
-    mutable QVariant transactions{0};
+    mutable int transactions{0};
 
     Asset(const AssetType &type);
     Asset(const QSqlRecord &record);
