@@ -262,8 +262,8 @@ private slots:
         QCOMPARE(holder.window->focusWidget(), holder.view);
         auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
         auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions;
-        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
-        auto groupDetailCount = dataStore->groupStore->value(groupId)->details.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details;
+        auto groupDetailCount = dataStore->groupStore->value(groupId)->details;
 
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, CATEGORY_NAME, "12.34", GROUP_NAME);
@@ -283,8 +283,8 @@ private slots:
         // should update counts
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount+1);
         QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions, payeeTxCount+1);
-        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
-        QCOMPARE(dataStore->groupStore->value(groupId)->details.toInt(), groupDetailCount+1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount+1);
+        QCOMPARE(dataStore->groupStore->value(groupId)->details, groupDetailCount+1);
     }
 
     void deleteTransaction_adjustsErrors() {
@@ -295,7 +295,7 @@ private slots:
         holder.view->setCurrentIndex(holder.index(0, 0));
         auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
         auto payeeTxCount = dataStore->payeeStore->value(payeeId)->transactions;
-        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details;
 
         QTest::keySequence(holder.view, {Qt::Key_Delete, Qt::Key_Enter});
         QVERIFY(accountUpdatedSpy->wait());
@@ -306,7 +306,7 @@ private slots:
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId).count(), INITIAL_TRANSACTION_COUNT-1);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount-1);
         QCOMPARE(dataStore->payeeStore->value(payeeId)->transactions, payeeTxCount-1);
-        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount-1);
     }
 
     void addTransfer_updatesRelatedWindows() {
@@ -317,7 +317,7 @@ private slots:
         QCOMPARE(holder.window->focusWidget(), holder.view);
         auto accountTxCount = dataStore->accountStore->value(accountId)->transactions;
         auto altAccountTxCount = dataStore->accountStore->value(altAccountId)->transactions;
-        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details;
 
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, ALT_ACCOUNT_NAME, "2.34");
@@ -337,14 +337,14 @@ private slots:
         verifyPendingTransaction(holder2.window);
         QCOMPARE(dataStore->accountStore->value(accountId)->transactions, accountTxCount+1);
         QCOMPARE(dataStore->accountStore->value(altAccountId)->transactions, altAccountTxCount+1);
-        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount+1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount+1);
     }
 
     void updateDetail_updatesRelatedWindows() {
         TxWindowHolder holder(openWindow(accountId));
         TxWindowHolder holder2(openWindow(altAccountId));
         holder.focusWindow();
-        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details.toInt();
+        auto categoryDetailCount = dataStore->categoryStore->value(categoryId)->details;
 
         holder.view->setCurrentIndex(holder.index(0, 0));
         QCOMPARE(holder.window->focusWidget(), holder.view);
@@ -360,7 +360,7 @@ private slots:
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
         verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
         verifyDetail(tx->detailIds.at(0), QVariant{}, accountId, "-98.76");
-        QCOMPARE(dataStore->categoryStore->value(categoryId)->details.toInt(), categoryDetailCount-1);
+        QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount-1);
     }
 
     void deleteTransfer_updatesRelatedWindows() {

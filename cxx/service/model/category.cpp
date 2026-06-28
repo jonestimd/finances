@@ -13,9 +13,9 @@ Category::Category(const QSqlRecord &record)
     , security{sql::yesNoValue(record, "security")}
     , parentId{sql::getInt(record, "parent_id")}
     , childIds(mapping::jsonToIntList(record.field("child_ids").value()))
-    , details{sql::getValue(record, "details")}
+    , details{sql::getValue(record, "details").toInt()}
 {}
 
 bool Category::deletable() const {
-    return details.toInt() == 0 && childIds.empty();
+    return details == 0 && childIds.empty();
 }

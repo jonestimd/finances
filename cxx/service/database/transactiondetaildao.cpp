@@ -175,7 +175,7 @@ void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *cat
     sql::bindValue(query, ":categoryId", newCategoryId);
     sql::bindValue(query, ":oldCategoryId", category->id);
     sql::exec(query, className, "setCategory");
-    if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
+    if (query.numRowsAffected() != category->details) throw staleDataMessage;
 }
 
 QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, const QList<TransactionDetail *> details, const QString &user) {

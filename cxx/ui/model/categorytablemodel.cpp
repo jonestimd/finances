@@ -30,7 +30,7 @@ CategoryTableModel::CategoryTableModel(DataStore *ds)
             new FieldColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
             new FieldColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
             new EnumColumnAdapter<Category, AmountType>(tr("Amount Type"), &Category::amountType, &AmountType::values, requiredValidatorFactory, true),
-            new NumberColumnAdapter<Category>(tr("Transactions"), &Category::details),
+            new NumberColumnAdapter<Category, int>(tr("Transactions"), &Category::details),
             new FieldColumnAdapter<Category>(tr("Income"), &Category::income),
             new FieldColumnAdapter<Category>(tr("Security"), &Category::security),
         },

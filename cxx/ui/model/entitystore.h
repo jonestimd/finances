@@ -212,12 +212,12 @@ protected:
             auto newDetailValue = newDetail ? getRelatedId(newDetail, detailField) : optional_id{};
             if (oldDetailValue.has_value() && newDetailValue != oldDetailValue) {
                 auto refValue = value(oldDetailValue.value());
-                refValue->details = refValue->details.toInt() - 1;
+                refValue->details = refValue->details - 1;
                 updateIds.insert(oldDetailValue.value());
             }
             if (newDetailValue.has_value() && newDetailValue != oldDetailValue) {
                 auto refValue = value(newDetailValue.value());
-                refValue->details = refValue->details.toInt() + 1;
+                refValue->details = refValue->details + 1;
                 updateIds.insert(newDetailValue.value());
             }
         }

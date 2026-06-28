@@ -14,7 +14,7 @@ public:
     QVariant security{false};
     optional_id parentId{};
     QList<domain_id> childIds{};
-    mutable QVariant details{0};
+    mutable int details{0};
 
     Category();
     Category(const QSqlRecord &record);

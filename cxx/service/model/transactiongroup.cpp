@@ -7,11 +7,11 @@ TransactionGroup::TransactionGroup() : NamedEntity() {}
 TransactionGroup::TransactionGroup(const QSqlRecord &record)
     : NamedEntity(record)
     , description{sql::getValue(record, "description")}
-    , details{sql::getValue(record, "details")}
+    , details{sql::getValue(record, "details").toInt()}
 {}
 
 TransactionGroup::TransactionGroup(const QString &name) : NamedEntity{name} {}
 
 bool TransactionGroup::deletable() const {
-    return details.toInt() == 0;
+    return details == 0;
 }
