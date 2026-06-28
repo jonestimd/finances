@@ -8,8 +8,8 @@ public:
     domain_id transactionId;
     optional_id categoryId;
     QVariant relatedDetailId;
-    QVariant groupId;
-    QVariant exchangeAssetId;
+    optional_id groupId;
+    optional_id exchangeAssetId;
     QVariant amount;
     QVariant assetQuantity;
     QVariant memo;

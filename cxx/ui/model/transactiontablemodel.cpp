@@ -114,7 +114,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
     , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore, accountId)}
     , detailColumns{
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
-        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
+        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore, optional_id>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
         new FieldColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
         new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),

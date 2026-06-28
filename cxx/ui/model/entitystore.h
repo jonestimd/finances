@@ -165,13 +165,6 @@ protected:
         this->loaded = true;
     }
 
-    /** @deprecated */
-    template<class Entity>
-    static inline optional_id getRelatedId(const Entity* entity, QVariant Entity::* idField) {
-        auto id = entity->*idField;
-        return id.isValid() ? id.toLongLong() : optional_id{};
-    }
-
     template<class Entity>
     static inline optional_id getRelatedId(const Entity* entity, optional_id Entity::* idField) {
         return entity->*idField;

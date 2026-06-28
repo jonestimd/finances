@@ -12,8 +12,8 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , transactionId{record.field("tx_id").value().toLongLong()}
     , categoryId{sql::getInt(record, "tx_category_id")}
     , relatedDetailId{sql::getValue(record, "related_detail_id")}
-    , groupId{sql::getValue(record, "tx_group_id")}
-    , exchangeAssetId{sql::getValue(record, "exchange_asset_id")}
+    , groupId{sql::getInt(record, "tx_group_id")}
+    , exchangeAssetId{sql::getInt(record, "exchange_asset_id")}
     , amount{decimalValue(record, "amount")}
     , assetQuantity{decimalValue(record, "asset_quantity")}
     , memo{sql::getValue(record, "memo")}
@@ -24,8 +24,8 @@ bool TransactionDetail::isEmpty() const {
     return !categoryId.has_value()
            && relatedDetailId.isNull()
            && !transferAccountId.has_value()
-           && groupId.isNull()
-           && exchangeAssetId.isNull()
+           && !groupId.has_value()
+           && !exchangeAssetId.has_value()
            && memo.isNull()
            && (amount.isNull() || amount.value<QDecNumber>().isZero())
            && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
