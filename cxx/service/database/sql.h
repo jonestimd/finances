@@ -15,7 +15,7 @@ namespace sql {
 
     std::optional<qlonglong> getInt(QSqlRecord record, const char *name);
 
-    QDecNumber decimalValue(const QSqlRecord &record, const char* name);
+    std::optional<QDecNumber> decimalValue(const QSqlRecord &record, const char* name);
 
     QVariant yesNoValue(QSqlRecord record, const char *name);
 
@@ -28,6 +28,8 @@ namespace sql {
     }
 
     void bindValue(QSqlQuery &query, const char *name, const QDecNumber& value);
+
+    void bindValue(QSqlQuery &query, const char *name, const std::optional<QDecNumber>& value);
 
     void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 

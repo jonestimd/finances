@@ -27,7 +27,7 @@ namespace transactiontablemodel {
         return moneyFormat(amount).prepend("$"); // TODO currency symbol for account
     }
 
-    class TxAmountColumnAdapter : public AmountColumnAdapter<Transaction> {
+    class TxAmountColumnAdapter : public AmountColumnAdapter<Transaction, QDecNumber> {
         TransactionTableModel *const model;
 
     public:
@@ -69,7 +69,7 @@ namespace transactiontablemodel {
         }
     };
 
-    class BalanceColumnAdapter : public AmountColumnAdapter<Transaction> {
+    class BalanceColumnAdapter : public AmountColumnAdapter<Transaction, QDecNumber> {
         const TransactionTableModel *model;
 
     public:

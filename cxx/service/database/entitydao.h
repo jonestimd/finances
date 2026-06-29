@@ -72,13 +72,6 @@ public:
         return load(query);
     }
 
-    /** @deprecated */
-    QHash<domain_id, const Entity*> get(QSqlDatabase &db, QVariantList ids) {
-        QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
-        sql::exec(query, className, "getByIds");
-        return load(query);
-    }
-
     /**
      * @brief update Saves changes to `entities` to the database.
      * @return input `entities` with `id`, `version` and `changeUser` updated.

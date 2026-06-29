@@ -8,9 +8,9 @@ class Security : public Asset {
 public:
     QVariant securityType{SecurityType::stock.code};
     QVariant firstAcquired{};
-    QVariant shares{};
-    QVariant costBasis{};
-    QVariant dividends{};
+    QDecNumber shares{0};
+    QDecNumber costBasis{0};
+    QDecNumber dividends{0};
 
     Security();
     Security(const QSqlRecord &record);

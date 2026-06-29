@@ -1,5 +1,4 @@
 #include "transactiondetail.h"
-#include "decimal.h"
 #include "service/database/sql.h"
 #include <QSqlField>
 
@@ -14,8 +13,8 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , relatedDetailId{sql::getInt(record, "related_detail_id")}
     , groupId{sql::getInt(record, "tx_group_id")}
     , exchangeAssetId{sql::getInt(record, "exchange_asset_id")}
-    , amount{decimalValue(record, "amount")}
-    , assetQuantity{decimalValue(record, "asset_quantity")}
+    , amount{sql::decimalValue(record, "amount").value()}
+    , assetQuantity{sql::decimalValue(record, "asset_quantity")}
     , memo{sql::getValue(record, "memo")}
     , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}
@@ -27,8 +26,8 @@ bool TransactionDetail::isEmpty() const {
            && !groupId.has_value()
            && !exchangeAssetId.has_value()
            && memo.isNull()
-           && (amount.isNull() || amount.value<QDecNumber>().isZero())
-           && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
+           && (amount.isNaN() || amount.isZero())
+           && (!assetQuantity.has_value() || assetQuantity.value().isZero());
 }
 
 TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAccountId, domain_id transactionId) const {
@@ -42,9 +41,9 @@ TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAcc
 void TransactionDetail::initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const {
     relatedDetail.relatedDetailId = id.value();
     relatedDetail.transactionId = transactionId;
-    relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
-    if (!relatedDetail.assetQuantity.isNull()) {
-        relatedDetail.assetQuantity = QVariant::fromValue(QDecNumber().copyNegate(assetQuantity.value<QDecNumber>()));
+    relatedDetail.amount.copyNegate(amount);
+    if (assetQuantity.has_value()) {
+        relatedDetail.assetQuantity.emplace(QDecNumber{}).copyNegate(assetQuantity.value());
     }
 }
 

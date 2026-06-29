@@ -157,7 +157,7 @@ private slots:
         tx->payeeId = {};
         tx->memo = "tx comment";
         auto detail0 = details.at(0);
-        detail0->amount = DECIMAL_VARIANT("3.21");
+        detail0->amount = QDecNumber("3.21");
         detail0->memo = "detail comment";
         TransactionUpdate changes{
             TX_UPDATES(tx), TX_ADDS(), TX_DELETES(),
@@ -183,7 +183,7 @@ private slots:
         QFETCH_GLOBAL(TransactionService*, service);
         auto transfer = saveTransfer({"1.00", "2.00"});
         auto [tx, details] = transfer.at(0);
-        details.at(0)->amount = DECIMAL_VARIANT("3.45");
+        details.at(0)->amount = QDecNumber("3.45");
         TransactionUpdate changes{
             TX_UPDATES(), TX_ADDS(), TX_DELETES(),
             DETAIL_UPDATES(details.at(0)), DETAIL_ADDS(), DETAIL_DELETES(),

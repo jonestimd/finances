@@ -94,7 +94,7 @@ SharesColumnAdapter::SharesColumnAdapter(const QString &title, const Transaction
 QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
     if (index.isValid() && role == finances::AltDisplayRole) {
         auto shares = row->assetQuantity;
-        if (!shares.isNull()) {
+        if (shares.has_value()) {
             auto securityId = index.parent().siblingAtColumn(securityColumn).data(finances::EntityIdRole);
             auto date = index.parent().siblingAtColumn(dateColumn).data(Qt::EditRole);
             auto shares = AmountColumnAdapter::value(row, index, current, Qt::EditRole).value<QDecNumber>();

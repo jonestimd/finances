@@ -62,7 +62,7 @@ namespace factory {
 
     TransactionDetail* detail(const char *amount, const optional_id& categoryId, const optional_id& groupId) {
         TransactionDetail* detail = new TransactionDetail;
-        detail->amount = DECIMAL_VARIANT(amount);
+        detail->amount = QDecNumber(amount);
         detail->categoryId = categoryId;
         detail->groupId = groupId;
         return detail;
@@ -206,11 +206,11 @@ Account *DbTestCase::addAccount(const QString &driver, const QString &name, cons
 }
 
 template<typename Entity, typename Dao, Dao &(DbTestCase::*dao)(const QString &)>
-const Entity* load(DbTestCase *test, const QString &driver, const QVariant &id, QList<const Entity*> list) {
+const Entity* load(DbTestCase *test, const QString &driver, domain_id id, QList<const Entity*> list) {
     auto conn = Connection(test->connectionPool(driver));
-    auto rows = ((*test).*dao)(driver).get(conn.db, {id});
+    auto rows = ((*test).*dao)(driver).get(conn.db, QList<domain_id>{id});
     list.append(rows.values());
-    return rows.value(id.toLongLong());
+    return rows.value(id);
 }
 
 domain_id DbTestCase::addPayee(const QString &driver, const QString &name) {
@@ -244,11 +244,11 @@ domain_id DbTestCase::addGroup(const QString &driver, const QString &name) {
     return group.id.value();
 }
 
-const Account *DbTestCase::loadAccount(const QString &driver, QVariant id) {
+const Account *DbTestCase::loadAccount(const QString &driver, domain_id id) {
     return load<Account, AccountDao, &DbTestCase::accountDao>(this, driver, id, accounts);
 }
 
-const Security *DbTestCase::loadSecurity(const QString &driver, QVariant id) {
+const Security *DbTestCase::loadSecurity(const QString &driver, domain_id id) {
     return load<Security, SecurityDao, &DbTestCase::securityDao>(this, driver, id, securities);
 }
 
@@ -301,7 +301,7 @@ DbTestCase::TxDetails DbTestCase::saveTransaction(const QString &driver, const T
     for (auto &amount : detailAmounts) {
         auto i = details.size();
         TransactionDetail *detail = factory::detail(amount);
-        if (tx->securityId.has_value() && detailShares.size() > i) detail->assetQuantity = DECIMAL_VARIANT(detailShares.at(i));
+        if (tx->securityId.has_value() && detailShares.size() > i) detail->assetQuantity = QDecNumber(detailShares.at(i));
         details.append(detail);
     }
     saveTransaction(driver, tx, details);

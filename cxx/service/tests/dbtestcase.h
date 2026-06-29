@@ -18,8 +18,6 @@
 
 #define TEST_USER "test"
 
-#define DECIMAL_VARIANT(value) QVariant::fromValue(QDecNumber{value})
-
 #define GET_DETAILS(txDetails) std::get<1>(txDetails)
 
 #define SKIP_FOR(...) \
@@ -94,8 +92,8 @@ public:
     domain_id addCategory(const QString &driver, const QString &name);
     domain_id addGroup(const QString &driver, const QString &name);
 
-    const Account *loadAccount(const QString &driver, QVariant id);
-    const Security *loadSecurity(const QString &driver, QVariant id);
+    const Account *loadAccount(const QString &driver, domain_id id);
+    const Security *loadSecurity(const QString &driver, domain_id id);
 
     QList<TxDetails> saveTransfer(const QString& driver, domain_id accountId, domain_id altAccountId, QList<const char*> amounts);
     TxDetails saveTransaction(const Transaction* unsaved, const QList<const char*> &detailAmounts, const QList<const char*> &detailShares = QList<const char*>{});

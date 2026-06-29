@@ -39,7 +39,7 @@ private slots:
 
         auto accountSummary = result.value(account->id.value());
         QCOMPARE(accountSummary->transactions, 2);
-        QCOMPARE(accountSummary->balance, DECIMAL_VARIANT("-1.43"));
+        QCOMPARE(accountSummary->balance, QDecNumber("-1.43"));
     }
 
     void update_savesData() {

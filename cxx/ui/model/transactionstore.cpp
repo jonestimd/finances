@@ -82,7 +82,7 @@ QDecNumber TransactionStore::amount(domain_id transactionId) const {
             if (!category) qCDebug(logger, "amount: category not loaded: %lld", detail->categoryId.value());
             else if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
         }
-        total += detail->amount.value<QDecNumber>();
+        if (!detail->amount.isNaN()) total += detail->amount;
     }
     return total;
 }

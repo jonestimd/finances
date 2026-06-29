@@ -13,7 +13,7 @@ Account::Account(const QSqlRecord &record)
     , accountNumber{sql::getValue(record, "account_no")}
     , closed{sql::yesNoValue(record, "closed")}
     , transactions{record.field("transactions").value().toInt()}
-    , balance{decimalValue(record, "balance")}
+    , balance{sql::decimalValue(record, "balance").value_or(QDecNumber(0))}
     , currency{record.field("currency").value()}
 {}
 

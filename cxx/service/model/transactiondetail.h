@@ -10,8 +10,8 @@ public:
     optional_id relatedDetailId;
     optional_id groupId;
     optional_id exchangeAssetId;
-    QVariant amount;
-    QVariant assetQuantity;
+    QDecNumber amount{"NaN"};
+    std::optional<QDecNumber> assetQuantity;
     QVariant memo;
 
     optional_id transferAccountId;

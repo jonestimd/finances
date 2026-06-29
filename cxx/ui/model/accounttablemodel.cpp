@@ -31,7 +31,7 @@ namespace accounttablemodel {
         }
     };
 
-    class BalanceColumnAdapter : public AmountColumnAdapter<Account> {
+    class BalanceColumnAdapter : public AmountColumnAdapter<Account, QDecNumber> {
     public:
         BalanceColumnAdapter(QString title) : AmountColumnAdapter{title, &Account::balance, moneyFormat, false} {}
 

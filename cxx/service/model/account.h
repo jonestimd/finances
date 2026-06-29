@@ -3,7 +3,6 @@
 
 #include "basedomain.h"
 #include "accounttype.h"
-#include "decimal.h"
 #include <QSqlRecord>
 #include <QVariant>
 
@@ -15,7 +14,7 @@ public:
     QVariant accountNumber;
     QVariant closed{false};
     mutable int transactions{0};
-    QVariant balance{QVariant::fromValue(QDEC_ZERO)};
+    QDecNumber balance{0};
     QVariant currency;
 
     Account();

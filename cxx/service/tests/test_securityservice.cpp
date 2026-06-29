@@ -6,15 +6,14 @@ class TestSecurityService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
 
-    QString normalize(const Security *security, QVariant(Security::*member)) {
-        auto value = (security->*member).value<QDecNumber>();
+    QString normalize(QDecNumber value) {
         return value.normalize().toString();
     }
 
     void verifySecurity(const Security *security, int txCount, const char *shares, const char *costBasis) {
         QCOMPARE(security->transactions, txCount);
-        QCOMPARE(normalize(security, &Security::shares), shares);
-        QCOMPARE(normalize(security, &Security::costBasis), costBasis);
+        QCOMPARE(normalize(security->shares), shares);
+        QCOMPARE(normalize(security->costBasis), costBasis);
     }
 
     domain_id addSplit(const QString &driver, domain_id securityId, QDate date, int sharesIn, int sharesOut) {

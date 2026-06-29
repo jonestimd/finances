@@ -31,7 +31,7 @@ private:
     ComboBoxModel *getOptions() const;
 };
 
-class SharesColumnAdapter : public AmountColumnAdapter<TransactionDetail> {
+class SharesColumnAdapter : public AmountColumnAdapter<TransactionDetail, std::optional<QDecNumber>> {
     const SecurityStore *securityStore;
     const int dateColumn;
     const int securityColumn;
@@ -42,7 +42,7 @@ public:
     virtual QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
 };
 
-class DetailAmountColumnAdapter : public AmountColumnAdapter<TransactionDetail> {
+class DetailAmountColumnAdapter : public AmountColumnAdapter<TransactionDetail, QDecNumber> {
 public:
     DetailAmountColumnAdapter(const QString &title);
 

@@ -22,11 +22,11 @@ std::optional<qlonglong> sql::getInt(QSqlRecord record, const char *name) {
     return field.value().toLongLong();
 }
 
-QDecNumber sql::decimalValue(const QSqlRecord &record, const char *name) {
+std::optional<QDecNumber> sql::decimalValue(const QSqlRecord &record, const char *name) {
     if (record.contains(name) && !record.isNull(name)) {
         return QDecNumber(record.field(name).value().toByteArray().constData());
     }
-    return QDecNumber();
+    return {};
 }
 
 QVariant sql::yesNoValue(QSqlRecord record, const char *name) {
@@ -42,9 +42,17 @@ void sql::bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
     qCDebug(sqlLogger) << "-" << name << "=" << (value);
 }
 
-void sql::bindValue(QSqlQuery &query, const char *name, const QDecNumber &value) {
+void sql::bindValue(QSqlQuery &query, const char *name, const QDecNumber& value) {
     query.bindValue(name, QString{value.toString()});
     qCDebug(sqlLogger) << "-" << name << "=" << value.toString();
+}
+
+void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<QDecNumber>& value) {
+    if (value.has_value()) bindValue(query, name, value.value());
+    else {
+        query.bindValue(name, QVariant{});
+        qCDebug(sqlLogger) << "-" << name << "= null";
+    }
 }
 
 static void bindList(QSqlQuery &query, const char *name, const QJsonArray &array) {
@@ -87,4 +95,3 @@ QList<qlonglong> sql::loadValues(QSqlQuery &query, const char *column) {
     while (query.next()) result.append(query.value(column).toLongLong());
     return result;
 }
-

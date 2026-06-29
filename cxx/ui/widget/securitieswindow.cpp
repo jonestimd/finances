@@ -49,7 +49,7 @@ void SecuritiesWindow::toggleZeroShares(bool hide) {
 bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
     auto row = model()->getRow(sourceIndex);
     auto shares = row->shares;
-    return shares.isNull() || shares.value<QDecNumber>().toDouble() > 0;
+    return !shares.isZero() && !shares.isNegative();
 }
 
 const char *SecuritiesWindow::settingsGroup() const {

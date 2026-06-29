@@ -79,9 +79,16 @@ public:
         : ColumnAdapter<T>{factory, title, isEditable, factory}, field{field} {}
 
     virtual QVariant rowValue(const T* row) const override {
-        if constexpr (std::is_same_v<Value, QVariant>) return row->*field;
-        if constexpr (std::is_same_v<Value, int>) return row->*field;
-        if constexpr (std::is_same_v<Value, optional_id>) return domain::toQVaraint(row->*field);
+        auto value = row->*field;
+        if constexpr (std::is_same_v<Value, QVariant>) return value;
+        if constexpr (std::is_same_v<Value, int>) return value;
+        if constexpr (std::is_same_v<Value, optional_id>) return domain::toQVaraint(value);
+        if constexpr (std::is_same_v<Value, std::optional<QDecNumber>>) {
+            return value.has_value() ? QVariant::fromValue(value.value()) : QVariant{};
+        }
+        if constexpr (std::is_same_v<Value, QDecNumber>) {
+            return value.isNaN() ? QVariant{} : QVariant::fromValue(value);
+        }
     }
 
     virtual void setValue(T *row, QVariant value) const  override {
@@ -89,7 +96,11 @@ public:
         if constexpr (std::is_same_v<Value, QVariant>) row->*field = value;
         else if constexpr (std::is_same_v<Value, int>) row->*field = value.toInt();
         else if constexpr (std::is_same_v<Value, optional_id>) row->*field = domain::toOptionalId(value);
-        else static_assert(false, "unsupported value type for FieldColumnAdapter");
+        else if constexpr (std::is_same_v<Value, QDecNumber>) row->*field = value.value<QDecNumber>();
+        else if constexpr (std::is_same_v<Value, std::optional<QDecNumber>>) {
+            if (value.isNull()) (row->*field).reset();
+            else (row->*field).emplace(value.value<QDecNumber>());
+        } else static_assert(false, "unsupported value type for FieldColumnAdapter");
     }
 };
 

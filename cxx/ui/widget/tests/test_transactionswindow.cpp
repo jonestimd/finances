@@ -178,8 +178,8 @@ private:
     void verifyDetail(const TransactionDetail* detail, optional_id categoryId, optional_id transferAccountId, QVariant amount) {
         QCOMPARE(detail->categoryId, categoryId);
         QCOMPARE(detail->transferAccountId, transferAccountId);
-        if (amount.isNull()) QVERIFY(detail->amount.isNull());
-        else QCOMPARE(detail->amount.toString(), amount);
+        if (amount.isNull()) QVERIFY(detail->amount.isNaN());
+        else QCOMPARE(detail->amount.toString(), amount.toString());
     }
 
     template<class Holder>

@@ -1,6 +1,7 @@
 #ifndef BASEDOMAIN_H
 #define BASEDOMAIN_H
 
+#include "QDecNumber.hh"
 #include <QSqlRecord>
 #include <QVariant>
 
