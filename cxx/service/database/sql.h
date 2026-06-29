@@ -1,6 +1,8 @@
 #ifndef SQL_H
 #define SQL_H
 
+#include "QDecNumber.hh"
+#include <QSqlField>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
@@ -13,6 +15,8 @@ namespace sql {
 
     std::optional<qlonglong> getInt(QSqlRecord record, const char *name);
 
+    QDecNumber decimalValue(const QSqlRecord &record, const char* name);
+
     QVariant yesNoValue(QSqlRecord record, const char *name);
 
     void bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value);
@@ -22,6 +26,8 @@ namespace sql {
     inline void bindValue(QSqlQuery &query, const char *name, qlonglong value) {
         bindValue(query, name, QVariant{value});
     }
+
+    void bindValue(QSqlQuery &query, const char *name, const QDecNumber& value);
 
     void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 

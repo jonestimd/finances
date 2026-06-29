@@ -22,6 +22,13 @@ std::optional<qlonglong> sql::getInt(QSqlRecord record, const char *name) {
     return field.value().toLongLong();
 }
 
+QDecNumber sql::decimalValue(const QSqlRecord &record, const char *name) {
+    if (record.contains(name) && !record.isNull(name)) {
+        return QDecNumber(record.field(name).value().toByteArray().constData());
+    }
+    return QDecNumber();
+}
+
 QVariant sql::yesNoValue(QSqlRecord record, const char *name) {
     return getValue(record, name).toString() == "Y";
 }
@@ -33,6 +40,11 @@ void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<qlon
 void sql::bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
     query.bindValue(name, value);
     qCDebug(sqlLogger) << "-" << name << "=" << (value);
+}
+
+void sql::bindValue(QSqlQuery &query, const char *name, const QDecNumber &value) {
+    query.bindValue(name, QString{value.toString()});
+    qCDebug(sqlLogger) << "-" << name << "=" << value.toString();
 }
 
 static void bindList(QSqlQuery &query, const char *name, const QJsonArray &array) {
@@ -75,3 +87,4 @@ QList<qlonglong> sql::loadValues(QSqlQuery &query, const char *column) {
     while (query.next()) result.append(query.value(column).toLongLong());
     return result;
 }
+

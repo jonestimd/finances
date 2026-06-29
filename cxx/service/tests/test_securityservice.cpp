@@ -17,7 +17,7 @@ class TestSecurityService : public QObject {
         QCOMPARE(normalize(security, &Security::costBasis), costBasis);
     }
 
-    void addSplit(const QString &driver, QVariant securityId, QDate date, int sharesIn, int sharesOut) {
+    domain_id addSplit(const QString &driver, domain_id securityId, QDate date, int sharesIn, int sharesOut) {
         Connection conn(dbTestCase.connectionPool(driver));
         StockSplit split{};
         split.securityId = securityId;
@@ -25,6 +25,7 @@ class TestSecurityService : public QObject {
         split.sharesIn = sharesIn;
         split.sharesOut = sharesOut;
         dbTestCase.stockSplitDao(driver).add(conn.db, {&split}, TEST_USER);
+        return split.id.value();
     }
 
 private slots:
@@ -90,16 +91,16 @@ private slots:
         QFETCH_GLOBAL(SecurityService*, service);
         QFETCH_GLOBAL(domain_id, securityId);
         QFETCH_GLOBAL(domain_id, securityId2);
-        addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
+        auto splitId = addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
         addSplit(driver, securityId, QDate{2015, 12, 15}, 1, 3);
         addSplit(driver, securityId2, QDate{2019, 10, 31}, 3, 2);
 
         auto result = service->getSplits();
 
         QCOMPARE(result.size(), 3);
-        auto split = result.values().constFirst();
-        QVERIFY(split->sharesIn.canConvert<QDecNumber>());
-        QVERIFY(split->sharesOut.canConvert<QDecNumber>());
+        auto split = result.value(splitId);
+        QCOMPARE(split->sharesIn.normalize().toString(), "1");
+        QCOMPARE(split->sharesOut.normalize().toString(), "2");
     }
 
     void update_savesData() {
