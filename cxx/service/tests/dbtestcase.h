@@ -88,7 +88,7 @@ public:
     void createDatabases();
     
     domain_id addCompany(const QString &driver, const QString &name);
-    Account *addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId = QVariant{});
+    Account *addAccount(const QString &driver, const QString &name, const QString &type, const optional_id companyId = {});
     domain_id addPayee(const QString &driver, const QString &name);
     Security* addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
     domain_id addCategory(const QString &driver, const QString &name);

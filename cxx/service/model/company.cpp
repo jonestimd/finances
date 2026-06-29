@@ -3,12 +3,13 @@
 
 Company::Company() {}
 
-Company::Company(const QSqlRecord &record) : NamedEntity{record} {
-    accounts = record.field("accounts").value();
-}
+Company::Company(const QSqlRecord &record)
+    : NamedEntity{record}
+    , accounts{record.field("accounts").value().toInt()}
+{}
 
 Company::Company(const QString &name) : NamedEntity{name} {}
 
 bool Company::deletable() const {
-    return accounts.toInt() == 0;
+    return accounts == 0;
 }

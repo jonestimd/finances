@@ -36,10 +36,10 @@ QString AccountStore::qualifiedName(domain_id accountId, QChar delimiter) const 
     auto account = value(accountId);
     if (account) {
         auto name = account->name.toString();
-        if (account->companyId.isNull()) return name;
-        auto company = companyStore.value(account->companyId.toLongLong());
+        if (!account->companyId.has_value()) return name;
+        auto company = companyStore.value(account->companyId.value());
         if (company) return company->name.toString().append(delimiter).append(name);
-        else qCDebug(logger, "qualifiedName: company not loaded: %lld", account->companyId.toLongLong());
+        else qCDebug(logger, "qualifiedName: company not loaded: %lld", account->companyId.value());
     }
     else qCDebug(logger, "qualifiedName: account not loaded: %lld", accountId);
     return QString::number(accountId);

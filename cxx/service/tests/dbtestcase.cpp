@@ -196,7 +196,7 @@ void save(DbTestCase *test, const QString &driver, Entity *entity, QList<const E
     list.append(entity);
 }
 
-Account *DbTestCase::addAccount(const QString &driver, const QString &name, const QString &type, const QVariant companyId) {
+Account *DbTestCase::addAccount(const QString &driver, const QString &name, const QString &type, const optional_id companyId) {
     Account *account = new Account;
     account->name = name;
     account->type = type;

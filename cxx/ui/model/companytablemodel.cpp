@@ -10,7 +10,7 @@ CompanyTableModel::CompanyTableModel(const CompanyStore *store, QObject *parent)
         store,
         QList<ColumnAdapter<Company>*>{
             new FieldColumnAdapter<Company>(tr("Company Name"), &Company::name, true, new UniqueValidatorFactory(COMPANY_NAME_COLUMN)),
-            new NumberColumnAdapter<Company>(tr("Accounts"), &Company::accounts),
+            new NumberColumnAdapter<Company, int>(tr("Accounts"), &Company::accounts),
         },
         parent,
     }

@@ -7,7 +7,7 @@ Account::Account() : TransactionType{true} {}
 
 Account::Account(const QSqlRecord &record)
     : TransactionType(true, record)
-    , companyId{sql::getValue(record, "company_id")}
+    , companyId{sql::getInt(record, "company_id")}
     , description{sql::getValue(record, "description")}
     , type{sql::getValue(record, "type", AccountType::bank.code)}
     , accountNumber{sql::getValue(record, "account_no")}

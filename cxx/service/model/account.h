@@ -9,7 +9,7 @@
 
 class Account : public TransactionType {
 public:
-    QVariant companyId;
+    optional_id companyId;
     QVariant description;
     QVariant type{AccountType::bank.code};
     QVariant accountNumber;

@@ -70,12 +70,12 @@ void AccountsMenu::updateMenu() {
     QHash<domain_id, QMenu*> companyMenus{};
     store->forEachEntry([&](domain_id id, const Account* account) {
         if (hideClosed && account->closed.toBool()) return;
-        if (account->companyId.isNull()) {
+        if (!account->companyId.has_value()) {
             insertByName(this, new AccountAction(this, window, account));
         } else {
-            QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
+            QMenu *companyMenu = companyMenus.value(account->companyId.value());
             if (!companyMenu) {
-                auto company = store->companyStore.value(account->companyId.toLongLong());
+                auto company = store->companyStore.value(account->companyId.value());
                 if (company) {
                     companyMenu = new QMenu(company->name.toString().replace('&', "&&"), this);
                     companyMenus.insert(company->id.value(), companyMenu);

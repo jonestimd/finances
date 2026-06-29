@@ -50,7 +50,7 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
         store,
         QList<ColumnAdapter<Account>*>{
             new FieldColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company, CompanyStore>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
+            new RelationColumnAdapter<Account, Company, CompanyStore, optional_id>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
             new FieldColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
             new FieldColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
@@ -62,10 +62,11 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
 {}
 
 void AccountTableModel::companiesLoaded(const QList<domain_id> companyIds) {
+    // remove pending changes referencing a deleted company
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
             auto account = children.at(i);
-            if (!companyIds.contains(account->companyId.toLongLong())) {
+            if (!companyIds.contains(account->companyId.value())) {
                 setData(index(rootIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }
         }
