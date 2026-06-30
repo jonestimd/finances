@@ -7,7 +7,6 @@
 
 class TransactionGroup : public NamedEntity {
 public:
-    QVariant name;
     QVariant description;
     mutable QVariant details{0};
 
