@@ -86,7 +86,7 @@ public:
             bindUpdateValues(query, entity);
             sql::exec(query, className, "update");
             if (query.numRowsAffected() < 1) throw staleDataMessage;
-            entity->version = entity->version.toInt() + 1;
+            entity->version = entity->version + 1;
             entity->changeUser = user;
             result.append(entity);
         }

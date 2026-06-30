@@ -56,7 +56,7 @@ void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id 
         if (tx->payeeId.has_value() && tx->payeeId.value() == oldPayeeId) {
             auto updatedTx = new Transaction(*tx);
             updatedTx->payeeId = newPayeeId;
-            updatedTx->version = tx->version.toLongLong() + 1;
+            updatedTx->version = tx->version + 1;
             updates.append(updatedTx);
         }
     });

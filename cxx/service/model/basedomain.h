@@ -2,6 +2,7 @@
 #define BASEDOMAIN_H
 
 #include "QDecNumber.hh"
+#include <QDateTime>
 #include <QSqlRecord>
 #include <QVariant>
 
@@ -22,9 +23,9 @@ namespace domain {
 class BaseDomain {
 public:
     optional_id id{};
-    QVariant version{0};
-    QVariant changeUser;
-    QVariant changeDate;
+    qlonglong version{0};
+    QString changeUser{};
+    QDateTime changeDate{};
 
     BaseDomain();
     BaseDomain(const QSqlRecord &record);

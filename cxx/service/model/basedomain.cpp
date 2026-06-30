@@ -12,10 +12,10 @@ namespace domain {
 BaseDomain::BaseDomain() {}
 
 BaseDomain::BaseDomain(const QSqlRecord &record)
-    : id{record.field("id").value().toLongLong()}
-    , version{record.field("version").value()}
-    , changeUser{record.field("change_user").value()}
-    , changeDate{record.field("change_date").value()}
+    : id{record.value("id").toLongLong()}
+    , version{record.value("version").toLongLong()}
+    , changeUser{record.value("change_user").toString()}
+    , changeDate{record.value("change_date").toDateTime()}
 {}
 
 NamedEntity::NamedEntity(const QSqlRecord &record, const char *nameColumn)

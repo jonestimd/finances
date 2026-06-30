@@ -396,7 +396,7 @@ private slots:
         QCOMPARE(updateSpy.at(0).at(0).value<QList<domain_id>>(), QList<domain_id>{tx->id.value()});
         QVERIFY(!dataStore->payeeStore->contains(altPayeeId));
         QCOMPARE(dataStore->transactionStore->value(tx->id.value())->payeeId, payeeId);
-        QCOMPARE(dataStore->transactionStore->value(tx->id.value())->version, tx->version.toLongLong()+1);
+        QCOMPARE(dataStore->transactionStore->value(tx->id.value())->version, tx->version+1);
     }
 
     void renamePayee_updatesTransactions() {
@@ -422,7 +422,7 @@ private slots:
 
         QVERIFY(!dataStore->categoryStore->contains(altCategoryId));
         QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id.value())->categoryId, categoryId);
-        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id.value())->version, detail->version.toLongLong()+1);
+        QCOMPARE(dataStore->transactionStore->detailStore.value(detail->id.value())->version, detail->version+1);
     }
 
     void renameAccount_updatesTransactionDetails() {

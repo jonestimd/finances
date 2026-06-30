@@ -15,7 +15,7 @@ void TransactionDetailStore::replaceCategory(const optional_id oldCategoryId, co
         if (detail->categoryId == oldCategoryId) {
             auto updatedDetail = new TransactionDetail(*detail);
             updatedDetail->categoryId = newCategoryId;
-            updatedDetail->version = detail->version.toLongLong() + 1;
+            updatedDetail->version = detail->version + 1;
             updates.append(updatedDetail);
         }
     });
