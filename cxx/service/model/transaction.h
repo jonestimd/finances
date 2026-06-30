@@ -5,6 +5,8 @@
 #include "bulkupdate.h"
 #include "transactiondetail.h"
 
+#include <QDate>
+
 class Transaction;
 class TransactionDetail;
 class TransactionDetailUpdate;
@@ -12,7 +14,7 @@ class TransactionDetailUpdate;
 class Transaction : public BaseDomain {
 public:
     domain_id accountId;
-    QVariant date;
+    QDate date;
     optional_id payeeId;
     optional_id securityId;
     QVariant referenceNumber;

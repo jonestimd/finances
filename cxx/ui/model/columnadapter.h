@@ -4,6 +4,7 @@
 #include "../finances.h"
 #include "../validation/validatorfactory.h"
 #include "service/model/basedomain.h"
+#include <QDate>
 #include <QVariant>
 
 class AbstractColumnAdapter {
@@ -67,8 +68,20 @@ public:
     }
 };
 
+template<typename V>
+struct extract_value {
+    typedef std::void_t<V> value_type;
+};
+
+template<typename V>
+struct extract_value<std::optional<V>> {
+    typedef V value_type;
+};
+
+
 template<class T, class Value = QVariant>
 class FieldColumnAdapter : public ColumnAdapter<T> {
+    typedef extract_value<Value>::value_type optional_value;
     Value T::* const field;
 
 public:
@@ -80,27 +93,21 @@ public:
 
     virtual QVariant rowValue(const T* row) const override {
         auto value = row->*field;
-        if constexpr (std::is_same_v<Value, QVariant>) return value;
-        if constexpr (std::is_same_v<Value, int>) return value;
-        if constexpr (std::is_same_v<Value, optional_id>) return domain::toQVaraint(value);
-        if constexpr (std::is_same_v<Value, std::optional<QDecNumber>>) {
+        if constexpr (std::is_convertible_v<Value, QVariant>) return value;
+        else if constexpr (std::is_convertible_v<optional_value, QVariant> || std::is_same_v<optional_value, QDecNumber>) {
             return value.has_value() ? QVariant::fromValue(value.value()) : QVariant{};
-        }
-        if constexpr (std::is_same_v<Value, QDecNumber>) {
+        } else if constexpr (std::is_same_v<Value, QDecNumber>) {
             return value.isNaN() ? QVariant{} : QVariant::fromValue(value);
-        }
+        } else static_assert(false, "unsupported value type for FieldColumnAdapter");
     }
 
     virtual void setValue(T *row, QVariant value) const  override {
         if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
         if constexpr (std::is_same_v<Value, QVariant>) row->*field = value;
-        else if constexpr (std::is_same_v<Value, int>) row->*field = value.toInt();
-        else if constexpr (std::is_same_v<Value, optional_id>) row->*field = domain::toOptionalId(value);
-        else if constexpr (std::is_same_v<Value, QDecNumber>) row->*field = value.value<QDecNumber>();
-        else if constexpr (std::is_same_v<Value, std::optional<QDecNumber>>) {
+        else if constexpr (std::is_convertible_v<optional_value, QVariant> || std::is_same_v<optional_value, QDecNumber>) {
             if (value.isNull()) (row->*field).reset();
-            else (row->*field).emplace(value.value<QDecNumber>());
-        } else static_assert(false, "unsupported value type for FieldColumnAdapter");
+            else (row->*field).emplace(value.value<optional_value>());
+        } else row->*field = value.value<Value>();
     }
 };
 

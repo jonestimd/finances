@@ -93,8 +93,8 @@ void TransactionStore::sort(QList<domain_id> &txIds) const {
 }
 
 bool TransactionStore::lessThan(domain_id txId1, domain_id txId2) const {
-    auto d1 = value(txId1)->date.toDate();
-    auto d2 = value(txId2)->date.toDate();
+    auto d1 = value(txId1)->date;
+    auto d2 = value(txId2)->date;
     return d1 == d2 ? txId1 < txId2 : d1 < d2;
 }
 

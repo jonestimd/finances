@@ -16,8 +16,6 @@ namespace domain {
         return copies;
     }
 
-    QVariant toQVaraint(const optional_id& id);
-    optional_id toOptionalId(const QVariant& id);
     QString toString(const optional_id& id);
 }
 

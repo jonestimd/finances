@@ -6,7 +6,7 @@ StockSplit::StockSplit() {}
 StockSplit::StockSplit(const QSqlRecord &record)
     : BaseDomain{record}
     , securityId{sql::getValue(record, "security_id").toLongLong()}
-    , date{record.value("date").toDate()}
+    , date{sql::getDate(record, "date").value()}
     , sharesIn{sql::decimalValue(record, "shares_in").value()}
     , sharesOut{sql::decimalValue(record, "shares_out").value()}
 {}

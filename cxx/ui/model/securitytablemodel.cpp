@@ -20,7 +20,7 @@ SecurityTableModel::SecurityTableModel(SecurityStore *store)
             new EnumColumnAdapter<Security, SecurityType>(tr("Type"), &Security::securityType, &SecurityType::values, requiredValidatorFactory, true),
             new NumberColumnAdapter<Security, int>(tr("Transactions"), &Security::transactions),
             new AmountColumnAdapter<Security, QDecNumber>(tr("Shares"), &Security::shares, securityShares, false),
-            new FormatColumnAdapter<Security>{tr("First Acquired"), &Security::firstAcquired, dateFormat, false},
+            new FormatColumnAdapter<Security, std::optional<QDate>>{tr("First Acquired"), &Security::firstAcquired, dateFormat, false},
             new AmountColumnAdapter<Security, QDecNumber>(tr("Cost Basis"), &Security::costBasis, dollarFormat, false),
             new AmountColumnAdapter<Security, QDecNumber>(tr("Dividends"), &Security::dividends, dollarFormat, false),
         },

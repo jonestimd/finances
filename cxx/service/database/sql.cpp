@@ -22,6 +22,14 @@ std::optional<qlonglong> sql::getInt(QSqlRecord record, const char *name) {
     return field.value().toLongLong();
 }
 
+QString sql::getString(QSqlRecord record, const char* name) {
+    return record.value(name).toString();
+}
+
+std::optional<QDate> sql::getDate(QSqlRecord record, const char *name) {
+    return record.field(name).isNull() ? std::optional<QDate>{} : std::optional{record.value(name).toDate()};
+}
+
 std::optional<QDecNumber> sql::decimalValue(const QSqlRecord &record, const char *name) {
     if (record.contains(name) && !record.isNull(name)) {
         return QDecNumber(record.field(name).value().toByteArray().constData());

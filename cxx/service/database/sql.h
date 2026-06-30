@@ -7,6 +7,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 #include <QLoggingCategory>
+#include <QDate>
 
 Q_DECLARE_LOGGING_CATEGORY(sqlLogger)
 
@@ -14,6 +15,10 @@ namespace sql {
     QVariant getValue(QSqlRecord record, const char *name, QVariant defaultValue = {});
 
     std::optional<qlonglong> getInt(QSqlRecord record, const char *name);
+
+    QString getString(QSqlRecord record, const char* name);
+
+    std::optional<QDate> getDate(QSqlRecord record, const char *name);
 
     std::optional<QDecNumber> decimalValue(const QSqlRecord &record, const char* name);
 

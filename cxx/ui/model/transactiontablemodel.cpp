@@ -57,13 +57,13 @@ namespace transactiontablemodel {
         }
     };
 
-    class TxDateColumnAdapter : public FormatColumnAdapter<Transaction> {
+    class TxDateColumnAdapter : public FormatColumnAdapter<Transaction, QDate> {
     public:
         TxDateColumnAdapter(const QString &title) : FormatColumnAdapter{title, &Transaction::date, dateFormat, true} {}
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (role == finances::SortRole) {
-                return QString("%1:%2").arg(row->date.toDate().toString(Qt::ISODate)).arg(row->id.value(), 16, 16);
+                return QString("%1:%2").arg(row->date.toString(Qt::ISODate)).arg(row->id.value(), 16, 16);
             }
             return FormatColumnAdapter::value(row, index, current, role);
         }

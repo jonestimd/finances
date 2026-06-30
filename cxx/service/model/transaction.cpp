@@ -10,7 +10,7 @@ Transaction::Transaction(domain_id accountId) : accountId{accountId} {}
 Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
     , accountId{record.field("account_id").value().toLongLong()}
-    , date{record.field("date").value()}
+    , date{sql::getDate(record, "date").value()}
     , payeeId{sql::getInt(record, "payee_id")}
     , securityId{sql::getInt(record, "security_id")}
     , referenceNumber{sql::getValue(record, "reference_number")}

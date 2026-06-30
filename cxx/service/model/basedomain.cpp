@@ -4,14 +4,6 @@
 #include <QSqlField>
 
 namespace domain {
-    QVariant toQVaraint(const optional_id& id) {
-        return id.has_value() ? QVariant{id.value()} : QVariant{};
-    }
-
-    optional_id toOptionalId(const QVariant& id) {
-        return id.isValid() ? optional_id{id.toLongLong()} : optional_id{};
-    }
-
     QString toString(const optional_id& id) {
         return id.has_value() ? QString::number(id.value()) : "";
     }
@@ -60,7 +52,7 @@ TransactionTypeId::TransactionTypeId(bool transfer, const optional_id& id)
 
 TransactionTypeId::TransactionTypeId(bool transfer, const QVariant& id)
     : transfer{transfer}
-    , id{domain::toOptionalId(id)}
+    , id{id.isNull() ? optional_id{} : id.toLongLong()}
 {}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}
