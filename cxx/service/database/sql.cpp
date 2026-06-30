@@ -37,7 +37,7 @@ std::optional<QDecNumber> sql::decimalValue(const QSqlRecord &record, const char
     return {};
 }
 
-QVariant sql::yesNoValue(QSqlRecord record, const char *name) {
+bool sql::yesNoValue(QSqlRecord record, const char *name) {
     return getValue(record, name).toString() == "Y";
 }
 

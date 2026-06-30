@@ -12,7 +12,7 @@ public:
     QVariant description;
     QVariant type{AccountType::bank.code};
     QVariant accountNumber;
-    QVariant closed{false};
+    bool closed{false};
     mutable int transactions{0};
     QDecNumber balance{0};
     QVariant currency;

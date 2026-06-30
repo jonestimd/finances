@@ -19,7 +19,7 @@ public:
     optional_id securityId;
     QVariant referenceNumber;
     QVariant memo;
-    QVariant cleared{false};
+    bool cleared{false};
     QList<domain_id> detailIds{};
 
     Transaction();

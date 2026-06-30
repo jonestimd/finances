@@ -108,7 +108,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
         new FieldColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore, optional_id>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
-        new FieldColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
+        new FieldColumnAdapter<Transaction, bool>(tr(CLEARED_TITLE), &Transaction::cleared),
         new BalanceColumnAdapter(tr(BALANCE_TITLE), this),
     }}
     , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore, accountId)}
@@ -221,7 +221,7 @@ void TransactionTableModel::updateBalances() {
             auto amount = store->amount(id);
             balance += amount;
             balances.insert(id, QVariant::fromValue(balance));
-            if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
+            if (store->value(id)->cleared) clearedBalance_ += amount;
         }
         emit dataChanged(index(0, balanceColumn), index(rowCount()-1, balanceColumn));
         emit dataChanged(index(0, payeeColumn), index(rowCount()-1, payeeColumn));

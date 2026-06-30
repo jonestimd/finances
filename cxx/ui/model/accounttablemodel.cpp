@@ -49,7 +49,7 @@ AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
     : PodTableModel<Account, AccountStore>{
         store,
         QList<ColumnAdapter<Account>*>{
-            new FieldColumnAdapter<Account>(tr("Closed"), &Account::closed),
+            new FieldColumnAdapter<Account, bool>(tr("Closed"), &Account::closed),
             new RelationColumnAdapter<Account, Company, CompanyStore, optional_id>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
             new FieldColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),

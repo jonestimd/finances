@@ -10,8 +10,8 @@ class Category : public TransactionType {
 public:
     QVariant amountType{DEBIT_DEPOSIT};
     QVariant description;
-    QVariant income{false};
-    QVariant security{false};
+    bool income{false};
+    bool security{false};
     optional_id parentId{};
     QList<domain_id> childIds{};
     mutable int details{0};

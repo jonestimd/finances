@@ -22,7 +22,7 @@ namespace sql {
 
     std::optional<QDecNumber> decimalValue(const QSqlRecord &record, const char* name);
 
-    QVariant yesNoValue(QSqlRecord record, const char *name);
+    bool yesNoValue(QSqlRecord record, const char *name);
 
     void bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value);
 

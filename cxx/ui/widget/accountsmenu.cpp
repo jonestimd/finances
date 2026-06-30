@@ -69,7 +69,7 @@ void AccountsMenu::updateMenu() {
     connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
     QHash<domain_id, QMenu*> companyMenus{};
     store->forEachEntry([&](domain_id id, const Account* account) {
-        if (hideClosed && account->closed.toBool()) return;
+        if (hideClosed && account->closed) return;
         if (!account->companyId.has_value()) {
             insertByName(this, new AccountAction(this, window, account));
         } else {

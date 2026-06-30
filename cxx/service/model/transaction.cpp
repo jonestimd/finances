@@ -36,7 +36,7 @@ QString Transaction::toString() const {
            % "},payeeId{" % domain::toString(payeeId)
            % "},securityId{" % domain::toString(securityId)
            % "},memo{" % memo.toString()
-           % "},cleared{" % cleared.toString() % "}";
+           % "},cleared{" % (cleared ? "Y" : "N") % "}";
 }
 
 PendingTransaction::PendingTransaction() {}
