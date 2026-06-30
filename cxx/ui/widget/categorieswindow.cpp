@@ -51,12 +51,12 @@ void CategoriesWindow::setCategories(const QList<domain_id> categoryIds) {
 
 void CategoriesWindow::reparent() {
     auto category = model()->getRow(entityView.selectedIndex());
-    auto name = category->name.toString();
+    auto name = category->name;
     QList<const NamedEntity*> options;
     QHash<domain_id, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
-        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);
+        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name, name);
         if (option != category && !store->isAncestor(id, category->id.value())) {
             options.append(option);
             if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.value(), message);

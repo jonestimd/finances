@@ -6,7 +6,7 @@ TransactionGroup::TransactionGroup() : NamedEntity() {}
 
 TransactionGroup::TransactionGroup(const QSqlRecord &record)
     : NamedEntity(record)
-    , description{sql::getValue(record, "description")}
+    , description{sql::getString(record, "description")}
     , details{sql::getValue(record, "details").toInt()}
 {}
 

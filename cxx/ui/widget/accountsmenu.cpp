@@ -5,6 +5,10 @@
 namespace accountsmenu {
 #   define HIDE_CLOSED_SETTING "hide.closed.accounts"
 
+    static QString escapeName(const QString name) {
+        return QString{name}.replace('&', "&&");
+    }
+
     class HideClosedAction : public QAction {
     public:
         HideClosedAction() : QAction{tr("Hide Closed Accounts")} {
@@ -23,7 +27,7 @@ namespace accountsmenu {
         AccountAction(AccountsMenu *menu, TransactionsWindow *window, const Account *account)
             : QAction(menu)
         {
-            setText(account->name.toString().replace('&', "&&"));
+            setText(escapeName(account->name));
             connect(this, &QAction::triggered, this, [=]() {
                 window->showAccount(account->id.value());
             });
@@ -77,7 +81,7 @@ void AccountsMenu::updateMenu() {
             if (!companyMenu) {
                 auto company = store->companyStore.value(account->companyId.value());
                 if (company) {
-                    companyMenu = new QMenu(company->name.toString().replace('&', "&&"), this);
+                    companyMenu = new QMenu(escapeName(company->name), this);
                     companyMenus.insert(company->id.value(), companyMenu);
                     insertByName(this, companyMenu);
                 }

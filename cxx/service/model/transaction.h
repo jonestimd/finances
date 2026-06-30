@@ -17,8 +17,8 @@ public:
     QDate date;
     optional_id payeeId;
     optional_id securityId;
-    QVariant referenceNumber;
-    QVariant memo;
+    QString referenceNumber;
+    QString memo;
     bool cleared{false};
     QList<domain_id> detailIds{};
 

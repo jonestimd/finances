@@ -40,7 +40,7 @@ QList<domain_id> getEntityIds(const QList<T*> items) {
 
 class NamedEntity : public BaseDomain {
 public:
-    QVariant name;
+    QString name;
 
     NamedEntity() = default;
     NamedEntity(const QSqlRecord &record, const char *nameColumn = "name");
@@ -72,8 +72,6 @@ struct TransactionTypeId {
     const optional_id id;
 
     TransactionTypeId(bool transfer = false, const optional_id& id = {});
-    /** @deprecated */
-    TransactionTypeId(bool transfer, const QVariant& id = {});
     TransactionTypeId(const TransactionType &tt);
     TransactionTypeId(const TransactionType *tt);
 };

@@ -158,7 +158,7 @@ private:
         }
     }
 
-    void verifyTransaction(const Transaction* tx, QVariant refNumber, const optional_id& payeeId, QVariant description) {
+    void verifyTransaction(const Transaction* tx, QString refNumber, const optional_id& payeeId, QString description) {
         QCOMPARE(tx->referenceNumber, refNumber);
         QCOMPARE(tx->payeeId, payeeId);
         QCOMPARE(tx->memo, description);
@@ -170,7 +170,7 @@ private:
 
     void verifyPendingTransaction(const TransactionsWindow *window) {
         auto pendingTx = window->model()->unsavedAdds().at(0);
-        verifyTransaction(pendingTx, QVariant{}, {}, QVariant{});
+        verifyTransaction(pendingTx, {}, {}, {});
         QCOMPARE(pendingTx->details.size(), 1);
         verifyDetail(pendingTx->details.at(0), {}, {}, QVariant{});
     }
@@ -331,7 +331,7 @@ private slots:
         QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
-        verifyTransaction(tx, QVariant{}, payeeId, "description");
+        verifyTransaction(tx, {}, payeeId, "description");
         verifyDetail(tx->detailIds.at(0), {}, accountId, "-2.34");
         verifyPendingTransaction(holder.window);
         verifyPendingTransaction(holder2.window);
@@ -358,7 +358,7 @@ private slots:
         QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
         auto tx = holder2.model()->getRow(holder2.index(ALT_INITIAL_TRANSACTION_COUNT, 0));
-        verifyTransaction(tx, QVariant{}, payeeId, QVariant{});
+        verifyTransaction(tx, {}, payeeId, {});
         verifyDetail(tx->detailIds.at(0), {}, accountId, "-98.76");
         QCOMPARE(dataStore->categoryStore->value(categoryId)->details, categoryDetailCount-1);
     }

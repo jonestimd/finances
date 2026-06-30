@@ -51,7 +51,7 @@ void CompaniesWindow::setCompanies(const QList<domain_id> companyIds) {
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
     QStringList nonEmpty;
     for (auto i : indexes) {
-        if (model.getRow(i)->accounts > 0) nonEmpty.append(model.getRow(i)->name.toString());
+        if (model.getRow(i)->accounts > 0) nonEmpty.append(model.getRow(i)->name);
     }
     // delete is disabled for non-empty company, so the dialog should never be displayed
     return dialog::confirmDelete(this, tr("Confirm delete companies"),

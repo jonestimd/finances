@@ -20,13 +20,13 @@ BaseDomain::BaseDomain(const QSqlRecord &record)
 
 NamedEntity::NamedEntity(const QSqlRecord &record, const char *nameColumn)
     : BaseDomain{record}
-    , name{record.field(nameColumn).value().toString()}
+    , name{record.value(nameColumn).toString()}
 {}
 
 NamedEntity::NamedEntity(const QString &name) : BaseDomain{}, name{name} {}
 
 QString NamedEntity::getName(const NamedEntity *entity) {
-    return entity->name.toString();
+    return entity->name;
 }
 
 TransactionType::TransactionType(bool transfer) : NamedEntity{}, transfer{transfer} {}
@@ -48,11 +48,6 @@ const Category *TransactionType::getCategory(const QVariant &value) {
 TransactionTypeId::TransactionTypeId(bool transfer, const optional_id& id)
     : transfer{transfer}
     , id{id}
-{}
-
-TransactionTypeId::TransactionTypeId(bool transfer, const QVariant& id)
-    : transfer{transfer}
-    , id{id.isNull() ? optional_id{} : id.toLongLong()}
 {}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}

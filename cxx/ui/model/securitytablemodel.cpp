@@ -15,7 +15,7 @@ SecurityTableModel::SecurityTableModel(SecurityStore *store)
     : PodTableModel{
         store,
         QList<ColumnAdapter<Security>*>{
-            new FieldColumnAdapter<Security>{tr("Name"), &Security::name, true, new UniqueValidatorFactory(SECURITY_NAME_COLUMN)},
+            new FieldColumnAdapter<Security, QString>{tr("Name"), &Security::name, true, new UniqueValidatorFactory(SECURITY_NAME_COLUMN)},
             new FieldColumnAdapter<Security>{tr("Symbol"), &Security::symbol},
             new EnumColumnAdapter<Security, SecurityType>(tr("Type"), &Security::securityType, &SecurityType::values, requiredValidatorFactory, true),
             new NumberColumnAdapter<Security, int>(tr("Transactions"), &Security::transactions),

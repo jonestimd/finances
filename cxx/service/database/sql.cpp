@@ -45,13 +45,18 @@ void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<qlon
     bindValue(query, name, value.has_value() ? value.value() : QVariant{});
 }
 
+void sql::bindValue(QSqlQuery &query, const char *name, const QString &value) {
+    query.bindValue(name, value.isEmpty() ? QVariant{} : value);
+    qCDebug(sqlLogger) << "-" << name << "=" << (value.isEmpty() ? "{null}" : value);
+}
+
 void sql::bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
     query.bindValue(name, value);
     qCDebug(sqlLogger) << "-" << name << "=" << (value);
 }
 
 void sql::bindValue(QSqlQuery &query, const char *name, const QDecNumber& value) {
-    query.bindValue(name, QString{value.toString()});
+    query.bindValue(name, value.isNaN() ? QVariant{} : QString{value.toString()});
     qCDebug(sqlLogger) << "-" << name << "=" << value.toString();
 }
 

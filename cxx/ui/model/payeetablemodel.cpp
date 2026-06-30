@@ -9,7 +9,7 @@ PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore)
     : PodTableModel<Payee, PayeeStore> {
         payeeStore,
         QList<ColumnAdapter<Payee>*>{
-            new FieldColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
+            new FieldColumnAdapter<Payee, QString>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
             new NumberColumnAdapter<Payee, int>(tr("Transactions"), &Payee::transactions),
         },
     }

@@ -20,7 +20,7 @@ const QSet<domain_id> CategoryStore::rootIds() const {
 QString CategoryStore::displayName(domain_id categoryId) const {
     auto category = value(categoryId);
     if (category) {
-        auto name = category->name.toString();
+        auto name = category->name;
         if (category->parentId.has_value()) {
             return displayName(category->parentId.value()) + "\u25ba" + name;
         }
@@ -40,7 +40,7 @@ bool CategoryStore::hasChild(domain_id categoryId, const QVariant &name) const {
     auto category = value(categoryId);
     auto lowerName = name.toString().toLower();
     for (const auto childId : category->childIds) {
-        if (value(childId)->name.toString().toLower() == lowerName) return true;
+        if (value(childId)->name.toLower() == lowerName) return true;
     }
     return false;
 }

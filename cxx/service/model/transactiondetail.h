@@ -12,7 +12,7 @@ public:
     optional_id exchangeAssetId;
     QDecNumber amount{"NaN"};
     std::optional<QDecNumber> assetQuantity;
-    QVariant memo;
+    QString memo;
 
     optional_id transferAccountId;
 

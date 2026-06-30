@@ -27,8 +27,8 @@ CategoryTableModel::CategoryTableModel(DataStore *ds)
     : PodItemModel<Category, CategoryStore> {
         ds->categoryStore,
         QList<ColumnAdapter<Category>*>{
-            new FieldColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
-            new FieldColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
+            new FieldColumnAdapter<Category, QString>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
+            new FieldColumnAdapter<Category, QString>(tr("Description"), &Category::description, trimmedValidatorFactory),
             new EnumColumnAdapter<Category, AmountType>(tr("Amount Type"), &Category::amountType, &AmountType::values, requiredValidatorFactory, true),
             new NumberColumnAdapter<Category, int>(tr("Transactions"), &Category::details),
             new FieldColumnAdapter<Category, bool>(tr("Income"), &Category::income),

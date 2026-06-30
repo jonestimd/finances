@@ -13,8 +13,8 @@ Transaction::Transaction(const QSqlRecord &record)
     , date{sql::getDate(record, "date").value()}
     , payeeId{sql::getInt(record, "payee_id")}
     , securityId{sql::getInt(record, "security_id")}
-    , referenceNumber{sql::getValue(record, "reference_number")}
-    , memo{sql::getValue(record, "memo")}
+    , referenceNumber{sql::getString(record, "reference_number")}
+    , memo{sql::getString(record, "memo")}
     , cleared{sql::yesNoValue(record, "cleared")}
     , detailIds(mapping::jsonToIntList(record.field("detail_ids").value()))
 {}
@@ -32,10 +32,10 @@ Transaction *Transaction::newTransfer(domain_id accountId) const {
 QString Transaction::toString() const {
     return QString("accountId{") % QString::number(accountId)
            % "},date{" % date.toString()
-           % "},referenceNumber{" % referenceNumber.toString()
+           % "},referenceNumber{" % referenceNumber
            % "},payeeId{" % domain::toString(payeeId)
            % "},securityId{" % domain::toString(securityId)
-           % "},memo{" % memo.toString()
+           % "},memo{" % memo
            % "},cleared{" % (cleared ? "Y" : "N") % "}";
 }
 

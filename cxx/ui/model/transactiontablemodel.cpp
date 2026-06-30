@@ -103,9 +103,9 @@ using namespace transactiontablemodel;
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id accountId)
     : PodItemModel{dataStore->transactionStore, {
         new TxDateColumnAdapter{tr(DATE_TITLE)},
-        new FieldColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
+        new FieldColumnAdapter<Transaction, QString>(tr(REF_TITLE), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore, optional_id>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
-        new FieldColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
+        new FieldColumnAdapter<Transaction, QString>(tr("Description"), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore, optional_id>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
         new FieldColumnAdapter<Transaction, bool>(tr(CLEARED_TITLE), &Transaction::cleared),
@@ -116,7 +116,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
         new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore, optional_id>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
-        new FieldColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
+        new FieldColumnAdapter<TransactionDetail, QString>(tr("Memo"), &TransactionDetail::memo),
         new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),
         new DetailAmountColumnAdapter(tr("Amount")),
         new EmptyColumnAdapter(),

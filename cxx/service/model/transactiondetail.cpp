@@ -15,7 +15,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , exchangeAssetId{sql::getInt(record, "exchange_asset_id")}
     , amount{sql::decimalValue(record, "amount").value()}
     , assetQuantity{sql::decimalValue(record, "asset_quantity")}
-    , memo{sql::getValue(record, "memo")}
+    , memo{sql::getString(record, "memo")}
     , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}
 

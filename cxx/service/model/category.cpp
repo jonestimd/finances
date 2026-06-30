@@ -8,7 +8,7 @@ Category::Category() : TransactionType{false} {}
 Category::Category(const QSqlRecord &record)
     : TransactionType(false, record, "code")
     , amountType{sql::getValue(record, "amount_type", DEBIT_DEPOSIT)}
-    , description{sql::getValue(record, "description")}
+    , description{sql::getString(record, "description")}
     , income{sql::yesNoValue(record, "income")}
     , security{sql::yesNoValue(record, "security")}
     , parentId{sql::getInt(record, "parent_id")}

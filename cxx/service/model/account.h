@@ -9,13 +9,13 @@
 class Account : public TransactionType {
 public:
     optional_id companyId;
-    QVariant description;
+    QString description;
     QVariant type{AccountType::bank.code};
-    QVariant accountNumber;
+    QString accountNumber;
     bool closed{false};
     mutable int transactions{0};
     QDecNumber balance{0};
-    QVariant currency;
+    QString currency;
 
     Account();
     Account(const QSqlRecord &record);

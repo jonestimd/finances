@@ -9,7 +9,7 @@
 class Category : public TransactionType {
 public:
     QVariant amountType{DEBIT_DEPOSIT};
-    QVariant description;
+    QString description;
     bool income{false};
     bool security{false};
     optional_id parentId{};
