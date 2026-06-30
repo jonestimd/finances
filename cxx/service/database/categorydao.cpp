@@ -118,7 +118,7 @@ void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {
     NamedEntityDao::bindUpdateValues(query, category);
     sql::bindValue(query, ":parentId", category->parentId);
     sql::bindValue(query, ":description", category->description);
-    sql::bindValue(query, ":amountType", category->amountType);
+    sql::bindValue(query, ":amountType", category->amountType->code);
     sql::bindValue(query, ":income", mapping::toYesNo(category->income));
     sql::bindValue(query, ":security", mapping::toYesNo(category->security));
 }
@@ -127,7 +127,7 @@ void CategoryDao::bindInsertValues(QSqlQuery &query, Category *category) {
     NamedEntityDao::bindInsertValues(query, category);
     sql::bindValue(query, ":parentId", category->parentId);
     sql::bindValue(query, ":description", category->description);
-    sql::bindValue(query, ":amountType", category->amountType);
+    sql::bindValue(query, ":amountType", category->amountType->code);
     sql::bindValue(query, ":income", mapping::toYesNo(category->income));
     sql::bindValue(query, ":security", mapping::toYesNo(category->security));
 }

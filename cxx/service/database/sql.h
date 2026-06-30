@@ -22,9 +22,17 @@ namespace sql {
 
     std::optional<QDecNumber> decimalValue(const QSqlRecord &record, const char* name);
 
+    template<class Enum>
+    const Enum* enumValue(const QSqlRecord& record, const char* name, const QHash<const QString, const Enum*> values) {
+        if (record.field(name).isNull()) return nullptr;
+        return values.value(record.value(name).toString());
+    }
+
     bool yesNoValue(QSqlRecord record, const char *name);
 
     void bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value);
+
+    void bindValue(QSqlQuery &query, const char *name, const char *value);
 
     void bindValue(QSqlQuery &query, const char *name, const QString &value);
 

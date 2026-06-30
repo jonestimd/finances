@@ -80,7 +80,7 @@ QDecNumber TransactionStore::amount(domain_id transactionId) const {
         if (detail->categoryId.has_value()) {
             auto category = categoryStore->value(detail->categoryId.value());
             if (!category) qCDebug(logger, "amount: category not loaded: %lld", detail->categoryId.value());
-            else if (!AmountType::values.value(category->amountType.toString())->affectsBalance) continue;
+            else if (!category->amountType->affectsBalance) continue;
         }
         if (!detail->amount.isNaN()) total += detail->amount;
     }

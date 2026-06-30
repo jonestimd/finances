@@ -98,6 +98,8 @@ public:
             return value.has_value() ? QVariant::fromValue(value.value()) : QVariant{};
         } else if constexpr (std::is_same_v<Value, QDecNumber>) {
             return value.isNaN() ? QVariant{} : QVariant::fromValue(value);
+        } else if constexpr (std::is_convertible_v<Value, const EnumValue*>) {
+            return value ? QVariant::fromValue<const EnumValue*>(value) : QVariant{};
         } else static_assert(false, "unsupported value type for FieldColumnAdapter");
     }
 

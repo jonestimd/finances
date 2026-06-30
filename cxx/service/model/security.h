@@ -7,7 +7,7 @@
 
 class Security : public Asset {
 public:
-    QVariant securityType{SecurityType::stock.code};
+    const SecurityType* securityType{&SecurityType::stock};
     std::optional<QDate> firstAcquired{};
     QDecNumber shares{0};
     QDecNumber costBasis{0};

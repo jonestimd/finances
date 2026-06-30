@@ -7,7 +7,7 @@ Category::Category() : TransactionType{false} {}
 
 Category::Category(const QSqlRecord &record)
     : TransactionType(false, record, "code")
-    , amountType{sql::getValue(record, "amount_type", DEBIT_DEPOSIT)}
+    , amountType{sql::enumValue(record, "amount_type", AmountType::values)}
     , description{sql::getString(record, "description")}
     , income{sql::yesNoValue(record, "income")}
     , security{sql::yesNoValue(record, "security")}

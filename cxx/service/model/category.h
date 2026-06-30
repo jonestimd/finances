@@ -8,7 +8,7 @@
 
 class Category : public TransactionType {
 public:
-    QVariant amountType{DEBIT_DEPOSIT};
+    const AmountType* amountType{&AmountType::debitDeposit};
     QString description;
     bool income{false};
     bool security{false};

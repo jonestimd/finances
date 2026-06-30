@@ -199,7 +199,7 @@ void save(DbTestCase *test, const QString &driver, Entity *entity, QList<const E
 Account *DbTestCase::addAccount(const QString &driver, const QString &name, const QString &type, const optional_id companyId) {
     Account *account = new Account;
     account->name = name;
-    account->type = type;
+    account->type = AccountType::values.value(type);
     account->companyId = companyId;
     save<Account, AccountDao, &DbTestCase::accountDao>(this, driver, account, accounts);
     return account;
@@ -223,7 +223,7 @@ domain_id DbTestCase::addPayee(const QString &driver, const QString &name) {
 Security* DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
     Security* security = new Security();
     security->name = name;
-    security->securityType = type;
+    security->securityType = SecurityType::values.value(QString{type});
     save<Security, SecurityDao, &DbTestCase::securityDao>(this, driver, security, securities);
     return security;
 }

@@ -10,7 +10,7 @@ class Account : public TransactionType {
 public:
     optional_id companyId;
     QString description;
-    QVariant type{AccountType::bank.code};
+    const AccountType* type{&AccountType::bank};
     QString accountNumber;
     bool closed{false};
     mutable int transactions{0};

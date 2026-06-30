@@ -6,12 +6,12 @@
 
 class Asset : public NamedEntity {
 public:
-    QVariant type;
+    const AssetType* type{&AssetType::security};
     QVariant scale;
     QVariant symbol{};
     mutable int transactions{0};
 
-    Asset(const AssetType &type);
+    Asset(const AssetType* type);
     Asset(const QSqlRecord &record);
 
     bool deletable() const;

@@ -39,7 +39,7 @@ const QString SharesValidatorFactory::isValid(const QModelIndex &index, QString 
 bool SharesValidatorFactory::isRequired(const QModelIndex &index) const {
     if (index.parent().isValid()) {
         auto category = TransactionType::getCategory(index.siblingAtColumn(categoryColumnIndex).data(Qt::EditRole));
-        if (category) return AmountType::valueOf(category->amountType)->sharesRequied;
+        if (category) return category->amountType->sharesRequied;
     }
     return false;
 }

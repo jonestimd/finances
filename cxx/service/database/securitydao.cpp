@@ -175,7 +175,7 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     query.prepare(insertSecurityQuery);
     for (auto security : std::as_const(result)) {
         query.bindValue(":id", security->id.value());
-        query.bindValue(":type", security->securityType);
+        query.bindValue(":type", security->securityType->code);
         sql::exec(query, className, "insert security");
     }
     return result;
@@ -197,7 +197,7 @@ QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Securit
     query.prepare(updateSecuritySql);
     for (auto security : securities) {
         query.bindValue(":id", security->id.value());
-        query.bindValue(":securityType", security->securityType);
+        query.bindValue(":securityType", security->securityType->code);
     }
     return updates;
 }
@@ -209,7 +209,7 @@ void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {
 
  void SecurityDao::bindInsertValues(QSqlQuery &query, Security *security) {
     NamedEntityDao::bindInsertValues(query, security);
-    query.bindValue(":type", security->type);
+    query.bindValue(":type", security->type->code);
     query.bindValue(":symbol", security->symbol);
     query.bindValue(":scale", security->scale);
 }

@@ -45,6 +45,10 @@ void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<qlon
     bindValue(query, name, value.has_value() ? value.value() : QVariant{});
 }
 
+void sql::bindValue(QSqlQuery &query, const char *name, const char *value) {
+    bindValue(query, name, QString{value});
+}
+
 void sql::bindValue(QSqlQuery &query, const char *name, const QString &value) {
     query.bindValue(name, value.isEmpty() ? QVariant{} : value);
     qCDebug(sqlLogger) << "-" << name << "=" << (value.isEmpty() ? "{null}" : value);
