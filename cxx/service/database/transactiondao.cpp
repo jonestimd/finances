@@ -113,7 +113,7 @@ void TransactionDao::createTable(const QSqlDatabase &db) const {
 QHash<domain_id, const Transaction*> TransactionDao::getAll(const QSqlDatabase &db, domain_id accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountSql);
-    query.bindValue(":accountId", accountId);
+    sql::bindValue(query, ":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);
 }
