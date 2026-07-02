@@ -14,7 +14,7 @@ public:
 
     virtual void createTable(const QSqlDatabase &db) const override;
 
-    QHash<qlonglong, const Transaction*> getAll(const QSqlDatabase &db, qlonglong accountId);
+    QHash<domain_id, const Transaction*> getAll(const QSqlDatabase &db, domain_id accountId);
 
     using EntityDao::add;
     /**
@@ -22,12 +22,12 @@ public:
      * @return `adds` with updated details.
      */
     const QList<PendingTransaction*> add(QSqlDatabase &db, const QList<PendingTransaction*> adds, const QString &user);
+    
+    void setAccountId(const QSqlDatabase& db, domain_id transactionId, domain_id oldAccountId, domain_id newAccountId, const QString& user);
 
-    void setAccountId(const QSqlDatabase& db, const QVariant& transactionId, const QVariant& oldAccountId, const QVariant& newAccountId, const QString& user);
-
-    void replacePayee(const QSqlDatabase& db, const Payee* payee, const QVariant newPayeeId, const QString& user);
-
-    QList<QVariant> removeEmpty(QSqlDatabase &db);
+    void replacePayee(const QSqlDatabase& db, const Payee* payee, const optional_id newPayeeId, const QString& user);
+    
+    QList<domain_id> removeEmpty(QSqlDatabase &db);
     
     Transaction *addRelatedTransaction(QSqlDatabase &db, TransactionDetail *detail, const QString &user);
 

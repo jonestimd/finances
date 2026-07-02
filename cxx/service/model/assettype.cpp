@@ -6,7 +6,7 @@ AssetType::AssetType(const char *code, const QString name, qint16 defaultScale)
     values[code] = this;
 }
 
-QHash<QString, const AssetType*> AssetType::values;
+QHash<const QString, const AssetType*> AssetType::values;
 
 const AssetType AssetType::currency(CURRENCY_ASSET, tr("Currency"), 2);
 const AssetType AssetType::security(SECURITY_ASSET, tr("Security"), 6);

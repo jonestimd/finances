@@ -72,18 +72,18 @@ AccountDao::AccountDao(const QString &dbType)
 
 void AccountDao::bindUpdateValues(QSqlQuery &query, Account *account) {
     NamedEntityDao::bindUpdateValues(query, account);
-    SQL_BIND_VALUE(query, ":companyId", account->companyId);
-    SQL_BIND_VALUE(query, ":description", account->description);
-    SQL_BIND_VALUE(query, ":type", account->type);
-    SQL_BIND_VALUE(query, ":accountNo", account->accountNumber);
-    SQL_BIND_VALUE(query, ":closed", mapping::toYesNo(account->closed));
+    sql::bindValue(query, ":companyId", account->companyId);
+    sql::bindValue(query, ":description", account->description);
+    sql::bindValue(query, ":type", account->type->code);
+    sql::bindValue(query, ":accountNo", account->accountNumber);
+    sql::bindValue(query, ":closed", mapping::toYesNo(account->closed));
 }
 
 void AccountDao::bindInsertValues(QSqlQuery &query, Account *account) {
     NamedEntityDao::bindInsertValues(query, account);
-    SQL_BIND_VALUE(query, ":companyId", account->companyId);
-    SQL_BIND_VALUE(query, ":description", account->description);
-    SQL_BIND_VALUE(query, ":type", account->type);
-    SQL_BIND_VALUE(query, ":accountNo", account->accountNumber);
-    SQL_BIND_VALUE(query, ":closed", mapping::toYesNo(account->closed));
+    sql::bindValue(query, ":companyId", account->companyId);
+    sql::bindValue(query, ":description", account->description);
+    sql::bindValue(query, ":type", account->type->code);
+    sql::bindValue(query, ":accountNo", account->accountNumber);
+    sql::bindValue(query, ":closed", mapping::toYesNo(account->closed));
 }

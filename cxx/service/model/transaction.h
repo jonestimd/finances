@@ -5,28 +5,30 @@
 #include "bulkupdate.h"
 #include "transactiondetail.h"
 
+#include <QDate>
+
 class Transaction;
 class TransactionDetail;
 class TransactionDetailUpdate;
 
 class Transaction : public BaseDomain {
 public:
-    QVariant accountId;
-    QVariant date;
-    QVariant payeeId;
-    QVariant securityId;
-    QVariant referenceNumber;
-    QVariant memo;
-    QVariant cleared{false};
-    QList<QVariant> detailIds{};
+    domain_id accountId;
+    QDate date;
+    optional_id payeeId;
+    optional_id securityId;
+    QString referenceNumber;
+    QString memo;
+    bool cleared{false};
+    QList<domain_id> detailIds{};
 
     Transaction();
-    Transaction(const QVariant &accountId);
+    Transaction(domain_id accountId);
     Transaction(const QSqlRecord &record);
 
     bool deletable() const;
 
-    Transaction *newTransfer(const QVariant &accountId) const;
+    Transaction *newTransfer(domain_id accountId) const;
 
     QString toString() const;
 };
@@ -36,7 +38,7 @@ public:
     QList<TransactionDetail*> details{};
 
     PendingTransaction();
-    PendingTransaction(const QVariant &accountId);
+    PendingTransaction(domain_id accountId);
     PendingTransaction(const PendingTransaction &that);
     ~PendingTransaction();
 
@@ -66,16 +68,16 @@ struct TransactionsData {
     QList<const Transaction*> transactions{};
     QList<const TransactionDetail*> details{};
     /** @brief deletedIds IDs of transactions deleted due to changes to transfer details. */
-    QList<QVariant> deletedIds{};
+    QList<domain_id> deletedIds{};
     /** @brief deletedDetailIds IDs of deleted related details. */
-    QList<QVariant> deletedDetailIds{};
+    QList<domain_id> deletedDetailIds{};
 
     TransactionsData() = default;
     TransactionsData(
         QList<const Transaction*> transactions,
         QList<const TransactionDetail*> details,
-        const QList<QVariant> deletedIds,
-        const QList<QVariant> deletedDetailIds
+        const QList<domain_id> deletedIds,
+        const QList<domain_id> deletedDetailIds
     );
 };
 

@@ -1,55 +1,48 @@
 #include "transactiondetail.h"
-#include "decimal.h"
 #include "service/database/sql.h"
 #include <QSqlField>
 
 TransactionDetail::TransactionDetail() {}
 
-TransactionDetail::TransactionDetail(const QVariant &transactionId) : transactionId{transactionId} {}
+TransactionDetail::TransactionDetail(domain_id transactionId) : transactionId{transactionId} {}
 
 TransactionDetail::TransactionDetail(const QSqlRecord &record)
     : BaseDomain{record}
-    , transactionId{record.field("tx_id").value()}
-    , categoryId{sql::getValue(record, "tx_category_id")}
-    , relatedDetailId{sql::getValue(record, "related_detail_id")}
-    , groupId{sql::getValue(record, "tx_group_id")}
-    , exchangeAssetId{sql::getValue(record, "exchange_asset_id")}
-    , amount{decimalValue(record, "amount")}
-    , assetQuantity{decimalValue(record, "asset_quantity")}
-    , memo{sql::getValue(record, "memo")}
-    , transferAccountId{sql::getValue(record, "transfer_account_id")}
+    , transactionId{record.value("tx_id").toLongLong()}
+    , categoryId{sql::getInt(record, "tx_category_id")}
+    , relatedDetailId{sql::getInt(record, "related_detail_id")}
+    , groupId{sql::getInt(record, "tx_group_id")}
+    , exchangeAssetId{sql::getInt(record, "exchange_asset_id")}
+    , amount{sql::decimalValue(record, "amount").value()}
+    , assetQuantity{sql::decimalValue(record, "asset_quantity")}
+    , memo{sql::getString(record, "memo")}
+    , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}
 
 bool TransactionDetail::isEmpty() const {
-    return categoryId.isNull()
-           && relatedDetailId.isNull()
-           && transferAccountId.isNull()
-           && groupId.isNull()
-           && exchangeAssetId.isNull()
+    return !categoryId.has_value()
+           && !relatedDetailId.has_value()
+           && !transferAccountId.has_value()
+           && !groupId.has_value()
+           && !exchangeAssetId.has_value()
            && memo.isNull()
-           && (amount.isNull() || amount.value<QDecNumber>().isZero())
-           && (assetQuantity.isNull() || assetQuantity.value<QDecNumber>().isZero());
+           && (amount.isNaN() || amount.isZero())
+           && (!assetQuantity.has_value() || assetQuantity.value().isZero());
 }
 
-TransactionDetail *TransactionDetail::newTransfer(const QVariant &transferAccountId, const QVariant &transactionId) const {
+TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAccountId, domain_id transactionId) const {
     auto relatedDetail = new TransactionDetail(*this);
-    relatedDetail->id = QVariant{};
+    relatedDetail->id.reset();
     initTransfer(transactionId, *relatedDetail);
     relatedDetail->transferAccountId = transferAccountId;
     return relatedDetail;
 }
 
-void TransactionDetail::initTransfer(const QVariant &transactionId, TransactionDetail &relatedDetail) const {
-    relatedDetail.relatedDetailId = id;
+void TransactionDetail::initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const {
+    relatedDetail.relatedDetailId = id.value();
     relatedDetail.transactionId = transactionId;
-    relatedDetail.amount = QVariant::fromValue(QDecNumber().copyNegate(amount.value<QDecNumber>()));
-    if (!relatedDetail.assetQuantity.isNull()) {
-        relatedDetail.assetQuantity = QVariant::fromValue(QDecNumber().copyNegate(assetQuantity.value<QDecNumber>()));
+    relatedDetail.amount.copyNegate(amount);
+    if (assetQuantity.has_value()) {
+        relatedDetail.assetQuantity.emplace(QDecNumber{}).copyNegate(assetQuantity.value());
     }
-}
-
-QVariantList TransactionDetail::transactionIds(const QList<const TransactionDetail *> details) {
-    QVariantList ids{};
-    for (auto detail : details) if (!ids.contains(detail->transactionId)) ids.append(detail->transactionId);
-    return ids;
 }

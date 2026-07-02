@@ -31,7 +31,7 @@ const NamedEntity *RelationEditor::entity() const {
 
 void RelationEditor::setEntity(const NamedEntity *entity) {
     entity_ = entity;
-    if (entity) setText(entity->name.toString());
+    if (entity) setText(entity->name);
     else setText("");
 }
 

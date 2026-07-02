@@ -20,7 +20,7 @@ public:
 
     TransactionTableModel* model() const;
 
-    void showAccount(qlonglong accountId);
+    void showAccount(domain_id accountId);
 
     void loadData() override;
     void saveData() override;

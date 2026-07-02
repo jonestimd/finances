@@ -5,27 +5,25 @@
 
 class TransactionDetail : public BaseDomain {
 public:
-    QVariant transactionId;
-    QVariant categoryId;
-    QVariant relatedDetailId;
-    QVariant groupId;
-    QVariant exchangeAssetId;
-    QVariant amount;
-    QVariant assetQuantity;
-    QVariant memo;
+    domain_id transactionId;
+    optional_id categoryId;
+    optional_id relatedDetailId;
+    optional_id groupId;
+    optional_id exchangeAssetId;
+    QDecNumber amount{"NaN"};
+    std::optional<QDecNumber> assetQuantity;
+    QString memo;
 
-    QVariant transferAccountId;
+    optional_id transferAccountId;
 
     TransactionDetail();
-    TransactionDetail(const QVariant &transactionId);
+    TransactionDetail(domain_id transactionId);
     TransactionDetail(const QSqlRecord &record);
 
     bool isEmpty() const;
 
-    TransactionDetail *newTransfer(const QVariant &transferAccountId, const QVariant &transactionId = QVariant{}) const;
-    void initTransfer(const QVariant &transactionId, TransactionDetail &relatedDetail) const;
-
-    static QVariantList transactionIds(const QList<const TransactionDetail*> details);
+    TransactionDetail *newTransfer(const optional_id& transferAccountId, domain_id transactionId) const;
+    void initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const;
 };
 
 #endif // TRANSACTIONDETAIL_H

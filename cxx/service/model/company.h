@@ -7,7 +7,7 @@
 
 class Company : public NamedEntity {
 public:
-    QVariant accounts{0};
+    int accounts{0};
 
     Company();
     Company(const QSqlRecord &record);

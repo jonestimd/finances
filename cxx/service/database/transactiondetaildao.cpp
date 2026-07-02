@@ -129,90 +129,90 @@ TransactionDetailDao::TransactionDetailDao(const QString &dbType)
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
 {}
 
-QHash<qlonglong, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, const QVariant &accountId) {
+QHash<domain_id, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, domain_id accountId) {
     QSqlQuery query(db);
     query.prepare(getByAccountQuery);
-    SQL_BIND_VALUE(query, ":accountId", accountId);
+    sql::bindValue(query, ":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);
 }
 
-const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, const QVariant &txId, const TransactionDetail *detail, const QString &user) {
+const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, domain_id txId, const TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
     query.prepare(insertQuery);
     TransactionDetail relatedDetail;
     detail->initTransfer(txId, relatedDetail);
-    SQL_BIND_VALUE(query, ":user", user);
+    sql::bindValue(query, ":user", user);
     bindInsertValues(query, &relatedDetail);
     sql::exec(query, className, "insert");
-    auto id = query.lastInsertId();
-    return get(db, {id}).value(id.toLongLong());
+    auto id = query.lastInsertId().toLongLong();
+    return get(db, QList<domain_id>{id}).value(id);
 }
 
-QVariantList TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QVariantList& relatedTransactionIds) {
+QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id>& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
-    SQL_BIND_LIST(query, ":txIds", getEntityIds(transactions));
+    sql::bindList(query, ":txIds", getEntityIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
-    QVariantList ids{}, relatedDetailIds{};
+    QList<domain_id> ids{}, relatedDetailIds{};
     while (query.next()) {
         auto record = query.record();
-        ids.append(sql::getValue(record, "id"));
-        auto relatedId = record.field("related_detail_id");
-        if (!relatedId.isNull()) {
+        ids.append(sql::getValue(record, "id").toLongLong());
+        auto relatedId = sql::getInt(record, "related_detail_id");
+        if (relatedId.has_value()) {
             relatedDetailIds.append(relatedId.value());
-            relatedTransactionIds.append(record.field("related_tx_id").value());
+            relatedTransactionIds.append(sql::getValue(record, "related_tx_id").toLongLong());
         }
     }
     removeByIds(db, ids + relatedDetailIds);
     return relatedDetailIds;
 }
 
-void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const QVariant newCategoryId, const QString &user) {
+void TransactionDetailDao::replaceCategory(QSqlDatabase &db, const Category *category, const domain_id newCategoryId, const QString &user) {
     QSqlQuery query(db);
     query.prepare(setCategorySql);
-    SQL_BIND_VALUE(query, ":user", user);
-    SQL_BIND_VALUE(query, ":categoryId", newCategoryId);
-    SQL_BIND_VALUE(query, ":oldCategoryId", category->id);
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":categoryId", newCategoryId);
+    sql::bindValue(query, ":oldCategoryId", category->id);
     sql::exec(query, className, "setCategory");
-    if (query.numRowsAffected() != category->details.toInt()) throw staleDataMessage;
+    if (query.numRowsAffected() != category->details) throw staleDataMessage;
 }
 
 QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, const QList<TransactionDetail *> details, const QString &user) {
     auto updates = EntityDao<TransactionDetail>::update(db, details, user);
-    QVariantList relatedIds{};
+    QList<domain_id> relatedIds{};
     for (auto detail : details) {
-        if (!detail->relatedDetailId.isNull()) relatedIds.append(detail->relatedDetailId);
+        if (detail->relatedDetailId.has_value()) relatedIds.append(detail->relatedDetailId.value());
     }
     if (!relatedIds.isEmpty()) {
         QSqlQuery query(db);
         query.prepare(updateTransferAmountSql);
-        SQL_BIND_LIST(query, ":ids", relatedIds);
-        SQL_BIND_VALUE(query, ":user", user);
+        sql::bindList(query, ":ids", relatedIds);
+        sql::bindValue(query, ":user", user);
         sql::exec(query, className, "updateTransferAmount");
         updates.append(get(db, relatedIds).values()); // TODO assumes related details are not in entities
     }
     return updates;
 }
 
-void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail *, qlonglong> relatedIds) {
+void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail *, domain_id> relatedIds) {
     QSqlQuery query(db);
     query.prepare(setRelatedDetailQuery);
     for (auto [detail, relatedId] : relatedIds.asKeyValueRange()) {
         detail->relatedDetailId = relatedId;
-        SQL_BIND_VALUE(query, ":id", detail->id);
-        SQL_BIND_VALUE(query, ":relatedId", detail->relatedDetailId);
+        sql::bindValue(query, ":id", detail->id);
+        sql::bindValue(query, ":relatedId", detail->relatedDetailId);
         sql::exec(query, className, "setRelatedDetailId");
     }
 }
 
-QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
+QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
     QSqlQuery query(db);
     auto ids = getEntityIds(updates);
     query.prepare(getRelatedIdsSql);
-    SQL_BIND_LIST(query, ":ids", ids);
+    sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "getRelatedDetailIds");
-    QHash<qlonglong, RelatedDetailIds> relatedIds{};
+    QHash<domain_id, RelatedDetailIds> relatedIds{};
     while (query.next()) {
         auto record = query.record();
         relatedIds.insert(record.value("id").toLongLong(), RelatedDetailIds{record});
@@ -223,41 +223,41 @@ QHash<qlonglong, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
 void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const TransactionDetail*> details) {
     QSqlQuery query(db);
     auto ids = getEntityIds(details);
-    for (auto detail : details) if (!detail->relatedDetailId.isNull()) ids.append(detail->relatedDetailId);
+    for (auto detail : details) if (detail->relatedDetailId.has_value()) ids.append(detail->relatedDetailId.value());
     removeByIds(db, ids);
 }
 
 void TransactionDetailDao::bindInsertValues(QSqlQuery &query, TransactionDetail *detail) {
-    SQL_BIND_VALUE(query, ":txId", detail->transactionId);
-    SQL_BIND_VALUE(query, ":amount", detail->amount);
-    SQL_BIND_VALUE(query, ":assetQuantity", detail->assetQuantity);
-    SQL_BIND_VALUE(query, ":memo", detail->memo);
-    SQL_BIND_VALUE(query, ":categoryId", detail->categoryId);
-    SQL_BIND_VALUE(query, ":groupId", detail->groupId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", detail->relatedDetailId);
+    sql::bindValue(query, ":txId", detail->transactionId);
+    sql::bindValue(query, ":amount", detail->amount);
+    sql::bindValue(query, ":assetQuantity", detail->assetQuantity);
+    sql::bindValue(query, ":memo", detail->memo);
+    sql::bindValue(query, ":categoryId", detail->categoryId);
+    sql::bindValue(query, ":groupId", detail->groupId);
+    sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
 void TransactionDetailDao::bindUpdateValues(QSqlQuery &query, TransactionDetail *detail) {
     EntityDao::bindUpdateValues(query, detail);
-    SQL_BIND_VALUE(query, ":txId", detail->transactionId);
-    SQL_BIND_VALUE(query, ":amount", detail->amount);
-    SQL_BIND_VALUE(query, ":assetQuantity", detail->assetQuantity);
-    SQL_BIND_VALUE(query, ":memo", detail->memo);
-    SQL_BIND_VALUE(query, ":categoryId", detail->categoryId);
-    SQL_BIND_VALUE(query, ":groupId", detail->groupId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", detail->relatedDetailId);
+    sql::bindValue(query, ":txId", detail->transactionId);
+    sql::bindValue(query, ":amount", detail->amount);
+    sql::bindValue(query, ":assetQuantity", detail->assetQuantity);
+    sql::bindValue(query, ":memo", detail->memo);
+    sql::bindValue(query, ":categoryId", detail->categoryId);
+    sql::bindValue(query, ":groupId", detail->groupId);
+    sql::bindValue(query, ":relatedDetailId", detail->relatedDetailId);
 }
 
-void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QVariantList ids) {
+void TransactionDetailDao::removeByIds(QSqlDatabase &db, const QList<domain_id> ids) {
     QSqlQuery query(db);
     query.prepare(deleteByIdsSql);
-    SQL_BIND_LIST(query, ":ids", ids);
+    sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "deleteByIds");
 }
 
 RelatedDetailIds::RelatedDetailIds(QSqlRecord &record)
-    : accountId{record.value("account_id")}
-    , relatedDetailId{sql::getValue(record, "related_detail_id")}
-    , relatedTransactionId{sql::getValue(record, "related_tx_id")}
-    , transferAccountId{sql::getValue(record, "transfer_account_id")}
+    : accountId{record.value("account_id").toLongLong()}
+    , relatedDetailId{sql::getInt(record, "related_detail_id")}
+    , relatedTransactionId{sql::getInt(record, "related_tx_id")}
+    , transferAccountId{sql::getInt(record, "transfer_account_id")}
 {}

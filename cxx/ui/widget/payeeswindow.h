@@ -22,7 +22,7 @@ public:
     void saveData() override;
 
 public Q_SLOTS:
-    void setPayees(const QList<qlonglong> payeeIds);
+    void setPayees(const QList<domain_id> payeeIds);
     void merge();
     void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
 

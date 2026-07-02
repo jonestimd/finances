@@ -18,30 +18,30 @@ protected:
     virtual QStringList rowValues(const QString value, const QModelIndex &index) const override {
         auto values = UniqueValidatorFactory::rowValues(value, index);
         auto parentId = static_cast<const Category*>(index.internalPointer())->parentId;
-        values.append(parentId.toString());
+        if (parentId.has_value()) values.append(QString::number(parentId.value()));
         return values;
     }
 };
 
 CategoryTableModel::CategoryTableModel(DataStore *ds)
-    : PodItemModel<Category> {
+    : PodItemModel<Category, CategoryStore> {
+        ds->categoryStore,
         QList<ColumnAdapter<Category>*>{
-            new ColumnAdapter<Category>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
-            new ColumnAdapter<Category>(tr("Description"), &Category::description, trimmedValidatorFactory),
+            new FieldColumnAdapter<Category, QString>(tr("Name"), &Category::name, true, new CategoryValidatorFactory()),
+            new FieldColumnAdapter<Category, QString>(tr("Description"), &Category::description, trimmedValidatorFactory),
             new EnumColumnAdapter<Category, AmountType>(tr("Amount Type"), &Category::amountType, &AmountType::values, requiredValidatorFactory, true),
-            new NumberColumnAdapter<Category>(tr("Transactions"), &Category::details),
-            new ColumnAdapter<Category>(tr("Income"), &Category::income),
-            new ColumnAdapter<Category>(tr("Security"), &Category::security),
+            new NumberColumnAdapter<Category, int>(tr("Transactions"), &Category::details),
+            new FieldColumnAdapter<Category, bool>(tr("Income"), &Category::income),
+            new FieldColumnAdapter<Category, bool>(tr("Security"), &Category::security),
         },
     }
-    , store{ds->categoryStore}
 {}
 
 int CategoryTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->childIds.length() : rootIds.length();
 }
 
-void CategoryTableModel::setRows(QList<qlonglong> categoryIds) {
+void CategoryTableModel::setRows(QList<domain_id> categoryIds) {
     clearChanges();
     beginResetModel();
     rootIds.clear();
@@ -62,14 +62,14 @@ int CategoryTableModel::rowCount(const QModelIndex &parent) const {
 
 bool CategoryTableModel::movable(const QModelIndex &index) {
     auto row = getRow(index);
-    return row->id.isValid() && store->movable(row->id.toLongLong());
+    return row->id.has_value() && (row->parentId.has_value() || rootIds.size() > 1);
 }
 
 QModelIndex CategoryTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (hasIndex(row, column, parent)) {
         if (parent.isValid()) {
             auto p = static_cast<const Category*>(parent.internalPointer());
-            auto rowId = store->value(p->id.toLongLong())->childIds[row].toLongLong();
+            auto rowId = store->value(p->id.value())->childIds[row];
             return createIndex(row, column, store->value(rowId));
         }
         if (row < rootIds.length()) {
@@ -87,11 +87,11 @@ QModelIndex CategoryTableModel::parent(const QModelIndex &index) const {
         // TODO pending child add or parent change?
         auto child = static_cast<const Category*>(index.internalPointer());
         auto parentId = child->parentId;
-        if (!parentId.isNull()) {
-            auto parent = store->value(parentId.toLongLong());
+        if (parentId.has_value()) {
+            auto parent = store->value(parentId.value());
             auto gpId = parent->parentId;
-            if (!gpId.isNull()) {
-                auto gp = store->value(gpId.toLongLong());
+            if (gpId.has_value()) {
+                auto gp = store->value(gpId.value());
                 auto row = gp->childIds.indexOf(child->id);
                 return createIndex(row, 0, gp);
             }

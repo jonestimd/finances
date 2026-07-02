@@ -7,8 +7,8 @@
 
 // TransactionTypeColumnAdapter //
 
-TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, qlonglong accountId)
-    : ColumnAdapter(title, &TransactionDetail::categoryId, true)
+TransactionTypeColumnAdapter::TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, domain_id accountId)
+    : ColumnAdapter(title, true)
     , dataStore{dataStore}
     , accountId{accountId}
 {}
@@ -19,16 +19,17 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     switch (role) {
     case Qt::DisplayRole:
         if (current.isValid() && current.isNull()) return "";
-        if (value.isValid() && !value.isNull()) {
-            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id, ':'); // .prepend("\u279c ");
-            if (typeId.id.isValid()) return dataStore->categoryStore->displayName(typeId.id.toLongLong());
+        if (typeId.id.has_value()) {
+            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id.value(), ':'); // .prepend("\u279c ");
+            return dataStore->categoryStore->displayName(typeId.id.value());
         }
         break;
     case Qt::EditRole:
         if (current.isValid()) return current;
         if (value.isValid() && !value.isNull()) {
-            if (typeId.transfer) return QVariant::fromValue<const NamedEntity*>(dataStore->accountStore->value(typeId.id));
-            return QVariant::fromValue<const NamedEntity*>(dataStore->categoryStore->value(typeId.id));
+            if (!typeId.id.has_value()) return QVariant::fromValue<const NamedEntity*>(nullptr);
+            if (typeId.transfer) return QVariant::fromValue<const NamedEntity*>(dataStore->accountStore->value(typeId.id.value()));
+            return QVariant::fromValue<const NamedEntity*>(dataStore->categoryStore->value(typeId.id.value()));
         }
         break;
     case finances::OptionsRole:
@@ -39,26 +40,26 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     return QVariant{};
 }
 
-QVariant TransactionTypeColumnAdapter::fieldValue(const TransactionDetail *row) const {
-    if (!row->transferAccountId.isNull()) {
+QVariant TransactionTypeColumnAdapter::rowValue(const TransactionDetail *row) const {
+    if (row->transferAccountId.has_value()) {
         return QVariant::fromValue(TransactionTypeId(true, row->transferAccountId));
     }
-    return QVariant::fromValue(TransactionTypeId(false, ColumnAdapter::fieldValue(row)));
+    return QVariant::fromValue(TransactionTypeId(false, row->categoryId));
 }
 
 void TransactionTypeColumnAdapter::setValue(TransactionDetail *row, QVariant value) const {
     if (value.value<const NamedEntity*>()) {
         auto typeId = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
         if (typeId->transfer) {
-            row->transferAccountId = typeId->id;
-            row->categoryId = QVariant{};
+            row->transferAccountId = typeId->id.value();
+            row->categoryId = {};
         } else {
-            row->categoryId = typeId->id;
-            row->transferAccountId = QVariant{};
+            row->categoryId = typeId->id.value();
+            row->transferAccountId = {};
         }
     } else {
-        row->categoryId = QVariant{};
-        row->transferAccountId = QVariant{};;
+        row->categoryId = {};
+        row->transferAccountId = {};
     }
 }
 
@@ -69,8 +70,8 @@ QVariant TransactionTypeColumnAdapter::getId(const QVariant &value) const {
 
 QString TransactionTypeColumnAdapter::optionText(const NamedEntity* option) const {
     auto type = static_cast<const TransactionType*>(option);
-    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id, ':');
-    return dataStore->categoryStore->displayName(option->id.toLongLong());
+    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id.value(), ':');
+    return dataStore->categoryStore->displayName(option->id.value());
 }
 
 ComboBoxModel *TransactionTypeColumnAdapter::getOptions() const {
@@ -93,7 +94,7 @@ SharesColumnAdapter::SharesColumnAdapter(const QString &title, const Transaction
 QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
     if (index.isValid() && role == finances::AltDisplayRole) {
         auto shares = row->assetQuantity;
-        if (!shares.isNull()) {
+        if (shares.has_value()) {
             auto securityId = index.parent().siblingAtColumn(securityColumn).data(finances::EntityIdRole);
             auto date = index.parent().siblingAtColumn(dateColumn).data(Qt::EditRole);
             auto shares = AmountColumnAdapter::value(row, index, current, Qt::EditRole).value<QDecNumber>();
@@ -117,8 +118,8 @@ QVariant DetailAmountColumnAdapter::value(const TransactionDetail *row, const QM
 
 // EmptyColumnAdapter //
 
-EmptyColumnAdapter::EmptyColumnAdapter() : ColumnAdapter{"", nullptr, false} {}
+EmptyColumnAdapter::EmptyColumnAdapter() : ColumnAdapter{"", false} {}
 
-QVariant EmptyColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
+QVariant EmptyColumnAdapter::rowValue(const TransactionDetail *row) const {
     return QVariant{};
 }

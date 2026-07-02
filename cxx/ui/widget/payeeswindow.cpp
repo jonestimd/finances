@@ -16,7 +16,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 
     entityView.insertAction(2, mergeAction);
 
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setPayees(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setPayees(QList<domain_id>)));
     connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
 
@@ -41,7 +41,7 @@ void PayeesWindow::saveData() {
     store->update(this, model(), tr(SAVING_PAYEES));
 }
 
-void PayeesWindow::setPayees(const QList<qlonglong> payeeIds) {
+void PayeesWindow::setPayees(const QList<domain_id> payeeIds) {
     model()->setRows(payeeIds);
 }
 
@@ -57,7 +57,7 @@ void PayeesWindow::merge() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
-        if (!selectedId.isNull()) store->mergePayees(this, payee, selectedId);
+        if (selectedId.has_value()) store->mergePayees(this, payee, selectedId.value());
     }
 }
 

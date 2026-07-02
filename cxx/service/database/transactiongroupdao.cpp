@@ -60,10 +60,10 @@ TransactionGroupDao::TransactionGroupDao(const QString &dbType)
 
 void TransactionGroupDao::bindUpdateValues(QSqlQuery &query, TransactionGroup *entity) {
     NamedEntityDao::bindUpdateValues(query, entity);
-    query.bindValue(":description", entity->description);
+    sql::bindValue(query, ":description", entity->description);
 }
 
 void TransactionGroupDao::bindInsertValues(QSqlQuery &query, TransactionGroup *entity) {
     NamedEntityDao::bindInsertValues(query, entity);
-    query.bindValue(":description", entity->description);
+    sql::bindValue(query, ":description", entity->description);
 }

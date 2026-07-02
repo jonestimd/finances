@@ -26,7 +26,7 @@ public:
     Q_INVOKABLE void saveData();
 
 protected Q_SLOTS:
-    void setCompanies(const QList<qlonglong> companyIds);
+    void setCompanies(const QList<domain_id> companyIds);
 
 protected:
     bool confirmDelete(const QSet<const QModelIndex> rowIndex);

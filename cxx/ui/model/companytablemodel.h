@@ -2,11 +2,10 @@
 #define COMPANYTABLEMODEL_H
 
 #include "service/model/company.h"
-#include "service/companyservice.h"
 #include "podtablemodel.h"
 #include "ui/model/companystore.h"
 
-class CompanyTableModel : public PodTableModel<Company, CompanyService> {
+class CompanyTableModel : public PodTableModel<Company, CompanyStore> {
     Q_OBJECT
 public:
     explicit CompanyTableModel(const CompanyStore *store, QObject *parent = nullptr);

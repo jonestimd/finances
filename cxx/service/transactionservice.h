@@ -11,7 +11,7 @@ class TransactionService : EntityService<Transaction, TransactionDao> {
 public:
     TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao);
 
-    QHash<qlonglong, const Transaction*> getAll(qlonglong accountId);
+    QHash<domain_id, const Transaction*> getAll(domain_id accountId);
 
     /**
      * @return `TransactionsData`:

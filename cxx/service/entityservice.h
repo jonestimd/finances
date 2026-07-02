@@ -12,7 +12,7 @@ protected:
 public:
     EntityService(ConnectionPool *connectionPool, Dao &dao) : dao{dao}, connectionPool{connectionPool} {}
 
-    QHash<qlonglong, const Entity*> getAll() {
+    QHash<domain_id, const Entity*> getAll() {
         auto conn = Connection(connectionPool);
         return dao.getAll(conn.db);
     }

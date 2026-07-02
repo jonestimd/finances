@@ -87,28 +87,28 @@ void CategoryDao::createTable(const QSqlDatabase &db) const {
     if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
-QHash<qlonglong, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const QVariant parentId, const QString user) {
+QHash<domain_id, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const optional_id &parentId, const QString user) {
     QSqlQuery query(db);
-    QVariantList ids{category->id};
-    if (!category->parentId.isNull()) ids.append(category->parentId.toLongLong());
-    if (!parentId.isNull()) ids.append(parentId);
+    QList<domain_id> ids{category->id.value()};
+    if (category->parentId.has_value()) ids.append(category->parentId.value());
+    if (parentId.has_value()) ids.append(parentId.value());
     query.prepare(setParentSql);
-    query.bindValue(":user", user);
-    query.bindValue(":id", category->id);
-    query.bindValue(":version", category->version);
-    query.bindValue(":parentId", parentId);
+    sql::bindValue(query, ":user", user);
+    sql::bindValue(query, ":id", category->id);
+    sql::bindValue(query, ":version", category->version);
+    sql::bindValue(query, ":parentId", parentId);
     sql::exec(query, className, "setParent");
     if (query.numRowsAffected() < 1) throw staleDataMessage;
     return get(db, ids);
 }
 
-void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const QVariant destinationId, const QString user) const {
+void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const domain_id destinationId, const QString user) const {
     if (!category->childIds.isEmpty()) {
         QSqlQuery query(db);
         query.prepare(setParentsSql);
-        query.bindValue(":user", user);
-        query.bindValue(":parentId", destinationId);
-        query.bindValue(":oldParentId", category->id);
+        sql::bindValue(query, ":user", user);
+        sql::bindValue(query, ":parentId", destinationId);
+        sql::bindValue(query, ":oldParentId", category->id);
         sql::exec(query, className, "setParents");
         if (query.numRowsAffected() != category->childIds.length()) throw staleDataMessage;
     }
@@ -116,18 +116,18 @@ void CategoryDao::moveChildren(QSqlDatabase &db, const Category *category, const
 
 void CategoryDao::bindUpdateValues(QSqlQuery &query, Category *category) {
     NamedEntityDao::bindUpdateValues(query, category);
-    query.bindValue(":parentId", category->parentId);
-    query.bindValue(":description", category->description);
-    query.bindValue(":amountType", category->amountType);
-    query.bindValue(":income", mapping::toYesNo(category->income));
-    query.bindValue(":security", mapping::toYesNo(category->security));
+    sql::bindValue(query, ":parentId", category->parentId);
+    sql::bindValue(query, ":description", category->description);
+    sql::bindValue(query, ":amountType", category->amountType->code);
+    sql::bindValue(query, ":income", mapping::toYesNo(category->income));
+    sql::bindValue(query, ":security", mapping::toYesNo(category->security));
 }
 
 void CategoryDao::bindInsertValues(QSqlQuery &query, Category *category) {
     NamedEntityDao::bindInsertValues(query, category);
-    query.bindValue(":parentId", category->parentId);
-    query.bindValue(":description", category->description);
-    query.bindValue(":amountType", category->amountType);
-    query.bindValue(":income", mapping::toYesNo(category->income));
-    query.bindValue(":security", mapping::toYesNo(category->security));
+    sql::bindValue(query, ":parentId", category->parentId);
+    sql::bindValue(query, ":description", category->description);
+    sql::bindValue(query, ":amountType", category->amountType->code);
+    sql::bindValue(query, ":income", mapping::toYesNo(category->income));
+    sql::bindValue(query, ":security", mapping::toYesNo(category->security));
 }

@@ -8,15 +8,15 @@
 
 static int numberAlignment = Qt::AlignVCenter | Qt::AlignTrailing;
 
-template<class T>
-class NumberColumnAdapter : public ColumnAdapter<T> {
+template<class T, class Value = QVariant>
+class NumberColumnAdapter : public FieldColumnAdapter<T, Value> {
 public:
-    NumberColumnAdapter(QString title, QVariant T::* field, bool editable = false, ValidatorFactory *factory = nullptr)
-        : ColumnAdapter<T>(title, field, editable, factory) {}
+    NumberColumnAdapter(QString title, Value T::* field, bool editable = false, ValidatorFactory *factory = nullptr)
+        : FieldColumnAdapter<T, Value>(title, field, editable, factory) {}
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         if (role == Qt::TextAlignmentRole) return numberAlignment; // TODO move
-        return ColumnAdapter<T>::value(row, index, current, role);
+        return FieldColumnAdapter<T, Value>::value(row, index, current, role);
     }
 };
 
