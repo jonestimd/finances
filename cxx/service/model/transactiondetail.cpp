@@ -8,7 +8,7 @@ TransactionDetail::TransactionDetail(domain_id transactionId) : transactionId{tr
 
 TransactionDetail::TransactionDetail(const QSqlRecord &record)
     : BaseDomain{record}
-    , transactionId{record.field("tx_id").value().toLongLong()}
+    , transactionId{record.value("tx_id").toLongLong()}
     , categoryId{sql::getInt(record, "tx_category_id")}
     , relatedDetailId{sql::getInt(record, "related_detail_id")}
     , groupId{sql::getInt(record, "tx_group_id")}
@@ -45,10 +45,4 @@ void TransactionDetail::initTransfer(domain_id transactionId, TransactionDetail 
     if (assetQuantity.has_value()) {
         relatedDetail.assetQuantity.emplace(QDecNumber{}).copyNegate(assetQuantity.value());
     }
-}
-
-QVariantList TransactionDetail::transactionIds(const QList<const TransactionDetail *> details) {
-    QVariantList ids{};
-    for (auto detail : details) if (!ids.contains(detail->transactionId)) ids.append(detail->transactionId);
-    return ids;
 }

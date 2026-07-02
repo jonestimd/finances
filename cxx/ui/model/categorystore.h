@@ -20,7 +20,7 @@ public:
      * @return `true` if `parentId` is an ancestor of `categoryId`.
      */
     bool isAncestor(domain_id categoryId, const domain_id parentId) const;
-    bool hasChild(domain_id categoryId, const QVariant &name) const;
+    bool hasChild(domain_id categoryId, const QString &name) const;
 
     void setParent(QWidget *source, const Category *category, const optional_id &parentId);
     void mergeCategories(QWidget *source, const Category *category, const domain_id destinationId);

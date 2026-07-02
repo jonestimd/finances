@@ -36,9 +36,9 @@ bool CategoryStore::isAncestor(domain_id categoryId, const domain_id parentId) c
     return category->parentId.value() == parentId || isAncestor(category->parentId.value(), parentId);
 }
 
-bool CategoryStore::hasChild(domain_id categoryId, const QVariant &name) const {
+bool CategoryStore::hasChild(domain_id categoryId, const QString &name) const {
     auto category = value(categoryId);
-    auto lowerName = name.toString().toLower();
+    auto lowerName = name.toLower();
     for (const auto childId : category->childIds) {
         if (value(childId)->name.toLower() == lowerName) return true;
     }

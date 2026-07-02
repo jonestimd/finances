@@ -5,7 +5,7 @@ Payee::Payee() : NamedEntity() {}
 
 Payee::Payee(const QSqlRecord &record)
     : NamedEntity(record)
-    , transactions{record.field("transactions").value().toInt()}
+    , transactions{record.value("transactions").toInt()}
 {}
 
 Payee::Payee(const QString &name) : NamedEntity{name} {}

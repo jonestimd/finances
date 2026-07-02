@@ -12,7 +12,7 @@ Category::Category(const QSqlRecord &record)
     , income{sql::yesNoValue(record, "income")}
     , security{sql::yesNoValue(record, "security")}
     , parentId{sql::getInt(record, "parent_id")}
-    , childIds(mapping::jsonToIntList(record.field("child_ids").value()))
+    , childIds(mapping::jsonToIntList(record.value("child_ids")))
     , details{sql::getValue(record, "details").toInt()}
 {}
 
