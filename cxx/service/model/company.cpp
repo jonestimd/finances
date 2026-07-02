@@ -5,7 +5,7 @@ Company::Company() {}
 
 Company::Company(const QSqlRecord &record)
     : NamedEntity{record}
-    , accounts{record.field("accounts").value().toInt()}
+    , accounts{record.value("accounts").toInt()}
 {}
 
 Company::Company(const QString &name) : NamedEntity{name} {}

@@ -9,14 +9,14 @@ Transaction::Transaction(domain_id accountId) : accountId{accountId} {}
 
 Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
-    , accountId{record.field("account_id").value().toLongLong()}
+    , accountId{record.value("account_id").toLongLong()}
     , date{sql::getDate(record, "date").value()}
     , payeeId{sql::getInt(record, "payee_id")}
     , securityId{sql::getInt(record, "security_id")}
     , referenceNumber{sql::getString(record, "reference_number")}
     , memo{sql::getString(record, "memo")}
     , cleared{sql::yesNoValue(record, "cleared")}
-    , detailIds(mapping::jsonToIntList(record.field("detail_ids").value()))
+    , detailIds(mapping::jsonToIntList(record.value("detail_ids")))
 {}
 
 bool Transaction::deletable() const {

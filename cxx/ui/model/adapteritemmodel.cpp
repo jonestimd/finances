@@ -110,15 +110,11 @@ void AdapterItemModel::removeRootId(domain_id id) {
     if (rowIndex >= 0) {
         beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
         rootIds.remove(rowIndex);
-        pendingDeletes.removeIf([=](const QModelIndex index) {
-            auto row = index.parent().isValid() ? index.parent().row() : index.row();
-            return row == rowIndex;
+        pendingDeletes.removeIf([=](const QModelIndex& index) {
+            return rootIndex(index).row() == rowIndex;
         });
         changes.removeIf([=](QHash<const QModelIndex, QVariant>::iterator i) -> bool {
-            for (auto n = i.key(); n.isValid(); n = n.parent()) {
-                if (!n.parent().isValid() && n.row() == rowIndex) return true;
-            }
-            return false;
+            return rootIndex(i.key()).row() == rowIndex;
         });
         updateIndexes(index(rowIndex, 0), -1);
         endRemoveRows();
@@ -199,7 +195,7 @@ void AdapterItemModel::revalidateRow(const QModelIndex &index) {
     }
 }
 
-const QModelIndex AdapterItemModel::adjustIndex(const QModelIndex index, const QModelIndex& changeRow, int delta) {
+QModelIndex AdapterItemModel::adjustIndex(const QModelIndex index, const QModelIndex& changeRow, int delta) {
     QList<QModelIndex> nodes;
     auto parent = changeRow.parent();
     for (auto i = index; i.isValid() && i != parent; i = i.parent()) nodes.append(i);
@@ -223,6 +219,11 @@ void AdapterItemModel::updateIndexes(const QModelIndex& changeRow, int delta) {
     updateDeletes(pendingDeletes, changeRow, delta);
     changes = updateChanges(changes, changeRow, delta);
     adjustErrorIndexes(changeRow, delta);
+}
+
+QModelIndex AdapterItemModel::rootIndex(QModelIndex index) {
+    while (index.parent().isValid()) index = index.parent();
+    return index;
 }
 
 QHash<const QModelIndex, QVariant> AdapterItemModel::updateChanges(const QHash<const QModelIndex, QVariant> &changes, const QModelIndex& changeRow, int delta) {

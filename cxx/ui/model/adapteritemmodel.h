@@ -74,7 +74,8 @@ protected:
 
     virtual void updateIndexes(const QModelIndex& changeRow, int delta);
 
-    static const QModelIndex adjustIndex(const QModelIndex index, const QModelIndex& changeRow, int delta);
+    static QModelIndex rootIndex(QModelIndex index);
+    static QModelIndex adjustIndex(const QModelIndex index, const QModelIndex& changeRow, int delta);
     static QHash<const QModelIndex, QVariant> updateChanges(const QHash<const QModelIndex, QVariant> &changes, const QModelIndex& changeRow, int delta);
     static void updateDeletes(QList<QModelIndex>& pendingDeletes, const QModelIndex& changeRow, int delta);
     /** @brief rowIndexes returns indexes of row and its ancestors. */

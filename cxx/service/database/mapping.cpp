@@ -8,11 +8,6 @@ namespace mapping {
         return boolValue.toBool() ? "Y" : "N";
     }
 
-    QList<QVariant> jsonToList(const QVariant &value) {
-        auto json = value.toByteArray();
-        return json.isEmpty() ? QList<QVariant>() : QJsonDocument::fromJson(json).array().toVariantList();
-    }
-
     QList<qlonglong> jsonToIntList(const QVariant &value) {
         auto json = value.toByteArray();
         QList<qlonglong> values;

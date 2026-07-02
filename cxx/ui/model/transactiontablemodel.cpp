@@ -393,7 +393,7 @@ bool TransactionTableModel::enableDelete(const QModelIndex &index) const {
 }
 
 bool TransactionTableModel::transactionHasChanges(const QModelIndex &rowIndex) const {
-    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txIndex = rootIndex(rowIndex);
     auto txRow = txIndex.row();
     if (txRow >= rootIds.size() || isPendingDelete(txIndex) || newDetails.contains(txRow)) return true;
     for (auto i = changes.keyBegin(); i != changes.keyEnd(); i++) {
@@ -407,7 +407,7 @@ bool TransactionTableModel::transactionHasChanges(const QModelIndex &rowIndex) c
 }
 
 bool TransactionTableModel::transactionIsValid(const QModelIndex &rowIndex) const {
-    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txIndex = rootIndex(rowIndex);
     auto txRow = txIndex.row();
     for (auto i = errors.keyBegin(); i != errors.keyEnd(); i++) {
         if (i->parent().isValid()) {
