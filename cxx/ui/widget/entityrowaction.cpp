@@ -37,7 +37,7 @@ inline bool selectEditColumn(QModelIndex &index) {
     auto columnCount = index.model()->columnCount();
     while (index.column() < columnCount) {
         if ((index.flags() & Qt::ItemIsEditable) && !index.data().isValid()) return true;
-        index = index.sibling(index.row(), index.column()+1);
+        index = index.siblingAtColumn(index.column()+1);
     }
     return false;
 }

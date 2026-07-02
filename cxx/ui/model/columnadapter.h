@@ -93,7 +93,8 @@ public:
 
     virtual QVariant rowValue(const T* row) const override {
         auto value = row->*field;
-        if constexpr (std::is_convertible_v<Value, QVariant>) return value;
+        if constexpr (std::is_same_v<Value, QString>) return value.isEmpty() ? QVariant{} : value;
+        else if constexpr (std::is_convertible_v<Value, QVariant>) return value;
         else if constexpr (std::is_convertible_v<optional_value, QVariant> || std::is_same_v<optional_value, QDecNumber>) {
             return value.has_value() ? QVariant::fromValue(value.value()) : QVariant{};
         } else if constexpr (std::is_same_v<Value, QDecNumber>) {
