@@ -3,7 +3,6 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.h ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accountstore.h ${CMAKE_CURRENT_LIST_DIR}/accountstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.h ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/background.h ${CMAKE_CURRENT_LIST_DIR}/background.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorystore.h ${CMAKE_CURRENT_LIST_DIR}/categorystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/columnadapter.h ${CMAKE_CURRENT_LIST_DIR}/columnadapter.cpp

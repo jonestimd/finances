@@ -19,8 +19,7 @@ void AccountStore::update(QWidget* source, AccountTableModel* model) {
 }
 
 void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<const Account*> adds, const QList<const Account*> deletes) {
-    messageStore->addMessage(tr(SAVING_ACCOUNTS));
-    doInBackground(source, [this, updates, adds, deletes] {
+    doInBackground(source, tr(SAVING_ACCOUNTS), [this, updates, adds, deletes] {
         auto changes = BulkUpdate{updates, adds, deletes};
         QHash<domain_id, const Company*> companies;
         auto accounts = service->update(changes, user, companies);
@@ -28,7 +27,6 @@ void AccountStore::update(QWidget* source, QList<Account*> updates, const QList<
         companyStore.update(companies.values());
         emit valuesLoaded(ids());
         emit companyStore.valuesLoaded(companyStore.ids());
-        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_ACCOUNTS));
     });
 }
 

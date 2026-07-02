@@ -1,7 +1,6 @@
 #ifndef ENTITYSTORE_H
 #define ENTITYSTORE_H
 
-#include "background.h"
 #include "comboboxmodel.h"
 #include "service/model/bulkupdate.h"
 #include "service/model/transaction.h"
@@ -12,15 +11,19 @@
 #include <QWidget>
 
 class DataStore;
+typedef std::function<void()> Runnable;
 
 class AbstractEntityStore : public QObject {
     Q_OBJECT
 
 protected:
     static const QString user;
+    StatusMessageStore* const messageStore;
+
+    void doInBackground(QWidget* source, const QString& message, Runnable task, Runnable onError = nullptr);
 
 public:
-    AbstractEntityStore(QObject *parent = nullptr);
+    AbstractEntityStore(StatusMessageStore* messageStore, QObject* parent = nullptr);
 
 Q_SIGNALS:
     void valuesLoaded(QList<domain_id> ids);
@@ -48,11 +51,11 @@ class EntityStore : public AbstractEntityStore {
 
 protected:
     Service* const service;
-    StatusMessageStore* const messageStore;
 
 public:
     EntityStore(Service *service, StatusMessageStore* messageStore)
-        : byIdLock(QReadWriteLock::NonRecursive), service{service}, messageStore{messageStore} {};
+        : AbstractEntityStore{messageStore}
+        , byIdLock(QReadWriteLock::NonRecursive), service{service} {};
     ~EntityStore() {
         qDeleteAll(byId);
         byId.clear();
@@ -101,13 +104,11 @@ public:
     /**
      * @return Returns `true` if the data is already loaded or `false` if the data is loading in the background.
      */
-    bool load(EntityView *view, const QString &statusMessage, GetAllArgs... args, bool reload = false) {
+    bool load(EntityView *view, const QString& statusMessage, GetAllArgs... args, bool reload = false) {
         if (!reload && loaded) return true;
-        messageStore->addMessage(statusMessage);
-        doInBackground(view->statusBar.parentWidget(), [=, this]() {
+        doInBackground(view->statusBar.parentWidget(), statusMessage, [=, this]() {
             setValues(args..., service->getAll(args...));
             emit valuesLoaded(ids());
-            QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, statusMessage);
         });
         return false;
     }
@@ -115,13 +116,11 @@ public:
     /**
      * @brief update Call service to persist changes and update stored entities.
      */
-    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes, const QString message) {
-        messageStore->addMessage(message);
-        doInBackground(source, [=, this]() {
+    void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes, const QString& message) {
+        doInBackground(source, message, [=, this]() {
             auto changes = BulkUpdate{updates, adds, deletes};
             update(service->update(changes, user), deletes);
             emit valuesLoaded(ids());
-            QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, message);
         });
     }
 

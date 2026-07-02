@@ -8,13 +8,11 @@ PayeeStore::PayeeStore(PayeeService *service, DataStore *dataStore)
 {}
 
 void PayeeStore::mergePayees(QWidget *source, const Payee *payee, domain_id destinationId) {
-    messageStore->addMessage(tr(SAVING_PAYEES));
-    doInBackground(source, [this, payee, destinationId] {
+    doInBackground(source, tr(SAVING_PAYEES), [this, payee, destinationId] {
         auto payees = service->merge(payee, destinationId, user);
         dataStore->transactionStore->replacePayee(payee->id.value(), destinationId);
         update(payees.values(), QList{payee});
         emit valuesLoaded(ids());
-        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, tr(SAVING_PAYEES));
     });
 }
 

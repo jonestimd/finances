@@ -19,8 +19,7 @@ bool TransactionStore::load(EntityView *view, domain_id accountId, bool reload) 
 }
 
 void TransactionStore::update(QWidget *source, TransactionTableModel *model, const QString message, int txRow) {
-    messageStore->addMessage(message);
-    doInBackground(source, [=, this]() {
+    doInBackground(source, message, [=, this]() {
         auto adds = model->unsavedAdds(txRow);
         adds.removeIf([](const PendingTransaction* tx) -> bool { return tx->isEmpty(); });
         auto deletes = model->unsavedDeletes(txRow);
@@ -46,7 +45,6 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
         // TODO filter tx's for unloaded accounts
         update(updateData.transactions, deletes);
         for (auto accountId : accountIds) emit accountUpdated(accountId);
-        QMetaObject::invokeMethod(messageStore, &StatusMessageStore::removeMessage, Qt::QueuedConnection, message);
     });
 }
 
