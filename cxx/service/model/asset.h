@@ -7,8 +7,8 @@
 class Asset : public NamedEntity {
 public:
     const AssetType* type{&AssetType::security};
-    QVariant scale;
-    QVariant symbol{};
+    int scale;
+    QString symbol{};
     mutable int transactions{0};
 
     Asset(const AssetType* type);

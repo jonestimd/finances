@@ -11,9 +11,9 @@ Asset::Asset(const AssetType* type)
 Asset::Asset(const QSqlRecord &record)
     : NamedEntity(record)
     , type{sql::enumValue(record, "type", AssetType::values)}
-    , scale{record.field("scale").value()}
-    , symbol{record.field("symbol").value()}
-    , transactions{record.field("transactions").value().toInt()}
+    , scale{record.value("scale").toInt()}
+    , symbol{sql::getString(record, "symbol")}
+    , transactions{record.value("transactions").toInt()}
 {}
 
 bool Asset::deletable() const {
