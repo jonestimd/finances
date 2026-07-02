@@ -8,6 +8,7 @@
 #include "statusmessagestore.h"
 #include "ui/widget/entityview.h"
 #include <QHash>
+#include <QReadWriteLock>
 #include <QWidget>
 
 class DataStore;
@@ -41,47 +42,57 @@ Q_SIGNALS:
  */
 template<typename T, class Service, typename... GetAllArgs>
 class EntityStore : public AbstractEntityStore {
+    mutable QReadWriteLock byIdLock;
     QHash<domain_id, const T*> byId{};
     bool loaded{false};
+
 protected:
     Service* const service;
     StatusMessageStore* const messageStore;
 
 public:
-    EntityStore(Service *service, StatusMessageStore* messageStore) : service{service}, messageStore{messageStore} {};
+    EntityStore(Service *service, StatusMessageStore* messageStore)
+        : byIdLock(QReadWriteLock::NonRecursive), service{service}, messageStore{messageStore} {};
     ~EntityStore() {
         qDeleteAll(byId);
         byId.clear();
     }
 
     const QList<domain_id> ids() const {
+        QReadLocker locker(&byIdLock);
         return byId.keys();
     }
 
     const qsizetype count() const {
+        QReadLocker locker(&byIdLock);
         return byId.size();
     }
 
     const T *value(domain_id id) const {
+        QReadLocker locker(&byIdLock);
         return byId.value(id);
     }
 
     bool contains(domain_id id) const {
+        QReadLocker locker(&byIdLock);
         return byId.contains(id);
     }
 
     void forEachEntry(std::function<void(domain_id, const T*)> func) const {
+        QReadLocker locker(&byIdLock);
         for (auto i = byId.cbegin(); i != byId.cend(); i++) func(i.key(), i.value());
     }
 
     template<class V>
     void appendValues(QList<const V*> &values, QList<domain_id> excludeIds = QList<domain_id>{}) const {
+        QReadLocker locker(&byIdLock);
         for (auto i = byId.cbegin(); i != byId.cend(); i++) {
             if (!excludeIds.contains(i.key())) values.append(i.value());
         }
     }
 
     ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const {
+        QReadLocker locker(&byIdLock);
         QList<const NamedEntity*> options;
         for (auto i = byId.cbegin(); i != byId.cend(); i++) options.append(i.value());
         return new ComboBoxModel(options, NamedEntity::getName, createValue);
@@ -126,26 +137,30 @@ protected:
      * @param deletes Entities that have been removed from database.
      */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
+        QWriteLocker locker(&byIdLock);
         QList<domain_id> updateIds, addIds;
         for (auto updated : updates) {
             auto id = updated->id.value();
-            auto oldValue = byId.value(id);
+            auto oldValue = byId.take(id);
             byId[id] = updated;
             if (oldValue) {
                 updateIds.append(id);
                 delete oldValue;
             } else addIds.append(id);
         }
+        locker.unlock();
         if (!updateIds.isEmpty()) emit valuesUpdated(updateIds);
         if (!addIds.isEmpty()) emit valuesAdded(addIds);
         if (!deletes.isEmpty()) {
             auto ids = getEntityIds(deletes);
             emit valuesToBeRemoved(ids);
+            locker.relock();
             for (auto entity : deletes) delete byId.take(entity->id.value());
         }
     }
 
     void removeValues(const QList<domain_id> &ids) {
+        QWriteLocker locker(&byIdLock);
         for (auto id : ids) {
             auto oldEntity = byId.take(id);
             if (oldEntity) delete oldEntity;
@@ -157,6 +172,7 @@ protected:
      * @details Replaced entities are deleted.
      */
     virtual void setValues(GetAllArgs... args, const QHash<domain_id, const T*> values) {
+        QWriteLocker locker(&byIdLock);
         for (auto [id, entity] : values.asKeyValueRange()) {
             auto oldEntity = byId.take(id);
             byId.insert(id, entity);
