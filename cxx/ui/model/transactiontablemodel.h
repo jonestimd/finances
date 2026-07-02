@@ -6,14 +6,14 @@
 #include "service/model/transaction.h"
 #include "ui/model/datastore.h"
 
-class TransactionTableModel : public PodItemModel<Transaction, PendingTransaction> {
+class TransactionTableModel : public PodItemModel<Transaction, TransactionStore, PendingTransaction> {
     Q_OBJECT
     TransactionTypeColumnAdapter *const transactionTypeAdapter;
-    const TransactionStore *const store;
+    // const TransactionStore *const store;
 
     QHash<int, QList<TransactionDetail*>> newDetails{};
 
-    QHash<qlonglong, QVariant> balances{};
+    QHash<domain_id, QVariant> balances{};
     QDecNumber clearedBalance_{0};
 
 public:
@@ -24,18 +24,16 @@ public:
     const int clearedColumn;
     const int subtotalColumn;
     const int balanceColumn;
-    const qlonglong accountId;
+    const domain_id accountId;
 
 private:
     const QList<ColumnAdapter<TransactionDetail>*> detailColumns;
 
 public:
-    explicit TransactionTableModel(DataStore *dataStore, qlonglong accountId);
+    explicit TransactionTableModel(DataStore *dataStore, domain_id accountId);
     ~TransactionTableModel();
 
 protected:
-    const QList<qlonglong> transactionIds() const;
-
     QVariant value(const QModelIndex &index, int role, QVariant current) const override;
     void setValue(const QModelIndex &index, const QVariant &value) override;
     void setDetailValue(TransactionDetail* detail, int columnIndex, const QVariant &value);
@@ -45,16 +43,21 @@ protected:
     PendingTransaction *pendingTransaction(const QModelIndex &index) const;
     const QList<TransactionDetail*> pendingDetails(const QModelIndex &parent) const;
 
+    virtual qsizetype insertIndex(domain_id id) override;
+    virtual void updateIndexes(const QModelIndex& changeRow, int delta) override;
+
     void updateBalances(int fromRow, const QDecNumber &delta);
     Q_SLOT void updateBalances();
     void updateClearedBalance(const QDecNumber &delta);
 
     virtual PendingTransaction *newRow() override;
 
-public:
-    void setRows(const QList<qlonglong> transactionIds);
+    virtual void rootIdsChanged() override;
 
-    QVariant balance(const QVariant &transactionId) const;
+public:
+    void setRows(const QList<domain_id> transactionIds) override;
+    
+    QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
@@ -63,7 +66,6 @@ public:
 
     virtual int rowType(const QModelIndex &index) const override;
 
-    const Transaction *getRow(const QModelIndex &index) const override;
     const TransactionDetail *getDetail(const QModelIndex &index) const;
 
     AbstractColumnAdapter *adapter(const QModelIndex &index) const override;
@@ -81,6 +83,8 @@ public:
     void clearChanges() override;
     bool enableDelete(const QModelIndex &index) const override;
 
+    void valuesAdded(const QList<domain_id>& ids) override;
+
     /**
      *  @brief transactionHasChanges Checks if the transaction associated with `index` has unsaved changes.
      *  @param index Model index of the transaction or one of its details.
@@ -97,16 +101,16 @@ public:
     QList<const TransactionDetail*> unsavedDetailDeletes(int txRow = -1) const;
 
 private slots:
-    void accountLoaded(qlonglong accountId);
-    void accountUpdated(qlonglong accountId);
+    void accountLoaded(domain_id accountId);
+    void accountUpdated(domain_id accountId);
     void payeesUpdated();
     void securitiesUpdated();
     void accountsUpdated();
     void groupsUpdated();
-    void transactionsSaved(const QList<const PendingTransaction*>& transactions);
-    void transactionAdded(qlonglong accountId, int index);
-    void transactionRemoved(qlonglong accountId, int index);
-    void transactionUpdated(qlonglong accountId, int index, int oldDetailCount);
+    void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
+    /** @brief Handle transfer transactions added in other accounts */
+    void transactionsUpdated(const QList<domain_id> txIds);
+    void detailsUpdated(const QList<domain_id> detailIds);
 
 private:
     void queueAddTransaction();

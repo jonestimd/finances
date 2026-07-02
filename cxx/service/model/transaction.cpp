@@ -5,43 +5,43 @@
 
 Transaction::Transaction() {}
 
-Transaction::Transaction(const QVariant &accountId) : accountId{accountId} {}
+Transaction::Transaction(domain_id accountId) : accountId{accountId} {}
 
 Transaction::Transaction(const QSqlRecord &record)
     : BaseDomain{record}
-    , accountId{record.field("account_id").value()}
-    , date{record.field("date").value()}
-    , payeeId{sql::getValue(record, "payee_id")}
-    , securityId{sql::getValue(record, "security_id")}
-    , referenceNumber{sql::getValue(record, "reference_number")}
-    , memo{sql::getValue(record, "memo")}
+    , accountId{record.value("account_id").toLongLong()}
+    , date{sql::getDate(record, "date").value()}
+    , payeeId{sql::getInt(record, "payee_id")}
+    , securityId{sql::getInt(record, "security_id")}
+    , referenceNumber{sql::getString(record, "reference_number")}
+    , memo{sql::getString(record, "memo")}
     , cleared{sql::yesNoValue(record, "cleared")}
-    , detailIds(mapping::jsonToList(record.field("detail_ids").value()))
+    , detailIds(mapping::jsonToIntList(record.value("detail_ids")))
 {}
 
 bool Transaction::deletable() const {
     return true;
 }
 
-Transaction *Transaction::newTransfer(const QVariant &accountId) const {
+Transaction *Transaction::newTransfer(domain_id accountId) const {
     auto relatedTransaction = new Transaction(*this);
     relatedTransaction->accountId = accountId;
     return relatedTransaction;
 }
 
 QString Transaction::toString() const {
-    return QString("accountId{") % accountId.toString()
+    return QString("accountId{") % QString::number(accountId)
            % "},date{" % date.toString()
-           % "},referenceNumber{" % referenceNumber.toString()
-           % "},payeeId{" % payeeId.toString()
-           % "},securityId{" % securityId.toString()
-           % "},memo{" % memo.toString()
-           % "},cleared{" % cleared.toString() % "}";
+           % "},referenceNumber{" % referenceNumber
+           % "},payeeId{" % domain::toString(payeeId)
+           % "},securityId{" % domain::toString(securityId)
+           % "},memo{" % memo
+           % "},cleared{" % (cleared ? "Y" : "N") % "}";
 }
 
 PendingTransaction::PendingTransaction() {}
 
-PendingTransaction::PendingTransaction(const QVariant &accountId) : Transaction{accountId} {
+PendingTransaction::PendingTransaction(domain_id accountId) : Transaction{accountId} {
     details.append(new TransactionDetail);
 }
 
@@ -55,7 +55,7 @@ PendingTransaction::~PendingTransaction() {
 
 bool PendingTransaction::isEmpty() const {
     for (auto detail : std::as_const(details)) if (!detail->isEmpty()) return false;
-    return payeeId.isNull() && securityId.isNull() && referenceNumber.isNull() && memo.isNull();
+    return !payeeId.has_value() && !securityId.has_value() && referenceNumber.isNull() && memo.isNull();
 }
 
 TransactionUpdate::TransactionUpdate(
@@ -84,8 +84,8 @@ void TransactionUpdate::onError() {
 TransactionsData::TransactionsData(
     QList<const Transaction*> transactions,
     QList<const TransactionDetail*> details,
-    const QList<QVariant> deletedIds,
-    const QList<QVariant> deletedDetailIds
+    const QList<domain_id> deletedIds,
+    const QList<domain_id> deletedDetailIds
 )
     : transactions{transactions}
     , details{details}

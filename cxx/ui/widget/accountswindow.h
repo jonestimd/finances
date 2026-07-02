@@ -28,8 +28,8 @@ public:
     void saveData() override;
 
 public Q_SLOTS:
-    void setCompanies(const QList<qlonglong> companyIds);
-    void setAccounts(const QList<qlonglong> accountIds);
+    void setCompanies(const QList<domain_id> companyIds);
+    void setAccounts(const QList<domain_id> accountIds);
     void showCompanies();
     void showTransactions();
     void selectionChanged();

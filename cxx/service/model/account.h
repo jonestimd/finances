@@ -3,20 +3,19 @@
 
 #include "basedomain.h"
 #include "accounttype.h"
-#include "decimal.h"
 #include <QSqlRecord>
 #include <QVariant>
 
 class Account : public TransactionType {
 public:
-    QVariant companyId;
-    QVariant description;
-    QVariant type{AccountType::bank.code};
-    QVariant accountNumber;
-    QVariant closed{false};
-    mutable QVariant transactions{0};
-    QVariant balance{QVariant::fromValue(QDEC_ZERO)};
-    QVariant currency;
+    optional_id companyId;
+    QString description;
+    const AccountType* type{&AccountType::bank};
+    QString accountNumber;
+    bool closed{false};
+    mutable int transactions{0};
+    QDecNumber balance{0};
+    QString currency;
 
     Account();
     Account(const QSqlRecord &record);

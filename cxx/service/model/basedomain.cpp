@@ -3,24 +3,30 @@
 #include <QDate>
 #include <QSqlField>
 
+namespace domain {
+    QString toString(const optional_id& id) {
+        return id.has_value() ? QString::number(id.value()) : "";
+    }
+}
+
 BaseDomain::BaseDomain() {}
 
 BaseDomain::BaseDomain(const QSqlRecord &record)
-    : id{record.field("id").value()}
-    , version{record.field("version").value()}
-    , changeUser{record.field("change_user").value()}
-    , changeDate{record.field("change_date").value()}
+    : id{record.value("id").toLongLong()}
+    , version{record.value("version").toLongLong()}
+    , changeUser{record.value("change_user").toString()}
+    , changeDate{record.value("change_date").toDateTime()}
 {}
 
 NamedEntity::NamedEntity(const QSqlRecord &record, const char *nameColumn)
     : BaseDomain{record}
-    , name{record.field(nameColumn).value().toString()}
+    , name{record.value(nameColumn).toString()}
 {}
 
 NamedEntity::NamedEntity(const QString &name) : BaseDomain{}, name{name} {}
 
 QString NamedEntity::getName(const NamedEntity *entity) {
-    return entity->name.toString();
+    return entity->name;
 }
 
 TransactionType::TransactionType(bool transfer) : NamedEntity{}, transfer{transfer} {}
@@ -39,7 +45,10 @@ const Category *TransactionType::getCategory(const QVariant &value) {
     return entity && !entity->transfer ? static_cast<const Category*>(entity) : nullptr;
 }
 
-TransactionTypeId::TransactionTypeId(bool transfer, QVariant id) : transfer{transfer}, id{id} {}
+TransactionTypeId::TransactionTypeId(bool transfer, const optional_id& id)
+    : transfer{transfer}
+    , id{id}
+{}
 
 TransactionTypeId::TransactionTypeId(const TransactionType &tt) : transfer{tt.transfer}, id{tt.id} {}
 

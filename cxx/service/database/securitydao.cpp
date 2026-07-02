@@ -174,8 +174,8 @@ QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> secu
     QSqlQuery query(db);
     query.prepare(insertSecurityQuery);
     for (auto security : std::as_const(result)) {
-        query.bindValue(":id", security->id);
-        query.bindValue(":type", security->securityType);
+        sql::bindValue(query, ":id", security->id.value());
+        sql::bindValue(query, ":type", security->securityType->code);
         sql::exec(query, className, "insert security");
     }
     return result;
@@ -186,7 +186,7 @@ void SecurityDao::remove(QSqlDatabase &db, const QList<const Security*> securiti
     QSqlQuery query(db);
     query.prepare("delete from asset where id = :id");
     for (auto security : securities) {
-        query.bindValue(":id", security->id);
+        sql::bindValue(query, ":id", security->id.value());
         sql::exec(query, className, "remove asset");
     }
 }
@@ -196,20 +196,20 @@ QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Securit
     QSqlQuery query(db);
     query.prepare(updateSecuritySql);
     for (auto security : securities) {
-        query.bindValue(":id", security->id);
-        query.bindValue(":securityType", security->securityType);
+        sql::bindValue(query, ":id", security->id.value());
+        sql::bindValue(query, ":securityType", security->securityType->code);
     }
     return updates;
 }
 
 void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {
     NamedEntityDao::bindUpdateValues(query, security);
-    query.bindValue(":symbol", security->symbol);
+    sql::bindValue(query, ":symbol", security->symbol);
 }
 
  void SecurityDao::bindInsertValues(QSqlQuery &query, Security *security) {
     NamedEntityDao::bindInsertValues(query, security);
-    query.bindValue(":type", security->type);
-    query.bindValue(":symbol", security->symbol);
-    query.bindValue(":scale", security->scale);
+    sql::bindValue(query, ":type", security->type->code);
+    sql::bindValue(query, ":symbol", security->symbol);
+    sql::bindValue(query, ":scale", security->scale);
 }

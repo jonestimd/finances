@@ -18,16 +18,12 @@ private slots:
         dbTestCase.createDatabases();
         QTest::addColumn<QString>("driver");
         QTest::addColumn<AccountService*>("service");
-        QTest::addColumn<QVariant>("companyId");
-        QTest::addColumn<QVariant>("payeeId");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &accountDao = dbTestCase.accountDao(driver);
             auto &companyDao = dbTestCase.companyDao(driver);
             auto service = new AccountService{dbTestCase.connectionPool(driver), accountDao, companyDao};
-            auto companyId = dbTestCase.addCompany(driver, "company");
-            auto payeeId = dbTestCase.addPayee(driver, "payee");
-            QTest::newRow(driver.toLocal8Bit())
-                << driver << service << companyId << payeeId;
+            dbTestCase.addCompany(driver, "company");
+            QTest::newRow(driver.toLocal8Bit()) << driver << service;
         }
     }
 
@@ -36,14 +32,14 @@ private slots:
         QFETCH_GLOBAL(AccountService*, service);
         auto account = dbTestCase.addAccount(driver, "account", "BANK");
         // for sqlite3: use amounts that will result in rounding errors if decimal extension is not loaded
-        dbTestCase.saveTransaction(factory::transaction(account->id), {"1.23"});
-        dbTestCase.saveTransaction(factory::transaction(account->id), {"2.34", "-5.00"});
+        dbTestCase.saveTransaction(factory::transaction(account->id.value()), {"1.23"});
+        dbTestCase.saveTransaction(factory::transaction(account->id.value()), {"2.34", "-5.00"});
 
         auto result = service->getAll();
 
-        auto accountSummary = result.value(account->id.toLongLong());
+        auto accountSummary = result.value(account->id.value());
         QCOMPARE(accountSummary->transactions, 2);
-        QCOMPARE(accountSummary->balance, DECIMAL_VARIANT("-1.43"));
+        QCOMPARE(accountSummary->balance, QDecNumber("-1.43"));
     }
 
     void update_savesData() {
@@ -56,10 +52,10 @@ private slots:
         account->closed = true;
         BulkUpdate<Account> changes{{account}, {}, {}};
 
-        QHash<qlonglong, const Company*> companies{};
+        QHash<domain_id, const Company*> companies{};
         auto result = service->update(changes, TEST_USER, companies);
 
-        auto updated = dbTestCase.loadAccount(driver, account->id);
+        auto updated = dbTestCase.loadAccount(driver, account->id.value());
         QCOMPARE(updated->name, account->name);
         QCOMPARE(updated->description, account->description);
         QCOMPARE(updated->accountNumber, account->accountNumber);

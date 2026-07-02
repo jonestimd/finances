@@ -12,7 +12,7 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
     entityView.addActions({hideZeroAction});
     setWindowTitle(tr("%1 - Securities[*]").arg(dataStore->connectionName()));
 
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setSecurities(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setSecurities(QList<domain_id>)));
 
     if (store->load(&entityView, tr(LOADING_SECURITIES))) model()->setRows(store->ids());
 
@@ -35,7 +35,7 @@ void SecuritiesWindow::saveData() {
     store->update(this, model(), tr(SAVING_SECURITIES));
 }
 
-void SecuritiesWindow::setSecurities(const QList<qlonglong> ids) {
+void SecuritiesWindow::setSecurities(const QList<domain_id> ids) {
     model()->setRows(ids);
 }
 
@@ -49,7 +49,7 @@ void SecuritiesWindow::toggleZeroShares(bool hide) {
 bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
     auto row = model()->getRow(sourceIndex);
     auto shares = row->shares;
-    return shares.isNull() || shares.value<QDecNumber>().toDouble() > 0;
+    return !shares.isZero() && !shares.isNegative();
 }
 
 const char *SecuritiesWindow::settingsGroup() const {

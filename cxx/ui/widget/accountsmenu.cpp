@@ -5,6 +5,10 @@
 namespace accountsmenu {
 #   define HIDE_CLOSED_SETTING "hide.closed.accounts"
 
+    static QString escapeName(const QString name) {
+        return QString{name}.replace('&', "&&");
+    }
+
     class HideClosedAction : public QAction {
     public:
         HideClosedAction() : QAction{tr("Hide Closed Accounts")} {
@@ -23,9 +27,9 @@ namespace accountsmenu {
         AccountAction(AccountsMenu *menu, TransactionsWindow *window, const Account *account)
             : QAction(menu)
         {
-            setText(account->name.toString().replace('&', "&&"));
+            setText(escapeName(account->name));
             connect(this, &QAction::triggered, this, [=]() {
-                window->showAccount(account->id.toLongLong());
+                window->showAccount(account->id.value());
             });
         }
     };
@@ -38,8 +42,8 @@ AccountsMenu::AccountsMenu(TransactionsWindow *window, UiContext *context)
     , store{context->dataStore->accountStore}
     , accountsAction{context->accountsAction()}
 {
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
-    connect(&store->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateMenu()));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateMenu()));
+    connect(&store->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateMenu()));
     updateMenu();
 }
 
@@ -67,18 +71,18 @@ void AccountsMenu::updateMenu() {
     auto hideClosed = hideClosedAction->isChecked();
     clear();
     connect(hideClosedAction, SIGNAL(toggled(bool)), this, SLOT(updateMenu()));
-    QHash<qlonglong, QMenu*> companyMenus{};
-    store->forEachEntry([&](qlonglong id, const Account* account) {
-        if (hideClosed && account->closed.toBool()) return;
-        if (account->companyId.isNull()) {
+    QHash<domain_id, QMenu*> companyMenus{};
+    store->forEachEntry([&](domain_id id, const Account* account) {
+        if (hideClosed && account->closed) return;
+        if (!account->companyId.has_value()) {
             insertByName(this, new AccountAction(this, window, account));
         } else {
-            QMenu *companyMenu = companyMenus.value(account->companyId.toLongLong());
+            QMenu *companyMenu = companyMenus.value(account->companyId.value());
             if (!companyMenu) {
-                auto company = store->companyStore.value(account->companyId);
+                auto company = store->companyStore.value(account->companyId.value());
                 if (company) {
-                    companyMenu = new QMenu(company->name.toString().replace('&', "&&"), this);
-                    companyMenus.insert(company->id.toLongLong(), companyMenu);
+                    companyMenu = new QMenu(escapeName(company->name), this);
+                    companyMenus.insert(company->id.value(), companyMenu);
                     insertByName(this, companyMenu);
                 }
             }

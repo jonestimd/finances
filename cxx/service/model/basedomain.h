@@ -1,8 +1,13 @@
 #ifndef BASEDOMAIN_H
 #define BASEDOMAIN_H
 
+#include "QDecNumber.hh"
+#include <QDateTime>
 #include <QSqlRecord>
 #include <QVariant>
+
+typedef qlonglong domain_id;
+typedef std::optional<domain_id> optional_id;
 
 namespace domain {
     template<class T>
@@ -11,29 +16,31 @@ namespace domain {
         for (const T* entity : entities) copies.append(new T(*entity));
         return copies;
     }
+
+    QString toString(const optional_id& id);
 }
 
 class BaseDomain {
 public:
-    QVariant id;
-    QVariant version{0};
-    QVariant changeUser;
-    QVariant changeDate;
+    optional_id id{};
+    qlonglong version{0};
+    QString changeUser{};
+    QDateTime changeDate{};
 
     BaseDomain();
     BaseDomain(const QSqlRecord &record);
 };
 
 template<class T>
-QVariantList getEntityIds(const QList<T*> items) {
-    QVariantList ids{};
-    for (auto item : items) ids.append(item->id);
+QList<domain_id> getEntityIds(const QList<T*> items) {
+    QList<domain_id> ids{};
+    for (auto item : items) ids.append(item->id.value());
     return ids;
 }
 
 class NamedEntity : public BaseDomain {
 public:
-    QVariant name;
+    QString name;
 
     NamedEntity() = default;
     NamedEntity(const QSqlRecord &record, const char *nameColumn = "name");
@@ -62,9 +69,9 @@ Q_DECLARE_METATYPE(const TransactionType*)
 
 struct TransactionTypeId {
     const bool transfer;
-    const QVariant id;
+    const optional_id id;
 
-    TransactionTypeId(bool transfer = false, QVariant id = QVariant{});
+    TransactionTypeId(bool transfer = false, const optional_id& id = {});
     TransactionTypeId(const TransactionType &tt);
     TransactionTypeId(const TransactionType *tt);
 };

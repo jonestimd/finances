@@ -36,7 +36,7 @@ class UiContext : public QObject {
     WindowAction<CategoriesWindow, DataStore*> categoriesAction_;
     WindowAction<GroupsWindow, DataStore*> groupsAction_;
     WindowAction<SecuritiesWindow, DataStore*> securitiesAction_;
-    QHash<qlonglong, TransactionTableModel*> transactionModels{};
+    QHash<domain_id, TransactionTableModel*> transactionModels{};
     QList<TransactionsWindow*> transactionsWindows{};
 
 public:
@@ -53,8 +53,8 @@ public:
     QAction *groupsAction();
     QAction *securitiesAction();
 
-    TransactionsWindow *showTransactions(qlonglong accountId);
-    TransactionTableModel *transactionsModel(qlonglong accountId);
+    TransactionsWindow *showTransactions(domain_id accountId);
+    TransactionTableModel *transactionsModel(domain_id accountId);
     int windowCount(const TransactionTableModel* model);
 
     /**

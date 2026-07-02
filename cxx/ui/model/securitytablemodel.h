@@ -3,9 +3,8 @@
 
 #include "podtablemodel.h"
 #include "securitystore.h"
-#include "service/securityservice.h"
 
-class SecurityTableModel : public PodTableModel<Security, SecurityService> {
+class SecurityTableModel : public PodTableModel<Security, SecurityStore> {
     Q_OBJECT
 
 public:

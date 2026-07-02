@@ -48,16 +48,16 @@ SecurityLotDao::SecurityLotDao(const QString &dbType)
 {}
 
 void SecurityLotDao::bindInsertValues(QSqlQuery &query, SecurityLot *lot) {
-    SQL_BIND_VALUE(query, ":purchaseDetailId", lot->purchaseDetailId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", lot->relatedDetailId);
-    SQL_BIND_VALUE(query, ":purchaseShares", lot->purchaseShares);
-    SQL_BIND_VALUE(query, ":adjustedShares", lot->adjustedShares);
+    sql::bindValue(query, ":purchaseDetailId", lot->purchaseDetailId);
+    sql::bindValue(query, ":relatedDetailId", lot->relatedDetailId);
+    sql::bindValue(query, ":purchaseShares", lot->purchaseShares);
+    sql::bindValue(query, ":adjustedShares", lot->adjustedShares);
 }
 
 void SecurityLotDao::bindUpdateValues(QSqlQuery &query, SecurityLot *lot) {
     EntityDao::bindUpdateValues(query, lot);
-    SQL_BIND_VALUE(query, ":purchaseDetailId", lot->purchaseDetailId);
-    SQL_BIND_VALUE(query, ":relatedDetailId", lot->relatedDetailId);
-    SQL_BIND_VALUE(query, ":purchaseShares", lot->purchaseShares);
-    SQL_BIND_VALUE(query, ":adjustedShares", lot->adjustedShares);
+    sql::bindValue(query, ":purchaseDetailId", lot->purchaseDetailId);
+    sql::bindValue(query, ":relatedDetailId", lot->relatedDetailId);
+    sql::bindValue(query, ":purchaseShares", lot->purchaseShares);
+    sql::bindValue(query, ":adjustedShares", lot->adjustedShares);
 }

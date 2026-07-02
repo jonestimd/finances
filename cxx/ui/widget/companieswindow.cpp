@@ -19,7 +19,7 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
 {
     setWindowTitle(tr("Companies[*]"));
 
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCompanies(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setCompanies(QList<domain_id>)));
 
     layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
@@ -28,6 +28,10 @@ CompaniesWindow::CompaniesWindow(QMainWindow *parent, DataStore *dataStore)
     layout.setContentsMargins(0, 0, 0, 0);
 
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500});
+
+    if (store->load(&entityView, tr(LOADING_COMPANIES))) {
+        model.setRows(store->ids());
+    }
 }
 
 void CompaniesWindow::loadData() {
@@ -40,16 +44,16 @@ void CompaniesWindow::saveData() {
     store->update(this, &model, tr("Saving companies..."));
 }
 
-void CompaniesWindow::setCompanies(const QList<qlonglong> companyIds) {
+void CompaniesWindow::setCompanies(const QList<domain_id> companyIds) {
     model.setRows(companyIds);
 }
 
 bool CompaniesWindow::confirmDelete(const QSet<const QModelIndex> indexes) {
     QStringList nonEmpty;
     for (auto i : indexes) {
-        if (model.getRow(i)->accounts.toInt() > 0) nonEmpty.append(model.getRow(i)->name.toString());
+        if (model.getRow(i)->accounts > 0) nonEmpty.append(model.getRow(i)->name);
     }
-    // FIXME: delete is disabled for non-empty company
+    // delete is disabled for non-empty company, so the dialog should never be displayed
     return dialog::confirmDelete(this, tr("Confirm delete companies"),
             tr("The following companies have accounts.  "
             "The accounts will remain but will no longer be associated with a company.  "

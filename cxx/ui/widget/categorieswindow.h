@@ -25,7 +25,7 @@ public:
     void saveData() override;
 
 public Q_SLOTS:
-    void setCategories(const QList<qlonglong> categoryIds);
+    void setCategories(const QList<domain_id> categoryIds);
     void reparent();
     void merge();
     void selectionChanged();

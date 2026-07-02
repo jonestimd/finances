@@ -21,7 +21,7 @@ public:
     Q_INVOKABLE void saveData() override;
 
 public Q_SLOTS:
-    void setSecurities(const QList<qlonglong> ids);
+    void setSecurities(const QList<domain_id> ids);
     void toggleZeroShares(bool hide);
 
 private:

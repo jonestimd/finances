@@ -7,9 +7,8 @@
 
 class TransactionGroup : public NamedEntity {
 public:
-    QVariant name;
-    QVariant description;
-    mutable QVariant details{0};
+    QString description;
+    mutable int details{0};
 
     TransactionGroup();
     TransactionGroup(const QSqlRecord &record);

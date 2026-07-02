@@ -7,15 +7,15 @@ Category::Category() : TransactionType{false} {}
 
 Category::Category(const QSqlRecord &record)
     : TransactionType(false, record, "code")
-    , amountType{sql::getValue(record, "amount_type", DEBIT_DEPOSIT)}
-    , description{sql::getValue(record, "description")}
+    , amountType{sql::enumValue(record, "amount_type", AmountType::values)}
+    , description{sql::getString(record, "description")}
     , income{sql::yesNoValue(record, "income")}
     , security{sql::yesNoValue(record, "security")}
-    , parentId{sql::getValue(record, "parent_id")}
-    , childIds(mapping::jsonToList(record.field("child_ids").value()))
-    , details{sql::getValue(record, "details")}
+    , parentId{sql::getInt(record, "parent_id")}
+    , childIds(mapping::jsonToIntList(record.value("child_ids")))
+    , details{sql::getValue(record, "details").toInt()}
 {}
 
 bool Category::deletable() const {
-    return details.toInt() == 0 && childIds.empty();
+    return details == 0 && childIds.empty();
 }

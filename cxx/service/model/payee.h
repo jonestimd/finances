@@ -7,7 +7,7 @@
 
 class Payee : public NamedEntity {
 public:
-    mutable QVariant transactions{0};
+    mutable int transactions{0};
 
     Payee();
     Payee(const QSqlRecord &record);

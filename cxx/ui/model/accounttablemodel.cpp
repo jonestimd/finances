@@ -31,13 +31,13 @@ namespace accounttablemodel {
         }
     };
 
-    class BalanceColumnAdapter : public AmountColumnAdapter<Account> {
+    class BalanceColumnAdapter : public AmountColumnAdapter<Account, QDecNumber> {
     public:
         BalanceColumnAdapter(QString title) : AmountColumnAdapter{title, &Account::balance, moneyFormat, false} {}
 
         virtual QVariant value(const Account *row, const QModelIndex &index, const QVariant current, int role) const override {
             auto value = AmountColumnAdapter::value(row, index, current, role);
-            if (role == Qt::DisplayRole) return row->currency.toString().append(value.toString());
+            if (role == Qt::DisplayRole) return value.toString().prepend(row->currency);
             return value;
         }
     };
@@ -46,27 +46,28 @@ namespace accounttablemodel {
 using namespace accounttablemodel;
 
 AccountTableModel::AccountTableModel(AccountStore *store, AddCompany addCompany)
-    : PodTableModel<Account, AccountService>{
+    : PodTableModel<Account, AccountStore>{
         store,
         QList<ColumnAdapter<Account>*>{
-            new ColumnAdapter<Account>(tr("Closed"), &Account::closed),
-            new RelationColumnAdapter<Account, Company, CompanyStore>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
-            new ColumnAdapter<Account>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
+            new FieldColumnAdapter<Account, bool>(tr("Closed"), &Account::closed),
+            new RelationColumnAdapter<Account, Company, CompanyStore, optional_id>(tr("Company"), &Account::companyId, &store->companyStore, addCompany),
+            new FieldColumnAdapter<Account, QString>(tr("Name"), &Account::name, true, new AccountValidatorFactory()),
             new EnumColumnAdapter<Account, AccountType>(tr("Type"), &Account::type, &AccountType::values, requiredValidatorFactory, true, &AccountType::isCompatible),
-            new ColumnAdapter<Account>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
-            new ColumnAdapter<Account>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
-            new NumberColumnAdapter<Account>(tr("Transactions"), &Account::transactions),
+            new FieldColumnAdapter<Account, QString>(tr("Description"), &Account::description, true, trimmedValidatorFactory),
+            new FieldColumnAdapter<Account, QString>(tr("Number"), &Account::accountNumber, true, trimmedValidatorFactory),
+            new NumberColumnAdapter<Account, int>(tr("Transactions"), &Account::transactions),
             new BalanceColumnAdapter(tr("Balance")),
         },
     }
 {}
 
-void AccountTableModel::companiesLoaded(const QList<qlonglong> companyIds) {
+void AccountTableModel::companiesLoaded(const QList<domain_id> companyIds) {
+    // remove pending changes referencing a deleted company
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
             auto account = children.at(i);
-            if (!companyIds.contains(account->companyId.toLongLong())) {
-                setData(index(rowIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
+            if (!companyIds.contains(account->companyId.value())) {
+                setData(index(rootIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }
         }
     }

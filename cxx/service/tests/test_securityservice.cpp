@@ -6,18 +6,17 @@ class TestSecurityService : public QObject {
     Q_OBJECT
     DbTestCase dbTestCase{};
 
-    QString normalize(const Security *security, QVariant(Security::*member)) {
-        auto value = (security->*member).value<QDecNumber>();
+    QString normalize(QDecNumber value) {
         return value.normalize().toString();
     }
 
     void verifySecurity(const Security *security, int txCount, const char *shares, const char *costBasis) {
-        QCOMPARE(security->transactions.toInt(), txCount);
-        QCOMPARE(normalize(security, &Security::shares), shares);
-        QCOMPARE(normalize(security, &Security::costBasis), costBasis);
+        QCOMPARE(security->transactions, txCount);
+        QCOMPARE(normalize(security->shares), shares);
+        QCOMPARE(normalize(security->costBasis), costBasis);
     }
 
-    void addSplit(const QString &driver, QVariant securityId, QDate date, int sharesIn, int sharesOut) {
+    domain_id addSplit(const QString &driver, domain_id securityId, QDate date, int sharesIn, int sharesOut) {
         Connection conn(dbTestCase.connectionPool(driver));
         StockSplit split{};
         split.securityId = securityId;
@@ -25,6 +24,7 @@ class TestSecurityService : public QObject {
         split.sharesIn = sharesIn;
         split.sharesOut = sharesOut;
         dbTestCase.stockSplitDao(driver).add(conn.db, {&split}, TEST_USER);
+        return split.id.value();
     }
 
 private slots:
@@ -32,20 +32,18 @@ private slots:
         dbTestCase.createDatabases();
         QTest::addColumn<QString>("driver");
         QTest::addColumn<SecurityService*>("service");
-        QTest::addColumn<QVariant>("payeeId");
-        QTest::addColumn<QVariant>("accountId");
-        QTest::addColumn<QVariant>("accountId2");
-        QTest::addColumn<QVariant>("securityId");
-        QTest::addColumn<QVariant>("securityId2");
-        QVariant payeeId{};
+        QTest::addColumn<domain_id>("accountId");
+        QTest::addColumn<domain_id>("accountId2");
+        QTest::addColumn<domain_id>("securityId");
+        QTest::addColumn<domain_id>("securityId2");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &dao = dbTestCase.securityDao(driver);
-            auto accountId = dbTestCase.addAccount(driver, "account 1", AccountType::bank.code)->id;
-            auto accountId2 = dbTestCase.addAccount(driver, "account 2", AccountType::bank.code)->id;
-            auto securityId = dbTestCase.addSecurity(driver, "security 1")->id;
-            auto securityId2 = dbTestCase.addSecurity(driver, "security 2")->id;
+            auto accountId = dbTestCase.addAccount(driver, "account 1", AccountType::bank.code)->id.value();
+            auto accountId2 = dbTestCase.addAccount(driver, "account 2", AccountType::bank.code)->id.value();
+            auto securityId = dbTestCase.addSecurity(driver, "security 1")->id.value();
+            auto securityId2 = dbTestCase.addSecurity(driver, "security 2")->id.value();
             auto service = new SecurityService{dbTestCase.connectionPool(driver), dao, dbTestCase.stockSplitDao(driver)};
-            QTest::newRow(driver.toLocal8Bit()) << driver << service << payeeId << accountId << accountId2 << securityId << securityId2;
+            QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << accountId2 << securityId << securityId2;
         }
     }
 
@@ -54,54 +52,54 @@ private slots:
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(QVariant, accountId);
-        QFETCH_GLOBAL(QVariant, accountId2);
-        QFETCH_GLOBAL(QVariant, securityId);
-        QFETCH_GLOBAL(QVariant, securityId2);
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-1.23", "-2.00"}, {"3"});
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId), {"-10.45"}, {"6"});
-        dbTestCase.saveTransaction(factory::transaction(accountId2, QVariant{}, securityId2), {"-2.00"}, {"5"});
-        dbTestCase.saveTransaction(factory::transaction(accountId2, QVariant{}, securityId2), {"20.00"}, {"-1"});
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, accountId2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-1.23", "-2.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-10.45"}, {"6"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"-2.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"20.00"}, {"-1"});
 
         auto result = service->getAll();
 
-        verifySecurity(result.value(securityId.toLongLong()), 2, "9", "11.68");
-        verifySecurity(result.value(securityId2.toLongLong()), 2, "4", "2");
+        verifySecurity(result.value(securityId), 2, "9", "11.68");
+        verifySecurity(result.value(securityId2), 2, "4", "2");
     }
 
     void getAll_adjustsSharesForSplits() {
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(QVariant, accountId);
-        QFETCH_GLOBAL(QVariant, securityId);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, securityId);
         QDate tx1Date{2010, 2, 15};
         QDate tx2Date = tx1Date.addDays(1);
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId, tx1Date), {"-1.00"}, {"3"});
-        dbTestCase.saveTransaction(factory::transaction(accountId, QVariant{}, securityId, tx2Date), {"-1.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId, tx1Date), {"-1.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId, tx2Date), {"-1.00"}, {"5"});
         addSplit(driver, securityId, tx1Date, 1, 2);
 
         auto result = service->getAll();
 
-        verifySecurity(result.value(securityId.toLongLong()), 2, "11", "2");
+        verifySecurity(result.value(securityId), 2, "11", "2");
     }
 
     void getSplits_returnsAllSplits() {
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
         QFETCH_GLOBAL(SecurityService*, service);
-        QFETCH_GLOBAL(QVariant, securityId);
-        QFETCH_GLOBAL(QVariant, securityId2);
-        addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
+        auto splitId = addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
         addSplit(driver, securityId, QDate{2015, 12, 15}, 1, 3);
         addSplit(driver, securityId2, QDate{2019, 10, 31}, 3, 2);
 
         auto result = service->getSplits();
 
         QCOMPARE(result.size(), 3);
-        auto split = result.values().constFirst();
-        QVERIFY(split->sharesIn.canConvert<QDecNumber>());
-        QVERIFY(split->sharesOut.canConvert<QDecNumber>());
+        auto split = result.value(splitId);
+        QCOMPARE(split->sharesIn.normalize().toString(), "1");
+        QCOMPARE(split->sharesOut.normalize().toString(), "2");
     }
 
     void update_savesData() {
@@ -114,7 +112,7 @@ private slots:
 
         auto result = service->update(changes, TEST_USER);
 
-        auto updated = dbTestCase.loadSecurity(driver, security->id);
+        auto updated = dbTestCase.loadSecurity(driver, security->id.value());
         QCOMPARE(updated->name, security->name);
     }
 };

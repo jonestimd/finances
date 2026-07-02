@@ -13,7 +13,7 @@ class AccountService : public EntityService<Account, AccountDao> {
 public:
     AccountService(ConnectionPool *connectionPool, AccountDao &accountDao, CompanyDao &companyDao);
 
-    QList<const Account*> update(BulkUpdate<Account> &changes, const QString &user, QHash<qlonglong, const Company*> &companies);
+    QList<const Account*> update(BulkUpdate<Account> &changes, const QString &user, QHash<domain_id, const Company*> &companies);
 };
 
 #endif // ACCOUNTSERVICE_H

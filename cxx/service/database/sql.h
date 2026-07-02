@@ -1,25 +1,52 @@
 #ifndef SQL_H
 #define SQL_H
 
+#include "QDecNumber.hh"
+#include <QSqlField>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
 #include <QLoggingCategory>
+#include <QDate>
 
 Q_DECLARE_LOGGING_CATEGORY(sqlLogger)
-
-#define SQL_BIND_VALUE(query, name, value) \
-    query.bindValue((name), (value)); \
-    qCDebug(sqlLogger) << "-" << (name) << "=" << (value);
-
-#define SQL_BIND_LIST(query, name, values) \
-    sql::bindList(query, name, values); \
-    qCDebug(sqlLogger) << "-" << (name) << "=" << (values);
 
 namespace sql {
     QVariant getValue(QSqlRecord record, const char *name, QVariant defaultValue = {});
 
-    QVariant yesNoValue(QSqlRecord record, const char *name);
+    std::optional<qlonglong> getInt(QSqlRecord record, const char *name);
+
+    QString getString(QSqlRecord record, const char* name);
+
+    std::optional<QDate> getDate(QSqlRecord record, const char *name);
+
+    std::optional<QDecNumber> decimalValue(const QSqlRecord &record, const char* name);
+
+    template<class Enum>
+    const Enum* enumValue(const QSqlRecord& record, const char* name, const QHash<const QString, const Enum*> values) {
+        if (record.field(name).isNull()) return nullptr;
+        return values.value(record.value(name).toString());
+    }
+
+    bool yesNoValue(QSqlRecord record, const char *name);
+
+    void bindValue(QSqlQuery &query, const char *name, const std::optional<qlonglong> &value);
+
+    void bindValue(QSqlQuery &query, const char *name, const char *value);
+
+    void bindValue(QSqlQuery &query, const char *name, const QString &value);
+
+    void bindValue(QSqlQuery &query, const char *name, const QVariant &value);
+
+    inline void bindValue(QSqlQuery &query, const char *name, qlonglong value) {
+        bindValue(query, name, QVariant{value});
+    }
+
+    void bindValue(QSqlQuery &query, const char *name, const QDecNumber& value);
+
+    void bindValue(QSqlQuery &query, const char *name, const std::optional<QDecNumber>& value);
+
+    void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 
     void bindList(QSqlQuery &query, const char *name, const QVariantList &values);
 
@@ -27,7 +54,7 @@ namespace sql {
 
     void exec(QSqlQuery &query, const char *className, const char *queryName);
 
-    QList<QVariant> loadValues(QSqlQuery& query, const char* column);
+    QList<qlonglong> loadValues(QSqlQuery& query, const char* column);
 }
 
 #endif // SQL_H

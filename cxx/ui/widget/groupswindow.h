@@ -19,7 +19,7 @@ public:
     Q_INVOKABLE void saveData() override;
 
 public Q_SLOTS:
-    void setGroups(const QList<qlonglong> groupIds);
+    void setGroups(const QList<domain_id> groupIds);
 
 protected:
     const char *settingsGroup() const override;

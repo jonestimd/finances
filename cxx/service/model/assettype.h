@@ -15,7 +15,7 @@ public:
     static const AssetType currency;
     static const AssetType security;
 
-    static QHash<QString, const AssetType*> values;
+    static QHash<const QString, const AssetType*> values;
 };
 
 #endif // ASSETTYPE_H

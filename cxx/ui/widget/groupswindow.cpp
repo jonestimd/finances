@@ -11,7 +11,7 @@ GroupsWindow::GroupsWindow(DataStore *dataStore)
 {
     setWindowTitle(tr("%1 - Groups[*]").arg(dataStore->connectionName()));
 
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setGroups(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setGroups(QList<domain_id>)));
 
     if (store->load(&entityView, tr(LOADING_GROUPS))) model()->setRows(store->ids());
 
@@ -34,7 +34,7 @@ void GroupsWindow::saveData() {
     store->update(this, model(), tr(SAVING_GROUPS));
 }
 
-void GroupsWindow::setGroups(const QList<qlonglong> groupIds) {
+void GroupsWindow::setGroups(const QList<domain_id> groupIds) {
     model()->setRows(groupIds);
 }
 

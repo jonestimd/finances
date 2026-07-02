@@ -56,8 +56,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connectModel(model);
 
     auto dataStore = context->dataStore;
-    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsLoaded()));
-    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(companiesLoaded()));
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsLoaded()));
+    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(companiesLoaded()));
     connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -96,7 +96,7 @@ TransactionTableModel *TransactionsWindow::model() const {
     return entityView.model<TransactionTableModel>();
 }
 
-void TransactionsWindow::showAccount(qlonglong accountId) {
+void TransactionsWindow::showAccount(domain_id accountId) {
     auto oldModel = model();
     if (accountId != oldModel->accountId) {
         auto windowCount = context->windowCount(oldModel);

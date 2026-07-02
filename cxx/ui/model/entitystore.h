@@ -22,7 +22,10 @@ public:
     AbstractEntityStore(QObject *parent = nullptr);
 
 Q_SIGNALS:
-    void valuesLoaded(QList<qlonglong> ids);
+    void valuesLoaded(QList<domain_id> ids);
+    void valuesAdded(QList<domain_id> ids);
+    void valuesUpdated(QList<domain_id> ids);
+    void valuesToBeRemoved(QList<domain_id> ids);
 };
 
 /**
@@ -38,7 +41,7 @@ Q_SIGNALS:
  */
 template<typename T, class Service, typename... GetAllArgs>
 class EntityStore : public AbstractEntityStore {
-    QHash<qlonglong, const T*> byId{};
+    QHash<domain_id, const T*> byId{};
     bool loaded{false};
 protected:
     Service* const service;
@@ -51,7 +54,7 @@ public:
         byId.clear();
     }
 
-    const QList<qlonglong> ids() const {
+    const QList<domain_id> ids() const {
         return byId.keys();
     }
 
@@ -59,20 +62,20 @@ public:
         return byId.size();
     }
 
-    const T *value(const QVariant &id) const {
-        return byId.value(id.toLongLong());
+    const T *value(domain_id id) const {
+        return byId.value(id);
     }
 
-    bool contains(const QVariant &id) const {
-        return byId.contains(id.toLongLong());
+    bool contains(domain_id id) const {
+        return byId.contains(id);
     }
 
-    void forEachEntry(std::function<void(qlonglong, const T*)> func) const {
+    void forEachEntry(std::function<void(domain_id, const T*)> func) const {
         for (auto i = byId.cbegin(); i != byId.cend(); i++) func(i.key(), i.value());
     }
 
     template<class V>
-    void appendValues(QList<const V*> &values, QList<qlonglong> excludeIds = QList<qlonglong>{}) const {
+    void appendValues(QList<const V*> &values, QList<domain_id> excludeIds = QList<domain_id>{}) const {
         for (auto i = byId.cbegin(); i != byId.cend(); i++) {
             if (!excludeIds.contains(i.key())) values.append(i.value());
         }
@@ -123,16 +126,26 @@ protected:
      * @param deletes Entities that have been removed from database.
      */
     virtual void update(const QList<const T*> &updates, const QList<const T*> deletes = QList<const T*>{}) {
+        QList<domain_id> updateIds, addIds;
         for (auto updated : updates) {
-            auto id = updated->id.toLongLong();
+            auto id = updated->id.value();
             auto oldValue = byId.value(id);
             byId[id] = updated;
-            if (oldValue) delete oldValue;
+            if (oldValue) {
+                updateIds.append(id);
+                delete oldValue;
+            } else addIds.append(id);
         }
-        for (auto entity : deletes) delete byId.take(entity->id.toLongLong());
+        if (!updateIds.isEmpty()) emit valuesUpdated(updateIds);
+        if (!addIds.isEmpty()) emit valuesAdded(addIds);
+        if (!deletes.isEmpty()) {
+            auto ids = getEntityIds(deletes);
+            emit valuesToBeRemoved(ids);
+            for (auto entity : deletes) delete byId.take(entity->id.value());
+        }
     }
 
-    void removeValues(const QList<qlonglong> &ids) {
+    void removeValues(const QList<domain_id> &ids) {
         for (auto id : ids) {
             auto oldEntity = byId.take(id);
             if (oldEntity) delete oldEntity;
@@ -143,7 +156,7 @@ protected:
      * @brief setValues Add/replace entities in the store.
      * @details Replaced entities are deleted.
      */
-    virtual void setValues(GetAllArgs... args, const QHash<qlonglong, const T*> values) {
+    virtual void setValues(GetAllArgs... args, const QHash<domain_id, const T*> values) {
         for (auto [id, entity] : values.asKeyValueRange()) {
             auto oldEntity = byId.take(id);
             byId.insert(id, entity);
@@ -152,43 +165,55 @@ protected:
         this->loaded = true;
     }
 
-    bool updateTransactionCounts(const QList<TransactionChange> changes, QVariant Transaction::* txField) {
-        QSet<qlonglong> updateIds;
+    template<class Entity>
+    static inline optional_id getRelatedId(const Entity* entity, optional_id Entity::* idField) {
+        return entity->*idField;
+    }
+
+    template<class Entity>
+    static inline optional_id getRelatedId(const Entity* entity, domain_id Entity::* idField) {
+        return entity->*idField;
+    }
+
+    template<class IdType>
+    bool updateTransactionCounts(const QList<TransactionChange> changes, IdType Transaction::* txField) {
+        QSet<domain_id> updateIds;
         for (auto change : changes) {
             auto oldTx = change.oldTransaction;
             auto newTx = change.newTransaction;
-            auto oldTxValue = oldTx ? oldTx->*txField : QVariant{};
-            auto newTxValue = newTx ? newTx->*txField : QVariant{};
-            if (oldTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(oldTxValue);
-                refValue->transactions = refValue->transactions.toInt() - 1;
-                updateIds.insert(oldTxValue.toLongLong());
+            auto oldTxValue = oldTx ? getRelatedId(oldTx, txField) : optional_id{};
+            auto newTxValue = newTx ? getRelatedId(newTx, txField) : optional_id{};
+            if (oldTxValue.has_value() && oldTxValue != newTxValue) {
+                auto refValue = value(oldTxValue.value());
+                refValue->transactions = refValue->transactions - 1;
+                updateIds.insert(oldTxValue.value());
             }
-            if (newTxValue.isValid() && newTxValue != oldTxValue) {
-                auto refValue = value(newTxValue);
-                refValue->transactions = refValue->transactions.toInt() + 1;
-                updateIds.insert(newTxValue.toLongLong());
+            if (newTxValue.has_value() && oldTxValue != newTxValue) {
+                auto refValue = value(newTxValue.value());
+                refValue->transactions = refValue->transactions + 1;
+                updateIds.insert(newTxValue.value());
             }
         }
         return !updateIds.isEmpty();
     }
 
-    bool updateDetailCounts(const QList<DetailChange> changes, QVariant TransactionDetail::* detailField) {
-        QSet<qlonglong> updateIds;
+    template<class IdType>
+    bool updateDetailCounts(const QList<DetailChange> changes, IdType TransactionDetail::* detailField) {
+        QSet<domain_id> updateIds;
         for (auto change : changes) {
             auto oldDetail = change.oldDetail;
             auto newDetail = change.newDetail;
-            auto oldDetailValue = oldDetail ? oldDetail->*detailField : QVariant{};
-            auto newDetailValue = newDetail ? newDetail->*detailField : QVariant{};
-            if (oldDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(oldDetailValue);
-                refValue->details = refValue->details.toInt() - 1;
-                updateIds.insert(oldDetailValue.toLongLong());
+            auto oldDetailValue = oldDetail ? getRelatedId(oldDetail, detailField) : optional_id{};
+            auto newDetailValue = newDetail ? getRelatedId(newDetail, detailField) : optional_id{};
+            if (oldDetailValue.has_value() && newDetailValue != oldDetailValue) {
+                auto refValue = value(oldDetailValue.value());
+                refValue->details = refValue->details - 1;
+                updateIds.insert(oldDetailValue.value());
             }
-            if (newDetailValue.isValid() && newDetailValue != oldDetailValue) {
-                auto refValue = value(newDetailValue);
-                refValue->details = refValue->details.toInt() + 1;
-                updateIds.insert(newDetailValue.toLongLong());
+            if (newDetailValue.has_value() && newDetailValue != oldDetailValue) {
+                auto refValue = value(newDetailValue.value());
+                refValue->details = refValue->details + 1;
+                updateIds.insert(newDetailValue.value());
             }
         }
         return !updateIds.isEmpty();

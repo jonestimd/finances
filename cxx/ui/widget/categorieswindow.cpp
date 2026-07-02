@@ -12,7 +12,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
     , getName{[this](const NamedEntity* entity) {
-        return store->displayName(entity->id.toLongLong());
+        return store->displayName(entity->id.value());
     }}
 {
     setWindowTitle(tr("%1 - Categories[*]").arg(dataStore->connectionName()));
@@ -22,7 +22,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
     entityView.insertAction(3, mergeAction);
 
     connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
-    connect(store, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(setCategories(QList<qlonglong>)));
+    connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setCategories(QList<domain_id>)));
 
     if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
@@ -45,30 +45,30 @@ void CategoriesWindow::saveData() {
     store->update(this, model(), tr(SAVING_CATEGORIES));
 }
 
-void CategoriesWindow::setCategories(const QList<qlonglong> categoryIds) {
+void CategoriesWindow::setCategories(const QList<domain_id> categoryIds) {
     model()->setRows(categoryIds);
 }
 
 void CategoriesWindow::reparent() {
     auto category = model()->getRow(entityView.selectedIndex());
-    auto name = category->name.toString();
+    auto name = category->name;
     QList<const NamedEntity*> options;
-    QHash<qlonglong, QString> disabledOptions;
+    QHash<domain_id, QString> disabledOptions;
     for (auto id : store->ids()) {
         auto option = store->value(id);
-        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name.toString(), name);
-        if (option != category && !store->isAncestor(id, category->id)) {
+        auto message = tr("\"%1\" already has a child named \"%2\"").arg(option->name, name);
+        if (option != category && !store->isAncestor(id, category->id.value())) {
             options.append(option);
-            if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.toLongLong(), message);
+            if (store->hasChild(id, category->name)) disabledOptions.insert(option->id.value(), message);
         }
     }
     auto model = new ComboBoxModel(options, getName);
     EntitySelectionDialog dialog(this, model, tr("Move Category"), tr("Select parent category for \"%1\":").arg(name), disabledOptions);
-    if (!category->parentId.isNull()) dialog.setSelectedEntity(store->value(category->parentId.toLongLong()));
+    if (category->parentId.has_value()) dialog.setSelectedEntity(store->value(category->parentId.value()));
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto parentId = dialog.selectedId();
-        if (category->parentId != dialog.selectedId()) store->setParent(this, category, parentId);
+        if (category->parentId != parentId) store->setParent(this, category, parentId);
     }
 }
 
@@ -84,7 +84,7 @@ void CategoriesWindow::merge() {
     auto result = dialog.exec();
     if (result == QDialog::Accepted) {
         auto selectedId = dialog.selectedId();
-        if (!selectedId.isNull()) store->mergeCategories(this, category, selectedId);
+        if (selectedId.has_value()) store->mergeCategories(this, category, selectedId.value());
     }
 }
 

@@ -15,14 +15,14 @@ SecurityTableModel::SecurityTableModel(SecurityStore *store)
     : PodTableModel{
         store,
         QList<ColumnAdapter<Security>*>{
-            new ColumnAdapter<Security>{tr("Name"), &Security::name, true, new UniqueValidatorFactory(SECURITY_NAME_COLUMN)},
-            new ColumnAdapter<Security>{tr("Symbol"), &Security::symbol},
+            new FieldColumnAdapter<Security, QString>{tr("Name"), &Security::name, true, new UniqueValidatorFactory(SECURITY_NAME_COLUMN)},
+            new FieldColumnAdapter<Security, QString>{tr("Symbol"), &Security::symbol},
             new EnumColumnAdapter<Security, SecurityType>(tr("Type"), &Security::securityType, &SecurityType::values, requiredValidatorFactory, true),
-            new NumberColumnAdapter<Security>(tr("Transactions"), &Security::transactions),
-            new AmountColumnAdapter<Security>(tr("Shares"), &Security::shares, securityShares, false),
-            new FormatColumnAdapter<Security>{tr("First Acquired"), &Security::firstAcquired, dateFormat, false},
-            new AmountColumnAdapter<Security>(tr("Cost Basis"), &Security::costBasis, dollarFormat, false),
-            new AmountColumnAdapter<Security>(tr("Dividends"), &Security::dividends, dollarFormat, false),
+            new NumberColumnAdapter<Security, int>(tr("Transactions"), &Security::transactions),
+            new AmountColumnAdapter<Security, QDecNumber>(tr("Shares"), &Security::shares, securityShares, false),
+            new FormatColumnAdapter<Security, std::optional<QDate>>{tr("First Acquired"), &Security::firstAcquired, dateFormat, false},
+            new AmountColumnAdapter<Security, QDecNumber>(tr("Cost Basis"), &Security::costBasis, dollarFormat, false),
+            new AmountColumnAdapter<Security, QDecNumber>(tr("Dividends"), &Security::dividends, dollarFormat, false),
         },
     }
 {}

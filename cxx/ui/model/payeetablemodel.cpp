@@ -6,11 +6,11 @@
 #define PAYEE_NAME_COLUMN 0
 
 PayeeTableModel::PayeeTableModel(PayeeStore *payeeStore)
-    : PodTableModel<Payee, PayeeService> {
+    : PodTableModel<Payee, PayeeStore> {
         payeeStore,
         QList<ColumnAdapter<Payee>*>{
-            new ColumnAdapter<Payee>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
-            new NumberColumnAdapter<Payee>(tr("Transactions"), &Payee::transactions),
+            new FieldColumnAdapter<Payee, QString>(tr("Name"), &Payee::name, true, new UniqueValidatorFactory(PAYEE_NAME_COLUMN)),
+            new NumberColumnAdapter<Payee, int>(tr("Transactions"), &Payee::transactions),
         },
     }
 {}

@@ -5,17 +5,17 @@ TransactionDetailStore::TransactionDetailStore(TransactionDetailService *service
     : EntityStore{service, messageStore}
 {}
 
-void TransactionDetailStore::load(qlonglong accountId) {
+void TransactionDetailStore::load(domain_id accountId) {
     setValues(accountId, service->getAll(accountId));
 }
 
-void TransactionDetailStore::replaceCategory(const QVariant oldCategoryId, const QVariant newCategoryId) {
+void TransactionDetailStore::replaceCategory(const optional_id oldCategoryId, const optional_id newCategoryId) {
     QList<const TransactionDetail*> updates;
-    forEachEntry([&](qlonglong id, const TransactionDetail* detail) {
+    forEachEntry([&](domain_id id, const TransactionDetail* detail) {
         if (detail->categoryId == oldCategoryId) {
             auto updatedDetail = new TransactionDetail(*detail);
             updatedDetail->categoryId = newCategoryId;
-            updatedDetail->version = detail->version.toLongLong() + 1;
+            updatedDetail->version = detail->version + 1;
             updates.append(updatedDetail);
         }
     });
@@ -29,16 +29,13 @@ void TransactionDetailStore::update(const TransactionsData& updates, const QList
     }
     for (auto tx : txDeletes) {
         for (auto& detailId : tx->detailIds) {
-            if (contains(detailId)) {
-                auto detail = value(detailId);
-                allDeletes.append(detail);
-            }
+            if (contains(detailId)) allDeletes.append(value(detailId));
         }
     }
     EntityStore::update(updates.details, allDeletes);
 }
 
-void TransactionDetailStore::setValues(qlonglong accountId, QHash<qlonglong, const TransactionDetail *> values) {
+void TransactionDetailStore::setValues(domain_id accountId, QHash<domain_id, const TransactionDetail *> values) {
     loadedAccounts.append(accountId);
     EntityStore::setValues(accountId, values);
 }

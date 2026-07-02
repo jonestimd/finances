@@ -27,14 +27,18 @@ namespace transactiontablemodel {
         return moneyFormat(amount).prepend("$"); // TODO currency symbol for account
     }
 
-    class TxAmountColumnAdapter : public AmountColumnAdapter<Transaction> {
+    class TxAmountColumnAdapter : public AmountColumnAdapter<Transaction, QDecNumber> {
         TransactionTableModel *const model;
 
     public:
         TxAmountColumnAdapter(QString title, TransactionTableModel *model)
-            : AmountColumnAdapter(title, &Transaction::id, dollarFormat, false)
+            : AmountColumnAdapter(title, nullptr, dollarFormat, false)
             , model{model}
         {}
+
+        virtual QVariant rowValue(const Transaction *row) const override {
+            return row->id.value();
+        }
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             switch (role) {
@@ -53,28 +57,31 @@ namespace transactiontablemodel {
         }
     };
 
-    class TxDateColumnAdapter : public FormatColumnAdapter<Transaction> {
+    class TxDateColumnAdapter : public FormatColumnAdapter<Transaction, QDate> {
     public:
         TxDateColumnAdapter(const QString &title) : FormatColumnAdapter{title, &Transaction::date, dateFormat, true} {}
 
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (role == finances::SortRole) {
-                return QString("%1:%2").arg(row->date.toDate().toString(Qt::ISODate)).arg(row->id.toLongLong(), 16, 16);
+                return QString("%1:%2").arg(row->date.toString(Qt::ISODate)).arg(row->id.value(), 16, 16);
             }
             return FormatColumnAdapter::value(row, index, current, role);
         }
     };
 
-    class BalanceColumnAdapter : public AmountColumnAdapter<Transaction> {
+    class BalanceColumnAdapter : public AmountColumnAdapter<Transaction, QDecNumber> {
         const TransactionTableModel *model;
 
     public:
         BalanceColumnAdapter(const QString &title, const TransactionTableModel *model)
-            : AmountColumnAdapter{title, &Transaction::id, dollarFormat, false}
+            : AmountColumnAdapter{title, nullptr, dollarFormat, false}
             , model{model}
         {}
 
-    public:
+        virtual QVariant rowValue(const Transaction *row) const override {
+            return row->id.has_value() ? row->id.value() : QVariant{};
+        }
+
         QVariant value(const Transaction *row, const QModelIndex &index, const QVariant current, int role) const override {
             if (!index.parent().isValid()) {
                 switch (role) {
@@ -93,29 +100,28 @@ namespace transactiontablemodel {
 
 using namespace transactiontablemodel;
 
-TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong accountId)
-    : PodItemModel{{
+TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id accountId)
+    : PodItemModel{dataStore->transactionStore, {
         new TxDateColumnAdapter{tr(DATE_TITLE)},
-        new ColumnAdapter<Transaction>(tr(REF_TITLE), &Transaction::referenceNumber),
-        new RelationColumnAdapter<Transaction, Payee, PayeeStore>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
-        new ColumnAdapter<Transaction>(tr("Description"), &Transaction::memo),
-        new RelationColumnAdapter<Transaction, Security, SecurityStore>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
+        new FieldColumnAdapter<Transaction, QString>(tr(REF_TITLE), &Transaction::referenceNumber),
+        new RelationColumnAdapter<Transaction, Payee, PayeeStore, optional_id>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
+        new FieldColumnAdapter<Transaction, QString>(tr("Description"), &Transaction::memo),
+        new RelationColumnAdapter<Transaction, Security, SecurityStore, optional_id>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
-        new ColumnAdapter<Transaction>(tr(CLEARED_TITLE), &Transaction::cleared),
+        new FieldColumnAdapter<Transaction, bool>(tr(CLEARED_TITLE), &Transaction::cleared),
         new BalanceColumnAdapter(tr(BALANCE_TITLE), this),
     }}
     , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore, accountId)}
     , detailColumns{
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
-        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
+        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore, optional_id>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
-        new ColumnAdapter<TransactionDetail>(tr("Memo"), &TransactionDetail::memo),
+        new FieldColumnAdapter<TransactionDetail, QString>(tr("Memo"), &TransactionDetail::memo),
         new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),
         new DetailAmountColumnAdapter(tr("Amount")),
         new EmptyColumnAdapter(),
         new EmptyColumnAdapter(),
     }
-    , store{dataStore->transactionStore}
     , dateColumn{columnIndex(tr(DATE_TITLE))}
     , refColumn{columnIndex(tr(REF_TITLE))}
     , payeeColumn{columnIndex(tr(PAYEE_TITLE))}
@@ -125,26 +131,21 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, qlonglong acc
     , balanceColumn{columnIndex(tr(BALANCE_TITLE))}
     , accountId{accountId}
 {
-    connect(store, SIGNAL(accountLoaded(qlonglong)), this, SLOT(accountLoaded(qlonglong)));
-    connect(store, SIGNAL(accountUpdated(qlonglong)), this, SLOT(accountUpdated(qlonglong)));
+    connect(store, SIGNAL(accountLoaded(domain_id)), this, SLOT(accountLoaded(domain_id)));
+    connect(store, SIGNAL(accountUpdated(domain_id)), this, SLOT(accountUpdated(domain_id)));
     connect(store, SIGNAL(transactionsSaved(QList<const PendingTransaction*>)), this, SLOT(transactionsSaved(QList<const PendingTransaction*>)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionAdded(qlonglong,int)), this, SLOT(transactionAdded(qlonglong,int)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionRemoved(qlonglong,int)), this, SLOT(transactionRemoved(qlonglong,int)), Qt::DirectConnection);
-    connect(store, SIGNAL(transactionUpdated(qlonglong,int,int)), this, SLOT(transactionUpdated(qlonglong,int,int)), Qt::DirectConnection);
-    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsUpdated()));
-    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(accountsUpdated()));
-    connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(payeesUpdated()));
-    connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(securitiesUpdated()));
-    connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(updateBalances()));
-    connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<qlonglong>)), this, SLOT(groupsUpdated()));
+    connect(store, SIGNAL(valuesUpdated(QList<domain_id>)), this, SLOT(transactionsUpdated(QList<domain_id>)), Qt::DirectConnection);
+    connect(&store->detailStore, SIGNAL(valuesUpdated(QList<domain_id>)), this, SLOT(detailsUpdated(QList<domain_id>)), Qt::DirectConnection);
+    connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
+    connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
+    connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(payeesUpdated()));
+    connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(securitiesUpdated()));
+    connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateBalances()));
+    connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(groupsUpdated()));
 }
 
 TransactionTableModel::~TransactionTableModel() {
     qDeleteAll(detailColumns);
-}
-
-const QList<qlonglong> TransactionTableModel::transactionIds() const {
-    return store->transactionIds(accountId);
 }
 
 QVariant TransactionTableModel::value(const QModelIndex &index, int role, QVariant current = QVariant{}) const {
@@ -169,11 +170,11 @@ void TransactionTableModel::setDetailValue(TransactionDetail *detail, int column
 }
 
 int TransactionTableModel::childCount(const QModelIndex &parent) const {
-    return parent.isValid() ? getRow(parent)->detailIds.size() : transactionIds().count();
+    return parent.isValid() ? getRow(parent)->detailIds.size() : rootIds.count();
 }
 
 PendingTransaction *TransactionTableModel::pendingTransaction(const QModelIndex &index) const {
-    return pendingAdds().at(index.row() - transactionIds().count());
+    return pendingAdds().at(index.row() - rootIds.count());
 }
 
 const QList<TransactionDetail*> TransactionTableModel::pendingDetails(const QModelIndex &parent) const {
@@ -181,8 +182,29 @@ const QList<TransactionDetail*> TransactionTableModel::pendingDetails(const QMod
     return newDetails.value(parent.row(), QList<TransactionDetail*>());
 }
 
+qsizetype TransactionTableModel::insertIndex(domain_id id) {
+    qsizetype rowIndex = 0;
+    for (; rowIndex < rootIds.size(); rowIndex++) {
+        if (store->lessThan(id, rootIds[rowIndex])) break;
+    }
+    return rowIndex;
+}
+
+void TransactionTableModel::updateIndexes(const QModelIndex &changeRow, int delta) {
+    AdapterItemModel::updateIndexes(changeRow, delta);
+    if (!changeRow.parent().isValid()) {
+        auto rowIndex = changeRow.row();
+        QHash<int, QList<TransactionDetail*>> updatedAdds;
+        for (auto [txIndex, details] : newDetails.asKeyValueRange()) {
+            if (txIndex >= rowIndex) updatedAdds.insert(txIndex + delta, details);
+            else updatedAdds.insert(txIndex, details);
+        }
+        newDetails = updatedAdds;
+    }
+}
+
 void TransactionTableModel::updateBalances(int fromRow, const QDecNumber &delta) {
-    const auto ids = transactionIds().sliced(fromRow);
+    const auto ids = rootIds.sliced(fromRow);
     for (auto id : ids) {
         auto balance = balances.value(id).value<QDecNumber>();
         balances.insert(id, QVariant::fromValue(balance + delta));
@@ -195,11 +217,11 @@ void TransactionTableModel::updateBalances() {
         balances.clear();
         clearedBalance_ = 0;
         QDecNumber balance{0};
-        for (auto id : transactionIds()) {
+        for (auto id : std::as_const(rootIds)) {
             auto amount = store->amount(id);
             balance += amount;
             balances.insert(id, QVariant::fromValue(balance));
-            if (store->value(id)->cleared.toBool()) clearedBalance_ += amount;
+            if (store->value(id)->cleared) clearedBalance_ += amount;
         }
         emit dataChanged(index(0, balanceColumn), index(rowCount()-1, balanceColumn));
         emit dataChanged(index(0, payeeColumn), index(rowCount()-1, payeeColumn));
@@ -216,18 +238,20 @@ PendingTransaction *TransactionTableModel::newRow() {
     return new PendingTransaction(accountId);
 }
 
-void TransactionTableModel::setRows(const QList<qlonglong> transactionIds) {
-    beginResetModel();
-    clearChanges();
+void TransactionTableModel::rootIdsChanged() {
+    store->sort(rootIds);
     updateBalances();
-    endResetModel();
+}
+
+void TransactionTableModel::setRows(const QList<domain_id> transactionIds) {
+    PodItemModel::setRows(transactionIds);
     queueAddTransaction();
     emit dataLoaded();
     emit clearedBalanceChanged(clearedBalance_);
 }
 
-QVariant TransactionTableModel::balance(const QVariant &transactionId) const {
-    return balances.value(transactionId.toLongLong());
+QVariant TransactionTableModel::balance(const optional_id &transactionId) const {
+    return transactionId.has_value() ? balances.value(transactionId.value()) : QVariant{};
 }
 
 QDecNumber TransactionTableModel::clearedBalance() const {
@@ -250,25 +274,17 @@ QModelIndex TransactionTableModel::parent(const QModelIndex &child) const {
 int TransactionTableModel::rowCount(const QModelIndex &parent) const {
     if (parent.parent().isValid()) return 0;
     if (parent.isValid()) {
-        auto idCount = transactionIds().count();
+        auto idCount = rootIds.count();
         if (parent.row() < idCount) return childCount(parent) + pendingDetails(parent).length();
         auto adds = pendingAdds();
         auto i = parent.row() - idCount;
         return i < adds.size() ? adds.at(i)->details.size() : 0;
     }
-    return transactionIds().count() + pendingAdds().size();
+    return rootIds.count() + pendingAdds().size();
 }
 
 int TransactionTableModel::rowType(const QModelIndex &index) const {
     return index.parent().isValid() ? DETAIL_ROW_TYPE : PodItemModel::rowType(index);
-}
-
-const Transaction *TransactionTableModel::getRow(const QModelIndex &index) const {
-    if (index.row() < transactionIds().size()) {
-        auto id = transactionIds().at(index.row());
-        return store->value(id);
-    }
-    return pendingTransaction(index);
 }
 
 const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &index) const {
@@ -368,19 +384,18 @@ void TransactionTableModel::clearChanges() {
 
 bool TransactionTableModel::enableDelete(const QModelIndex &index) const {
     if (index.parent().isValid()) {
-        if (isPendingAdd(index.parent())) {
-            return newRows.value(QModelIndex{}).size() > 1 || newDetails.value(index.parent().row()).size() > 1;
-        }
+        if (isPendingAdd(index.parent())) return pendingAdd(index.parent())->details.size() > 1;
+        return newDetails.value(index.parent().row()).size() > 1;
     } else if (isPendingAdd(index)) {
-        return newRows.value(QModelIndex{}).size() > 1;
+        return pendingAdds().size() > 1;
     }
     return PodItemModel::enableDelete(index);
 }
 
 bool TransactionTableModel::transactionHasChanges(const QModelIndex &rowIndex) const {
-    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txIndex = rootIndex(rowIndex);
     auto txRow = txIndex.row();
-    if (txRow >= transactionIds().size() || isPendingDelete(txIndex) || newDetails.contains(txRow)) return true;
+    if (txRow >= rootIds.size() || isPendingDelete(txIndex) || newDetails.contains(txRow)) return true;
     for (auto i = changes.keyBegin(); i != changes.keyEnd(); i++) {
         if (!i->parent().isValid() && i->row() == txRow || i->parent() == txIndex) return true;
     }
@@ -392,7 +407,7 @@ bool TransactionTableModel::transactionHasChanges(const QModelIndex &rowIndex) c
 }
 
 bool TransactionTableModel::transactionIsValid(const QModelIndex &rowIndex) const {
-    auto txIndex = rowIndex.parent().isValid() ? rowIndex.parent() : rowIndex;
+    auto txIndex = rootIndex(rowIndex);
     auto txRow = txIndex.row();
     for (auto i = errors.keyBegin(); i != errors.keyEnd(); i++) {
         if (i->parent().isValid()) {
@@ -448,14 +463,15 @@ QList<const TransactionDetail*> TransactionTableModel::unsavedDetailDeletes(int 
     return deletes;
 }
 
-void TransactionTableModel::accountLoaded(qlonglong accountId) {
+void TransactionTableModel::accountLoaded(domain_id accountId) {
     if (accountId == this->accountId) setRows(store->transactionIds(accountId));
 }
 
-void TransactionTableModel::accountUpdated(qlonglong accountId) {
+void TransactionTableModel::accountUpdated(domain_id accountId) {
     // force sort model to reset its state
     beginResetModel();
     endResetModel();
+    updateBalances();
 }
 
 void TransactionTableModel::payeesUpdated() {
@@ -478,12 +494,12 @@ void TransactionTableModel::groupsUpdated() {
     if (rows > 0) emit dataChanged(index(0, refColumn), index(rows-1, refColumn));
 }
 
-void TransactionTableModel::transactionsSaved(const QList<const PendingTransaction *> &transactions) {
+void TransactionTableModel::transactionsSaved(const QList<const PendingTransaction*> transactions) {
     auto& adds = newRows[QModelIndex{}];
     for (auto tx : transactions) {
         auto index = adds.indexOf(tx);
         if (index >= 0) {
-            auto fromIndex = transactionIds().size() + index;
+            auto fromIndex = rootIds.size() + index;
             beginRemoveRows(QModelIndex{}, fromIndex, fromIndex);
             delete adds.takeAt(index);
             endRemoveRows();
@@ -492,94 +508,35 @@ void TransactionTableModel::transactionsSaved(const QList<const PendingTransacti
     if (adds.isEmpty()) queueAddTransaction();
 }
 
-static QHash<const QModelIndex, QVariant> updateChanges(const QHash<const QModelIndex, QVariant> &changes, int rowIndex, int delta) {
-    QHash<const QModelIndex, QVariant> updatedChanges;
-    for (auto [index, value] : changes.asKeyValueRange()) {
-        auto parent = index.parent();
-        auto row = index.row();
-        if (parent.isValid()) {
-            if (parent.row() >= rowIndex) {
-                auto newParent = parent.siblingAtRow(parent.row() + delta);
-                updatedChanges.insert(parent.model()->index(row, index.column(), newParent), value);
-            } else updatedChanges.insert(index, value);
-        } else if (row >= rowIndex) {
-            updatedChanges.insert(index.siblingAtRow(row + delta), value);
-        } else updatedChanges.insert(index, value);
-    }
-    return updatedChanges;
-}
-
-static QHash<int, QList<TransactionDetail*>> updateAdds(const QHash<int, QList<TransactionDetail*>> newDetails, int rowIndex, int delta) {
-    QHash<int, QList<TransactionDetail*>> updatedAdds;
-    for (auto [txIndex, details] : newDetails.asKeyValueRange()) {
-        if (txIndex >= rowIndex) updatedAdds.insert(txIndex + delta, details);
-        else updatedAdds.insert(txIndex, details);
-    }
-    return updatedAdds;
-}
-
-static void updateDeletes(QList<QModelIndex>& pendingDeletes, int rowIndex, int delta) {
-    for (auto i = pendingDeletes.begin(); i != pendingDeletes.end(); i++) {
-        auto parent = (*i).parent();
-        auto row = (*i).row();
-        if (parent.isValid()) {
-            if (parent.row() >= rowIndex) {
-                auto newParent = parent.siblingAtRow(parent.row() + delta);
-                *i = parent.model()->index(row, 0, newParent);
-            }
-        } else if (row > rowIndex) {
-            *i = (*i).siblingAtRow(row + delta);
+void TransactionTableModel::valuesAdded(const QList<domain_id>& ids) {
+    QList<domain_id> accountTxs;
+    for (auto txId : ids) {
+        auto tx = store->value(txId);
+        if (tx->accountId == this->accountId) {
+            accountTxs.append(txId);
         }
     }
+    PodItemModel::valuesAdded(accountTxs);
 }
 
-void TransactionTableModel::transactionAdded(qlonglong accountId, int rowIndex) {
-    if (accountId == this->accountId) {
-        beginInsertRows(QModelIndex{}, rowIndex, rowIndex);
-        // TODO adjust indexes of adds, deletes and changes
-        endInsertRows();
+void TransactionTableModel::transactionsUpdated(const QList<domain_id> txIds) {
+    for (auto txId : txIds) {
+        removeRootId(txId);
+        if (store->value(txId)->accountId == accountId) addRootId(txId);
     }
 }
 
-void TransactionTableModel::transactionRemoved(qlonglong accountId, int rowIndex) {
-    if (accountId == this->accountId) {
-        beginRemoveRows(QModelIndex{}, rowIndex, rowIndex);
-        auto modelIndex = index(rowIndex, 0);
-        if (pendingDeletes.contains(modelIndex)) {
-            pendingDeletes.removeOne(modelIndex );
-        } else { // must be a related tx for a transfer
-            changes.removeIf([=](QHash<const QModelIndex, QVariant>::iterator i) -> bool {
-                if (i.key().parent().isValid()) return i.key().parent().row() == rowIndex;
-                return i.key().row() == rowIndex;
+void TransactionTableModel::detailsUpdated(const QList<domain_id> detailIds) {
+    changes.removeIf([=, this](QHash<const QModelIndex, QVariant>::iterator i) {
+        if (i.key().parent().isValid()) {
+            auto txId = rootIds.at(i.key().parent().row());
+            auto detailIds = store->value(txId)->detailIds;
+            return std::any_of(detailIds.cbegin(), detailIds.cend(), [=, &detailIds](domain_id id) {
+                return detailIds.contains(id);
             });
         }
-        updateDeletes(pendingDeletes, rowIndex, -1);
-        updateAdds(newDetails, rowIndex, -1);
-        changes = updateChanges(changes, rowIndex, -1);
-        adjustErrorIndexes(rowIndex, QModelIndex{}, -1);
-        endRemoveRows();
-    }
-}
-
-void TransactionTableModel::transactionUpdated(qlonglong accountId, int rowIndex, int oldDetailCount) {
-    if (accountId == this->accountId) {
-        auto txId = transactionIds().at(rowIndex);
-        auto tx = store->value(txId);
-        auto txIndex = this->index(rowIndex, 0);
-        changes.removeIf([=](QHash<const QModelIndex, QVariant>::iterator i) -> bool {
-            return i.key().parent().isValid() ? false : i.key().row() == rowIndex;
-        });
-        // TODO adjust indexes of other changes, adds and deletes
-        if (tx->detailIds.size() < oldDetailCount) {
-            beginRemoveRows(txIndex, tx->detailIds.size(), oldDetailCount-1);
-            endRemoveRows();
-        } else if (tx->detailIds.size() > oldDetailCount) {
-            beginInsertRows(txIndex, oldDetailCount, tx->detailIds.size()-1);
-            endInsertRows();
-        }
-        emit dataChanged(txIndex, this->index(tx->detailIds.size()-1, columns.size()-1, txIndex));
-        updateBalances(); // TODO do once per save
-    }
+        return false;
+    });
 }
 
 void TransactionTableModel::queueAddTransaction() {
@@ -614,7 +571,7 @@ QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {
             pendingTransaction(parent)->details.append(new TransactionDetail);
         } else {
             if (!newDetails.contains(parent.row())) newDetails.insert(parent.row(), QList<TransactionDetail*>());
-            newDetails[parent.row()].append(new TransactionDetail(getRow(parent)->id));
+            newDetails[parent.row()].append(new TransactionDetail(getRow(parent)->id.value()));
         }
         validateRow(rowIndex, parent);
         endInsertRows();
@@ -629,12 +586,16 @@ void TransactionTableModel::queueDelete(const QModelIndex &index) {
         if (isPendingAdd(index)) {
             auto indexRow = index.row();
             beginRemoveRows(parent, indexRow, indexRow);
-            delete newDetails[parent.row()].takeAt(indexRow - childCount(parent));
-            if (newDetails[parent.row()].isEmpty()) newDetails.remove(parent.row());
+            if (isPendingAdd(parent)) {
+                delete pendingAdd(parent)->details.takeAt(indexRow);
+            } else {
+                delete newDetails[parent.row()].takeAt(indexRow - childCount(parent));
+                if (newDetails[parent.row()].isEmpty()) newDetails.remove(parent.row());
+            }
             endRemoveRows();
-            adjustErrorIndexes(indexRow, parent, -1);
+            adjustErrorIndexes(index, -1);
             removeStaleErrors();
-            if (isPendingAdd(parent) && !newDetails.contains(parent.row())) {
+            if (isPendingAdd(parent) && pendingAdd(parent)->details.isEmpty()) {
                 PodItemModel::queueDelete(parent);
             }
         } else if (!isPendingDelete(parent)) {
