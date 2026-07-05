@@ -15,6 +15,10 @@ void SortFilterProxyModel::clearFilters() {
     endFilterChange(Direction::Rows);
 }
 
+void SortFilterProxyModel::setSourceModel(QAbstractItemModel* model) {
+    QSortFilterProxyModel::setSourceModel(model);
+}
+
 bool SortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
     for (const auto &accept : acceptFunctions) {
         if (!accept(sourceModel()->index(sourceRow, 0, sourceParent))) return false;

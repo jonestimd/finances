@@ -200,13 +200,13 @@ public:
     void clearChanges() override {
         AdapterItemModel::clearChanges();
         if (!newRows.isEmpty()) {
-            for (auto [key, rows] : newRows.asKeyValueRange()) {
-                auto count = childCount(key);
-                beginRemoveRows(key, count, rowCount(key.parent())-1);
-                while (!rows.isEmpty()) delete rows.takeFirst();
+            for (auto i = newRows.begin(); i != newRows.end();) {
+                auto parent = i.key();
+                beginRemoveRows(parent, childCount(parent), rowCount(parent)-1);
+                qDeleteAll(i.value());
+                i = newRows.erase(i);
                 endRemoveRows();
             }
-            newRows.clear();
         }
     }
 

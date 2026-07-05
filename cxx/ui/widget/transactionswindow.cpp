@@ -2,6 +2,7 @@
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/model/formats.h"
+#include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
@@ -58,8 +59,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(companiesLoaded()));
-    connect(&entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
-    connect(&entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    connect(entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
+    connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
     entityView.viewHeader->setSectionHidden(model->securityColumn, !security());
@@ -72,8 +73,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     dataStore->payeeStore->load(&entityView, tr(LOADING_PAYEES));
     dataStore->securityStore->load(&entityView, tr(LOADING_SECURITIES));
 
-    entityView.sortModel.setRecursiveFilteringEnabled(true);
-    entityView.sortModel.setAutoAcceptChildRows(true);
+    entityView.sortModel->setRecursiveFilteringEnabled(true);
+    entityView.sortModel->setAutoAcceptChildRows(true);
     entityView.viewHeader->setSectionResizeMode(model->clearedColumn, QHeaderView::Fixed);
     entityView.viewHeader->resizeSection(model->clearedColumn, CLEARED_WIDTH);
 
@@ -104,7 +105,7 @@ void TransactionsWindow::showAccount(domain_id accountId) {
             if (windowCount == 1) oldModel->clearChanges();
             disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
             disconnect(oldModel, SIGNAL(dataLoaded()), this, SLOT(transactionsLoaded()));
-            entityView.sortModel.setSourceModel(context->transactionsModel(accountId));
+            entityView.setModel(context->transactionsModel(accountId));
             context->transactionsModelRemoved(oldModel);
             connectModel(model());
             initializeData();
@@ -128,7 +129,7 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     if (!parent.isValid()) {
         auto view = treeView();
         for (int row = first; row <= last; ++row) {
-            view->expand(entityView.sortModel.index(row, 0));
+            view->expand(entityView.sortModel->index(row, 0));
         }
     }
 }
@@ -175,7 +176,7 @@ void TransactionsWindow::companiesLoaded() {
 
 void TransactionsWindow::transactionsLoaded() {
     auto m = model();
-    entityView.itemView->setCurrentIndex(entityView.sortModel.mapFromSource(m->index(m->rowCount()-1, 0)));
+    entityView.itemView->setCurrentIndex(entityView.sortModel->mapFromSource(m->index(m->rowCount()-1, 0)));
     entityView.focusItemView();
 }
 
@@ -198,7 +199,7 @@ static bool isEnter(const QKeyEvent *event) {
 
 void TransactionsWindow::keyPressEvent(QKeyEvent *event) {
     if (isEnter(event) && focusWidget() == entityView.itemView) {
-        auto index = entityView.sortModel.mapToSource(entityView.itemView->currentIndex());
+        auto index = entityView.sortModel->mapToSource(entityView.itemView->currentIndex());
         if (model()->transactionHasChanges(index) && model()->transactionIsValid(index)) {
             auto txRow = index.parent().isValid() ? index.parent().row() : index.row();
             store()->update(this, model(), tr(SAVING_TRANSACTION), txRow);

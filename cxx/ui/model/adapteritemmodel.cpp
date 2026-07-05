@@ -8,9 +8,11 @@ bool AdapterItemModel::hasUnsavedChanges() const {
 }
 
 void AdapterItemModel::clearChanges() {
-    changes.clear(); // TODO emit changes
-    pendingDeletes.clear(); // TODO emit changes
+    beginResetModel();
+    changes.clear();
+    pendingDeletes.clear();
     errors.clear();
+    endResetModel();
 }
 
 bool AdapterItemModel::isValid() const {
