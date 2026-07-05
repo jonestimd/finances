@@ -29,10 +29,15 @@ DataStore::~DataStore() {
     delete groupStore;
     delete securityStore;
     delete transactionStore;
+    delete services;
 }
 
 const QString DataStore::connectionName() const {
     return services->connectionName();
+}
+
+void DataStore::shutdown() {
+    services->shutdown();
 }
 
 const QString DataStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};

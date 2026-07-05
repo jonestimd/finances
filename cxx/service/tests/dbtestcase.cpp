@@ -109,8 +109,12 @@ QList<QString> DbTestCase::connectionPoolNames() {
     return connectionPools.keys();
 }
 
-ConnectionPool *DbTestCase::connectionPool(QString name) {
-    return connectionPools.value(name);
+ConnectionPool *DbTestCase::connectionPool(const QString &driver) {
+    return connectionPools.value(driver);
+}
+
+const ConnectionSettings DbTestCase::settings(const QString &driver) {
+    return connectionPools.value(driver)->settings;
 }
 
 CompanyDao &DbTestCase::companyDao(const QString &driver) {
@@ -253,7 +257,7 @@ const Security *DbTestCase::loadSecurity(const QString &driver, domain_id id) {
 }
 
 #define freeObjects(list) \
-    for (auto item : std::as_const(list)) delete item; \
+    qDeleteAll(list); \
     list.clear();
 
 void DbTestCase::cleanup() {

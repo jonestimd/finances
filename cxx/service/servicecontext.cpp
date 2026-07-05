@@ -21,6 +21,14 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , transationService{pool, transactionDao, transactionDetailDao}
 {}
 
+ServiceContext::~ServiceContext() {
+    delete pool;
+}
+
 const QString ServiceContext::connectionName() const {
     return pool->displayName;
+}
+
+void ServiceContext::shutdown() {
+    pool->shutdown();
 }

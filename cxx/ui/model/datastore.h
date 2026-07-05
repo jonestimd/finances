@@ -28,6 +28,8 @@ public:
 
     const QString connectionName() const;
 
+    void shutdown();
+
     static const QString user;
 };
 

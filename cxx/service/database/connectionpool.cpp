@@ -1,3 +1,4 @@
+#include <QLoggingCategory>
 #include <QSqlError>
 #include <QThread>
 #include <QtDebug>
@@ -5,6 +6,10 @@
 #include <QSqlQuery>
 #include <sqlite3.h>
 #include "connectionpool.h"
+
+#define MAX_ACTIVE 5
+
+Q_LOGGING_CATEGORY(connectionPoolLogger, "connectionPool");
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
@@ -29,6 +34,35 @@ ConnectionPool::ConnectionPool(const ConnectionSettings &settings)
     , displayName{settings.displayName()}
 {}
 
+static void closeConnections(QList<QSqlDatabase>& connections) {
+    QList<QString> names;
+    // remove references before calling removeDatabase() so they won't be reported as "in use"
+    while (!connections.isEmpty()) {
+        auto db = connections.takeFirst();
+        db.close();
+        names.append(db.connectionName());
+    }
+    for (const auto& name : std::as_const(names)) QSqlDatabase::removeDatabase(name);
+}
+
+ConnectionPool::~ConnectionPool() {
+    if (!isShutdown) {
+        qCWarning(connectionPoolLogger, "did not call shutdown()");
+        if (activeCount) qCWarning(connectionPoolLogger, "active connections: %d", activeCount);
+    }
+    closeConnections(idle);
+}
+
+void ConnectionPool::shutdown() {
+    QMutexLocker locker(&poolMutex);
+    if (!isShutdown) {
+        qCDebug(connectionPoolLogger, "shutting down connection pool");
+        isShutdown = true;
+        while (activeCount) released.wait(&poolMutex);
+        closeConnections(idle);
+    } else qCWarning(connectionPoolLogger, "already shut(ting) down");
+}
+
 const QString &ConnectionPool::dbType() const {
     return settings.dbType;
 }
@@ -43,11 +77,15 @@ static void load_sqlite_extension(sqlite3 *handle, const char *filename, const c
     }
 }
 
+int ConnectionPool::openConnections{0};
+
 QSqlDatabase ConnectionPool::acquire() {
-    QString dbName = nameStore.localData();
-    if (dbName.isNull()) {
-        QMutexLocker locker(&poolMutex);
-        dbName = QString("%1(%2)").arg(name).arg(openConnections++);
+    Q_ASSERT(!isShutdown);
+    QMutexLocker locker(&poolMutex);
+    activeCount++;
+    if (idle.isEmpty()) {
+        if (activeCount > MAX_ACTIVE) qCWarning(connectionPoolLogger, "active connections: %d", activeCount);
+        auto dbName = QString("%1(%2)").arg(name).arg(openConnections++);
         auto db = QSqlDatabase::addDatabase(settings.dbType, dbName);
         if (!db.isOpen()) {
             db.setNumericalPrecisionPolicy(QSql::HighPrecision);
@@ -67,18 +105,26 @@ QSqlDatabase ConnectionPool::acquire() {
                 query.exec("pragma foreign_keys = on");
             }
         }
-        nameStore.setLocalData(dbName);
         return db;
     }
-    return QSqlDatabase::database(dbName);
+    auto db = idle.takeFirst();
+    return db;
+}
+
+void ConnectionPool::release(QSqlDatabase db) {
+    QMutexLocker locker(&poolMutex);
+    activeCount--;
+    idle.append(db);
+    released.wakeAll();
 }
 
 Connection::Connection(ConnectionPool *pool) : pool{pool}, db{pool->acquire()} {
     if (!db.transaction()) {
-        qCritical() << "ConnectionPool:" << pool->nameStore.localData() << "begin transaction failed";
+        qCritical() << "ConnectionPool:" << db.connectionName() << "begin transaction failed";
     }
 };
 
 Connection::~Connection() {
     db.commit();
+    pool->release(db);
 }

@@ -14,7 +14,6 @@
 
 class AppWindow : public QMainWindow {
     Q_OBJECT
-
 protected:
     EntityView entityView;
 
@@ -26,6 +25,12 @@ public:
 
     Q_INVOKABLE virtual void loadData() = 0;
     Q_INVOKABLE virtual void saveData() = 0;
+
+    void show();
+
+signals:
+    void opened(AppWindow*);
+    void closed(AppWindow*);
 
 protected:
     virtual const char *settingsGroup() const = 0;

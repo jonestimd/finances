@@ -80,7 +80,6 @@ class TestTransactionsWindow : public QObject {
     const char* driver = SQLITE_DRIVER;
 
     DbTestCase dbTestCase{};
-    ServiceContext services{dbTestCase.connectionPool(driver)};
     DataStore* dataStore;
     UiContext* uiContext;
 
@@ -235,7 +234,7 @@ private slots:
     }
 
     void init() {
-        dataStore = new DataStore(&services);
+        dataStore = new DataStore(new ServiceContext(new ConnectionPool(dbTestCase.settings(driver))));
         uiContext = new UiContext(dataStore);
         dbTestCase.resetDatabase(driver);
         dbTestCase.saveTransaction(driver, factory::transaction(accountId, payeeId), {factory::detail("23.45", categoryId)});
@@ -471,9 +470,7 @@ private slots:
         delete accountUpdatedSpy;
         accountUpdatedSpy = nullptr;
         dbTestCase.cleanup();
-        delete uiContext;
         uiContext = nullptr;
-        delete dataStore;
         dataStore = nullptr;
     }
 };

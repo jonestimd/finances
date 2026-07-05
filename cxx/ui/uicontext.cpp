@@ -28,14 +28,17 @@ public:
     }
 };
 
-UiContext::UiContext(DataStore *dataStore, QObject *parent)
-    : QObject{parent}
-    , dataStore{dataStore}
-    , accountsAction_(finances::LibraryBooks, tr("Organize Accounts"), tr("alt+o", "accounts"), this)
-    , payeesAction_(finances::Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
-    , categoriesAction_(finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
-    , groupsAction_(finances::Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
-    , securitiesAction_(finances::AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
+UiContext::UiContext(DataStore *dataStore)
+    : dataStore{dataStore}
+    , accountsAction_(this, finances::LibraryBooks, tr("Organize Accounts"), tr("alt+o", "accounts"), this)
+    , payeesAction_(this, finances::Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
+    , categoriesAction_(this, finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
+    , groupsAction_(this, finances::Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
+    , securitiesAction_(this, finances::AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
+{}
+
+UiContext::UiContext(const ConnectionSettings &settings)
+    : UiContext(new DataStore(new ServiceContext(new ConnectionPool(settings))))
 {}
 
 UiContext::~UiContext() {
@@ -43,6 +46,7 @@ UiContext::~UiContext() {
     transactionsWindows.clear();
     qDeleteAll(transactionModels);
     transactionModels.clear();
+    delete dataStore;
 }
 
 void UiContext::start() {
@@ -112,4 +116,21 @@ void UiContext::transactionsModelRemoved(TransactionTableModel *model) {
 void UiContext::transactionsWindowClosed(TransactionsWindow *window) {
     transactionsWindows.removeOne(window);
     transactionsModelRemoved(window->model());
+    shutdownIfEmpty();
+}
+
+void UiContext::windowOpened(AppWindow* window) {
+    openWindows++;
+}
+
+void UiContext::windowClosed(AppWindow* window) {
+    openWindows--;
+    shutdownIfEmpty();
+}
+
+void UiContext::shutdownIfEmpty() {
+    if (!openWindows && transactionsWindows.isEmpty()) {
+        dataStore->shutdown();
+        deleteLater();
+    }
 }

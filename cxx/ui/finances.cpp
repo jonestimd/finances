@@ -1,4 +1,6 @@
 #include "finances.h"
+#include "uicontext.h"
+#include "ui/widget/settings.h"
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
@@ -255,6 +257,13 @@ namespace finances {
 
     App::~App() {
         QThreadPool::globalInstance()->waitForDone();
+    }
+
+    int App::start() {
+        // TODO if no saved connection, show connection dialog
+        auto context = new UiContext(settings::connectionSettings());
+        context->start();
+        return exec();
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {

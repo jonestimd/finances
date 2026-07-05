@@ -26,18 +26,26 @@ struct ConnectionSettings {
 class ConnectionPool {
     friend Connection;
 
+    static int openConnections;
     const QString name;
-    const ConnectionSettings settings;
-    QThreadStorage<QString> nameStore{};
+
     QMutex poolMutex{};
-    int openConnections{0};
+    QWaitCondition released;
+    QList<QSqlDatabase> idle;
+    int activeCount{0};
+    bool isShutdown{false};
 
     QSqlDatabase acquire();
+    void release(QSqlDatabase db);
 
 public:
     const QString displayName;
+    const ConnectionSettings settings;
 
     ConnectionPool(const ConnectionSettings &settings);
+    ~ConnectionPool();
+
+    void shutdown();
 
     const QString &dbType() const;
 };
@@ -48,7 +56,9 @@ class Connection {
 public:
     QSqlDatabase db;
 
+    /** @brief Acquire a connection and begin a transaction. */
     Connection(ConnectionPool *pool);
+    /** @brief Commit the transaction and release the connection. */
     ~Connection();
 };
 

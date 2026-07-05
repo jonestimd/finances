@@ -11,6 +11,8 @@
 #include <QToolBar>
 #include <Qt>
 
+class UiContext;
+
 namespace finances {
     enum ItemDataRole {
         TextHighlightRole = Qt::UserRole,
@@ -96,9 +98,12 @@ namespace finances {
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;
+
     public:
         App(int &argc, char **argv);
         ~App();
+
+        int start();
 
     public slots:
         void updateStyleSheet(Qt::ColorScheme scheme);

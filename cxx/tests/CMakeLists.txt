@@ -51,6 +51,10 @@ qt_add_library(finances-testlib OBJECT
     ${SERVICE_SOURCES}
 )
 
+set_target_properties(finances-testlib PROPERTIES
+    COMPILE_DEFINITIONS __FINANCES_TEST__
+)
+
 target_link_libraries(finances-testlib PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Gui

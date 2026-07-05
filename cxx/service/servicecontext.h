@@ -36,8 +36,11 @@ public:
     TransactionService transationService;
 
     ServiceContext(ConnectionPool *pool);
+    ~ServiceContext();
 
     const QString connectionName() const;
+
+    void shutdown();
 };
 
 #endif // SERVICECONTEXT_H

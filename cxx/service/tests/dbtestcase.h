@@ -71,7 +71,8 @@ public:
 
     QList<QString> connectionPoolNames();
 
-    ConnectionPool *connectionPool(QString name);
+    ConnectionPool *connectionPool(const QString& driver);
+    const ConnectionSettings settings(const QString& driver);
 
     CompanyDao &companyDao(const QString &driver);
     AccountDao &accountDao(const QString &driver);
