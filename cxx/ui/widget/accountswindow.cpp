@@ -1,6 +1,9 @@
 #include "accountswindow.h"
+#include "filemenu.h"
 #include "settings.h"
 #include "ui/uicontext.h"
+
+#include <QMenuBar>
 
 #define SETTINGS_GROUP "accounts"
 
@@ -25,6 +28,19 @@ AccountsWindow::AccountsWindow(UiContext *context)
         context->securitiesAction(),
         showAccount,
     });
+    QMenuBar *menuBar = new QMenuBar();
+    menuBar->addMenu(new FileMenu(this));
+    QHBoxLayout *layout = new QHBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(menuBar, 0, Qt::AlignCenter);
+    layout->addWidget(finances::separator());
+    layout->addWidget(&entityView.toolbar, 1);
+    QFrame *frame = new QFrame();
+    frame->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    frame->setLineWidth(2);
+    frame->setLayout(layout);
+    setMenuWidget(frame);
+
     setWindowTitle(tr("%1 - Accounts[*]").arg(dataStore->connectionName()));
 
     auto companyStore = &dataStore->accountStore->companyStore;

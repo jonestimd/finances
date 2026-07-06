@@ -61,6 +61,7 @@ namespace finances {
         Trash = 0xe872,
         Unchecked = 0xe835,
         Undo = 0xe166,
+        Visibility = 0xe8f4,
         Workspaces = 0xe1a0, // groups
         None = ' ',
     };
@@ -92,6 +93,11 @@ namespace finances {
 
     QAction *saveAction(QWidget *window, const char *invokable = "saveData");
     QAction *reloadAction(QWidget *window, const char *invokable = "loadData");
+
+    QLineEdit* fileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, const QString dir = {});
+    QLineEdit* maskInput(QWidget* parent, const QString& mask);
+    QLineEdit* passwordInput(QWidget* parent);
+    QFrame *separator(QFrame::Shape shape = QFrame::VLine);
 
     void setColumnResize(QHeaderView *viewHeader);
 

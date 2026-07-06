@@ -4,23 +4,30 @@
 #include <QtSql/QSqlDatabase>
 #include <QList>
 #include <QMutex>
+#include <QSettings>
 #include <QThreadStorage>
 #include <QWaitCondition>
 
 class Connection;
 
 struct ConnectionSettings {
-    const QString dbType;
-    const QString host;
-    const int port;
-    const QString schema;
-    const QString user;
-    const QString password;
+    QString dbType;
+    QString host;
+    int port;
+    QString schema;
+    QString user;
+    QString password;
 
     QString makeName() const;
+    QString configName() const;
     QString displayName() const;
 
+    bool isComplete() const;
     bool openDatabase(QSqlDatabase &db) const;
+
+    void save(QSettings* settings) const;
+    static ConnectionSettings fromConfig(const QString& name, QSettings* settings);
+    static QString lastError(const QSqlDatabase &db);
 };
 
 class ConnectionPool {
@@ -39,7 +46,6 @@ class ConnectionPool {
     void release(QSqlDatabase db);
 
 public:
-    const QString displayName;
     const ConnectionSettings settings;
 
     ConnectionPool(const ConnectionSettings &settings);

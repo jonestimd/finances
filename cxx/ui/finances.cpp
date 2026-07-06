@@ -1,5 +1,6 @@
 #include "finances.h"
 #include "uicontext.h"
+#include "ui/widget/connectiondialog.h"
 #include "ui/widget/settings.h"
 #include <QFile>
 #include <QFontDatabase>
@@ -12,6 +13,9 @@
 #include <QTranslator>
 #include <QSqlDatabase>
 #include <QProxyStyle>
+#include <QAbstractButton>
+#include <QFileDialog>
+#include <QErrorMessage>
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -260,10 +264,16 @@ namespace finances {
     }
 
     int App::start() {
-        // TODO if no saved connection, show connection dialog
-        auto context = new UiContext(settings::connectionSettings());
-        context->start();
-        return exec();
+        auto lastConnection = settings::lastConnection();
+        if (lastConnection.isValid()) {
+            auto context = new UiContext(settings::connectionSettings(lastConnection.toString()));
+            context->start();
+            return exec();
+        } else {
+            ConnectionDialog dialog;
+            if (dialog.exec() == QDialog::Accepted) return exec();
+        }
+        return 1;
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {
@@ -275,5 +285,39 @@ namespace finances {
             auto styles = readStyles(":/styles/minimal-light.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
+    }
+
+    QLineEdit *fileInput(QWidget *parent, const QString caption, const QString filter, const QString dir) {
+        auto input = new QLineEdit();
+        auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
+        fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
+        QObject::connect(fileAction, &QAction::triggered, [=]() {
+            auto name = QFileDialog::getOpenFileName(parent, caption, dir, filter);
+            input->setText(name);
+        });
+        return input;
+    }
+
+    QLineEdit *maskInput(QWidget *parent, const QString &mask) {
+        auto input = new QLineEdit();
+        input->setInputMask(mask);
+        return input;
+    }
+
+    QLineEdit *passwordInput(QWidget *parent) {
+        auto input = new QLineEdit();
+        input->addAction(iconAction(FontIcon::Visibility, parent->tr("Show password"), parent), QLineEdit::TrailingPosition);
+        input->setEchoMode(QLineEdit::Password);
+        auto button = input->findChild<QAbstractButton*>();
+        QObject::connect(button, &QAbstractButton::pressed, [=]() { input->setEchoMode(QLineEdit::Normal); });
+        QObject::connect(button, &QAbstractButton::released, [=]() { input->setEchoMode(QLineEdit::Password); });
+        return input;
+    }
+
+    QFrame *separator(QFrame::Shape shape) {
+        QFrame *frame = new QFrame();
+        frame->setProperty("separator", "true");
+        frame->setFrameStyle(shape | QFrame::Raised);
+        return frame;
     }
 }

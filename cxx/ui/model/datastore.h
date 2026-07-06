@@ -10,6 +10,8 @@
 #include "securitystore.h"
 #include "transactionstore.h"
 
+class ConnectionDialog;
+
 class DataStore : public QObject {
     Q_OBJECT
     ServiceContext *services;
@@ -24,9 +26,14 @@ public:
     TransactionStore *const transactionStore;
 
     DataStore(ServiceContext *services);
+    DataStore(const ConnectionSettings &settings);
     ~DataStore();
 
     const QString connectionName() const;
+    const QString connectionConfigName() const;
+
+    /** @brief Used by FileDialog to verify connection parameters. */
+    void loadAccounts(ConnectionDialog* dialog);
 
     void shutdown();
 

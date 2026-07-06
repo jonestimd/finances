@@ -5,33 +5,93 @@
 #include <QSqlDriver>
 #include <QSqlQuery>
 #include <sqlite3.h>
+#include <QUrl>
+#include <QFileInfo>
 #include "connectionpool.h"
+#include "dbdialect.h"
 
 #define MAX_ACTIVE 5
+#define CONFIG_SEP '|'
+#define CONNECT_TIMEOUT 5000
 
 Q_LOGGING_CATEGORY(connectionPoolLogger, "connectionPool");
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
+struct DbOpener : public QThread {
+    bool success{false};
+    QSqlDatabase &db;
+
+    DbOpener(QSqlDatabase &db) : QThread{}, db{db} {}
+
+protected:
+    virtual void run() override {
+        success = db.open();
+    }
+};
+
 QString ConnectionSettings::makeName() const {
     return QString("%1:%2:%3").arg(dbType, host, schema);
+}
+
+QString ConnectionSettings::configName() const {
+    auto schema = this->schema;
+    if (dbType == SQLITE_DRIVER) schema = QFileInfo{schema}.absoluteFilePath();
+    schema = QUrl::toPercentEncoding(schema);
+    if (dbType == SQLITE_DRIVER) return QStringList{dbType, schema}.join(CONFIG_SEP);
+    else return QStringList{dbType, host, QString::number(port), schema}.join(CONFIG_SEP);
 }
 
 QString ConnectionSettings::displayName() const {
     return QString("%1:%2").arg(host, schema);
 }
 
+bool ConnectionSettings::isComplete() const {
+    if (dbType == SQLITE_DRIVER) {
+        return !schema.isEmpty() && QFile::exists(schema);
+    } else {
+        return !(host.isEmpty() || port < 0 || schema.isEmpty() || user.isEmpty() || password.isEmpty());
+    }
+}
+
 bool ConnectionSettings::openDatabase(QSqlDatabase &db) const {
     db.setHostName(host);
     db.setPort(port);
     db.setDatabaseName(schema);
-    return db.open(user, password);
+    db.setUserName(user);
+    db.setPassword(password);
+    auto runner = new DbOpener(db);
+    runner->start();
+    return runner->wait(CONNECT_TIMEOUT) && runner->success;
+}
+
+void ConnectionSettings::save(QSettings* settings) const {
+    auto name = configName();
+    settings->setValue(name + "/user", user);
+    settings->setValue(name + "/password", password);
+}
+
+ConnectionSettings ConnectionSettings::fromConfig(const QString &name, QSettings* settings) {
+    auto parts = name.split(CONFIG_SEP);
+    if (parts[0] == SQLITE_DRIVER) {
+        parts.insert(1, "");
+        parts.insert(2, "0");
+    }
+    while (parts.size() < 4) parts.append("");
+    return ConnectionSettings{
+        parts[0], parts[1], parts[2].toInt(), QUrl::fromPercentEncoding(parts[3].toLocal8Bit()),
+        settings->value(name + "/user").toString(),
+        settings->value(name + "/password").toString(),
+    };
+}
+
+QString ConnectionSettings::lastError(const QSqlDatabase &db) {
+    return db.lastError().isValid() ? db.lastError().text() : QObject::tr("timed out");
 }
 
 ConnectionPool::ConnectionPool(const ConnectionSettings &settings)
     : settings{settings}
     , name{settings.makeName()}
-    , displayName{settings.displayName()}
 {}
 
 static void closeConnections(QList<QSqlDatabase>& connections) {
@@ -71,8 +131,8 @@ static void load_sqlite_extension(sqlite3 *handle, const char *filename, const c
     char *msg;
     sqlite3_load_extension(handle, filename, initFunction, &msg);
     if (msg) {
-        qCritical() << qgetenv("LD_LIBRARY_PATH");
-        qCritical() << msg;
+        qCCritical(connectionPoolLogger) << qgetenv("LD_LIBRARY_PATH");
+        qCCritical(connectionPoolLogger) << msg;
         sqlite3_free(msg);
     }
 }
@@ -90,8 +150,9 @@ QSqlDatabase ConnectionPool::acquire() {
         if (!db.isOpen()) {
             db.setNumericalPrecisionPolicy(QSql::HighPrecision);
             if (!settings.openDatabase(db)) {
-                qCritical() << "ConnectionPool:" << dbName << db.lastError().text();
-                throw QObject::tr("Failed to connect to the database.");
+                auto error = ConnectionSettings::lastError(db);
+                qCCritical(connectionPoolLogger) << dbName << error;
+                throw QObject::tr("Connection error: %1").arg(error);
             }
         }
         if (settings.dbType == "QSQLITE") {
@@ -120,7 +181,7 @@ void ConnectionPool::release(QSqlDatabase db) {
 
 Connection::Connection(ConnectionPool *pool) : pool{pool}, db{pool->acquire()} {
     if (!db.transaction()) {
-        qCritical() << "ConnectionPool:" << db.connectionName() << "begin transaction failed";
+        qCCritical(connectionPoolLogger) << db.connectionName() << "begin transaction failed";
     }
 };
 

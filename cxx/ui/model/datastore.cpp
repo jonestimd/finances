@@ -1,5 +1,7 @@
 #include "datastore.h"
+#include "ui/widget/connectiondialog.h"
 #include <QSqlError>
+#include <QThreadPool>
 
 DataStore::DataStore(ServiceContext *services)
     : services{services}
@@ -22,6 +24,8 @@ DataStore::DataStore(ServiceContext *services)
             groupStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
 }
 
+DataStore::DataStore(const ConnectionSettings &settings) : DataStore{new ServiceContext(settings)} {}
+
 DataStore::~DataStore() {
     delete accountStore;
     delete payeeStore;
@@ -34,6 +38,21 @@ DataStore::~DataStore() {
 
 const QString DataStore::connectionName() const {
     return services->connectionName();
+}
+
+const QString DataStore::connectionConfigName() const {
+    return services->connectionConfigName();
+}
+
+void DataStore::loadAccounts(ConnectionDialog* dialog) {
+    QThreadPool::globalInstance()->start([=, this]() {
+        try {
+            accountStore->setValues(services->accountService.getAll(), AccountStore::FriendKey{});
+            QMetaObject::invokeMethod(dialog, &ConnectionDialog::handleOpenResult, Qt::QueuedConnection, this, QString{});
+        } catch(const QString error) {
+            QMetaObject::invokeMethod(dialog, &ConnectionDialog::handleOpenResult, Qt::QueuedConnection, this, error);
+        }
+    });
 }
 
 void DataStore::shutdown() {

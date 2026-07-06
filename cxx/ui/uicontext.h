@@ -34,12 +34,6 @@ public:
     }
 };
 
-#ifdef __FINANCES_TEST__
-#define PRIVATE_ACCESS public
-#else
-#define PRIVATE_ACCESS private
-#endif
-
 class UiContext : public QObject {
     Q_OBJECT
     WindowAction<AccountsWindow, UiContext*> accountsAction_;
@@ -54,9 +48,8 @@ class UiContext : public QObject {
 public:
     DataStore *const dataStore;
 
-PRIVATE_ACCESS:
-    explicit UiContext(DataStore *dataStore);
 public:
+    explicit UiContext(DataStore *dataStore);
     explicit UiContext(const ConnectionSettings& settings);
     ~UiContext();
 

@@ -37,9 +37,7 @@ UiContext::UiContext(DataStore *dataStore)
     , securitiesAction_(this, finances::AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
 {}
 
-UiContext::UiContext(const ConnectionSettings &settings)
-    : UiContext(new DataStore(new ServiceContext(new ConnectionPool(settings))))
-{}
+UiContext::UiContext(const ConnectionSettings &settings) : UiContext(new DataStore(settings)) {}
 
 UiContext::~UiContext() {
     qDeleteAll(transactionsWindows);
@@ -50,7 +48,7 @@ UiContext::~UiContext() {
 }
 
 void UiContext::start() {
-    auto lastViewed = settings::lastViewedAccount();
+    auto lastViewed = settings::lastViewedAccount(dataStore->connectionConfigName());
     if (lastViewed.isValid()) showTransactions(lastViewed.toLongLong());
     else accountsAction_.trigger();
 }

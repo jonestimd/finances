@@ -1,4 +1,5 @@
 #include "accountsmenu.h"
+#include "filemenu.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/model/formats.h"
@@ -15,17 +16,6 @@
 #define HIDE_CLOSED_ACCOUNTS "hideClosedAccounts"
 #define CLEARED_WIDTH 30
 
-namespace transactionwindow {
-    QFrame *separator() {
-        QFrame *frame = new QFrame();
-        frame->setProperty("separator", "true");
-        frame->setFrameStyle(QFrame::VLine | QFrame::Raised);
-        return frame;
-    }
-}
-
-using namespace transactionwindow;
-
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
     : AppWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
@@ -41,11 +31,12 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->securitiesAction(),
     });
     QMenuBar *menuBar = new QMenuBar();
+    menuBar->addMenu(new FileMenu(this));
     menuBar->addMenu(new AccountsMenu(this, context));
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
-    layout->addWidget(separator());
+    layout->addWidget(finances::separator());
     layout->addWidget(&entityView.toolbar, 1);
     QFrame *frame = new QFrame();
     frame->setFrameStyle(QFrame::Panel | QFrame::Raised);
@@ -89,7 +80,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 }
 
 TransactionsWindow::~TransactionsWindow() {
-    settings::setLastViewedAccount(model()->accountId);
+    settings::setLastViewedAccount(model()->accountId, context->dataStore->connectionConfigName());
     context->transactionsWindowClosed(this);
 }
 
