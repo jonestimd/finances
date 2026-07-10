@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QThreadPool>
 
 #include <ui/uicontext.h>
 
@@ -20,25 +21,27 @@
 #define SQLITE_PROP "SqliteInput"
 #define TEST_DB_NAME "test connection"
 
+#define SCHEMA_LABEL "Sche&ma:"
+
 using namespace finances;
 
-static const QHash<const QString, QString> typeMap{
+static const QHash<const QString, const char*> typeMap{
     {MYSQL_TYPE_NAME, MYSQL_DRIVER},
     {PG_TYPE_NAME, PG_DRIVER},
     {SQLITE_TYPE_NAME, SQLITE_DRIVER},
 };
 
-static const QHash<const QString, QString> defaultPort{
+static const QHash<const QString, const char*> defaultPort{
     {MYSQL_TYPE_NAME, "3306"},
     {PG_TYPE_NAME, "5432"},
 };
 
 template<typename Value>
-QLineEdit *ConnectionDialog::initInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput) {
+QLineEdit *ConnectionDialog::connectInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput) {
     input->setProperty(SQLITE_PROP, sqliteInput);
     connect(input, &QLineEdit::textChanged, [=, this](const QString& value) {
         if constexpr (std::is_same_v<Value, QString>) {
-            &settings->*field = value;
+            &settings->*field = value.trimmed();
         } else if constexpr (std::is_same_v<Value, int>) {
             auto x = value.toInt();
             &settings->*field = x > 0 ? x : -1;
@@ -48,13 +51,30 @@ QLineEdit *ConnectionDialog::initInput(QLineEdit* input, Value ConnectionSetting
     return input;
 }
 
-ConnectionDialog::ConnectionDialog(QWidget *parent)
+static const char* labelText(const char* adminText, ConnectionDialog::Mode mode) {
+    return mode == ConnectionDialog::Mode::Create ? adminText : adminText + sizeof("Admin ");
+}
+
+static QString userHelp(ConnectionDialog::Mode mode) {
+    if (mode & ConnectionDialog::Create) return QObject::tr("Database super user for\ncreating the schema.");
+    else return "";
+}
+
+ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     : QDialog(parent)
+    , mode{mode}
     , settings{}
 {
     setWindowModality(Qt::ApplicationModal);
     setWindowTitle(tr("Database Connection"));
     status.setWordWrap(true);
+    auto buttonBox = new QDialogButtonBox(this);
+    testButton = buttonBox->addButton(tr("&Test Connection"), QDialogButtonBox::ApplyRole);
+    connect(testButton, SIGNAL(clicked()), this, SLOT(testConnection()));
+    if (mode & Mode::Open) {
+        openButton = buttonBox->addButton(QDialogButtonBox::Open);
+        connect(openButton, SIGNAL(clicked()), this, SLOT(openDatabase()));
+    }
 
     auto layout = new QVBoxLayout(this);
     auto formLayout = new QFormLayout();
@@ -62,27 +82,30 @@ ConnectionDialog::ConnectionDialog(QWidget *parent)
     layout->addLayout(formLayout);
 
     typeInput.addItems({MYSQL_TYPE_NAME, PG_TYPE_NAME, SQLITE_TYPE_NAME});
-    formLayout->addRow(tr("Database &Type:"), &typeInput);
+    formLayout->addRow(tr("Database T&ype:"), &typeInput);
 
-    formLayout->addRow(tr("&Host:"), initInput(new QLineEdit(this), &ConnectionSettings::host));
-    formLayout->addRow(tr("Po&rt:"), initInput(maskInput(this, "00009"), &ConnectionSettings::port));
+    formLayout->addRow(tr("&Host:"), connectInput(new QLineEdit(this), &ConnectionSettings::host));
+    formLayout->addRow(tr("Po&rt:"), connectInput(maskInput(this, "00009"), &ConnectionSettings::port));
     auto caption = tr("Select database file");
-    auto filters = tr("Databases (%1);;All files(%2)").arg("*.fdb *.db", "*");
-    formLayout->addRow(tr("&Schema:"), initInput(fileInput(this, caption, filters), &ConnectionSettings::schema, true));
-    formLayout->addRow(tr("&User:"), initInput(new QLineEdit(this), &ConnectionSettings::user));
-    formLayout->addRow(tr("&Password:"), initInput(passwordInput(this), &ConnectionSettings::password));
+    auto filters = tr("Databases (%1);;All files(%2)").arg("*.dbfin *.db", "*");
+    formLayout->addRow(tr(SCHEMA_LABEL), connectInput(fileInput(this, caption, filters), &ConnectionSettings::schema, true));
+    if (mode & Mode::Create) {
+        userInput = new QLineEdit(this);
+        passwordInput = ::passwordInput(this);
+        formLayout->addRow(tr("U&ser"), userInput);
+        formLayout->addRow(tr("P&assword"), passwordInput);
+        connect(userInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
+        connect(passwordInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
+        createButton = buttonBox->addButton(tr("&Create"), QDialogButtonBox::YesRole);
+        connect(createButton, SIGNAL(clicked(bool)), this, SLOT(createDatabase()));
+    }
+    formLayout->addRow(tr(labelText("Admin &User:", mode)), connectInput(whatsThisInput(this, userHelp(mode)), &ConnectionSettings::user));
+    formLayout->addRow(tr(labelText("Admin &Password", mode)), connectInput(::passwordInput(this), &ConnectionSettings::password));
 
     layout->addWidget(&status);
-    auto buttonBox = new QDialogButtonBox(this);
-    testButton = buttonBox->addButton(tr("&Test"), QDialogButtonBox::ApplyRole);
-    openButton = buttonBox->addButton(QDialogButtonBox::Open);
     layout->addWidget(buttonBox);
 
-    connect(testButton, SIGNAL(clicked()), this, SLOT(testConnection()));
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     connect(&typeInput, &QComboBox::currentTextChanged, this, &ConnectionDialog::typeChanged);
-
     typeChanged(typeInput.currentText());
 }
 
@@ -112,32 +135,35 @@ void ConnectionDialog::typeChanged(const QString &value) {
     for (auto label : labels) {
         auto input = qobject_cast<QLineEdit*>(label->buddy());
         if (input) {
+            input->clear();
             if (!input->property(SQLITE_PROP).toBool()) {
-                updateInput(input, !isSqlite);
+                label->setVisible(!isSqlite);
+                input->setVisible(!isSqlite);
                 if (!input->inputMask().isEmpty()) input->setText(defaultPort.value(value));
             } else {
-                label->setText(isSqlite ? tr("&File:") : tr("&Schema:"));
+                label->setText(isSqlite ? tr("&File:") : tr(SCHEMA_LABEL));
                 input->actions().constFirst()->setVisible(isSqlite);
-                input->clear();
             }
         }
     }
     inputChanged();
+    adjustSize();
+}
+
+static inline bool notEmpty(QLineEdit* input) {
+    return !input->text().trimmed().isEmpty();
 }
 
 void ConnectionDialog::inputChanged() {
     bool enable = settings.isComplete();
-    testButton->setEnabled(enable && typeInput.currentText() != SQLITE_TYPE_NAME);
-    openButton->setEnabled(enable);
-    status.clear();
-}
-
-void ConnectionDialog::updateInput(QLineEdit* input, bool enable) {
-    if (input->isEnabled() != enable) {
-        input->clear();
-        input->setEnabled(enable);
-        style()->unpolish(input);
+    auto isSqlite = typeInput.currentText() != SQLITE_TYPE_NAME;
+    testButton->setEnabled(enable && isSqlite);
+    if (openButton) openButton->setEnabled(enable);
+    if (createButton) {
+        auto haveUser = isSqlite || notEmpty(userInput) && notEmpty(passwordInput);
+        createButton->setEnabled(enable && haveUser);
     }
+    status.clear();
 }
 
 void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &error) {
@@ -145,7 +171,7 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
         auto context = new UiContext(dataStore);
         context->start();
         settings::addConnection(settings);
-        QDialog::accept();
+        accept();
     } else {
         status.setText(error);
         adjustSize();
@@ -153,9 +179,34 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
     }
 }
 
-void ConnectionDialog::accept() {
+void ConnectionDialog::createDatabase() {
+    setDisabled(true);
+    status.setText(tr("Creating database..."));
+    QThreadPool::globalInstance()->start([=, this]() {
+        ServiceContext context{settings};
+        try {
+            context.createDatabase(userInput->text().trimmed(), passwordInput->text().trimmed());
+            QMetaObject::invokeMethod(this, &ConnectionDialog::openDatabase, Qt::QueuedConnection);
+        } catch(const QString error) {
+            QMetaObject::invokeMethod(this, &ConnectionDialog::createFailed, Qt::QueuedConnection, error);
+        }
+        context.shutdown();
+    });
+}
+
+void ConnectionDialog::createFailed(const QString message) {
+    status.setText(message);
+    setEnabled(true);
+}
+void ConnectionDialog::openDatabase() {
+    setDisabled(true);
+    auto settings = this->settings;
+    if (mode & Mode::Create) {
+        settings.user = userInput->text().trimmed();
+        settings.password = passwordInput->text().trimmed();
+    }
     auto dataStore = new DataStore(settings);
     status.setText(tr("Loading Accounts..."));
-    setDisabled(true);
     dataStore->loadAccounts(this);
 }
+

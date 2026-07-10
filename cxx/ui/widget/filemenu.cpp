@@ -13,21 +13,22 @@
 #define CONNECTION_PROP "connectionName"
 
 namespace filemenu {
-    static const QHash<const QString, QString> typeMap{
+    static const QHash<const QString, const char*> typeMap{
         {MYSQL_DRIVER, "MySQL"},
         {PG_DRIVER, "Postgres"},
     };
 
     using namespace finances;
+    using Mode = ConnectionDialog::Mode;
 
     class FileAction : public QAction { // TODO add dialogAction() factory to finances.cpp
     public:
-        FileAction(const QString& name, const QKeySequence& shortcut, QWidget* window)
+        FileAction(const QString& name, const QKeySequence& shortcut, QWidget* window, Mode mode = Mode::Open)
             : QAction(window)
         {
             initAction(this, FontIcon::None, name, shortcut);
             connect(this, &FileAction::triggered, [=]() {
-                ConnectionDialog dialog{window};
+                ConnectionDialog dialog{window, mode};
                 dialog.exec();
             });
         };
@@ -39,8 +40,8 @@ using namespace filemenu;
 FileMenu::FileMenu(AppWindow* window)
     : QMenu(tr("&File"), window)
 {
-    // addAction(new FileAction(tr("&New File..."), QKeyCombination{}, window));
-    addAction(new FileAction(tr("&Open File..."), QKeyCombination{Qt::ControlModifier, Qt::Key_O}, window));
+    addAction(new FileAction(tr("&New Database..."), QKeyCombination{}, window, Mode::Create));
+    addAction(new FileAction(tr("&Open Database..."), QKeyCombination{Qt::ControlModifier, Qt::Key_O}, window));
     addMenu(&recentsMenu);
     updateRecentsMenu();
 }
@@ -52,7 +53,7 @@ void FileMenu::updateRecentsMenu() {
         auto parts = ConnectionSettings::parseConfigName(*i);
         QString text =  parts[0] == SQLITE_DRIVER
                 ? parts[3]
-                : QList{typeMap.value(parts[0]), parts[1], parts[3]}.join(':');
+                : QStringList{typeMap.value(parts[0]), parts[1], parts[3]}.join(':');
         auto action = recentsMenu.addAction(text);
         action->setProperty(CONNECTION_PROP, *i);
         connect(action, SIGNAL(triggered(bool)), this, SLOT(openConnection()));

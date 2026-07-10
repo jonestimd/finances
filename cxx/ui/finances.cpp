@@ -16,6 +16,7 @@
 #include <QAbstractButton>
 #include <QFileDialog>
 #include <QErrorMessage>
+#include <QWhatsThis>
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -304,8 +305,22 @@ namespace finances {
         return input;
     }
 
+    QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText) {
+        auto input = new QLineEdit(parent);
+        if (!helpText.isEmpty()) {
+            input->setWhatsThis(helpText);
+            auto action = iconAction(FontIcon::Help, parent->tr("What's this?"), parent);
+            QObject::connect(action, &QAction::triggered, [=]() {
+                auto pos = input->window()->geometry().topLeft() + input->geometry().bottomLeft();
+                QWhatsThis::showText(pos, input->whatsThis(), input);
+            });
+            input->addAction(action, QLineEdit::TrailingPosition);
+        }
+        return input;
+    }
+
     QLineEdit *passwordInput(QWidget *parent) {
-        auto input = new QLineEdit();
+        auto input = new QLineEdit(parent);
         input->addAction(iconAction(FontIcon::Visibility, parent->tr("Show password"), parent), QLineEdit::TrailingPosition);
         input->setEchoMode(QLineEdit::Password);
         auto button = input->findChild<QAbstractButton*>();

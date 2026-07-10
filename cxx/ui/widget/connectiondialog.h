@@ -10,14 +10,26 @@
 
 class ConnectionDialog : public QDialog, public DataStore::OpenHandler {
     Q_OBJECT
+public:
+    enum Mode {
+        Open = 1,
+        Create = 2,
+        OpenOrCreate = 3,
+    };
+
+private:
+    Mode const mode;
     QComboBox typeInput;
-    QPushButton *testButton;
-    QPushButton *openButton;
+    QPushButton *testButton{};
+    QPushButton *openButton{};
+    QPushButton *createButton{};
+    QLineEdit *userInput;
+    QLineEdit *passwordInput{};
     QLabel status{};
     ConnectionSettings settings;
 
 public:
-    ConnectionDialog(QWidget *parent = nullptr);
+    ConnectionDialog(QWidget *parent = nullptr, Mode mode = Mode::Open);
 
     const ConnectionSettings connectionSettings() const;
 
@@ -25,17 +37,15 @@ public:
 
 private slots:
     void testConnection();
+    void typeChanged(const QString& value);
+    void inputChanged();
+    void createDatabase();
+    void createFailed(const QString message);
+    void openDatabase();
 
 private:
     template<typename Value>
-    QLineEdit* initInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput = false);
-
-    void typeChanged(const QString& value);
-    void inputChanged();
-    void updateInput(QLineEdit* input, bool enable);
-
-public slots:
-    virtual void accept() override;
+    QLineEdit* connectInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput = false);
 };
 
 #endif // CONNECTIONDIALOG_H

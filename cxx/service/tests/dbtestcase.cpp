@@ -3,14 +3,11 @@
 #include "service/database/transactiongroupdao.h"
 #include "service/database/transactiondetaildao.h"
 #include "qtcommon.h"
+#include "service/servicecontext.h"
 #include <QFile>
 #include <QSqlError>
 #include <QSqlResult>
 #include <QtTest/qtestcase.h>
-
-static const auto addCurencyQuery = R"(
-insert into asset (name, type, scale, symbol, change_user, version)
-values ('USD', 'Currency', 2, '$', :user, 0))";
 
 static const QList<const char*> dropTableQueries = {
     "drop view if exists account_security",
@@ -164,24 +161,7 @@ void DbTestCase::createDatabases() {
                 sql::exec(conn.db, dropQuery, CLASS_NAME, "dropObject");
             }
         }
-        auto daos = DAOS(driver);
-        daos.securityDao.createTable(conn.db);
-        daos.companyDao.createTable(conn.db);
-        daos.accountDao.createTable(conn.db);
-        daos.payeeDao.createTable(conn.db);
-        daos.categoryDao.createTable(conn.db);
-        daos.transactionGroupDao.createTable(conn.db);
-        daos.transactionDao.createTable(conn.db);
-        daos.detailDao.createTable(conn.db);
-        daos.stockSplitDao.createTable(conn.db);
-        daos.securityLotDao.createTable(conn.db);
-
-        daos.securityDao.createViews(conn.db);
-
-        QSqlQuery query{conn.db};
-        query.prepare(addCurencyQuery);
-        query.bindValue(":user", TEST_USER);
-        sql::exec(query, CLASS_NAME, "addCurency");
+        ServiceContext{pool, true}.createDatabaseTables(conn.db);
     }
 }
 

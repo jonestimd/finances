@@ -45,6 +45,7 @@ namespace finances {
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
+        Help = 0xe887,
         HideSource = 0xf023,
         LibraryBooks = 0xe02f,
         Merge = 0xeb98,
@@ -96,6 +97,7 @@ namespace finances {
 
     QLineEdit* fileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, const QString dir = {});
     QLineEdit* maskInput(QWidget* parent, const QString& mask);
+    QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText);
     QLineEdit* passwordInput(QWidget* parent);
     QFrame *separator(QFrame::Shape shape = QFrame::VLine);
 

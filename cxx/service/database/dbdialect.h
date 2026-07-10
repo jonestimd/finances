@@ -41,6 +41,9 @@ namespace dbDialect {
     QString inList(const QSqlDatabase &db, const char *column, const char *placeholder);
 
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, const QList<domain_id> ids, const char *idColumn);
+
+    void createSchema(const QSqlDatabase& db, const QString& schema);
+    void addUser(const QSqlDatabase& db, const QString& schema, const QString& user, const QString& password);
 };
 
 #endif // DBDIALECT_H

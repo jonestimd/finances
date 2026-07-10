@@ -41,14 +41,10 @@ install(TARGETS test_decimal
 add_test(NAME test_decimal COMMAND test_decimal)
 
 get_target_property(UI_SOURCES finances SOURCES)
-list(FILTER UI_SOURCES INCLUDE REGEX ".*/ui/.+\\.(cpp|h)$")
-
-get_target_property(SERVICE_SOURCES finances SOURCES)
-list(FILTER SERVICE_SOURCES INCLUDE REGEX ".*/service/[^/]+\\.(cpp|h)$")
+list(FILTER UI_SOURCES INCLUDE REGEX ".*/ui/.*\\.(cpp|h)$")
 
 qt_add_library(finances-testlib OBJECT
     ${UI_SOURCES}
-    ${SERVICE_SOURCES}
 )
 
 set_target_properties(finances-testlib PROPERTIES
