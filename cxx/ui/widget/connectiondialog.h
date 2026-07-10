@@ -8,7 +8,7 @@
 #include <QLabel>
 #include <QMenu>
 
-class ConnectionDialog : public QDialog {
+class ConnectionDialog : public QDialog, public DataStore::OpenHandler {
     Q_OBJECT
     QComboBox typeInput;
     QPushButton *testButton;
@@ -21,7 +21,7 @@ public:
 
     const ConnectionSettings connectionSettings() const;
 
-    void handleOpenResult(DataStore* dataStore, const QString& error);
+    virtual void handleOpenResult(DataStore* dataStore, const QString& error) override;
 
 private slots:
     void testConnection();

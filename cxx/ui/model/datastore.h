@@ -17,6 +17,10 @@ class DataStore : public QObject {
     ServiceContext *services;
 
 public:
+    struct OpenHandler {
+        virtual void handleOpenResult(DataStore* dataStore, const QString& error) = 0;
+    };
+
     StatusMessageStore messageStore;
     AccountStore *const accountStore;
     PayeeStore *const payeeStore;
@@ -29,11 +33,11 @@ public:
     DataStore(const ConnectionSettings &settings);
     ~DataStore();
 
-    const QString connectionName() const;
-    const QString connectionConfigName() const;
+    const ConnectionSettings& connectionSettings() const;
+    QString connectionName() const;
 
-    /** @brief Used by FileDialog to verify connection parameters. */
-    void loadAccounts(ConnectionDialog* dialog);
+    /** @brief Verify connection parameters before creating a `UiContext`. */
+    void loadAccounts(OpenHandler* handler);
 
     void shutdown();
 

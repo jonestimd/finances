@@ -27,6 +27,7 @@ struct ConnectionSettings {
 
     void save(QSettings* settings) const;
     static ConnectionSettings fromConfig(const QString& name, QSettings* settings);
+    static QStringList parseConfigName(const QString& name);
     static QString lastError(const QSqlDatabase &db);
 };
 

@@ -72,17 +72,23 @@ void ConnectionSettings::save(QSettings* settings) const {
 }
 
 ConnectionSettings ConnectionSettings::fromConfig(const QString &name, QSettings* settings) {
+    auto parts = parseConfigName(name);
+    return ConnectionSettings{
+        parts[0], parts[1], parts[2].toInt(), parts[3],
+        settings->value(name + "/user").toString(),
+        settings->value(name + "/password").toString(),
+    };
+}
+
+QStringList ConnectionSettings::parseConfigName(const QString &name) {
     auto parts = name.split(CONFIG_SEP);
     if (parts[0] == SQLITE_DRIVER) {
         parts.insert(1, "");
         parts.insert(2, "0");
     }
-    while (parts.size() < 4) parts.append("");
-    return ConnectionSettings{
-        parts[0], parts[1], parts[2].toInt(), QUrl::fromPercentEncoding(parts[3].toLocal8Bit()),
-        settings->value(name + "/user").toString(),
-        settings->value(name + "/password").toString(),
-    };
+    Q_ASSERT(parts.size() >= 4);
+    parts[3] = QUrl::fromPercentEncoding(parts[3].toLocal8Bit());
+    return parts;
 }
 
 QString ConnectionSettings::lastError(const QSqlDatabase &db) {

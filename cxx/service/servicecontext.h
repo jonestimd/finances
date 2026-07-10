@@ -39,8 +39,7 @@ public:
     ServiceContext(const ConnectionSettings &settings);
     ~ServiceContext();
 
-    const QString connectionName() const;
-    const QString connectionConfigName() const;
+    const ConnectionSettings& connectionSettings() const;
 
     void shutdown();
 };

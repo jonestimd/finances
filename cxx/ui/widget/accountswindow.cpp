@@ -93,7 +93,7 @@ void AccountsWindow::showCompanies() {
 void AccountsWindow::showTransactions() {
     if (entityView.selectedIndex().isValid()) {
         auto accountId = model()->getRow(entityView.selectedIndex())->id.value();
-        context->showTransactions(accountId);
+        context->showTransactions(accountId, frameGeometry());
     }
 }
 

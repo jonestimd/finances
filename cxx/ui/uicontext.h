@@ -53,7 +53,7 @@ public:
     explicit UiContext(const ConnectionSettings& settings);
     ~UiContext();
 
-    void start();
+    void start(QRect requestorRect = {});
 
     QAction *accountsAction();
     QAction *payeesAction();
@@ -61,7 +61,7 @@ public:
     QAction *groupsAction();
     QAction *securitiesAction();
 
-    TransactionsWindow *showTransactions(domain_id accountId);
+    TransactionsWindow *showTransactions(domain_id accountId, const QRect& requestorRect = {});
     TransactionTableModel *transactionsModel(domain_id accountId);
     int windowCount(const TransactionTableModel* model);
 

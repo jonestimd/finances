@@ -80,7 +80,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 }
 
 TransactionsWindow::~TransactionsWindow() {
-    settings::setLastViewedAccount(model()->accountId, context->dataStore->connectionConfigName());
+    settings::setLastViewedAccount(model()->accountId, context->dataStore->connectionSettings().configName());
     context->transactionsWindowClosed(this);
 }
 

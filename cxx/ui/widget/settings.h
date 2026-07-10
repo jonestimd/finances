@@ -28,6 +28,9 @@ namespace settings {
     QVariant lastViewedAccount(QString connectionName);
 
     void setLastViewedAccount(const QVariant &id, const QString &connectionName);
+
+    QStringList addRecentName(const QString& name);
+    QStringList getRecentNames();
 }
 
 #endif // SETTINGS_H

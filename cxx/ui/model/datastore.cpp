@@ -1,5 +1,5 @@
 #include "datastore.h"
-#include "ui/widget/connectiondialog.h"
+#include "ui/widget/settings.h"
 #include <QSqlError>
 #include <QThreadPool>
 
@@ -36,27 +36,31 @@ DataStore::~DataStore() {
     delete services;
 }
 
-const QString DataStore::connectionName() const {
-    return services->connectionName();
+const ConnectionSettings& DataStore::connectionSettings() const {
+    return services->connectionSettings();
 }
 
-const QString DataStore::connectionConfigName() const {
-    return services->connectionConfigName();
+QString DataStore::connectionName() const {
+    return connectionSettings().displayName();
 }
 
-void DataStore::loadAccounts(ConnectionDialog* dialog) {
+void DataStore::loadAccounts(OpenHandler* handler) {
     QThreadPool::globalInstance()->start([=, this]() {
+        QString message;
         try {
             accountStore->setValues(services->accountService.getAll(), AccountStore::FriendKey{});
-            QMetaObject::invokeMethod(dialog, &ConnectionDialog::handleOpenResult, Qt::QueuedConnection, this, QString{});
         } catch(const QString error) {
-            QMetaObject::invokeMethod(dialog, &ConnectionDialog::handleOpenResult, Qt::QueuedConnection, this, error);
+            message = error;
         }
+        QMetaObject::invokeMethod(this, [=, this]() {
+            handler->handleOpenResult(this, message);
+        }, Qt::QueuedConnection);
     });
 }
 
 void DataStore::shutdown() {
     services->shutdown();
+    settings::addRecentName(services->connectionSettings().configName());
 }
 
 const QString DataStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};

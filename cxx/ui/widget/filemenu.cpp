@@ -1,13 +1,23 @@
 #include "connectiondialog.h"
+#include "ui/uicontext.h"
+#include "ui/widget/settings.h"
 #include "filemenu.h"
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
 
+#define CONNECTION_PROP "connectionName"
+
 namespace filemenu {
+    static const QHash<const QString, QString> typeMap{
+        {MYSQL_DRIVER, "MySQL"},
+        {PG_DRIVER, "Postgres"},
+    };
+
     using namespace finances;
 
     class FileAction : public QAction { // TODO add dialogAction() factory to finances.cpp
@@ -31,4 +41,42 @@ FileMenu::FileMenu(AppWindow* window)
 {
     // addAction(new FileAction(tr("&New File..."), QKeyCombination{}, window));
     addAction(new FileAction(tr("&Open File..."), QKeyCombination{Qt::ControlModifier, Qt::Key_O}, window));
+    addMenu(&recentsMenu);
+    updateRecentsMenu();
+}
+
+void FileMenu::updateRecentsMenu() {
+    recentsMenu.clear();
+    const auto& recentNames = settings::getRecentNames();
+    for (auto i = recentNames.rbegin(); i != recentNames.rend(); i++) {
+        auto parts = ConnectionSettings::parseConfigName(*i);
+        QString text =  parts[0] == SQLITE_DRIVER
+                ? parts[3]
+                : QList{typeMap.value(parts[0]), parts[1], parts[3]}.join(':');
+        auto action = recentsMenu.addAction(text);
+        action->setProperty(CONNECTION_PROP, *i);
+        connect(action, SIGNAL(triggered(bool)), this, SLOT(openConnection()));
+    }
+}
+
+void FileMenu::openConnection() {
+    auto action = qobject_cast<QAction*>(sender());
+    if (action) {
+        auto name = action->property(CONNECTION_PROP).toString();
+        if (!name.isEmpty()) {
+            auto dataStore = new DataStore(settings::connectionSettings(name));
+            dataStore->loadAccounts(this);
+        }
+    }
+}
+
+void FileMenu::handleOpenResult(DataStore *dataStore, const QString &error) {
+    if (error.isEmpty()) {
+        settings::addRecentName(dataStore->connectionSettings().configName());
+        updateRecentsMenu();
+        auto context = new UiContext(dataStore);
+        context->start(appWindow()->frameGeometry());
+    } else {
+        QMessageBox::critical(appWindow(), tr("Connection Error"), error);
+    }
 }

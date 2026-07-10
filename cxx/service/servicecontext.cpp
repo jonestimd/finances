@@ -27,12 +27,8 @@ ServiceContext::~ServiceContext() {
     delete pool;
 }
 
-const QString ServiceContext::connectionName() const {
-    return pool->settings.displayName();
-}
-
-const QString ServiceContext::connectionConfigName() const {
-    return pool->settings.configName();
+const ConnectionSettings& ServiceContext::connectionSettings() const {
+    return pool->settings;
 }
 
 void ServiceContext::shutdown() {
