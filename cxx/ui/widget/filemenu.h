@@ -5,7 +5,7 @@
 #include "ui/widget/appwindow.h"
 #include <QMenu>
 
-class FileMenu : public QMenu, public DataStore::OpenHandler {
+class FileMenu : public QMenu {
     Q_OBJECT
     QMenu recentsMenu{tr("Recent &Files")};
 
@@ -14,9 +14,9 @@ class FileMenu : public QMenu, public DataStore::OpenHandler {
 public:
     FileMenu(AppWindow* window);
 
-    virtual void handleOpenResult(DataStore* dataStore, const QString& error) override;
-
 private:
+    void handleOpenResult(DataStore* dataStore, const QString& error);
+
     inline AppWindow* appWindow() const {
         return qobject_cast<AppWindow*>(parent());
     }

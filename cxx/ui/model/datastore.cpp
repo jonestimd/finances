@@ -44,7 +44,7 @@ QString DataStore::connectionName() const {
     return connectionSettings().displayName();
 }
 
-void DataStore::loadAccounts(OpenHandler* handler) {
+void DataStore::loadAccounts(OpenHandler handler) {
     QThreadPool::globalInstance()->start([=, this]() {
         QString message;
         try {
@@ -53,7 +53,7 @@ void DataStore::loadAccounts(OpenHandler* handler) {
             message = error;
         }
         QMetaObject::invokeMethod(this, [=, this]() {
-            handler->handleOpenResult(this, message);
+            handler(this, message);
         }, Qt::QueuedConnection);
     });
 }

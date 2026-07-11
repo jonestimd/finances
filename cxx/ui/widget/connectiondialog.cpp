@@ -114,18 +114,22 @@ const ConnectionSettings ConnectionDialog::connectionSettings() const {
 }
 
 void ConnectionDialog::testConnection() {
+    setDisabled(true);
     status.setText(tr("Connecting..."));
-    {
-        auto db = QSqlDatabase::addDatabase(settings.dbType, TEST_DB_NAME);
-        if (settings.openDatabase(db)) {
-            status.setText(tr("Successful connection"));
-            db.close();
-        } else {
-            status.setText(tr("Error: %1").arg(ConnectionSettings::lastError(db)));
-            adjustSize();
+    QThreadPool::globalInstance()->start([=, this] {
+        {
+            auto db = QSqlDatabase::addDatabase(settings.dbType, TEST_DB_NAME);
+            if (settings.openDatabase(db)) {
+                status.setText(tr("Successful connection"));
+                db.close();
+            } else {
+                status.setText(tr("Error: %1").arg(ConnectionSettings::lastError(db)));
+                adjustSize();
+            }
         }
-    }
-    QSqlDatabase::removeDatabase(TEST_DB_NAME);
+        QSqlDatabase::removeDatabase(TEST_DB_NAME);
+        setDisabled(false);
+    });
 }
 
 void ConnectionDialog::typeChanged(const QString &value) {
@@ -196,8 +200,9 @@ void ConnectionDialog::createDatabase() {
 
 void ConnectionDialog::createFailed(const QString message) {
     status.setText(message);
-    setEnabled(true);
+    setDisabled(false);
 }
+
 void ConnectionDialog::openDatabase() {
     setDisabled(true);
     auto settings = this->settings;
@@ -207,6 +212,6 @@ void ConnectionDialog::openDatabase() {
     }
     auto dataStore = new DataStore(settings);
     status.setText(tr("Loading Accounts..."));
-    dataStore->loadAccounts(this);
+    dataStore->loadAccounts(std::bind_front(&ConnectionDialog::handleOpenResult, this));
 }
 

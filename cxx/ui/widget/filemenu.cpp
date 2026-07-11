@@ -66,7 +66,7 @@ void FileMenu::openConnection() {
         auto name = action->property(CONNECTION_PROP).toString();
         if (!name.isEmpty()) {
             auto dataStore = new DataStore(settings::connectionSettings(name));
-            dataStore->loadAccounts(this);
+            dataStore->loadAccounts(std::bind_front(&FileMenu::handleOpenResult, this));
         }
     }
 }

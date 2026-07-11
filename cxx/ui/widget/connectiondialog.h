@@ -8,7 +8,7 @@
 #include <QLabel>
 #include <QMenu>
 
-class ConnectionDialog : public QDialog, public DataStore::OpenHandler {
+class ConnectionDialog : public QDialog {
     Q_OBJECT
 public:
     enum Mode {
@@ -33,8 +33,6 @@ public:
 
     const ConnectionSettings connectionSettings() const;
 
-    virtual void handleOpenResult(DataStore* dataStore, const QString& error) override;
-
 private slots:
     void testConnection();
     void typeChanged(const QString& value);
@@ -44,6 +42,8 @@ private slots:
     void openDatabase();
 
 private:
+    void handleOpenResult(DataStore* dataStore, const QString& error);
+
     template<typename Value>
     QLineEdit* connectInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput = false);
 };

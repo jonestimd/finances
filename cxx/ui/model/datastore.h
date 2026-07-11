@@ -17,9 +17,7 @@ class DataStore : public QObject {
     ServiceContext *services;
 
 public:
-    struct OpenHandler {
-        virtual void handleOpenResult(DataStore* dataStore, const QString& error) = 0;
-    };
+    typedef std::function<void(DataStore*, const QString&)> OpenHandler;
 
     StatusMessageStore messageStore;
     AccountStore *const accountStore;
@@ -37,7 +35,7 @@ public:
     QString connectionName() const;
 
     /** @brief Verify connection parameters before creating a `UiContext`. */
-    void loadAccounts(OpenHandler* handler);
+    void loadAccounts(OpenHandler handler);
 
     void shutdown();
 
