@@ -7,27 +7,21 @@
 #include <sqlite3.h>
 #include <QUrl>
 #include <QFileInfo>
+#include <QtEnvironmentVariables>
 #include "connectionpool.h"
 #include "dbdialect.h"
 
 #define MAX_ACTIVE 5
 #define CONFIG_SEP '|'
-#define CONNECT_TIMEOUT 5000
+#define CONNECT_TIMEOUT "5"
 
 Q_LOGGING_CATEGORY(connectionPoolLogger, "connectionPool");
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
-struct DbOpener : public QThread {
-    bool success{false};
-    QSqlDatabase &db;
-
-    DbOpener(QSqlDatabase &db) : QThread{}, db{db} {}
-
-protected:
-    virtual void run() override {
-        success = db.open();
-    }
+static const QHash<const QString, const char*>timeoutOptions{
+    {MYSQL_DRIVER, "MYSQL_OPT_CONNECT_TIMEOUT="},
+    {PG_DRIVER, "connect_timeout="},
 };
 
 QString ConnectionSettings::makeName() const {
@@ -54,15 +48,20 @@ bool ConnectionSettings::isComplete() const {
     }
 }
 
+QString timeoutOption(const QString& driver) {
+    QString option = timeoutOptions.value(driver, "");
+    if (!option.isEmpty()) option += qEnvironmentVariable("FINANCES_CONNECT_TIMEOUT", CONNECT_TIMEOUT);
+    return option;
+}
+
 bool ConnectionSettings::openDatabase(QSqlDatabase &db) const {
     db.setHostName(host);
     db.setPort(port);
     db.setDatabaseName(schema);
     db.setUserName(user);
     db.setPassword(password);
-    auto runner = new DbOpener(db);
-    runner->start();
-    return runner->wait(CONNECT_TIMEOUT) && runner->success;
+    db.setConnectOptions(timeoutOption(db.driverName()));
+    return db.open();
 }
 
 void ConnectionSettings::save(QSettings* settings) const {
