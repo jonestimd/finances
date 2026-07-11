@@ -1,6 +1,7 @@
 #include "connectiondialog.h"
 #include "service/database/dbdialect.h"
 #include "ui/finances.h"
+#include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 
 #include <QDialogButtonBox>
@@ -11,8 +12,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QThreadPool>
-
-#include <ui/uicontext.h>
 
 #define MYSQL_TYPE_NAME "MySQL"
 #define PG_TYPE_NAME "PostgreSQL"

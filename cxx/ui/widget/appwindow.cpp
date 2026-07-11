@@ -31,7 +31,7 @@ void AppWindow::show() {
 
 void AppWindow::closeEvent(QCloseEvent *event) {
     entityView.confirmClose(event, settingsGroup());
-    if (!event->isAccepted()) emit closed(this);
+    if (event->isAccepted()) emit closed(this);
 }
 
 void AppWindow::keyPressEvent(QKeyEvent *event) {
