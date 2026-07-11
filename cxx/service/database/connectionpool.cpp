@@ -147,9 +147,8 @@ int ConnectionPool::openConnections{0};
 QSqlDatabase ConnectionPool::acquire() {
     Q_ASSERT(!isShutdown);
     QMutexLocker locker(&poolMutex);
-    activeCount++;
     if (idle.isEmpty()) {
-        if (activeCount > MAX_ACTIVE) qCWarning(connectionPoolLogger, "active connections: %d", activeCount);
+        if (activeCount >= MAX_ACTIVE) qCWarning(connectionPoolLogger, "active connections: %d", activeCount);
         auto dbName = QString("%1(%2)").arg(name).arg(openConnections++);
         auto db = QSqlDatabase::addDatabase(settings.dbType, dbName);
         if (!db.isOpen()) {
@@ -171,8 +170,10 @@ QSqlDatabase ConnectionPool::acquire() {
                 query.exec("pragma foreign_keys = on");
             }
         }
+        activeCount++;
         return db;
     }
+    activeCount++;
     auto db = idle.takeFirst();
     return db;
 }
