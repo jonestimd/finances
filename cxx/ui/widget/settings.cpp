@@ -1,14 +1,6 @@
 #include "settings.h"
+#include "ui/finances.h"
 #include <QHeaderView>
-
-#define APP_NAME "finances"
-#define LAST_CONNECTION "last.connection"
-#define LAST_ACCOUNT "/last.viewed.account"
-
-#define RECENT_PREFIX "recent."
-#define RECENT_COUNT RECENT_PREFIX "count"
-#define RECENT_ITEM(index) QString{RECENT_PREFIX "%1"}.arg(index)
-#define MAX_RECENT_COUNT 5
 
 Q_GLOBAL_STATIC(QSettings, appSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, APP_NAME);
 
@@ -97,52 +89,4 @@ void settings::saveValue(const char *name, const QVariant &value) {
 
 QVariant settings::getValue(const char *name, const QVariant &defaultValue) {
     return appSettings->value(name, defaultValue);
-}
-
-Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection")
-
-ConnectionSettings settings::connectionSettings(const QString &name) {
-    return ConnectionSettings::fromConfig(name, dbSettings);
-}
-
-void settings::addConnection(const ConnectionSettings &settings) {
-    settings.save(dbSettings);
-    dbSettings->setValue(LAST_CONNECTION, settings.configName());
-}
-
-QVariant settings::lastConnection() {
-    return dbSettings->value(LAST_CONNECTION);
-}
-
-QVariant settings::lastViewedAccount(QString connectionName) {
-    return dbSettings->value(connectionName + LAST_ACCOUNT);
-}
-
-void settings::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
-    dbSettings->setValue(LAST_CONNECTION, connectionName);
-    dbSettings->setValue(connectionName + LAST_ACCOUNT, id);
-    dbSettings->sync();
-}
-
-QStringList settings::addRecentName(const QString &name) {
-    auto list = getRecentNames();
-    if (!list.contains(name)) {
-        list.append(name);
-        while (list.size() >= MAX_RECENT_COUNT) list.removeFirst();
-    } else if (list.indexOf(name) < list.size()-1){
-        list.removeOne(name);
-        list.append(name);
-    }
-    for (int i = 0; i < list.size(); i++) dbSettings->setValue(RECENT_ITEM(i), list.at(i));
-    dbSettings->setValue(RECENT_COUNT, list.size());
-    return list;
-}
-
-QStringList settings::getRecentNames() {
-    QStringList names;
-    int size = dbSettings->value(RECENT_COUNT, 0).toInt();
-    for (int i = 0; i < size; i++) {
-        names.append(dbSettings->value(RECENT_ITEM(i)).toString());
-    }
-    return names;
 }

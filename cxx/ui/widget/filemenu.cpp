@@ -1,6 +1,5 @@
 #include "connectiondialog.h"
 #include "ui/uicontext.h"
-#include "ui/widget/settings.h"
 #include "filemenu.h"
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -37,26 +36,30 @@ namespace filemenu {
 
 using namespace filemenu;
 
-FileMenu::FileMenu(AppWindow* window)
+FileMenu::FileMenu(AppWindow* window, const QString &connectionName)
     : QMenu(tr("&File"), window)
+    , connectionName{connectionName}
 {
     addAction(new FileAction(tr("&New Database..."), QKeyCombination{}, window, Mode::Create));
     addAction(new FileAction(tr("&Open Database..."), QKeyCombination{Qt::ControlModifier, Qt::Key_O}, window));
     addMenu(&recentsMenu);
+    connect(qApp, SIGNAL(recentAdded()), this, SLOT(updateRecentsMenu()));
     updateRecentsMenu();
 }
 
 void FileMenu::updateRecentsMenu() {
     recentsMenu.clear();
-    const auto& recentNames = settings::getRecentNames();
+    const auto& recentNames = App::getRecentNames();
     for (auto i = recentNames.rbegin(); i != recentNames.rend(); i++) {
-        auto parts = ConnectionSettings::parseConfigName(*i);
-        QString text =  parts[0] == SQLITE_DRIVER
-                ? parts[3]
-                : QStringList{typeMap.value(parts[0]), parts[1], parts[3]}.join(':');
-        auto action = recentsMenu.addAction(text);
-        action->setProperty(CONNECTION_PROP, *i);
-        connect(action, SIGNAL(triggered(bool)), this, SLOT(openConnection()));
+        if (*i != connectionName) {
+            auto parts = ConnectionSettings::parseConfigName(*i);
+            QString text =  parts[0] == SQLITE_DRIVER
+                    ? parts[3]
+                    : QStringList{typeMap.value(parts[0]), parts[1], parts[3]}.join(':');
+            auto action = recentsMenu.addAction(text);
+            action->setProperty(CONNECTION_PROP, *i);
+            connect(action, SIGNAL(triggered(bool)), this, SLOT(openConnection()));
+        }
     }
 }
 
@@ -65,7 +68,7 @@ void FileMenu::openConnection() {
     if (action) {
         auto name = action->property(CONNECTION_PROP).toString();
         if (!name.isEmpty()) {
-            auto dataStore = new DataStore(settings::connectionSettings(name));
+            auto dataStore = new DataStore(App::connectionSettings(name));
             dataStore->loadAccounts(std::bind_front(&FileMenu::handleOpenResult, this));
         }
     }
@@ -73,8 +76,7 @@ void FileMenu::openConnection() {
 
 void FileMenu::handleOpenResult(DataStore *dataStore, const QString &error) {
     if (error.isEmpty()) {
-        settings::addRecentName(dataStore->connectionSettings().configName());
-        updateRecentsMenu();
+        App::addRecentName(dataStore->connectionSettings().configName());
         auto context = new UiContext(dataStore);
         context->start(appWindow()->frameGeometry());
     } else {

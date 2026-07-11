@@ -1,5 +1,5 @@
 #include "datastore.h"
-#include "ui/widget/settings.h"
+#include "ui/finances.h"
 #include <QSqlError>
 #include <QThreadPool>
 
@@ -60,7 +60,7 @@ void DataStore::loadAccounts(OpenHandler handler) {
 
 void DataStore::shutdown() {
     services->shutdown();
-    settings::addRecentName(services->connectionSettings().configName());
+    finances::App::addRecentName(services->connectionSettings().configName());
 }
 
 const QString DataStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};

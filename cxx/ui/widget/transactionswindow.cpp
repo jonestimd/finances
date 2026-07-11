@@ -31,7 +31,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->securitiesAction(),
     });
     QMenuBar *menuBar = new QMenuBar();
-    menuBar->addMenu(new FileMenu(this));
+    menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -80,7 +80,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
 }
 
 TransactionsWindow::~TransactionsWindow() {
-    settings::setLastViewedAccount(model()->accountId, context->dataStore->connectionSettings().configName());
+    finances::App::setLastViewedAccount(model()->accountId, context->dataStore->connectionSettings().configName());
     context->transactionsWindowClosed(this);
 }
 

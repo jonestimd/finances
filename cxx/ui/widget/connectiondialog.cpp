@@ -2,7 +2,6 @@
 #include "service/database/dbdialect.h"
 #include "ui/finances.h"
 #include "ui/uicontext.h"
-#include "ui/widget/settings.h"
 
 #include <QDialogButtonBox>
 #include <QFile>
@@ -173,7 +172,7 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
     if (error.isEmpty()) {
         auto context = new UiContext(dataStore);
         context->start();
-        settings::addConnection(settings);
+        App::addConnection(settings);
         accept();
     } else {
         status.setText(error);

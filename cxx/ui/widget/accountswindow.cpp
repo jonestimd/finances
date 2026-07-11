@@ -29,7 +29,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
         showAccount,
     });
     QMenuBar *menuBar = new QMenuBar();
-    menuBar->addMenu(new FileMenu(this));
+    menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);

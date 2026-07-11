@@ -8,11 +8,12 @@
 class FileMenu : public QMenu {
     Q_OBJECT
     QMenu recentsMenu{tr("Recent &Files")};
-
-    void updateRecentsMenu();
+    const QString connectionName;
 
 public:
-    FileMenu(AppWindow* window);
+    FileMenu(AppWindow* window, const QString& connectionName);
+
+    Q_SLOT void updateRecentsMenu();
 
 private:
     void handleOpenResult(DataStore* dataStore, const QString& error);
@@ -21,8 +22,8 @@ private:
         return qobject_cast<AppWindow*>(parent());
     }
 
-private slots:
-    void openConnection();
+private:
+    Q_SLOT void openConnection();
 };
 
 #endif // FILEMENU_H

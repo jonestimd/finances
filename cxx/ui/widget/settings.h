@@ -2,7 +2,6 @@
 #define SETTINGS_H
 
 #include "entityview.h"
-#include "service/database/connectionpool.h"
 #include <QWidget>
 
 namespace settings {
@@ -20,17 +19,6 @@ namespace settings {
 
     void saveValue(const char *name, const QVariant &value);
     QVariant getValue(const char *name, const QVariant &defaultValue = {});
-
-    ConnectionSettings connectionSettings(const QString &name);
-    void addConnection(const ConnectionSettings& settings);
-
-    QVariant lastConnection();
-    QVariant lastViewedAccount(QString connectionName);
-
-    void setLastViewedAccount(const QVariant &id, const QString &connectionName);
-
-    QStringList addRecentName(const QString& name);
-    QStringList getRecentNames();
 }
 
 #endif // SETTINGS_H

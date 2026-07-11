@@ -1,7 +1,6 @@
 #include "finances.h"
 #include "uicontext.h"
 #include "ui/widget/connectiondialog.h"
-#include "ui/widget/settings.h"
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
@@ -17,6 +16,14 @@
 #include <QFileDialog>
 #include <QErrorMessage>
 #include <QWhatsThis>
+
+#define LAST_CONNECTION "last.connection"
+#define LAST_ACCOUNT "/last.viewed.account"
+
+#define RECENT_PREFIX "recent."
+#define RECENT_COUNT RECENT_PREFIX "count"
+#define RECENT_ITEM(index) QString{RECENT_PREFIX "%1"}.arg(index)
+#define MAX_RECENT_COUNT 5
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -244,6 +251,8 @@ namespace finances {
         }
     };
 
+    QSettings App::dbSettings{QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection"};
+
     App::App(int &argc, char **argv)
         : QApplication(argc, argv)
         , userStyleSheet{""}
@@ -265,9 +274,9 @@ namespace finances {
     }
 
     int App::start() {
-        auto lastConnection = settings::lastConnection();
+        auto lastConnection = dbSettings.value(LAST_CONNECTION);
         if (lastConnection.isValid()) {
-            auto context = new UiContext(settings::connectionSettings(lastConnection.toString()));
+            auto context = new UiContext(connectionSettings(lastConnection.toString()));
             context->start();
             return exec();
         } else {
@@ -275,6 +284,51 @@ namespace finances {
             if (dialog.exec() == QDialog::Accepted) return exec();
         }
         return 1;
+    }
+
+    ConnectionSettings App::connectionSettings(const QString &name) {
+        return ConnectionSettings::fromConfig(name, &dbSettings);
+    }
+
+    void App::addConnection(const ConnectionSettings &settings) {
+        settings.save(&dbSettings);
+        dbSettings.setValue(LAST_CONNECTION, settings.configName());
+        addRecentName(settings.configName());
+    }
+
+    void App::addRecentName(const QString &name) {
+        auto list = getRecentNames();
+        if (!list.contains(name)) {
+            list.append(name);
+            while (list.size() >= MAX_RECENT_COUNT) list.removeFirst();
+        } else if (list.indexOf(name) < list.size()-1){
+            list.removeOne(name);
+            list.append(name);
+        }
+        for (int i = 0; i < list.size(); i++) dbSettings.setValue(RECENT_ITEM(i), list.at(i));
+        dbSettings.setValue(RECENT_COUNT, list.size());
+        auto self = qobject_cast<App*>(qApp);
+        if (self) emit self->recentAdded();
+    }
+
+    QStringList App::getRecentNames() {
+        QStringList names;
+        int size = dbSettings.value(RECENT_COUNT, 0).toInt();
+        for (int i = 0; i < size; i++) {
+            auto name = dbSettings.value(RECENT_ITEM(i)).toString();
+            if (!name.isEmpty()) names.append(name);
+        }
+        return names;
+    }
+
+    QVariant App::lastViewedAccount(QString connectionName) {
+        return dbSettings.value(connectionName + LAST_ACCOUNT);
+    }
+
+    void App::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
+        dbSettings.setValue(LAST_CONNECTION, connectionName);
+        dbSettings.setValue(connectionName + LAST_ACCOUNT, id);
+        dbSettings.sync();
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {

@@ -1,5 +1,4 @@
 #include "uicontext.h"
-#include "ui/widget/settings.h"
 #include <QAbstractEventDispatcher>
 #include <QThread>
 
@@ -58,7 +57,7 @@ UiContext::~UiContext() {
 }
 
 void UiContext::start(QRect requestorRect) {
-    auto lastViewed = settings::lastViewedAccount(dataStore->connectionSettings().configName());
+    auto lastViewed = finances::App::lastViewedAccount(dataStore->connectionSettings().configName());
     if (lastViewed.isValid()) showTransactions(lastViewed.toLongLong(), requestorRect);
     else accountsAction_.trigger();
 }

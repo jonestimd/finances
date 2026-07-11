@@ -1,6 +1,7 @@
 #ifndef FINANCES_H
 #define FINANCES_H
 
+#include "service/database/connectionpool.h"
 #include <QApplication>
 #include <QColor>
 #include <QFont>
@@ -10,6 +11,8 @@
 #include <QSettings>
 #include <QToolBar>
 #include <Qt>
+
+#define APP_NAME "finances"
 
 class UiContext;
 
@@ -106,12 +109,24 @@ namespace finances {
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;
+        static QSettings dbSettings;
 
     public:
         App(int &argc, char **argv);
         ~App();
 
         int start();
+
+        static ConnectionSettings connectionSettings(const QString &name);
+        static void addConnection(const ConnectionSettings& settings);
+        static void addRecentName(const QString& name);
+        static QStringList getRecentNames();
+
+        static QVariant lastViewedAccount(QString connectionName);
+        static void setLastViewedAccount(const QVariant &id, const QString &connectionName);
+
+    signals:
+        void recentAdded();
 
     public slots:
         void updateStyleSheet(Qt::ColorScheme scheme);
