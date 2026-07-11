@@ -23,7 +23,7 @@ private:
     QPushButton *testButton{};
     QPushButton *openButton{};
     QPushButton *createButton{};
-    QLineEdit *userInput;
+    QLineEdit *userInput{};
     QLineEdit *passwordInput{};
     QLabel status{};
     ConnectionSettings settings;
@@ -42,6 +42,9 @@ private slots:
     void openDatabase();
 
 private:
+    const QString adminUser() const;
+    const QString adminPassword() const;
+
     void handleOpenResult(DataStore* dataStore, const QString& error);
 
     template<typename Value>

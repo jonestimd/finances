@@ -19,10 +19,24 @@ Q_LOGGING_CATEGORY(connectionPoolLogger, "connectionPool");
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
+static int openConnections{0};
+
 static const QHash<const QString, const char*>timeoutOptions{
     {MYSQL_DRIVER, "MYSQL_OPT_CONNECT_TIMEOUT="},
     {PG_DRIVER, "connect_timeout="},
 };
+
+static void load_sqlite_extension(sqlite3 *handle, const char *filename, const char *initFunction) {
+    char *msg;
+    sqlite3_load_extension(handle, filename, initFunction, &msg);
+    if (msg) {
+        qCCritical(connectionPoolLogger) << qgetenv("LD_LIBRARY_PATH");
+        qCCritical(connectionPoolLogger) << msg;
+        sqlite3_free(msg);
+    }
+}
+
+int ConnectionSettings::openConnections{0};
 
 QString ConnectionSettings::makeName() const {
     return QString("%1:%2:%3").arg(dbType, host, schema);
@@ -49,7 +63,8 @@ bool ConnectionSettings::isComplete() const {
 }
 
 QString timeoutOption(const QString& driver) {
-    QString option = timeoutOptions.value(driver, "");
+    QString option = timeoutOptions.value(driver, "");    static int openConnections;
+
     if (!option.isEmpty()) option += qEnvironmentVariable("FINANCES_CONNECT_TIMEOUT", CONNECT_TIMEOUT);
     return option;
 }
@@ -62,6 +77,36 @@ bool ConnectionSettings::openDatabase(QSqlDatabase &db) const {
     db.setPassword(password);
     db.setConnectOptions(timeoutOption(db.driverName()));
     return db.open();
+}
+
+QSqlDatabase ConnectionSettings::connect() const {
+    return connect(nullptr);
+}
+
+QSqlDatabase ConnectionSettings::connect(int* activeCount) const {
+    auto dbName = QString("Connection (%2)").arg(openConnections++);
+    auto db = QSqlDatabase::addDatabase(dbType, dbName);
+    if (!db.isOpen()) {
+        db.setNumericalPrecisionPolicy(QSql::HighPrecision);
+        if (!openDatabase(db)) {
+            auto error = ConnectionSettings::lastError(db);
+            qCCritical(connectionPoolLogger) << dbName << error;
+            throw QObject::tr("Connection error: %1").arg(error);
+        }
+    }
+    if (dbType == "QSQLITE") {
+        QVariant qhandle = db.driver()->handle();
+        if (qhandle.isValid()) {
+            sqlite3 *handle = qhandle.value<sqlite3*>();
+            sqlite3_db_config(handle, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, 1, nullptr);
+            load_sqlite_extension(handle, "./decimal", "sqlite3_decimal_init");
+            load_sqlite_extension(handle, "./sqlite_finances", "sqlite3_finances_init");
+            QSqlQuery query{db};
+            query.exec("pragma foreign_keys = on");
+        }
+    }
+    if (activeCount) (*activeCount)++;
+    return db;
 }
 
 void ConnectionSettings::save(QSettings* settings) const {
@@ -94,6 +139,20 @@ QStringList ConnectionSettings::parseConfigName(const QString &name) {
 
 QString ConnectionSettings::lastError(const QSqlDatabase &db) {
     return db.lastError().isValid() ? db.lastError().text() : QObject::tr("timed out");
+}
+
+ConnectionSettings ConnectionSettings::admin(const QString &user, const QString &password) const {
+    auto settings = forUser(user, password);
+    if (dbType == MYSQL_DRIVER) settings.schema = MYSQL_ROOT_SCHEMA;
+    else if (dbType == PG_DRIVER) settings.schema = PG_ROOT_SCHEMA;
+    return settings;
+}
+
+ConnectionSettings ConnectionSettings::forUser(const QString &user, const QString &password) const {
+    auto settings = *this;
+    settings.user = user;
+    settings.password = password;
+    return settings;
 }
 
 ConnectionPool::ConnectionPool(const ConnectionSettings &settings)
@@ -134,46 +193,12 @@ const QString &ConnectionPool::dbType() const {
     return settings.dbType;
 }
 
-static void load_sqlite_extension(sqlite3 *handle, const char *filename, const char *initFunction) {
-    char *msg;
-    sqlite3_load_extension(handle, filename, initFunction, &msg);
-    if (msg) {
-        qCCritical(connectionPoolLogger) << qgetenv("LD_LIBRARY_PATH");
-        qCCritical(connectionPoolLogger) << msg;
-        sqlite3_free(msg);
-    }
-}
-
-int ConnectionPool::openConnections{0};
-
 QSqlDatabase ConnectionPool::acquire() {
     Q_ASSERT(!isShutdown);
     QMutexLocker locker(&poolMutex);
     if (idle.isEmpty()) {
         if (activeCount >= MAX_ACTIVE) qCWarning(connectionPoolLogger, "active connections: %d", activeCount);
-        auto dbName = QString("%1(%2)").arg(name).arg(openConnections++);
-        auto db = QSqlDatabase::addDatabase(settings.dbType, dbName);
-        if (!db.isOpen()) {
-            db.setNumericalPrecisionPolicy(QSql::HighPrecision);
-            if (!settings.openDatabase(db)) {
-                auto error = ConnectionSettings::lastError(db);
-                qCCritical(connectionPoolLogger) << dbName << error;
-                throw QObject::tr("Connection error: %1").arg(error);
-            }
-        }
-        if (settings.dbType == "QSQLITE") {
-            QVariant qhandle = db.driver()->handle();
-            if (qhandle.isValid()) {
-                sqlite3 *handle = qhandle.value<sqlite3*>();
-                sqlite3_db_config(handle, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, 1, nullptr);
-                load_sqlite_extension(handle, "./decimal", "sqlite3_decimal_init");
-                load_sqlite_extension(handle, "./sqlite_finances", "sqlite3_finances_init");
-                QSqlQuery query{db};
-                query.exec("pragma foreign_keys = on");
-            }
-        }
-        activeCount++;
-        return db;
+        return settings.connect(&activeCount);
     }
     activeCount++;
     auto db = idle.takeFirst();

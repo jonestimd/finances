@@ -24,17 +24,26 @@ struct ConnectionSettings {
 
     bool isComplete() const;
     bool openDatabase(QSqlDatabase &db) const;
+    QSqlDatabase connect() const;
+private:
+    friend class ConnectionPool;
+    QSqlDatabase connect(int* activeCount) const;
 
+public:
     void save(QSettings* settings) const;
     static ConnectionSettings fromConfig(const QString& name, QSettings* settings);
     static QStringList parseConfigName(const QString& name);
     static QString lastError(const QSqlDatabase &db);
+    ConnectionSettings admin(const QString& user, const QString& password) const;
+    ConnectionSettings forUser(const QString& user, const QString& password) const;
+
+private:
+    static int openConnections;
 };
 
 class ConnectionPool {
     friend Connection;
 
-    static int openConnections;
     const QString name;
 
     QMutex poolMutex{};

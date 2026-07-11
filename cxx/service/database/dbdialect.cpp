@@ -13,8 +13,8 @@
     "end $$)"
 
 static const QHash<const QString, const char*> createSchemaQuery{
-    {MYSQL_DRIVER, "create database if not exists :schema"},
-    {PG_DRIVER, PG_IGNORE_DUPLICATE("create database :schema")},
+    {MYSQL_DRIVER, "create database if not exists %1"},
+    {PG_DRIVER, PG_IGNORE_DUPLICATE("create database %1")},
 };
 
 static const QHash<const QString, const char*> createUserQuery{
@@ -50,22 +50,22 @@ namespace dbDialect {
     void createSchema(const QSqlDatabase &db, const QString &schema) {
         const char* sql = createSchemaQuery.value(db.driverName());
         if (sql) {
-            QSqlQuery query{sql};
-            sql::bindValue(query, ":schema", schema);
+            QSqlQuery query{QString{sql}.arg(schema), db};
             sql::exec(query, CLASS_NAME, "createSchema");
         }
     }
 
-    void addUser(const QSqlDatabase &db, const QString &schema, const QString &user, const QString &password) {
+    void addUser(const QSqlDatabase &db, const ConnectionSettings& settings) {
         const char* sql = createUserQuery.value(db.driverName());
         if (sql) {
-            QSqlQuery addQuery{sql};
-            sql::bindValue(addQuery, ":user", user);
-            sql::bindValue(addQuery, ":password", password);
-            sql::exec(addQuery, CLASS_NAME, "addUser");
-            QSqlQuery grantQuery{QString{grantUserQuery.value(db.driverName())}.arg(schema)};
-            sql::bindValue(grantQuery, ":user", user);
-            sql::exec(grantQuery, CLASS_NAME, "grantUser");
+            QSqlQuery query{db};
+            query.prepare(sql);
+            sql::bindValue(query, ":user", settings.user);
+            sql::bindValue(query, ":password", settings.password);
+            sql::exec(query, CLASS_NAME, "addUser");
+            query.prepare({QString{grantUserQuery.value(db.driverName())}.arg(settings.schema)});
+            sql::bindValue(query, ":user", settings.user);
+            sql::exec(query, CLASS_NAME, "grantUser");
         }
     }
 }

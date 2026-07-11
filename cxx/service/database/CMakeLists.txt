@@ -4,6 +4,7 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/categorydao.h ${CMAKE_CURRENT_LIST_DIR}/categorydao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/connectionpool.h ${CMAKE_CURRENT_LIST_DIR}/connectionpool.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companydao.h ${CMAKE_CURRENT_LIST_DIR}/companydao.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/daocontext.h ${CMAKE_CURRENT_LIST_DIR}/daocontext.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dbdialect.h ${CMAKE_CURRENT_LIST_DIR}/dbdialect.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entitydao.h
     ${CMAKE_CURRENT_LIST_DIR}/transactiongroupdao.h ${CMAKE_CURRENT_LIST_DIR}/transactiongroupdao.cpp

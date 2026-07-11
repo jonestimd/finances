@@ -3,7 +3,7 @@
 #include "service/database/transactiongroupdao.h"
 #include "service/database/transactiondetaildao.h"
 #include "qtcommon.h"
-#include "service/servicecontext.h"
+#include "service/database/daocontext.h"
 #include <QFile>
 #include <QSqlError>
 #include <QSqlResult>
@@ -161,7 +161,7 @@ void DbTestCase::createDatabases() {
                 sql::exec(conn.db, dropQuery, CLASS_NAME, "dropObject");
             }
         }
-        ServiceContext{pool, true}.createDatabaseTables(conn.db);
+        DaoContext{pool->dbType()}.createDatabaseTables(conn.db);
     }
 }
 
