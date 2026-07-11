@@ -121,7 +121,7 @@ ConnectionPool::~ConnectionPool() {
 void ConnectionPool::shutdown() {
     QMutexLocker locker(&poolMutex);
     if (!isShutdown) {
-        qCDebug(connectionPoolLogger, "shutting down connection pool");
+        qCDebug(connectionPoolLogger, "shutting down");
         isShutdown = true;
         while (activeCount) released.wait(&poolMutex);
         closeConnections(idle);
