@@ -66,8 +66,10 @@ bool ConnectionSettings::openDatabase(QSqlDatabase &db) const {
 
 void ConnectionSettings::save(QSettings* settings) const {
     auto name = configName();
-    settings->setValue(name + "/user", user);
-    settings->setValue(name + "/password", password);
+    if (!user.isEmpty()) {
+        settings->setValue(name + "/user", user);
+        settings->setValue(name + "/password", password);
+    }
 }
 
 ConnectionSettings ConnectionSettings::fromConfig(const QString &name, QSettings* settings) {
