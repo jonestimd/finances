@@ -26,7 +26,7 @@ struct DaoContext {
 
     explicit DaoContext(const QString& dbType);
 
-    void createDatabase(const ConnectionSettings& settings, const QString& adminUser, const QString& adminPassword);
+    void createDatabase(const ConnectionSettings& settings, const QString& adminUser, const QString& adminPassword, const QString& adminSocket);
     void createDatabaseTables(const QSqlDatabase& db);
 };
 

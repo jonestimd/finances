@@ -7,24 +7,28 @@
 
 #define CLASS_NAME "dbDialect"
 
-#define PG_IGNORE_DUPLICATE(createSql) \
-    "DO $$ begin\n" createSql ";\n" \
-    "exception when duplicate_object then raise notice '%, skipping', sqlerrm using errcode = sqlstate;\n" \
-    "end $$)"
-
 static const QHash<const QString, const char*> createSchemaQuery{
     {MYSQL_DRIVER, "create database if not exists %1"},
-    {PG_DRIVER, PG_IGNORE_DUPLICATE("create database %1")},
+    {PG_DRIVER, "create database %1"},
 };
 
 static const QHash<const QString, const char*> createUserQuery{
     {MYSQL_DRIVER, "create user if not exists :user identified by :password"},
-    {PG_DRIVER, PG_IGNORE_DUPLICATE("create user :user with password :password")},
+    {PG_DRIVER, "create user %1 with password '%2'"},
 };
 
+static const char* pgGrantUserQuery = R"(do $$
+declare
+    tab record;
+begin
+for tab in select tablename from pg_tables where schemaname = 'public' loop
+    execute 'grant all on table ' || tab.tablename || ' to %1';
+end loop;
+end $$)";
+
 static const QHash<const QString, const char*> grantUserQuery{
-    {MYSQL_DRIVER, "grant all on %1.* to :user"},
-    {PG_DRIVER, "grant all on database %1 to :user"},
+    {MYSQL_DRIVER, "grant all on %2.* to %1"},
+    {PG_DRIVER, pgGrantUserQuery},
 };
 
 namespace dbDialect {
@@ -50,7 +54,14 @@ namespace dbDialect {
     void createSchema(const QSqlDatabase &db, const QString &schema) {
         const char* sql = createSchemaQuery.value(db.driverName());
         if (sql) {
-            QSqlQuery query{QString{sql}.arg(schema), db};
+            QSqlQuery query{db};
+            if (IS_PG(db)) {
+                query.prepare("select * from pg_catalog.pg_database where datname = :schema");
+                sql::bindValue(query, ":schema", schema);
+                sql::exec(query, CLASS_NAME, "selectSchema");
+                if (query.next()) return;
+            }
+            query.prepare(QString{sql}.arg(schema));
             sql::exec(query, CLASS_NAME, "createSchema");
         }
     }
@@ -59,12 +70,24 @@ namespace dbDialect {
         const char* sql = createUserQuery.value(db.driverName());
         if (sql) {
             QSqlQuery query{db};
-            query.prepare(sql);
-            sql::bindValue(query, ":user", settings.user);
-            sql::bindValue(query, ":password", settings.password);
-            sql::exec(query, CLASS_NAME, "addUser");
-            query.prepare({QString{grantUserQuery.value(db.driverName())}.arg(settings.schema)});
-            sql::bindValue(query, ":user", settings.user);
+            if (IS_PG(db)) {
+                query.prepare("select usename from pg_catalog.pg_user where usename = :user");
+                sql::bindValue(query, ":user", settings.user);
+                sql::exec(query, CLASS_NAME, "selectUser");
+                if (!query.next()) {
+                    auto password = QString{settings.password}.replace('\'', "''");
+                    query.prepare(QString{sql}.arg(settings.user, password));
+                    sql::exec(query, CLASS_NAME, "addUser");
+                }
+            } else {
+                query.prepare(sql);
+                sql::bindValue(query, ":user", settings.password);
+                sql::bindValue(query, ":password", settings.password);
+                sql::exec(query, CLASS_NAME, "addUser");
+            }
+            auto grantsql = QString{grantUserQuery.value(db.driverName())}.arg(settings.user);
+            if (IS_MYSQL(db)) grantsql = grantsql.arg(settings.schema);
+            query.prepare({grantsql});
             sql::exec(query, CLASS_NAME, "grantUser");
         }
     }

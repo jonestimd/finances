@@ -41,17 +41,16 @@ DaoContext::DaoContext(const QString &dbType)
     , transactionDetailDao{dbType}
 {}
 
-void DaoContext::createDatabase(const ConnectionSettings &settings, const QString &adminUser, const QString &adminPassword) {
+void DaoContext::createDatabase(const ConnectionSettings &settings, const QString &adminUser, const QString &adminPassword, const QString &adminSocket) {
     ConnectionDeleter deleter;
     if (!settings.schema.isEmpty()) {
-        DbTransaction tx{settings.admin(adminUser, adminPassword), deleter};
-        dbDialect::createSchema(tx.db, settings.schema);
+        auto db = settings.admin(adminUser, adminPassword, adminSocket).connect();
+        deleter.names.append(db.connectionName());
+        dbDialect::createSchema(db, settings.schema);
     }
-    DbTransaction tx{settings.forUser(adminUser, adminPassword), deleter};
+    DbTransaction tx{settings.forUser(adminUser, adminPassword, adminSocket), deleter};
     createDatabaseTables(tx.db);
-    if (!settings.user.isEmpty()) {
-        dbDialect::addUser(tx.db, settings);
-    }
+    if (!settings.user.isEmpty()) dbDialect::addUser(tx.db, settings);
 }
 
 void DaoContext::createDatabaseTables(const QSqlDatabase &db) {

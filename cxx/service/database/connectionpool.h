@@ -34,8 +34,8 @@ public:
     static ConnectionSettings fromConfig(const QString& name, QSettings* settings);
     static QStringList parseConfigName(const QString& name);
     static QString lastError(const QSqlDatabase &db);
-    ConnectionSettings admin(const QString& user, const QString& password) const;
-    ConnectionSettings forUser(const QString& user, const QString& password) const;
+    ConnectionSettings admin(const QString& user, const QString& password, const QString& socket) const;
+    ConnectionSettings forUser(const QString& user, const QString& password, const QString& socket) const;
 
 private:
     static int openConnections;

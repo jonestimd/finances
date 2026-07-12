@@ -21,6 +21,12 @@
 
 #define SCHEMA_LABEL "Sche&ma:"
 
+#define SOCKET_WHATS_THIS "<div>Linux socket file for\n" \
+    "the admin connection.\n" \
+    "If not provided then <b>Host</b>\n" \
+    "and <b>Port</b> will be used\n" \
+    "for the admin connection.</div>"
+
 using namespace finances;
 
 static const QHash<const QString, const char*> typeMap{
@@ -87,14 +93,16 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     formLayout->addRow(tr("U&ser"), connectInput(new QLineEdit(this), &ConnectionSettings::user));
     formLayout->addRow(tr("P&assword"), connectInput(::passwordInput(this), &ConnectionSettings::password));
     if (mode & Create) {
-        userInput = whatsThisInput(this, tr("Database super user for\ncreating the schema."));
-        passwordInput = ::passwordInput(this);
-        connect(userInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
-        connect(passwordInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
+        adminUserInput = whatsThisInput(this, tr("Database super user for\ncreating the schema."));
+        adminPasswordInput = ::passwordInput(this);
+        adminSocketInput = whatsThisInput(this, tr(SOCKET_WHATS_THIS));
+        connect(adminUserInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
+        connect(adminPasswordInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
         createButton = buttonBox->addButton(tr("&Create"), QDialogButtonBox::YesRole);
         connect(createButton, SIGNAL(clicked(bool)), this, SLOT(createDatabase()));
-        formLayout->addRow(tr("Admin &User:"), userInput);
-        formLayout->addRow(tr("Admin &Password"), passwordInput);
+        formLayout->addRow(tr("Admin &User:"), adminUserInput);
+        formLayout->addRow(tr("Admin &Password"), adminPasswordInput);
+        formLayout->addRow(tr("Admin Soc&ket"), adminSocketInput);
     }
 
     layout->addWidget(&status);
@@ -111,11 +119,12 @@ const ConnectionSettings ConnectionDialog::connectionSettings() const {
 
 void ConnectionDialog::testConnection() {
     setDisabled(true);
-    status.setText(tr("Connecting..."));
+    status.setText(tr("Trying connection..."));
     QThreadPool::globalInstance()->start([=, this] {
         {
             auto testSettings = settings;
-            if (mode & Create) testSettings = settings.admin(adminUser(), adminPassword());
+            // TODO also check non-admin for create?
+            if (mode & Create) testSettings = settings.admin(adminUser(), adminPassword(), adminSocket());
             auto db = QSqlDatabase::addDatabase(testSettings.dbType, TEST_DB_NAME);
             if (testSettings.openDatabase(db)) {
                 emit statusChanged(tr("Successful connection"));
@@ -146,7 +155,7 @@ void ConnectionDialog::typeChanged(const QString &value) {
             }
         }
     }
-    if (!isSqlite && userInput) userInput->setText(defaultAdmin.value(settings.dbType, ""));
+    if (!isSqlite && adminUserInput) adminUserInput->setText(defaultAdmin.value(settings.dbType, ""));
     inputChanged();
     adjustSize();
 }
@@ -186,7 +195,7 @@ void ConnectionDialog::createDatabase() {
     QThreadPool::globalInstance()->start([=, this]() {
         DaoContext daos{settings.dbType};
         try {
-            daos.createDatabase(settings, adminUser(), adminPassword());
+            daos.createDatabase(settings, adminUser(), adminPassword(), adminSocket());
             QMetaObject::invokeMethod(this, &ConnectionDialog::openDatabase, Qt::QueuedConnection);
         } catch(const QString error) {
             emit statusChanged(error);
@@ -202,10 +211,14 @@ void ConnectionDialog::openDatabase() {
 }
 
 const QString ConnectionDialog::adminUser() const {
-    return userInput ? userInput->text().trimmed() : "";
+    return adminUserInput ? adminUserInput->text().trimmed() : "";
 }
 
 const QString ConnectionDialog::adminPassword() const {
-    return passwordInput ? passwordInput->text().trimmed() : "";
+    return adminPasswordInput ? adminPasswordInput->text().trimmed() : "";
+}
+
+const QString ConnectionDialog::adminSocket() const {
+    return adminSocketInput ? adminSocketInput->text().trimmed() : "";
 }
 

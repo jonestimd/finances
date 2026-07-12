@@ -23,8 +23,9 @@ private:
     QPushButton *testButton{};
     QPushButton *openButton{};
     QPushButton *createButton{};
-    QLineEdit *userInput{};
-    QLineEdit *passwordInput{};
+    QLineEdit *adminUserInput{};
+    QLineEdit *adminPasswordInput{};
+    QLineEdit *adminSocketInput{};
     QLabel status{};
     ConnectionSettings settings;
 
@@ -46,6 +47,7 @@ private:
 
     const QString adminUser() const;
     const QString adminPassword() const;
+    const QString adminSocket() const;
 
     void handleOpenResult(DataStore* dataStore, const QString& error);
 

@@ -141,17 +141,18 @@ QString ConnectionSettings::lastError(const QSqlDatabase &db) {
     return db.lastError().isValid() ? db.lastError().text() : QObject::tr("timed out");
 }
 
-ConnectionSettings ConnectionSettings::admin(const QString &user, const QString &password) const {
-    auto settings = forUser(user, password);
+ConnectionSettings ConnectionSettings::admin(const QString &user, const QString &password, const QString& socket) const {
+    auto settings = forUser(user, password, socket);
     if (dbType == MYSQL_DRIVER) settings.schema = MYSQL_ROOT_SCHEMA;
     else if (dbType == PG_DRIVER) settings.schema = PG_ROOT_SCHEMA;
     return settings;
 }
 
-ConnectionSettings ConnectionSettings::forUser(const QString &user, const QString &password) const {
+ConnectionSettings ConnectionSettings::forUser(const QString &user, const QString &password, const QString &socket) const {
     auto settings = *this;
     settings.user = user;
     settings.password = password;
+    if (!socket.isEmpty()) settings.host = socket;
     return settings;
 }
 
