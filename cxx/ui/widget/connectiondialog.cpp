@@ -62,6 +62,7 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     setWindowModality(Qt::ApplicationModal);
     setWindowTitle(tr("Database Connection"));
     status.setWordWrap(true);
+    status.setTextInteractionFlags(Qt::TextSelectableByMouse);
     auto buttonBox = new QDialogButtonBox(this);
     testButton = buttonBox->addButton(tr("&Test Connection"), QDialogButtonBox::ApplyRole);
     connect(testButton, SIGNAL(clicked()), this, SLOT(testConnection()));
@@ -100,6 +101,7 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     layout->addWidget(buttonBox);
 
     connect(&typeInput, &QComboBox::currentTextChanged, this, &ConnectionDialog::typeChanged);
+    connect(this, SIGNAL(statusChanged(QString)), this, SLOT(setStatus(QString)));
     typeChanged(typeInput.currentText());
 }
 
@@ -116,15 +118,13 @@ void ConnectionDialog::testConnection() {
             if (mode & Create) testSettings = settings.admin(adminUser(), adminPassword());
             auto db = QSqlDatabase::addDatabase(testSettings.dbType, TEST_DB_NAME);
             if (testSettings.openDatabase(db)) {
-                status.setText(tr("Successful connection"));
+                emit statusChanged(tr("Successful connection"));
                 db.close();
             } else {
-                status.setText(tr("Error: %1").arg(ConnectionSettings::lastError(db)));
-                adjustSize();
+                emit statusChanged(tr("Error: %1").arg(ConnectionSettings::lastError(db)));
             }
         }
         QSqlDatabase::removeDatabase(TEST_DB_NAME);
-        setDisabled(false);
     });
 }
 
@@ -156,11 +156,17 @@ void ConnectionDialog::inputChanged() {
     auto isSqlite = typeInput.currentText() == SQLITE_TYPE_NAME;
     if (openButton) openButton->setEnabled(enable);
     if (createButton) {
-        auto haveUser = isSqlite || !adminUser().isEmpty() && !adminPassword().isEmpty();
+        auto haveUser = isSqlite || !adminUser().isEmpty();
         createButton->setEnabled(enable && haveUser);
         testButton->setEnabled(enable && haveUser);
     } else testButton->setEnabled(enable && !isSqlite);
     status.clear();
+}
+
+void ConnectionDialog::setStatus(const QString message) {
+    status.setText(message);
+    adjustSize();
+    setDisabled(false);
 }
 
 void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &error) {
@@ -170,9 +176,7 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
         App::addConnection(settings);
         accept();
     } else {
-        status.setText(error);
-        adjustSize();
-        setDisabled(false);
+        emit statusChanged(error);
     }
 }
 
@@ -185,14 +189,9 @@ void ConnectionDialog::createDatabase() {
             daos.createDatabase(settings, adminUser(), adminPassword());
             QMetaObject::invokeMethod(this, &ConnectionDialog::openDatabase, Qt::QueuedConnection);
         } catch(const QString error) {
-            QMetaObject::invokeMethod(this, &ConnectionDialog::createFailed, Qt::QueuedConnection, error);
+            emit statusChanged(error);
         }
     });
-}
-
-void ConnectionDialog::createFailed(const QString message) {
-    status.setText(message);
-    setDisabled(false);
 }
 
 void ConnectionDialog::openDatabase() {

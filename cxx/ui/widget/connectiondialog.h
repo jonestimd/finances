@@ -37,11 +37,13 @@ private slots:
     void testConnection();
     void typeChanged(const QString& value);
     void inputChanged();
+    void setStatus(const QString message);
     void createDatabase();
-    void createFailed(const QString message);
     void openDatabase();
 
 private:
+    Q_SIGNAL void statusChanged(const QString message);
+
     const QString adminUser() const;
     const QString adminPassword() const;
 
