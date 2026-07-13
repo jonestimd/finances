@@ -279,7 +279,7 @@ namespace finances {
             context->start();
             return exec();
         } else {
-            ConnectionDialog dialog;
+            ConnectionDialog dialog{nullptr, ConnectionDialog::OpenOrCreate};
             if (dialog.exec() == QDialog::Accepted) return exec();
         }
         return 1;
