@@ -20,6 +20,8 @@ namespace dialog {
 
     bool confirmDelete(QWidget *parent, const QString title, const QString message, QStringList items);
 
+    bool confirmReplaceFile(QWidget *parent, const QString name);
+
     void showError(QWidget *parent, const QString message);
 }
 #endif // DIALOG_H

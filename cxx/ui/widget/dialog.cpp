@@ -14,6 +14,16 @@ namespace dialog {
         }
     }
 
+    bool confirmReplaceFile(QWidget *parent, const QString name) {
+        QMessageBox dialog{parent};
+        dialog.setWindowTitle(QObject::tr("Confirm Replace File"));
+        dialog.setIcon(QMessageBox::Question);
+        dialog.setText(QObject::tr("A file named \"%1\" already exists.\nDo you want to replace it?").arg(name));
+        dialog.addButton(QObject::tr("&Replace"), QMessageBox::YesRole);
+        dialog.addButton(QObject::tr("&Cancel"), QMessageBox::NoRole);
+        return dialog.exec() == QMessageBox::Yes;
+    }
+
     bool confirmDelete(QWidget *parent, const QString title, const QString message, QStringList items) {
         return items.empty() || QMessageBox::Yes == QMessageBox::warning(parent,
                 title, message.arg(items.join(DIALOG_ITEM_SEPARATOR)),

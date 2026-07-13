@@ -2,6 +2,7 @@
 #include "service/database/dbdialect.h"
 #include "ui/finances.h"
 #include "ui/uicontext.h"
+#include "ui/widget/dialog.h"
 
 #include <QDialogButtonBox>
 #include <QFile>
@@ -62,7 +63,7 @@ QLineEdit *ConnectionDialog::connectInput(QLineEdit* input, Value Settings::*fie
             auto x = value.toInt();
             &settings->*field = x > 0 ? x : -1;
         } else static_assert(false);
-        inputChanged();
+        inputChanged(input);
     });
     return input;
 }
@@ -96,7 +97,7 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     formLayout->addRow(tr("Po&rt:"), connectInput(maskInput(this, "00009"), &ConnectionSettings::port, PORT_INPUT));
     auto caption = tr("Select database file");
     auto filters = tr("Databases (%1);;All files(%2)").arg(SQLITE_EXT_FILTER, "*");
-    auto schemaInput = mode & Create ? saveFileInput(this, caption, filters) : openFileInput(this, caption, filters);
+    auto schemaInput = mode & Create ? saveFileInput(this, caption, filters, &replaceConfirmed) : openFileInput(this, caption, filters);
     formLayout->addRow("dummy", connectInput(schemaInput, &ConnectionSettings::schema, SCHEMA_INPUT));
     formLayout->addRow(tr("U&ser"), connectInput(new QLineEdit(this), &ConnectionSettings::user));
     formLayout->addRow(tr("P&assword"), connectInput(::passwordInput(this), &ConnectionSettings::password));
@@ -156,11 +157,12 @@ void ConnectionDialog::typeChanged(const QString &value) {
         }
     }
     if (adminUserInput) adminUserInput->setText(defaultAdmin.value(settings.dbType, ""));
-    inputChanged();
+    inputChanged(&typeInput);
     adjustSize();
 }
 
-void ConnectionDialog::inputChanged() {
+void ConnectionDialog::inputChanged(QWidget* input) {
+    if (input->property(NAME_PROP).toString() ==  SCHEMA_INPUT) replaceConfirmed = false;
     bool enable = settings.isComplete(mode & Create);
     auto isSqlite = typeInput.currentText() == SQLITE_TYPE_NAME;
     if (openButton) openButton->setEnabled(enable);
@@ -190,8 +192,18 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
 }
 
 void ConnectionDialog::createDatabase() {
+    if (typeInput.currentText() == SQLITE_TYPE_NAME) {
+        replaceConfirmed &= ensureExtension(settings.schema, sqliteExtensions);
+        auto dbfile = QFile{settings.schema};
+        if (dbfile.exists()) {
+            if (!replaceConfirmed) {
+                if (!dialog::confirmReplaceFile(this, settings.schema)) return;
+                replaceConfirmed = true;
+            }
+            dbfile.remove();
+        }
+    }
     setDisabled(true);
-    if (typeInput.currentText() == SQLITE_TYPE_NAME) ensureExtension(settings.schema, sqliteExtensions);
     status.setText(tr("Creating database..."));
     QThreadPool::globalInstance()->start([=, this]() {
         DaoContext daos{settings.dbType};

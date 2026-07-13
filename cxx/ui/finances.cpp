@@ -16,7 +16,6 @@
 #include <QFileDialog>
 #include <QErrorMessage>
 #include <QWhatsThis>
-#include <forward_list>
 
 #define LAST_CONNECTION "last.connection"
 #define LAST_ACCOUNT "/last.viewed.account"
@@ -343,9 +342,10 @@ namespace finances {
         }
     }
 
-    void ensureExtension(QString &name, const QList<QString> extensions) {
+    bool ensureExtension(QString &name, const QList<QString> extensions) {
         auto hasExt = std::any_of(extensions.cbegin(), extensions.cend(), [&](auto ext) { return name.endsWith(ext); });
         if (!hasExt && !extensions.isEmpty()) name.append(extensions.constFirst());
+        return hasExt;
     }
 
     static void normalizePath(QString& name) {
@@ -386,17 +386,19 @@ namespace finances {
         return extensions;
     }
 
-    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter) {
+    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter, bool *replaceConfirmed) {
         const auto extensions = filterExtensions(filter);
         auto input = new QLineEdit();
         auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
         fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
         QObject::connect(fileAction, &QAction::triggered, [=]() {
+            if (replaceConfirmed) *replaceConfirmed = false;
             auto name = QFileDialog::getSaveFileName(parent, caption, QDir::currentPath(), filter);
             if (!name.isEmpty()) {
-                ensureExtension(name, extensions);
+                bool confirmed = ensureExtension(name, extensions);
                 normalizePath(name);
                 input->setText(name);
+                if (replaceConfirmed) *replaceConfirmed = confirmed;
             }
         });
         return input;

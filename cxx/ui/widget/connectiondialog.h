@@ -26,6 +26,7 @@ private:
     QLineEdit *adminUserInput{};
     QLabel status{};
     AdminConnectionSettings settings;
+    bool replaceConfirmed{false};
 
 public:
     ConnectionDialog(QWidget *parent = nullptr, Mode mode = Mode::Open);
@@ -33,7 +34,7 @@ public:
 private slots:
     void testConnection();
     void typeChanged(const QString& value);
-    void inputChanged();
+    void inputChanged(QWidget* widget);
     void setStatus(const QString message);
     void createDatabase();
     void openDatabase();
