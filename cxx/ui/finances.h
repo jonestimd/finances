@@ -98,7 +98,10 @@ namespace finances {
     QAction *saveAction(QWidget *window, const char *invokable = "saveData");
     QAction *reloadAction(QWidget *window, const char *invokable = "loadData");
 
-    QLineEdit* fileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, const QString dir = {});
+    void ensureExtension(QString& name, const QList<QString> extensions);
+
+    QLineEdit* openFileInput(QWidget* parent, const QString caption = {}, const QString filter = {});
+    QLineEdit* saveFileInput(QWidget* parent, const QString caption = {}, const QString filter = {});
     QLineEdit* maskInput(QWidget* parent, const QString& mask);
     QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText);
     QLineEdit* passwordInput(QWidget* parent);

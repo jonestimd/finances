@@ -96,7 +96,7 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     formLayout->addRow(tr("Po&rt:"), connectInput(maskInput(this, "00009"), &ConnectionSettings::port, PORT_INPUT));
     auto caption = tr("Select database file");
     auto filters = tr("Databases (%1);;All files(%2)").arg(SQLITE_EXT_FILTER, "*");
-    auto schemaInput = fileInput(this, caption, filters);
+    auto schemaInput = mode & Create ? saveFileInput(this, caption, filters) : openFileInput(this, caption, filters);
     formLayout->addRow("dummy", connectInput(schemaInput, &ConnectionSettings::schema, SCHEMA_INPUT));
     formLayout->addRow(tr("U&ser"), connectInput(new QLineEdit(this), &ConnectionSettings::user));
     formLayout->addRow(tr("P&assword"), connectInput(::passwordInput(this), &ConnectionSettings::password));
@@ -191,6 +191,7 @@ void ConnectionDialog::handleOpenResult(DataStore *dataStore, const QString &err
 
 void ConnectionDialog::createDatabase() {
     setDisabled(true);
+    if (typeInput.currentText() == SQLITE_TYPE_NAME) ensureExtension(settings.schema, sqliteExtensions);
     status.setText(tr("Creating database..."));
     QThreadPool::globalInstance()->start([=, this]() {
         DaoContext daos{settings.dbType};

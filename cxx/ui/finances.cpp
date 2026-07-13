@@ -16,6 +16,7 @@
 #include <QFileDialog>
 #include <QErrorMessage>
 #include <QWhatsThis>
+#include <forward_list>
 
 #define LAST_CONNECTION "last.connection"
 #define LAST_ACCOUNT "/last.viewed.account"
@@ -342,13 +343,61 @@ namespace finances {
         }
     }
 
-    QLineEdit *fileInput(QWidget *parent, const QString caption, const QString filter, const QString dir) {
+    void ensureExtension(QString &name, const QList<QString> extensions) {
+        auto hasExt = std::any_of(extensions.cbegin(), extensions.cend(), [&](auto ext) { return name.endsWith(ext); });
+        if (!hasExt && !extensions.isEmpty()) name.append(extensions.constFirst());
+    }
+
+    static void normalizePath(QString& name) {
+        if (name.startsWith(QDir::currentPath())) {
+            name.remove(0, QDir::currentPath().length()+1);
+        }
+    }
+
+    QLineEdit *openFileInput(QWidget *parent, const QString caption, const QString filter) {
         auto input = new QLineEdit();
         auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
         fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
         QObject::connect(fileAction, &QAction::triggered, [=]() {
-            auto name = QFileDialog::getOpenFileName(parent, caption, dir, filter);
-            input->setText(name);
+            auto name = QFileDialog::getOpenFileName(parent, caption, QDir::currentPath(), filter);
+            if (!name.isEmpty()) {
+                normalizePath(name);
+                input->setText(name);
+            }
+        });
+        return input;
+    }
+
+    static QList<QString> filterExtensions(const QString& filter) {
+        QList<QString> extensions;
+        auto append = [&](const QStringList items) {
+            for (const auto& item : items) {
+                const QString x = item.sliced(1);
+                extensions.append(x);
+            }
+        };
+        if (!filter.isEmpty()) {
+            QRegularExpression extract{"\\(([^)]+)\\)"};
+            auto first = filter.split(";;").constFirst();
+            auto match = extract.match(first);
+            if (match.hasCaptured(1)) append(match.captured(1).split(' '));
+            else if (!first.isEmpty()) append(first.split(' '));
+        }
+        return extensions;
+    }
+
+    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter) {
+        const auto extensions = filterExtensions(filter);
+        auto input = new QLineEdit();
+        auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
+        fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
+        QObject::connect(fileAction, &QAction::triggered, [=]() {
+            auto name = QFileDialog::getSaveFileName(parent, caption, QDir::currentPath(), filter);
+            if (!name.isEmpty()) {
+                ensureExtension(name, extensions);
+                normalizePath(name);
+                input->setText(name);
+            }
         });
         return input;
     }
