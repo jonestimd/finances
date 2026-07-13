@@ -22,7 +22,7 @@ struct ConnectionSettings {
     QString configName() const;
     QString displayName() const;
 
-    bool isComplete() const;
+    bool isComplete(bool create) const;
     bool openDatabase(QSqlDatabase &db) const;
     QSqlDatabase connect() const;
 private:
@@ -34,11 +34,24 @@ public:
     static ConnectionSettings fromConfig(const QString& name, QSettings* settings);
     static QStringList parseConfigName(const QString& name);
     static QString lastError(const QSqlDatabase &db);
-    ConnectionSettings admin(const QString& user, const QString& password, const QString& socket) const;
+
+protected:
     ConnectionSettings forUser(const QString& user, const QString& password, const QString& socket) const;
 
 private:
     static int openConnections;
+};
+
+/** @brief Connection settings for creating a new database. */
+struct AdminConnectionSettings : public ConnectionSettings {
+    QString adminUser{};
+    QString adminPassword{};
+    QString adminSocket{};
+
+    /** @brief Create settings for connecting to the admin schema. */
+    ConnectionSettings toAdminSchema() const;
+    /** @brief Create settings for connecting to the user schema. */
+    ConnectionSettings asAdmin() const;
 };
 
 class ConnectionPool {

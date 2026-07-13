@@ -16,18 +16,25 @@
 #define PG_TYPE_NAME "PostgreSQL"
 #define SQLITE_TYPE_NAME "SQLite3"
 
-#define SQLITE_PROP "SqliteInput"
-#define TEST_DB_NAME "test connection"
+#define NAME_PROP "InputName"
+#define PORT_INPUT "port"
+#define SCHEMA_INPUT "schema/file"
 
-#define SCHEMA_LABEL "Sche&ma:"
+#define TEST_DB_NAME "test connection"
 
 #define SOCKET_WHATS_THIS "<div>Linux socket file for\n" \
     "the admin connection.\n" \
     "If not provided then <b>Host</b>\n" \
     "and <b>Port</b> will be used\n" \
     "for the admin connection.</div>"
+#define ADMIN_WHATS_THIS "Database super user for\ncreating the schema."
+
+#define DEFAULT_SQLITE_EXT ".dbfin"
+#define SQLITE_EXT_FILTER "*" DEFAULT_SQLITE_EXT " *.db"
 
 using namespace finances;
+
+static const QList<QString> sqliteExtensions{DEFAULT_SQLITE_EXT, ".db"};
 
 static const QHash<const QString, const char*> typeMap{
     {MYSQL_TYPE_NAME, MYSQL_DRIVER},
@@ -45,9 +52,9 @@ static const QHash<const QString, const char*> defaultAdmin{
     {PG_DRIVER, "postgres"},
 };
 
-template<typename Value>
-QLineEdit *ConnectionDialog::connectInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput) {
-    input->setProperty(SQLITE_PROP, sqliteInput);
+template<class Settings, class Value>
+QLineEdit *ConnectionDialog::connectInput(QLineEdit* input, Value Settings::*field, const QString& name) {
+    if (!name.isEmpty()) input->setProperty(NAME_PROP, name);
     connect(input, &QLineEdit::textChanged, [=, this](const QString& value) {
         if constexpr (std::is_same_v<Value, QString>) {
             &settings->*field = value.trimmed();
@@ -86,23 +93,20 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     formLayout->addRow(tr("Database T&ype:"), &typeInput);
 
     formLayout->addRow(tr("&Host:"), connectInput(new QLineEdit(this), &ConnectionSettings::host));
-    formLayout->addRow(tr("Po&rt:"), connectInput(maskInput(this, "00009"), &ConnectionSettings::port));
+    formLayout->addRow(tr("Po&rt:"), connectInput(maskInput(this, "00009"), &ConnectionSettings::port, PORT_INPUT));
     auto caption = tr("Select database file");
-    auto filters = tr("Databases (%1);;All files(%2)").arg("*.dbfin *.db", "*");
-    formLayout->addRow(tr(SCHEMA_LABEL), connectInput(fileInput(this, caption, filters), &ConnectionSettings::schema, true));
+    auto filters = tr("Databases (%1);;All files(%2)").arg(SQLITE_EXT_FILTER, "*");
+    auto schemaInput = fileInput(this, caption, filters);
+    formLayout->addRow("dummy", connectInput(schemaInput, &ConnectionSettings::schema, SCHEMA_INPUT));
     formLayout->addRow(tr("U&ser"), connectInput(new QLineEdit(this), &ConnectionSettings::user));
     formLayout->addRow(tr("P&assword"), connectInput(::passwordInput(this), &ConnectionSettings::password));
     if (mode & Create) {
-        adminUserInput = whatsThisInput(this, tr("Database super user for\ncreating the schema."));
-        adminPasswordInput = ::passwordInput(this);
-        adminSocketInput = whatsThisInput(this, tr(SOCKET_WHATS_THIS));
-        connect(adminUserInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
-        connect(adminPasswordInput, SIGNAL(textChanged(QString)), this, SLOT(inputChanged()));
+        adminUserInput = connectInput(whatsThisInput(this, tr(ADMIN_WHATS_THIS)), &AdminConnectionSettings::adminUser);
+        formLayout->addRow(tr("Admin &User:"), adminUserInput);
+        formLayout->addRow(tr("Admin &Password"), connectInput(::passwordInput(this), &AdminConnectionSettings::adminPassword));
+        formLayout->addRow(tr("Admin Soc&ket"), connectInput(whatsThisInput(this, tr(SOCKET_WHATS_THIS)), &AdminConnectionSettings::adminSocket));
         createButton = buttonBox->addButton(tr("&Create"), QDialogButtonBox::YesRole);
         connect(createButton, SIGNAL(clicked(bool)), this, SLOT(createDatabase()));
-        formLayout->addRow(tr("Admin &User:"), adminUserInput);
-        formLayout->addRow(tr("Admin &Password"), adminPasswordInput);
-        formLayout->addRow(tr("Admin Soc&ket"), adminSocketInput);
     }
 
     layout->addWidget(&status);
@@ -113,18 +117,13 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
     typeChanged(typeInput.currentText());
 }
 
-const ConnectionSettings ConnectionDialog::connectionSettings() const {
-    return settings;
-}
-
 void ConnectionDialog::testConnection() {
     setDisabled(true);
     status.setText(tr("Trying connection..."));
     QThreadPool::globalInstance()->start([=, this] {
         {
-            auto testSettings = settings;
             // TODO also check non-admin for create?
-            if (mode & Create) testSettings = settings.admin(adminUser(), adminPassword(), adminSocket());
+            ConnectionSettings testSettings = mode & Create ? settings.toAdminSchema() : settings;
             auto db = QSqlDatabase::addDatabase(testSettings.dbType, TEST_DB_NAME);
             if (testSettings.openDatabase(db)) {
                 emit statusChanged(tr("Successful connection"));
@@ -145,29 +144,30 @@ void ConnectionDialog::typeChanged(const QString &value) {
         auto input = qobject_cast<QLineEdit*>(label->buddy());
         if (input) {
             input->clear();
-            if (!input->property(SQLITE_PROP).toBool()) {
+            auto inputName = input->property(NAME_PROP).toString();
+            if (inputName != SCHEMA_INPUT) {
                 label->setVisible(!isSqlite);
                 input->setVisible(!isSqlite);
-                if (!input->inputMask().isEmpty()) input->setText(defaultPort.value(value));
+                if (inputName == PORT_INPUT) input->setText(defaultPort.value(value));
             } else {
-                label->setText(isSqlite ? tr("&File:") : tr(SCHEMA_LABEL));
+                label->setText(isSqlite ? tr("&File:") : tr("Sche&ma:"));
                 input->actions().constFirst()->setVisible(isSqlite);
             }
         }
     }
-    if (!isSqlite && adminUserInput) adminUserInput->setText(defaultAdmin.value(settings.dbType, ""));
+    if (adminUserInput) adminUserInput->setText(defaultAdmin.value(settings.dbType, ""));
     inputChanged();
     adjustSize();
 }
 
 void ConnectionDialog::inputChanged() {
-    bool enable = settings.isComplete();
+    bool enable = settings.isComplete(mode & Create);
     auto isSqlite = typeInput.currentText() == SQLITE_TYPE_NAME;
     if (openButton) openButton->setEnabled(enable);
     if (createButton) {
-        auto haveUser = isSqlite || !adminUser().isEmpty();
-        createButton->setEnabled(enable && haveUser);
-        testButton->setEnabled(enable && haveUser);
+        auto haveUser = !settings.adminUser.isEmpty();
+        createButton->setEnabled(enable && (isSqlite || haveUser));
+        testButton->setEnabled(enable && haveUser && !isSqlite);
     } else testButton->setEnabled(enable && !isSqlite);
     status.clear();
 }
@@ -195,7 +195,7 @@ void ConnectionDialog::createDatabase() {
     QThreadPool::globalInstance()->start([=, this]() {
         DaoContext daos{settings.dbType};
         try {
-            daos.createDatabase(settings, adminUser(), adminPassword(), adminSocket());
+            daos.createDatabase(settings);
             QMetaObject::invokeMethod(this, &ConnectionDialog::openDatabase, Qt::QueuedConnection);
         } catch(const QString error) {
             emit statusChanged(error);
@@ -209,16 +209,3 @@ void ConnectionDialog::openDatabase() {
     status.setText(tr("Loading Accounts..."));
     dataStore->loadAccounts(std::bind_front(&ConnectionDialog::handleOpenResult, this));
 }
-
-const QString ConnectionDialog::adminUser() const {
-    return adminUserInput ? adminUserInput->text().trimmed() : "";
-}
-
-const QString ConnectionDialog::adminPassword() const {
-    return adminPasswordInput ? adminPasswordInput->text().trimmed() : "";
-}
-
-const QString ConnectionDialog::adminSocket() const {
-    return adminSocketInput ? adminSocketInput->text().trimmed() : "";
-}
-

@@ -7,6 +7,7 @@
 #include <sqlite3.h>
 #include <QUrl>
 #include <QFileInfo>
+#include <QDir>
 #include <QtEnvironmentVariables>
 #include "connectionpool.h"
 #include "dbdialect.h"
@@ -54,17 +55,17 @@ QString ConnectionSettings::displayName() const {
     return QString("%1:%2").arg(host, schema);
 }
 
-bool ConnectionSettings::isComplete() const {
+bool ConnectionSettings::isComplete(bool create) const {
     if (dbType == SQLITE_DRIVER) {
-        return !schema.isEmpty() && QFile::exists(schema);
+        auto fileInfo = QFileInfo{schema};
+        return !schema.isEmpty() && (create ? fileInfo.dir().exists() : fileInfo.exists());
     } else {
         return !(host.isEmpty() || port < 0 || schema.isEmpty() || user.isEmpty() || password.isEmpty());
     }
 }
 
 QString timeoutOption(const QString& driver) {
-    QString option = timeoutOptions.value(driver, "");    static int openConnections;
-
+    QString option = timeoutOptions.value(driver, "");
     if (!option.isEmpty()) option += qEnvironmentVariable("FINANCES_CONNECT_TIMEOUT", CONNECT_TIMEOUT);
     return option;
 }
@@ -141,19 +142,23 @@ QString ConnectionSettings::lastError(const QSqlDatabase &db) {
     return db.lastError().isValid() ? db.lastError().text() : QObject::tr("timed out");
 }
 
-ConnectionSettings ConnectionSettings::admin(const QString &user, const QString &password, const QString& socket) const {
-    auto settings = forUser(user, password, socket);
-    if (dbType == MYSQL_DRIVER) settings.schema = MYSQL_ROOT_SCHEMA;
-    else if (dbType == PG_DRIVER) settings.schema = PG_ROOT_SCHEMA;
-    return settings;
-}
-
 ConnectionSettings ConnectionSettings::forUser(const QString &user, const QString &password, const QString &socket) const {
     auto settings = *this;
     settings.user = user;
     settings.password = password;
     if (!socket.isEmpty()) settings.host = socket;
     return settings;
+}
+
+ConnectionSettings AdminConnectionSettings::toAdminSchema() const {
+    auto settings = asAdmin();
+    if (dbType == MYSQL_DRIVER) settings.schema = MYSQL_ROOT_SCHEMA;
+    else if (dbType == PG_DRIVER) settings.schema = PG_ROOT_SCHEMA;
+    return settings;
+}
+
+ConnectionSettings AdminConnectionSettings::asAdmin() const {
+    return forUser(adminUser, adminPassword, adminSocket);
 }
 
 ConnectionPool::ConnectionPool(const ConnectionSettings &settings)

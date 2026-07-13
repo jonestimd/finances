@@ -24,15 +24,11 @@ private:
     QPushButton *openButton{};
     QPushButton *createButton{};
     QLineEdit *adminUserInput{};
-    QLineEdit *adminPasswordInput{};
-    QLineEdit *adminSocketInput{};
     QLabel status{};
-    ConnectionSettings settings;
+    AdminConnectionSettings settings;
 
 public:
     ConnectionDialog(QWidget *parent = nullptr, Mode mode = Mode::Open);
-
-    const ConnectionSettings connectionSettings() const;
 
 private slots:
     void testConnection();
@@ -45,14 +41,10 @@ private slots:
 private:
     Q_SIGNAL void statusChanged(const QString message);
 
-    const QString adminUser() const;
-    const QString adminPassword() const;
-    const QString adminSocket() const;
-
     void handleOpenResult(DataStore* dataStore, const QString& error);
 
-    template<typename Value>
-    QLineEdit* connectInput(QLineEdit* input, Value ConnectionSettings::*field, bool sqliteInput = false);
+    template<class Settings, class Value>
+    QLineEdit* connectInput(QLineEdit* input, Value Settings::*field, const QString& name = "");
 };
 
 #endif // CONNECTIONDIALOG_H
