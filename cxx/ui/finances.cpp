@@ -17,7 +17,6 @@
 #include <QErrorMessage>
 #include <QWhatsThis>
 
-#define LAST_CONNECTION "last.connection"
 #define LAST_ACCOUNT "/last.viewed.account"
 
 #define RECENT_PREFIX "recent."
@@ -274,9 +273,9 @@ namespace finances {
     }
 
     int App::start() {
-        auto lastConnection = dbSettings.value(LAST_CONNECTION);
-        if (lastConnection.isValid()) {
-            auto context = new UiContext(connectionSettings(lastConnection.toString()));
+        auto recents = getRecentNames();
+        if (!recents.isEmpty()) {
+            auto context = new UiContext(connectionSettings(recents.last()));
             context->start();
             return exec();
         } else {
@@ -292,7 +291,6 @@ namespace finances {
 
     void App::addConnection(const ConnectionSettings &settings) {
         settings.save(&dbSettings);
-        dbSettings.setValue(LAST_CONNECTION, settings.configName());
         addRecentName(settings.configName());
     }
 
@@ -326,7 +324,6 @@ namespace finances {
     }
 
     void App::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
-        dbSettings.setValue(LAST_CONNECTION, connectionName);
         dbSettings.setValue(connectionName + LAST_ACCOUNT, id);
         dbSettings.sync();
     }
