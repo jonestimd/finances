@@ -367,18 +367,12 @@ namespace finances {
 
     static QList<QString> filterExtensions(const QString& filter) {
         QList<QString> extensions;
-        auto append = [&](const QStringList items) {
-            for (const auto& item : items) {
-                const QString x = item.sliced(1);
-                extensions.append(x);
-            }
-        };
         if (!filter.isEmpty()) {
             QRegularExpression extract{"\\(([^)]+)\\)"};
             auto first = filter.split(";;").constFirst();
             auto match = extract.match(first);
-            if (match.hasCaptured(1)) append(match.captured(1).split(' '));
-            else if (!first.isEmpty()) append(first.split(' '));
+            if (match.hasCaptured(1)) extensions.append(match.captured(1).split(' '));
+            else if (!first.isEmpty()) extensions.append(first.split(' '));
         }
         return extensions;
     }
