@@ -351,12 +351,16 @@ namespace finances {
         }
     }
 
+    static QString getOpenFileName(QWidget* parent, const QString caption, const QString filter) {
+        return QFileDialog::getOpenFileName(parent, caption, QDir::currentPath(), filter, nullptr, QFileDialog::DontUseNativeDialog);
+    }
+
     QLineEdit *openFileInput(QWidget *parent, const QString caption, const QString filter) {
         auto input = new QLineEdit();
         auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
         fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
         QObject::connect(fileAction, &QAction::triggered, [=]() {
-            auto name = QFileDialog::getOpenFileName(parent, caption, QDir::currentPath(), filter);
+            auto name = getOpenFileName(parent, caption, filter);
             if (!name.isEmpty()) {
                 normalizePath(name);
                 input->setText(name);
@@ -365,28 +369,36 @@ namespace finances {
         return input;
     }
 
+    // parse filters and return extensions for first filter
     static QList<QString> filterExtensions(const QString& filter) {
         QList<QString> extensions;
+        auto appendSuffixes = [&](const QStringList items) {
+            for (const auto& item : items) extensions.append(item.sliced(1));
+        };
         if (!filter.isEmpty()) {
             QRegularExpression extract{"\\(([^)]+)\\)"};
             auto first = filter.split(";;").constFirst();
             auto match = extract.match(first);
-            if (match.hasCaptured(1)) extensions.append(match.captured(1).split(' '));
-            else if (!first.isEmpty()) extensions.append(first.split(' '));
+            if (match.hasCaptured(1)) appendSuffixes(match.captured(1).split(' '));
+            else if (!first.isEmpty()) appendSuffixes(first.split(' '));
         }
         return extensions;
     }
 
-    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter, bool *replaceConfirmed) {
+    static QString getSaveFileName(QWidget* parent, const QString caption, const QString filter) {
+        return QFileDialog::getSaveFileName(parent, caption, QDir::currentPath(), filter, nullptr, QFileDialog::DontUseNativeDialog);
+    }
+
+    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter, bool *replaceConfirmed, bool *create) {
         const auto extensions = filterExtensions(filter);
         auto input = new QLineEdit();
         auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
         fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
         QObject::connect(fileAction, &QAction::triggered, [=]() {
             if (replaceConfirmed) *replaceConfirmed = false;
-            auto name = QFileDialog::getSaveFileName(parent, caption, QDir::currentPath(), filter);
+            auto name = !create || *create ? getSaveFileName(parent, caption, filter) : getOpenFileName(parent, caption, filter);
             if (!name.isEmpty()) {
-                bool confirmed = ensureExtension(name, extensions);
+                bool confirmed = (!create || *create) && ensureExtension(name, extensions);
                 normalizePath(name);
                 input->setText(name);
                 if (replaceConfirmed) *replaceConfirmed = confirmed;

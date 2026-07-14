@@ -3,6 +3,6 @@
 #include <QDir>
 #include <QSettings>
 
-void ui_test::setConfigHome() {
+void uitest::setConfigHome() {
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QDir{}.absoluteFilePath("config"));
 }

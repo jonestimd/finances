@@ -9,7 +9,6 @@
 #include "ui/widget/entityselectiondialog.h"
 #include "ui/widget/relationeditor.h"
 #include "ui/widget/transactionswindow.h"
-#include "windowtest.h"
 
 #define COMPANY_NAME "Bank 1"
 #define ACCOUNT_NAME "Checking"
@@ -212,7 +211,7 @@ private:
         QVERIFY(mergeSpy.isValid());
 
         QTimer::singleShot(0, refHolder.window, [&]() {
-            auto dialog = windowtest::findWindow<EntitySelectionDialog>();
+            auto dialog = uitest::findWindow<EntitySelectionDialog>();
             if (dialog) {
                 dialog->setSelectedEntity(store->value(destinationId));
                 dialog->accept();
@@ -224,7 +223,7 @@ private:
 
 private slots:
     void initTestCase_data() {
-        ui_test::setConfigHome();
+        uitest::setConfigHome();
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
         accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
@@ -452,7 +451,7 @@ private slots:
         QVERIFY(saveSpy.isValid());
 
         QTimer::singleShot(0, accountHolder.window, [&]() {
-            auto dialog = windowtest::findWindow<CompaniesWindow>();
+            auto dialog = uitest::findWindow<CompaniesWindow>();
             if (dialog) {
                 QVERIFY(QTest::qWaitForWindowFocused(dialog));
                 auto table = dialog->findChild<QTableView *>();
