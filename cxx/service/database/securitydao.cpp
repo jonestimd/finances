@@ -22,6 +22,10 @@ create table security (
     constraint security_asset_fk foreign key (asset_id) references asset (id)
 ))";
 
+static const auto addCurencyQuery = R"(
+insert into asset (name, type, scale, symbol, change_user, version)
+values ('USD', 'Currency', 2, '$', :user, 0))";
+
 static const auto pgCreateAdjustShares = R"(
 create function adjust_shares(_security_id bigint, _from_date timestamp, _shares numeric)
   returns decimal(19,6) as $$
@@ -167,6 +171,13 @@ void SecurityDao::createTable(const QSqlDatabase &db) const {
 void SecurityDao::createViews(const QSqlDatabase &db) const {
     if (createAdjustSharesSql != nullptr) sql::exec(db, createAdjustSharesSql, className, "createAdjustShares");
     sql::exec(db, createAccountSecuritySql, className, "createAccountSecurity");
+}
+
+void SecurityDao::addCurrency(const QSqlDatabase &db, const char* user) const {
+    QSqlQuery query{db};
+    query.prepare(addCurencyQuery);
+    query.bindValue(":user", user);
+    sql::exec(query, className, "addCurency");
 }
 
 QList<const Security *> SecurityDao::add(QSqlDatabase &db, QList<Security*> securities, const QString &user) {

@@ -38,6 +38,10 @@ QTreeView QLineEdit[acceptableInput="false"] {
     background-position: center right;
 }
 
+QLineEdit[enabled="false"] {
+    background: #20000000;
+}
+
 QLineEdit[acceptableInput="false"][tableFilter="true"] {
     border: 1px solid rgb(128, 0, 0);
     border-radius: 2px;

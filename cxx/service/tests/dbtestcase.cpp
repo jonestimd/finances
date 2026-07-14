@@ -3,14 +3,11 @@
 #include "service/database/transactiongroupdao.h"
 #include "service/database/transactiondetaildao.h"
 #include "qtcommon.h"
+#include "service/database/daocontext.h"
 #include <QFile>
 #include <QSqlError>
 #include <QSqlResult>
 #include <QtTest/qtestcase.h>
-
-static const auto addCurencyQuery = R"(
-insert into asset (name, type, scale, symbol, change_user, version)
-values ('USD', 'Currency', 2, '$', :user, 0))";
 
 static const QList<const char*> dropTableQueries = {
     "drop view if exists account_security",
@@ -109,8 +106,12 @@ QList<QString> DbTestCase::connectionPoolNames() {
     return connectionPools.keys();
 }
 
-ConnectionPool *DbTestCase::connectionPool(QString name) {
-    return connectionPools.value(name);
+ConnectionPool *DbTestCase::connectionPool(const QString &driver) {
+    return connectionPools.value(driver);
+}
+
+const ConnectionSettings DbTestCase::settings(const QString &driver) {
+    return connectionPools.value(driver)->settings;
 }
 
 CompanyDao &DbTestCase::companyDao(const QString &driver) {
@@ -160,24 +161,7 @@ void DbTestCase::createDatabases() {
                 sql::exec(conn.db, dropQuery, CLASS_NAME, "dropObject");
             }
         }
-        auto daos = DAOS(driver);
-        daos.securityDao.createTable(conn.db);
-        daos.companyDao.createTable(conn.db);
-        daos.accountDao.createTable(conn.db);
-        daos.payeeDao.createTable(conn.db);
-        daos.categoryDao.createTable(conn.db);
-        daos.transactionGroupDao.createTable(conn.db);
-        daos.transactionDao.createTable(conn.db);
-        daos.detailDao.createTable(conn.db);
-        daos.stockSplitDao.createTable(conn.db);
-        daos.securityLotDao.createTable(conn.db);
-
-        daos.securityDao.createViews(conn.db);
-
-        QSqlQuery query{conn.db};
-        query.prepare(addCurencyQuery);
-        query.bindValue(":user", TEST_USER);
-        sql::exec(query, CLASS_NAME, "addCurency");
+        DaoContext{pool->dbType()}.createDatabaseTables(conn.db);
     }
 }
 
@@ -253,7 +237,7 @@ const Security *DbTestCase::loadSecurity(const QString &driver, domain_id id) {
 }
 
 #define freeObjects(list) \
-    for (auto item : std::as_const(list)) delete item; \
+    qDeleteAll(list); \
     list.clear();
 
 void DbTestCase::cleanup() {

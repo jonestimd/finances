@@ -10,6 +10,11 @@ class AccountTableModel;
 class AccountStore : public EntityStore<Account, AccountService> {
     Q_OBJECT
 public:
+    class FriendKey {
+        friend DataStore;
+        FriendKey() = default;
+    };
+
     CompanyStore companyStore;
 
     AccountStore(ServiceContext *services, StatusMessageStore* messageStore);
@@ -19,6 +24,10 @@ public:
     void update(QWidget *source, AccountTableModel *model);
 
     QString qualifiedName(domain_id accountId, QChar delimiter) const;
+
+    inline void setValues(const QHash<domain_id, const Account*> values, FriendKey key) {
+        EntityStore::setValues(values);
+    }
 
 public slots:
     void transactionsUpdated(const QList<TransactionChange> changes);

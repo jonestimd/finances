@@ -13,6 +13,7 @@ public:
 
     virtual void createTable(const QSqlDatabase &db) const override;
     void createViews(const QSqlDatabase &db) const;
+    void addCurrency(const QSqlDatabase &db, const char* user = "REF_DATA") const;
 
     virtual QList<const Security*> add(QSqlDatabase &db, QList<Security*> securities, const QString &user) override;
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;

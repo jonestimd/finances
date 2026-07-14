@@ -1,7 +1,6 @@
 #include "settings.h"
+#include "ui/finances.h"
 #include <QHeaderView>
-
-#define APP_NAME "finances"
 
 Q_GLOBAL_STATIC(QSettings, appSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, APP_NAME);
 
@@ -90,26 +89,4 @@ void settings::saveValue(const char *name, const QVariant &value) {
 
 QVariant settings::getValue(const char *name, const QVariant &defaultValue) {
     return appSettings->value(name, defaultValue);
-}
-
-Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection")
-
-ConnectionSettings settings::connectionSettings(const QString &name) {
-    return ConnectionSettings{
-        dbSettings->value(name + "/type").toString(),
-        dbSettings->value(name + "/host").toString(),
-        dbSettings->value(name + "/port").toInt(),
-        dbSettings->value(name + "/schema").toString(),
-        dbSettings->value(name + "/user").toString(),
-        dbSettings->value(name + "/password").toString(),
-    };
-}
-
-QVariant settings::lastViewedAccount(const QString &connectionName) {
-    return dbSettings->value(connectionName + "/last.viewed.account");
-}
-
-void settings::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
-    dbSettings->setValue(connectionName + "/last.viewed.account", id);
-    dbSettings->sync();
 }

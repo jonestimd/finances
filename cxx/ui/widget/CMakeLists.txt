@@ -5,12 +5,14 @@ target_sources(finances
     ${CMAKE_CURRENT_LIST_DIR}/accountswindow.h ${CMAKE_CURRENT_LIST_DIR}/accountswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.h ${CMAKE_CURRENT_LIST_DIR}/categorieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companieswindow.h ${CMAKE_CURRENT_LIST_DIR}/companieswindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/connectiondialog.h ${CMAKE_CURRENT_LIST_DIR}/connectiondialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dateedit.h ${CMAKE_CURRENT_LIST_DIR}/dateedit.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dialog.h ${CMAKE_CURRENT_LIST_DIR}/dialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.h ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.h ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityview.h ${CMAKE_CURRENT_LIST_DIR}/entityview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.h ${CMAKE_CURRENT_LIST_DIR}/enumcombobox.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/filemenu.h ${CMAKE_CURRENT_LIST_DIR}/filemenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/filterinput.h ${CMAKE_CURRENT_LIST_DIR}/filterinput.cpp
     ${CMAKE_CURRENT_LIST_DIR}/groupswindow.h ${CMAKE_CURRENT_LIST_DIR}/groupswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.h ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.cpp

@@ -26,21 +26,21 @@ public:
 EntityView::EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
-    , sortModel{window}
+    , sortModel{new SortFilterProxyModel(window)}
     , itemView{itemView}
     , viewHeader{viewHeader}
-    , filterInput{new FilterInput(tr("%1 filter").arg(entityName), &sortModel, window)}
+    , filterInput{new FilterInput(tr("%1 filter").arg(entityName), sortModel, window)}
     , toolbar{window}
     , itemDelegate{window, &statusBar}
     , saveAction{finances::saveAction(window)}
 {
-    sortModel.setSourceModel(model);
-    sortModel.setSortRole(finances::SortRole);
-    sortModel.setFilterKeyColumn(-1);
-    sortModel.setSortCaseSensitivity(Qt::CaseInsensitive);
+    setModel(model);
+    sortModel->setSortRole(finances::SortRole);
+    sortModel->setFilterKeyColumn(-1);
+    sortModel->setSortCaseSensitivity(Qt::CaseInsensitive);
 
     itemView->setProperty("sortingEnabled", true);
-    itemView->setModel(&sortModel);
+    itemView->setModel(sortModel);
     itemView->setItemDelegate(&itemDelegate);
     itemView->setAlternatingRowColors(true);
 
@@ -49,17 +49,13 @@ EntityView::EntityView(QWidget *window, StatusMessageStore* messageStore, Adapte
     viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
 
     toolbar.setMovable(false);
-    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, &sortModel, itemView, this));
-    toolbar.addAction(new DeleteRowAction(entityName, &sortModel, itemView, this));
-    toolbar.addAction(new UndoChangeAction(&sortModel, itemView, this));
+    toolbar.addAction(new AddRowAction(entityName, &itemDelegate, sortModel, itemView, this));
+    toolbar.addAction(new DeleteRowAction(entityName, sortModel, itemView, this));
+    toolbar.addAction(new UndoChangeAction(sortModel, itemView, this));
     toolbar.addAction(saveAction);
     toolbar.addAction(finances::reloadAction(window));
     toolbar.addWidget(filterInput);
 
-    connect(&sortModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    connect(&sortModel, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(&sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(&sortModel, SIGNAL(modelReset()), this, SLOT(dataChanged()));
     connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
     connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
@@ -67,6 +63,23 @@ EntityView::EntityView(QWidget *window, StatusMessageStore* messageStore, Adapte
     connect(messageStore, SIGNAL(isReady()), this, SLOT(clearStatusMessage()));
 
     finances::setColumnResize(viewHeader);
+}
+
+void EntityView::setModel(AdapterItemModel *model) {
+    // need to connect to the source model because some signals are emitted by the proxy model before
+    // the source model has completed the change.
+    auto oldModel = sortModel->sourceModel();
+    if (oldModel) {
+        disconnect(oldModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+        disconnect(oldModel, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
+        disconnect(oldModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
+        disconnect(oldModel, SIGNAL(modelReset()), this, SLOT(dataChanged()));
+    }
+    sortModel->setSourceModel(model);
+    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
+    connect(model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
+    connect(model, SIGNAL(modelReset()), this, SLOT(dataChanged()));
 }
 
 void EntityView::addActions(const QList<QAction *> &actions) {
@@ -85,7 +98,7 @@ void EntityView::insertAction(qsizetype index, QAction *action) {
 
 QModelIndex EntityView::selectedIndex() {
     if (itemView->selectionModel()->hasSelection()) {
-        return sortModel.mapToSource(itemView->selectionModel()->selectedIndexes().first());
+        return sortModel->mapToSource(itemView->selectionModel()->selectedIndexes().first());
     }
     return QModelIndex{};
 }
@@ -128,8 +141,8 @@ void EntityView::restoreSelection() {
     if (!lastSelection.isEmpty()) {
         QModelIndex index;
         for (int row : std::as_const(lastSelection)) {
-            int count = sortModel.rowCount(index);
-            index = sortModel.index(row < count ? row : count-1, 0, index);
+            int count = sortModel->rowCount(index);
+            index = sortModel->index(row < count ? row : count-1, 0, index);
         }
         itemView->setCurrentIndex(index);
     }
@@ -140,9 +153,14 @@ void EntityView::focusItemView() {
     else itemView->installEventFilter(new ViewFocusFilter);
 }
 
+QAbstractItemModel* EntityView::sourceModel() const {
+    return sortModel->sourceModel();
+}
+
 void EntityView::dataChanged() {
-    saveAction->setEnabled(model()->hasUnsavedChanges() && model()->isValid());
-    window->setWindowModified(model()->hasUnsavedChanges());
+    auto model = this->model();
+    saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
+    window->setWindowModified(model->hasUnsavedChanges());
 }
 
 void EntityView::showValidation(const QModelIndex &index) {

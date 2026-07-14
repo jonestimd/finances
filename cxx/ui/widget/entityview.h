@@ -8,7 +8,8 @@
 #include <QStatusBar>
 #include <QTableView>
 #include <QTreeView>
-#include <ui/model/sortfilterproxymodel.h>
+
+class SortFilterProxyModel;
 
 class EntityView : public QObject {
     Q_OBJECT
@@ -21,7 +22,7 @@ public:
     QStatusBar statusBar{};
     QHeaderView *const viewHeader;
     QAbstractItemView *const itemView;
-    SortFilterProxyModel sortModel;
+    SortFilterProxyModel* sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
     QAction *const saveAction;
@@ -30,9 +31,10 @@ public:
     EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
 
     template<class T = AdapterItemModel>
-    T *model() const {
-        return static_cast<T*>(sortModel.sourceModel());
+    inline T *model() const {
+        return static_cast<T*>(sourceModel());
     }
+    void setModel(AdapterItemModel* model);
 
     void addActions(const QList<QAction*> &actions);
     void insertAction(qsizetype index, QAction* action);
@@ -52,6 +54,7 @@ public:
     void focusItemView();
 
 private:
+    QAbstractItemModel* sourceModel() const;
     void restoreSelection();
 
 public Q_SLOTS:

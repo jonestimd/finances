@@ -1,15 +1,17 @@
 #ifndef FINANCES_H
 #define FINANCES_H
 
+#include "service/database/connectionpool.h"
 #include <QApplication>
 #include <QColor>
 #include <QFont>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSettings>
 #include <QToolBar>
 #include <Qt>
+
+#define APP_NAME "finances"
 
 namespace finances {
     enum ItemDataRole {
@@ -43,6 +45,7 @@ namespace finances {
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
+        Help = 0xe887,
         HideSource = 0xf023,
         LibraryBooks = 0xe02f,
         Merge = 0xeb98,
@@ -59,6 +62,7 @@ namespace finances {
         Trash = 0xe872,
         Unchecked = 0xe835,
         Undo = 0xe166,
+        Visibility = 0xe8f4,
         Workspaces = 0xe1a0, // groups
         None = ' ',
     };
@@ -91,14 +95,38 @@ namespace finances {
     QAction *saveAction(QWidget *window, const char *invokable = "saveData");
     QAction *reloadAction(QWidget *window, const char *invokable = "loadData");
 
+    /** @return `true` if `name` already has one of the `extensions`. */
+    bool ensureExtension(QString& name, const QList<QString> extensions);
+
+    QLineEdit* openFileInput(QWidget* parent, const QString caption = {}, const QString filter = {});
+    QLineEdit* saveFileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, bool* replaceConfirmed = nullptr);
+    QLineEdit* maskInput(QWidget* parent, const QString& mask);
+    QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText);
+    QLineEdit* passwordInput(QWidget* parent);
+    QFrame *separator(QFrame::Shape shape = QFrame::VLine);
+
     void setColumnResize(QHeaderView *viewHeader);
 
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;
+
     public:
         App(int &argc, char **argv);
         ~App();
+
+        int start();
+
+        static ConnectionSettings connectionSettings(const QString &name);
+        static void addConnection(const ConnectionSettings& settings);
+        static void addRecentName(const QString& name);
+        static QStringList getRecentNames();
+
+        static QVariant lastViewedAccount(QString connectionName);
+        static void setLastViewedAccount(const QVariant &id, const QString &connectionName);
+
+    signals:
+        void recentAdded();
 
     public slots:
         void updateStyleSheet(Qt::ColorScheme scheme);

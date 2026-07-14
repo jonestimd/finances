@@ -9,21 +9,14 @@
 #include "categoryservice.h"
 #include "groupservice.h"
 #include "securityservice.h"
+#include "service/database/daocontext.h"
 #include "transactionservice.h"
 #include "transactiondetailservice.h"
 
 class ServiceContext
 {
     ConnectionPool *pool;
-    CompanyDao companyDao;
-    AccountDao accountDao;
-    CategoryDao categoryDao;
-    TransactionGroupDao transactionGroupDao;
-    PayeeDao payeeDao;
-    SecurityDao securityDao;
-    StockSplitDao stockSplitDao;
-    TransactionDao transactionDao;
-    TransactionDetailDao transactionDetailDao;
+    DaoContext daos;
 
 public:
     AccountService accountService;
@@ -35,9 +28,17 @@ public:
     TransactionDetailService transationDetailService;
     TransactionService transationService;
 
+#ifndef __FINANCES_TEST__
+private:
+#endif
     ServiceContext(ConnectionPool *pool);
+public:
+    ServiceContext(const ConnectionSettings &settings);
+    ~ServiceContext();
 
-    const QString connectionName() const;
+    const ConnectionSettings& connectionSettings() const;
+
+    void shutdown();
 };
 
 #endif // SERVICECONTEXT_H

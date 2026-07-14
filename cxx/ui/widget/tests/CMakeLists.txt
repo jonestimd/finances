@@ -4,9 +4,6 @@ function(add_widget_test name)
     # add_dependencies(${exec_name} qdecimal decimal.so dbtestcase finances-testlib)
     set_target_properties(${exec_name} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
-    )
-
-    set_target_properties(${exec_name} PROPERTIES
         AUTOMOC ON
         WIN32_EXECUTABLE TRUE
         MACOSX_BUNDLE TRUE
@@ -29,10 +26,8 @@ function(add_window_test name)
     qt_add_executable(${exec_name} ${exec_name}.cpp ${PROJECT_RESOURCES} ${ARGN})
     add_dependencies(${exec_name} qdecimal decimal.so dbtestcase finances-testlib)
     set_target_properties(${exec_name} PROPERTIES
+        COMPILE_DEFINITIONS __FINANCES_TEST__
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
-    )
-
-    set_target_properties(${exec_name} PROPERTIES
         AUTOMOC ON
         WIN32_EXECUTABLE TRUE
         MACOSX_BUNDLE TRUE

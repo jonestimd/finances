@@ -24,8 +24,14 @@ AppWindow::AppWindow(const QString &entityName, AdapterItemModel *model, QTreeVi
     itemView->setEditTriggers(AllEditTriggers ^ CurrentChanged);
 }
 
+void AppWindow::show() {
+    QMainWindow::show();
+    emit opened(this);
+}
+
 void AppWindow::closeEvent(QCloseEvent *event) {
     entityView.confirmClose(event, settingsGroup());
+    if (event->isAccepted()) emit closed(this);
 }
 
 void AppWindow::keyPressEvent(QKeyEvent *event) {

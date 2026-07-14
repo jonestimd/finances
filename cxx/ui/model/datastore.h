@@ -15,6 +15,8 @@ class DataStore : public QObject {
     ServiceContext *services;
 
 public:
+    typedef std::function<void(DataStore*, const QString&)> OpenHandler;
+
     StatusMessageStore messageStore;
     AccountStore *const accountStore;
     PayeeStore *const payeeStore;
@@ -24,9 +26,16 @@ public:
     TransactionStore *const transactionStore;
 
     DataStore(ServiceContext *services);
+    DataStore(const ConnectionSettings &settings);
     ~DataStore();
 
-    const QString connectionName() const;
+    const ConnectionSettings& connectionSettings() const;
+    QString connectionName() const;
+
+    /** @brief Verify connection parameters before creating a `UiContext`. */
+    void loadAccounts(OpenHandler handler);
+
+    void shutdown();
 
     static const QString user;
 };

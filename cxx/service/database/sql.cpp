@@ -91,19 +91,25 @@ void sql::bindList(QSqlQuery &query, const char *name, const QVariantList &value
 static void logAndThrowError(const QSqlQuery &query, const QString &className, const char *queryName) {
     auto connectionName = query.driver()->connectionName();
     auto driver = connectionName.split(':').first();
-    qCritical().noquote().nospace() << driver << " " << className << "." << queryName << ": " << query.lastError().text();
+    auto message = query.lastError().text();
+    qCritical().noquote().nospace() << driver << " " << className << "." << queryName << ": " << message;
     qCritical().noquote() << query.lastQuery();
-    throw query.lastError().text();
+    throw message;
 }
 
 void sql::exec(const QSqlDatabase &db, const char *sql, const char *className, const char *queryName) {
     qCInfo(sqlLogger, "%s.%s:\n%s", className, queryName, sql);
     QSqlQuery query(sql, db);
-    if (query.lastError() != QSqlError()) logAndThrowError(query, className, queryName);
+    if (query.lastError().type() != QSqlError::NoError) logAndThrowError(query, className, queryName);
+}
+
+void sql::exec(const QSqlDatabase &db, const QString sql, const char *className, const char *queryName) {
+    exec(db, sql.toLocal8Bit().constData(), className, queryName);
 }
 
 void sql::exec(QSqlQuery &query, const char *className, const char *queryName) {
     if (sqlLogger().isInfoEnabled()) qCInfo(sqlLogger, "%s.%s:\n%s", className, queryName, query.lastQuery().toLocal8Bit().data());
+    if (query.lastError().type() != QSqlError::NoError) logAndThrowError(query, className, queryName);
     if (!query.exec()) logAndThrowError(query, className, queryName);
 }
 

@@ -1,5 +1,7 @@
 #include "datastore.h"
+#include "ui/finances.h"
 #include <QSqlError>
+#include <QThreadPool>
 
 DataStore::DataStore(ServiceContext *services)
     : services{services}
@@ -22,6 +24,8 @@ DataStore::DataStore(ServiceContext *services)
             groupStore, SLOT(detailsUpdated(const QList<DetailChange>)), Qt::DirectConnection);
 }
 
+DataStore::DataStore(const ConnectionSettings &settings) : DataStore{new ServiceContext(settings)} {}
+
 DataStore::~DataStore() {
     delete accountStore;
     delete payeeStore;
@@ -29,10 +33,34 @@ DataStore::~DataStore() {
     delete groupStore;
     delete securityStore;
     delete transactionStore;
+    delete services;
 }
 
-const QString DataStore::connectionName() const {
-    return services->connectionName();
+const ConnectionSettings& DataStore::connectionSettings() const {
+    return services->connectionSettings();
+}
+
+QString DataStore::connectionName() const {
+    return connectionSettings().displayName();
+}
+
+void DataStore::loadAccounts(OpenHandler handler) {
+    QThreadPool::globalInstance()->start([=, this]() {
+        QString message;
+        try {
+            accountStore->setValues(services->accountService.getAll(), AccountStore::FriendKey{});
+        } catch(const QString error) {
+            message = error;
+        }
+        QMetaObject::invokeMethod(this, [=, this]() {
+            handler(this, message);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void DataStore::shutdown() {
+    services->shutdown();
+    finances::App::addRecentName(services->connectionSettings().configName());
 }
 
 const QString DataStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};

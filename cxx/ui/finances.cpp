@@ -1,4 +1,6 @@
 #include "finances.h"
+#include "uicontext.h"
+#include "ui/widget/connectiondialog.h"
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
@@ -10,6 +12,17 @@
 #include <QTranslator>
 #include <QSqlDatabase>
 #include <QProxyStyle>
+#include <QAbstractButton>
+#include <QFileDialog>
+#include <QErrorMessage>
+#include <QWhatsThis>
+
+#define LAST_ACCOUNT "/last.viewed.account"
+
+#define RECENT_PREFIX "recent."
+#define RECENT_COUNT RECENT_PREFIX "count"
+#define RECENT_ITEM(index) QString{RECENT_PREFIX "%1"}.arg(index)
+#define MAX_RECENT_COUNT 5
 
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
@@ -237,6 +250,8 @@ namespace finances {
         }
     };
 
+    Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection");
+
     App::App(int &argc, char **argv)
         : QApplication(argc, argv)
         , userStyleSheet{""}
@@ -257,6 +272,62 @@ namespace finances {
         QThreadPool::globalInstance()->waitForDone();
     }
 
+    int App::start() {
+        auto recents = getRecentNames();
+        if (!recents.isEmpty()) {
+            auto context = new UiContext(connectionSettings(recents.last()));
+            context->start();
+            return exec();
+        } else {
+            ConnectionDialog dialog{nullptr, ConnectionDialog::OpenOrCreate};
+            if (dialog.exec() == QDialog::Accepted) return exec();
+        }
+        return 1;
+    }
+
+    ConnectionSettings App::connectionSettings(const QString &name) {
+        return ConnectionSettings::fromConfig(name, dbSettings);
+    }
+
+    void App::addConnection(const ConnectionSettings &settings) {
+        settings.save(dbSettings);
+        addRecentName(settings.configName());
+    }
+
+    void App::addRecentName(const QString &name) {
+        auto list = getRecentNames();
+        if (!list.contains(name)) {
+            list.append(name);
+            while (list.size() >= MAX_RECENT_COUNT) list.removeFirst();
+        } else if (list.indexOf(name) < list.size()-1){
+            list.removeOne(name);
+            list.append(name);
+        }
+        for (int i = 0; i < list.size(); i++) dbSettings->setValue(RECENT_ITEM(i), list.at(i));
+        dbSettings->setValue(RECENT_COUNT, list.size());
+        auto self = qobject_cast<App*>(qApp);
+        if (self) emit self->recentAdded();
+    }
+
+    QStringList App::getRecentNames() {
+        QStringList names;
+        int size = dbSettings->value(RECENT_COUNT, 0).toInt();
+        for (int i = 0; i < size; i++) {
+            auto name = dbSettings->value(RECENT_ITEM(i)).toString();
+            if (!name.isEmpty()) names.append(name);
+        }
+        return names;
+    }
+
+    QVariant App::lastViewedAccount(QString connectionName) {
+        return dbSettings->value(connectionName + LAST_ACCOUNT);
+    }
+
+    void App::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
+        dbSettings->setValue(connectionName + LAST_ACCOUNT, id);
+        dbSettings->sync();
+    }
+
     void App::updateStyleSheet(Qt::ColorScheme scheme) {
         if (scheme == Qt::ColorScheme::Dark) {
             auto styles = readStyles(":/styles/finances.qss");
@@ -266,5 +337,98 @@ namespace finances {
             auto styles = readStyles(":/styles/minimal-light.qss");
             setStyleSheet(styles + "\n" + userStyleSheet);
         }
+    }
+
+    bool ensureExtension(QString &name, const QList<QString> extensions) {
+        auto hasExt = std::any_of(extensions.cbegin(), extensions.cend(), [&](auto ext) { return name.endsWith(ext); });
+        if (!hasExt && !extensions.isEmpty()) name.append(extensions.constFirst());
+        return hasExt;
+    }
+
+    static void normalizePath(QString& name) {
+        if (name.startsWith(QDir::currentPath())) {
+            name.remove(0, QDir::currentPath().length()+1);
+        }
+    }
+
+    QLineEdit *openFileInput(QWidget *parent, const QString caption, const QString filter) {
+        auto input = new QLineEdit();
+        auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
+        fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
+        QObject::connect(fileAction, &QAction::triggered, [=]() {
+            auto name = QFileDialog::getOpenFileName(parent, caption, QDir::currentPath(), filter);
+            if (!name.isEmpty()) {
+                normalizePath(name);
+                input->setText(name);
+            }
+        });
+        return input;
+    }
+
+    static QList<QString> filterExtensions(const QString& filter) {
+        QList<QString> extensions;
+        if (!filter.isEmpty()) {
+            QRegularExpression extract{"\\(([^)]+)\\)"};
+            auto first = filter.split(";;").constFirst();
+            auto match = extract.match(first);
+            if (match.hasCaptured(1)) extensions.append(match.captured(1).split(' '));
+            else if (!first.isEmpty()) extensions.append(first.split(' '));
+        }
+        return extensions;
+    }
+
+    QLineEdit *saveFileInput(QWidget *parent, const QString caption, const QString filter, bool *replaceConfirmed) {
+        const auto extensions = filterExtensions(filter);
+        auto input = new QLineEdit();
+        auto fileAction = input->addAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen), QLineEdit::TrailingPosition);
+        fileAction->setShortcut(QKeyCombination{Qt::ControlModifier, Qt::Key_O});
+        QObject::connect(fileAction, &QAction::triggered, [=]() {
+            if (replaceConfirmed) *replaceConfirmed = false;
+            auto name = QFileDialog::getSaveFileName(parent, caption, QDir::currentPath(), filter);
+            if (!name.isEmpty()) {
+                bool confirmed = ensureExtension(name, extensions);
+                normalizePath(name);
+                input->setText(name);
+                if (replaceConfirmed) *replaceConfirmed = confirmed;
+            }
+        });
+        return input;
+    }
+
+    QLineEdit *maskInput(QWidget *parent, const QString &mask) {
+        auto input = new QLineEdit();
+        input->setInputMask(mask);
+        return input;
+    }
+
+    QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText) {
+        auto input = new QLineEdit(parent);
+        if (!helpText.isEmpty()) {
+            input->setWhatsThis(helpText);
+            auto action = iconAction(FontIcon::Help, parent->tr("What's this?"), parent);
+            QObject::connect(action, &QAction::triggered, [=]() {
+                auto pos = input->window()->geometry().topLeft() + input->geometry().bottomLeft();
+                QWhatsThis::showText(pos, input->whatsThis(), input);
+            });
+            input->addAction(action, QLineEdit::TrailingPosition);
+        }
+        return input;
+    }
+
+    QLineEdit *passwordInput(QWidget *parent) {
+        auto input = new QLineEdit(parent);
+        input->addAction(iconAction(FontIcon::Visibility, parent->tr("Show password"), parent), QLineEdit::TrailingPosition);
+        input->setEchoMode(QLineEdit::Password);
+        auto button = input->findChild<QAbstractButton*>();
+        QObject::connect(button, &QAbstractButton::pressed, [=]() { input->setEchoMode(QLineEdit::Normal); });
+        QObject::connect(button, &QAbstractButton::released, [=]() { input->setEchoMode(QLineEdit::Password); });
+        return input;
+    }
+
+    QFrame *separator(QFrame::Shape shape) {
+        QFrame *frame = new QFrame();
+        frame->setProperty("separator", "true");
+        frame->setFrameStyle(shape | QFrame::Raised);
+        return frame;
     }
 }

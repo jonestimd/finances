@@ -10,16 +10,21 @@
 #include <QObject>
 
 template<class T, typename... WindowArgs>
+requires std::is_base_of_v<AppWindow, T>
 class WindowAction : public QAction {
     T *window{};
 
 public:
-    WindowAction(finances::FontIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
-        : QAction(finances::materialIcon(icon), title)
+    WindowAction(QObject* context, finances::FontIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
+        : QAction(finances::materialIcon(icon), title, context)
     {
         finances::initAction(this, icon, title, QKeySequence(shortcut));
         connect(this, &QAction::triggered, this, [=, this]() {
-            if (!window) window = new T(args...);
+            if (!window) {
+                window = new T(args...);
+                connect(window, SIGNAL(opened(AppWindow*)), context, SLOT(windowOpened(AppWindow*)));
+                connect(window, SIGNAL(closed(AppWindow*)), context, SLOT(windowClosed(AppWindow*)));
+            }
             window->show();
         });
     }
@@ -38,14 +43,17 @@ class UiContext : public QObject {
     WindowAction<SecuritiesWindow, DataStore*> securitiesAction_;
     QHash<domain_id, TransactionTableModel*> transactionModels{};
     QList<TransactionsWindow*> transactionsWindows{};
+    int openWindows{0};
 
 public:
     DataStore *const dataStore;
 
-    explicit UiContext(DataStore *dataStore, QObject *parent = nullptr);
+public:
+    explicit UiContext(DataStore *dataStore);
+    explicit UiContext(const ConnectionSettings& settings);
     ~UiContext();
 
-    void start();
+    void start(QRect requestorRect = {});
 
     QAction *accountsAction();
     QAction *payeesAction();
@@ -53,16 +61,23 @@ public:
     QAction *groupsAction();
     QAction *securitiesAction();
 
-    TransactionsWindow *showTransactions(domain_id accountId);
+    TransactionsWindow *showTransactions(domain_id accountId, const QRect& requestorRect = {});
     TransactionTableModel *transactionsModel(domain_id accountId);
     int windowCount(const TransactionTableModel* model);
 
     /**
-     * @brief transactionsModelRemoved Signals that a window is not longer using a model.
+     * @brief transactionsModelRemoved Signals that a window is no longer using a model.
      */
     void transactionsModelRemoved(TransactionTableModel* model);
 
     void transactionsWindowClosed(TransactionsWindow *window);
+
+public slots:
+    void windowOpened(AppWindow*);
+    void windowClosed(AppWindow*);
+
+private:
+    void shutdownIfEmpty();
 };
 
 #endif // UICONTEXT_H
