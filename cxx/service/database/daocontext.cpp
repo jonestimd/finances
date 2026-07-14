@@ -49,6 +49,7 @@ void DaoContext::createDatabase(const AdminConnectionSettings &settings) {
         dbDialect::createSchema(db, settings.schema);
     }
     DbTransaction tx{settings.asAdmin(), deleter};
+    dbDialect::initSchema(tx.db, settings.schema);
     createDatabaseTables(tx.db);
     if (!settings.user.isEmpty()) dbDialect::addUser(tx.db, settings);
 }

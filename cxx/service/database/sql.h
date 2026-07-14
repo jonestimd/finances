@@ -51,6 +51,7 @@ namespace sql {
     void bindList(QSqlQuery &query, const char *name, const QVariantList &values);
 
     void exec(const QSqlDatabase &db, const char *query, const char *className, const char *queryName);
+    void exec(const QSqlDatabase &db, const QString query, const char *className, const char *queryName);
 
     void exec(QSqlQuery &query, const char *className, const char *queryName);
 

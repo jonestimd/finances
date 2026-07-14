@@ -30,9 +30,9 @@
 #define PG_ROOT_SCHEMA "postgres"
 #define MYSQL_ROOT_SCHEMA "mysql"
 
-#define IS_PG(db) db.driverName() == PG_DRIVER
-#define IS_MYSQL(db) db.driverName() == MYSQL_DRIVER
-#define IS_SQLITE(db) db.driverName() == SQLITE_DRIVER
+#define IS_PG(db) (db.driverName() == PG_DRIVER)
+#define IS_MYSQL(db) (db.driverName() == MYSQL_DRIVER)
+#define IS_SQLITE(db) (db.driverName() == SQLITE_DRIVER)
 
 // Requires 3 query variables in scope with the passed suffix and the following prefixes:
 //  - pg
@@ -47,6 +47,7 @@ namespace dbDialect {
     QSqlQuery prepareGetByIds(const QSqlDatabase &db, const char *getAllSql, const QList<domain_id> ids, const char *idColumn);
 
     void createSchema(const QSqlDatabase& db, const QString& schema);
+    void initSchema(const QSqlDatabase& db, const QString& schema);
     void addUser(const QSqlDatabase& db, const ConnectionSettings& settings);
 };
 

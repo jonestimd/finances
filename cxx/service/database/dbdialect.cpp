@@ -6,6 +6,11 @@
 #include <QDecNumber.hh>
 
 #define CLASS_NAME "dbDialect"
+#define ROLE_SUFFIX "_rw"
+
+#define PG_SELECT_DB "select * from pg_catalog.pg_database where datname = :schema"
+#define PG_SELECT_ROLE "select rolname from pg_catalog.pg_roles where rolname = :role"
+#define PG_SELECT_USER "select usename from pg_catalog.pg_user where usename = :user"
 
 static const QHash<const QString, const char*> createSchemaQuery{
     {MYSQL_DRIVER, "create database if not exists %1"},
@@ -13,22 +18,20 @@ static const QHash<const QString, const char*> createSchemaQuery{
 };
 
 static const QHash<const QString, const char*> createUserQuery{
-    {MYSQL_DRIVER, "create user if not exists :user identified by :password"},
+    {MYSQL_DRIVER, "create user if not exists %1 identified by '%2'"},
     {PG_DRIVER, "create user %1 with password '%2'"},
 };
 
-static const char* pgGrantUserQuery = R"(do $$
-declare
-    tab record;
-begin
-for tab in select tablename from pg_tables where schemaname = 'public' loop
-    execute 'grant all on table ' || tab.tablename || ' to %1';
-end loop;
-end $$)";
+static const QHash<const QString, const char*> grantRoleQuery{
+    {MYSQL_DRIVER, "grant all on %1.* to %1" ROLE_SUFFIX},
+    {PG_DRIVER, "alter database %1 owner to %1" ROLE_SUFFIX},
+};
 
-static const QHash<const QString, const char*> grantUserQuery{
-    {MYSQL_DRIVER, "grant all on %2.* to %1"},
-    {PG_DRIVER, pgGrantUserQuery},
+static const std::array pgDefaultGrants{
+    "alter default privileges in schema public grant all on tables to %1" ROLE_SUFFIX,
+    "alter default privileges in schema public grant all on sequences to %1" ROLE_SUFFIX,
+    "alter default privileges in schema public grant all on functions to %1" ROLE_SUFFIX,
+    "alter default privileges in schema public grant all on types to %1" ROLE_SUFFIX,
 };
 
 namespace dbDialect {
@@ -51,44 +54,50 @@ namespace dbDialect {
         return query;
     }
 
+    static bool rowExists(const QSqlDatabase &db, const char* sql, const QList<std::pair<const char*, QString>> bindings) {
+        QSqlQuery query{db};
+        query.prepare(sql);
+        for (const auto& [name, value] : bindings) {
+            sql::bindValue(query, name, value);
+        }
+        sql::exec(query, CLASS_NAME, "rowExists");
+        return query.next();
+    }
+
     void createSchema(const QSqlDatabase &db, const QString &schema) {
         const char* sql = createSchemaQuery.value(db.driverName());
         if (sql) {
-            QSqlQuery query{db};
-            if (IS_PG(db)) {
-                query.prepare("select * from pg_catalog.pg_database where datname = :schema");
-                sql::bindValue(query, ":schema", schema);
-                sql::exec(query, CLASS_NAME, "selectSchema");
-                if (query.next()) return;
+            if (!IS_PG(db) || !rowExists(db, PG_SELECT_DB, {{":schema", schema}})) {
+                sql::exec(db, QString{sql}.arg(schema), CLASS_NAME, "createSchema");
             }
-            query.prepare(QString{sql}.arg(schema));
-            sql::exec(query, CLASS_NAME, "createSchema");
+            if (!IS_PG(db) || !rowExists(db, PG_SELECT_ROLE, {{":role", QString{"%1" ROLE_SUFFIX}.arg(schema)}})) {
+                sql::exec(db, QString{"create role %1" ROLE_SUFFIX}.arg(schema), CLASS_NAME, "createRole");
+            }
+            auto grantsql = QString{grantRoleQuery.value(db.driverName())}.arg(schema);
+            sql::exec(db, grantsql, CLASS_NAME, "grantRole");
+        }
+    }
+
+    void initSchema(const QSqlDatabase &db, const QString &schema) {
+        if (IS_PG(db)) {
+            for (auto i = pgDefaultGrants.cbegin(); i != pgDefaultGrants.cend(); i++) {
+                sql::exec(db, QString{*i}.arg(schema), CLASS_NAME, "defaultTableGrants");
+            }
         }
     }
 
     void addUser(const QSqlDatabase &db, const ConnectionSettings& settings) {
         const char* sql = createUserQuery.value(db.driverName());
         if (sql) {
-            QSqlQuery query{db};
-            if (IS_PG(db)) {
-                query.prepare("select usename from pg_catalog.pg_user where usename = :user");
-                sql::bindValue(query, ":user", settings.user);
-                sql::exec(query, CLASS_NAME, "selectUser");
-                if (!query.next()) {
-                    auto password = QString{settings.password}.replace('\'', "''");
-                    query.prepare(QString{sql}.arg(settings.user, password));
-                    sql::exec(query, CLASS_NAME, "addUser");
-                }
-            } else {
-                query.prepare(sql);
-                sql::bindValue(query, ":user", settings.password);
-                sql::bindValue(query, ":password", settings.password);
-                sql::exec(query, CLASS_NAME, "addUser");
+            if (!IS_PG(db) || !rowExists(db, PG_SELECT_USER, {{":user", settings.user}})) {
+                auto password = QString{settings.password}.replace('\'', "''");
+                sql::exec(db, QString{sql}.arg(settings.user, password), CLASS_NAME, "addUser");
             }
-            auto grantsql = QString{grantUserQuery.value(db.driverName())}.arg(settings.user);
-            if (IS_MYSQL(db)) grantsql = grantsql.arg(settings.schema);
-            query.prepare({grantsql});
-            sql::exec(query, CLASS_NAME, "grantUser");
+            auto grantsql = QString{"grant %1" ROLE_SUFFIX " to %2"}.arg(settings.schema, settings.user);
+            sql::exec(db, grantsql, CLASS_NAME, "grantUser");
+            if (IS_MYSQL(db)) {
+                sql::exec(db, QString{"alter user %1 default role all"}.arg(settings.user), CLASS_NAME, "defaultRole");
+            }
         }
     }
 }

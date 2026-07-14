@@ -85,7 +85,7 @@ QSqlDatabase ConnectionSettings::connect() const {
 }
 
 QSqlDatabase ConnectionSettings::connect(int* activeCount) const {
-    auto dbName = QString("Connection (%2)").arg(openConnections++);
+    auto dbName = QString("%1: (%2)").arg(dbType).arg(openConnections++);
     auto db = QSqlDatabase::addDatabase(dbType, dbName);
     if (!db.isOpen()) {
         db.setNumericalPrecisionPolicy(QSql::HighPrecision);
