@@ -4,6 +4,7 @@
 #include <QTimer>
 
 #include "service/tests/dbtestcase.h"
+#include "tests/uitest.h"
 #include "ui/uicontext.h"
 #include "ui/widget/entityselectiondialog.h"
 #include "ui/widget/relationeditor.h"
@@ -223,6 +224,7 @@ private:
 
 private slots:
     void initTestCase_data() {
+        ui_test::setConfigHome();
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
         accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
@@ -470,6 +472,7 @@ private slots:
         delete accountUpdatedSpy;
         accountUpdatedSpy = nullptr;
         dbTestCase.cleanup();
+        // NOTE: UiContext deletes itself when last window is closed
         uiContext = nullptr;
         dataStore = nullptr;
     }

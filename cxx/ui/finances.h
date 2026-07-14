@@ -8,13 +8,10 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSettings>
 #include <QToolBar>
 #include <Qt>
 
 #define APP_NAME "finances"
-
-class UiContext;
 
 namespace finances {
     enum ItemDataRole {
@@ -113,7 +110,6 @@ namespace finances {
     class App : public QApplication {
         Q_OBJECT
         QString userStyleSheet;
-        static QSettings dbSettings;
 
     public:
         App(int &argc, char **argv);

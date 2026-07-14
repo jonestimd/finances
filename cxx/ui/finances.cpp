@@ -250,7 +250,7 @@ namespace finances {
         }
     };
 
-    QSettings App::dbSettings{QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection"};
+    Q_GLOBAL_STATIC(QSettings, dbSettings, QSettings::IniFormat, QSettings::UserScope, APP_NAME, "connection");
 
     App::App(int &argc, char **argv)
         : QApplication(argc, argv)
@@ -286,11 +286,11 @@ namespace finances {
     }
 
     ConnectionSettings App::connectionSettings(const QString &name) {
-        return ConnectionSettings::fromConfig(name, &dbSettings);
+        return ConnectionSettings::fromConfig(name, dbSettings);
     }
 
     void App::addConnection(const ConnectionSettings &settings) {
-        settings.save(&dbSettings);
+        settings.save(dbSettings);
         addRecentName(settings.configName());
     }
 
@@ -303,29 +303,29 @@ namespace finances {
             list.removeOne(name);
             list.append(name);
         }
-        for (int i = 0; i < list.size(); i++) dbSettings.setValue(RECENT_ITEM(i), list.at(i));
-        dbSettings.setValue(RECENT_COUNT, list.size());
+        for (int i = 0; i < list.size(); i++) dbSettings->setValue(RECENT_ITEM(i), list.at(i));
+        dbSettings->setValue(RECENT_COUNT, list.size());
         auto self = qobject_cast<App*>(qApp);
         if (self) emit self->recentAdded();
     }
 
     QStringList App::getRecentNames() {
         QStringList names;
-        int size = dbSettings.value(RECENT_COUNT, 0).toInt();
+        int size = dbSettings->value(RECENT_COUNT, 0).toInt();
         for (int i = 0; i < size; i++) {
-            auto name = dbSettings.value(RECENT_ITEM(i)).toString();
+            auto name = dbSettings->value(RECENT_ITEM(i)).toString();
             if (!name.isEmpty()) names.append(name);
         }
         return names;
     }
 
     QVariant App::lastViewedAccount(QString connectionName) {
-        return dbSettings.value(connectionName + LAST_ACCOUNT);
+        return dbSettings->value(connectionName + LAST_ACCOUNT);
     }
 
     void App::setLastViewedAccount(const QVariant &id, const QString &connectionName) {
-        dbSettings.setValue(connectionName + LAST_ACCOUNT, id);
-        dbSettings.sync();
+        dbSettings->setValue(connectionName + LAST_ACCOUNT, id);
+        dbSettings->sync();
     }
 
     void App::updateStyleSheet(Qt::ColorScheme scheme) {

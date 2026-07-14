@@ -44,6 +44,7 @@ get_target_property(UI_SOURCES finances SOURCES)
 list(FILTER UI_SOURCES INCLUDE REGEX ".*/ui/.*\\.(cpp|h)$")
 
 qt_add_library(finances-testlib OBJECT
+    ${CMAKE_CURRENT_LIST_DIR}/uitest.h ${CMAKE_CURRENT_LIST_DIR}/uitest.cpp
     ${UI_SOURCES}
 )
 

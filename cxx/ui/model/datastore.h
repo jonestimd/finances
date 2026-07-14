@@ -10,8 +10,6 @@
 #include "securitystore.h"
 #include "transactionstore.h"
 
-class ConnectionDialog;
-
 class DataStore : public QObject {
     Q_OBJECT
     ServiceContext *services;
