@@ -136,8 +136,7 @@ void ConnectionDialog::testConnection() {
         {
             // TODO also check non-admin for create?
             ConnectionSettings testSettings = create ? settings.toAdminSchema() : settings;
-            auto db = QSqlDatabase::addDatabase(testSettings.dbType, TEST_DB_NAME);// #define NAME_PROP "InputName"
-
+            auto db = QSqlDatabase::addDatabase(testSettings.dbType, TEST_DB_NAME);
             if (testSettings.openDatabase(db)) {
                 emit statusChanged(tr("Successful connection"));
                 db.close();
