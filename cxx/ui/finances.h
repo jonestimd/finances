@@ -99,7 +99,7 @@ namespace finances {
     bool ensureExtension(QString& name, const QList<QString> extensions);
 
     QLineEdit* openFileInput(QWidget* parent, const QString caption = {}, const QString filter = {});
-    QLineEdit* saveFileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, bool* replaceConfirmed = nullptr);
+    QLineEdit* saveFileInput(QWidget* parent, const QString caption = {}, const QString filter = {}, bool* replaceConfirmed = nullptr, bool* create = nullptr);
     QLineEdit* maskInput(QWidget* parent, const QString& mask);
     QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText);
     QLineEdit* passwordInput(QWidget* parent);

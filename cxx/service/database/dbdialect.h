@@ -28,7 +28,9 @@
 #define SQLITE_DRIVER "QSQLITE"
 
 #define PG_ROOT_SCHEMA "postgres"
+#define PG_ROOT_USER "postgres"
 #define MYSQL_ROOT_SCHEMA "mysql"
+#define MYSQL_ROOT_USER "root"
 
 #define IS_PG(db) (db.driverName() == PG_DRIVER)
 #define IS_MYSQL(db) (db.driverName() == MYSQL_DRIVER)

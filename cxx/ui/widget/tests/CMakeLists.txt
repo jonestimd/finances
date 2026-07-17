@@ -61,3 +61,4 @@ endfunction()
 
 add_widget_test(treeview)
 add_window_test(transactionswindow)
+add_window_test(connectiondialog)

@@ -21,7 +21,8 @@ namespace dialog {
         dialog.setText(QObject::tr("A file named \"%1\" already exists.\nDo you want to replace it?").arg(name));
         dialog.addButton(QObject::tr("&Replace"), QMessageBox::YesRole);
         dialog.addButton(QObject::tr("&Cancel"), QMessageBox::NoRole);
-        return dialog.exec() == QMessageBox::Yes;
+        if (dialog.exec() == -1) return false;
+        return dialog.buttonRole(dialog.clickedButton()) == QMessageBox::YesRole;
     }
 
     bool confirmDelete(QWidget *parent, const QString title, const QString message, QStringList items) {

@@ -8,6 +8,13 @@
 #include <QLabel>
 #include <QMenu>
 
+#define MYSQL_OPTION "MySQL"
+#define PG_OPTION "PostgreSQL"
+#define SQLITE_OPTION "SQLite3"
+
+#define TEST_BUTTON_ROLE QDialogButtonBox::ApplyRole
+#define CREATE_BUTTON_ROLE QDialogButtonBox::YesRole
+
 class ConnectionDialog : public QDialog {
     Q_OBJECT
 public:
@@ -18,7 +25,7 @@ public:
     };
 
 private:
-    Mode const mode;
+    bool create;
     QComboBox typeInput;
     QPushButton *testButton{};
     QPushButton *openButton{};
@@ -31,8 +38,11 @@ private:
 public:
     ConnectionDialog(QWidget *parent = nullptr, Mode mode = Mode::Open);
 
+    QString getStatus();
+
 private slots:
     void testConnection();
+    void modeChanged(bool create);
     void typeChanged(const QString& value);
     void inputChanged(QWidget* widget);
     void setStatus(const QString message);
