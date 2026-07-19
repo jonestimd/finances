@@ -72,7 +72,9 @@ public:
     QList<QString> connectionPoolNames();
 
     ConnectionPool *connectionPool(const QString& driver);
-    const ConnectionSettings settings(const QString& driver);
+    const ConnectionSettings settings(const QString& driver) const;
+    static ConnectionSettings envSettings(const char *driverName);
+    static int port(const char *driverName);
 
     CompanyDao &companyDao(const QString &driver);
     AccountDao &accountDao(const QString &driver);

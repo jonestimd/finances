@@ -59,7 +59,10 @@ function(add_service_test name)
     # )
     # install(SCRIPT ${deploy_${exec_name}})
 
-    add_test(NAME ${exec_name} COMMAND LD_LIBRARY_PATH="${SQLITE_EXTENSION_DIR}" ${exec_name})
+    add_test(NAME ${exec_name}
+        WORKING_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
+        COMMAND ${exec_name}
+    )
 endfunction()
 
 add_service_test(transactionservice)

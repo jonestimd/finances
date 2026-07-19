@@ -18,7 +18,7 @@ function(add_widget_test name)
         Qt${QT_VERSION_MAJOR}::Test
     )
 
-    add_test(NAME ${exec_name} COMMAND ${exec_name})
+    add_test(NAME ${exec_name} COMMAND ${exec_name} -platform offscreen)
 endfunction()
 
 function(add_window_test name)
@@ -56,7 +56,10 @@ function(add_window_test name)
     # )
     # install(SCRIPT ${deploy_${exec_name}})
 
-    add_test(NAME ${exec_name} COMMAND LD_LIBRARY_PATH="${SQLITE_EXTENSION_DIR}" ${exec_name})
+    add_test(NAME ${exec_name}
+        WORKING_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
+        COMMAND ${exec_name} -platform offscreen
+    )
 endfunction()
 
 add_widget_test(treeview)

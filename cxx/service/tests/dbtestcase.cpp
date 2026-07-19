@@ -25,6 +25,16 @@ static const QList<const char*> dropTableQueries = {
     "drop table if exists asset",
 };
 
+static const QHash<const QString, const char*> driverEnvSettings{
+    {PG_DRIVER, "TEST_PSQL_CONNECTION"},
+    {MYSQL_DRIVER, "TEST_MYSQL_CONNECTION"},
+};
+
+static const QHash<const QString, int> driverDefaultPort{
+    {PG_DRIVER, 5432},
+    {MYSQL_DRIVER, 3306},
+};
+
 Daos::Daos(const QString &dbType)
     : companyDao{dbType}
     , accountDao{dbType}
@@ -75,30 +85,15 @@ DbTestCase::DbTestCase()
 {
     qtcommon::registerConverters();
 
-    addConnection(SQLITE_DRIVER, {SQLITE_DRIVER, "", 0, "test.db", "", ""});
-    auto psqlConnection = qgetenv("TEST_PSQL_CONNECTION");
-    if (!psqlConnection.isEmpty()) {
-        auto props = psqlConnection.split('|');
-        if (props.length() >= 5) {
-            auto host = props[0];
-            auto port = props[1].toInt();
-            auto schema = props[2];
-            auto user = props[3];
-            auto password = props[4];
-            addConnection(PG_DRIVER, {PG_DRIVER, host, port, schema, user, password});
-        }
+    auto sqliteFile = qEnvironmentVariable("TEST_SQLITE_FILE", "file::memory:?cache=shared");
+    addConnection(SQLITE_DRIVER, {SQLITE_DRIVER, "", 0, sqliteFile, "", ""});
+    auto pgSettings = envSettings(PG_DRIVER);
+    if (pgSettings.isComplete(false)) {
+        addConnection(PG_DRIVER, pgSettings);
     }
-    auto mysqlConnection = qgetenv("TEST_MYSQL_CONNECTION");
-    if (!mysqlConnection.isEmpty()) {
-        auto props = mysqlConnection.split('|');
-        if (props.length() >= 5) {
-            auto host = props[0];
-            auto port = props[1].toInt();
-            auto schema = props[2];
-            auto user = props[3];
-            auto password = props[4];
-            addConnection(MYSQL_DRIVER, {MYSQL_DRIVER, host, port, schema, user, password});
-        }
+    auto mysqlSettings = envSettings(MYSQL_DRIVER);
+    if (mysqlSettings.isComplete(false)) {
+        addConnection(MYSQL_DRIVER, mysqlSettings);
     }
 }
 
@@ -110,8 +105,26 @@ ConnectionPool *DbTestCase::connectionPool(const QString &driver) {
     return connectionPools.value(driver);
 }
 
-const ConnectionSettings DbTestCase::settings(const QString &driver) {
+const ConnectionSettings DbTestCase::settings(const QString &driver) const {
     return connectionPools.value(driver)->settings;
+}
+
+ConnectionSettings DbTestCase::envSettings(const char* driverName) {
+    auto props = qgetenv(driverEnvSettings.value(driverName)).split('|');
+    if (props.length() >= 5) {
+        auto host = props[0];
+        auto port = props[1].toInt();
+        auto schema = props[2];
+        auto user = props[3];
+        auto password = props[4];
+        return ConnectionSettings{driverName, host, port, schema, user, password};
+    }
+    return ConnectionSettings{};
+}
+
+int DbTestCase::port(const char *driverName) {
+    auto settings = envSettings(driverName);
+    return settings.isComplete(false) ? settings.port : driverDefaultPort.value(driverName);
 }
 
 CompanyDao &DbTestCase::companyDao(const QString &driver) {

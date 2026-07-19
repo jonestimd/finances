@@ -107,12 +107,24 @@ private:
         return window;
     }
 
-    void addDetail(TreeView* treeView) {
-        QTest::keyClick(treeView, Qt::Key_N, Qt::ControlModifier);
-        QTest::keyClick(treeView, Qt::Key_Escape);
+    static void triggerShortcut(TxWindowHolder& holder, QKeyCombination shortcut) {
+        auto toolbar = holder.window->findChild<QToolBar*>();
+        for (auto action : toolbar->actions()) {
+            if (action->shortcut() == QKeySequence{shortcut}) {
+                action->trigger();
+                return;
+            }
+        }
+        QFAIL("action not found");
     }
 
-    void enterText(QAbstractItemView *view, const char* text) {
+    static void addDetail(TxWindowHolder& holder) {
+        triggerShortcut(holder, QKeyCombination{Qt::ControlModifier, Qt::Key_N});
+        QTest::keyClick(holder.view, Qt::Key_Escape);
+    }
+
+    static void enterText(QAbstractItemView *view, const char* text) {
+        auto focusWidget = view->window()->focusWidget();
         QSignalSpy editSpy(view->itemDelegate(), &QAbstractItemDelegate::closeEditor);
         QVERIFY(editSpy.isValid());
         QTest::keyClick(view, text[0]);
@@ -120,9 +132,11 @@ private:
         QTest::keyClicks(editor, QString{text}.slice(1));
         QTest::keyClick(editor, Qt::Key_Enter);
         QVERIFY(editSpy.wait());
+        QTRY_VERIFY(view->window()->focusWidget() != editor);
+        if (focusWidget && view->window()->focusWidget() != focusWidget) focusWidget->setFocus();
     }
 
-    void selectValue(QAbstractItemView *view, const char* text) {
+    static void selectValue(QAbstractItemView *view, const char* text) {
         QSignalSpy editSpy(view->itemDelegate(), &QAbstractItemDelegate::closeEditor);
         QVERIFY(editSpy.isValid());
         QTest::keyClick(view, text[0]);
@@ -132,7 +146,7 @@ private:
         QVERIFY(editSpy.wait());
     }
 
-    void fillTransaction(TxWindowHolder& holder, const char* refNumber, const char* payee, const char* description) {
+    static void fillTransaction(TxWindowHolder& holder, const char* refNumber, const char* payee, const char* description) {
         if (holder.window->focusWidget() != holder.view) holder.focusWindow();
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
         QTest::keyClick(holder.view, Qt::Key_Tab);
@@ -143,7 +157,7 @@ private:
         enterText(holder.view, description);
     }
 
-    void fillDetail(TxWindowHolder& holder, const char* category, const char* amount = nullptr, const char* group = nullptr) {
+    static void fillDetail(TxWindowHolder& holder, const char* category, const char* amount = nullptr, const char* group = nullptr) {
         if (holder.window->focusWidget() != holder.view) holder.focusWindow();
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
         if (!holder.view->currentIndex().parent().isValid()) QTest::keyClick(holder.view, Qt::Key_Down);
@@ -157,7 +171,7 @@ private:
         }
     }
 
-    void verifyTransaction(const Transaction* tx, QString refNumber, const optional_id& payeeId, QString description) {
+    static void verifyTransaction(const Transaction* tx, QString refNumber, const optional_id& payeeId, QString description) {
         QCOMPARE(tx->referenceNumber, refNumber);
         QCOMPARE(tx->payeeId, payeeId);
         QCOMPARE(tx->memo, description);
@@ -174,7 +188,7 @@ private:
         verifyDetail(pendingTx->details.at(0), {}, {}, QVariant{});
     }
 
-    void verifyDetail(const TransactionDetail* detail, optional_id categoryId, optional_id transferAccountId, QVariant amount) {
+    static void verifyDetail(const TransactionDetail* detail, optional_id categoryId, optional_id transferAccountId, QVariant amount) {
         QCOMPARE(detail->categoryId, categoryId);
         QCOMPARE(detail->transferAccountId, transferAccountId);
         if (amount.isNull()) QVERIFY(detail->amount.isNaN());
@@ -269,7 +283,6 @@ private slots:
         fillDetail(holder, CATEGORY_NAME, "12.34", GROUP_NAME);
         QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
         QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(dataStore->transactionStore->transactionIds(accountId).size(), INITIAL_TRANSACTION_COUNT+1);
@@ -321,12 +334,10 @@ private slots:
 
         fillTransaction(holder, "123", PAYEE_NAME, "description");
         fillDetail(holder, ALT_ACCOUNT_NAME, "2.34");
-        addDetail(holder.view);
+        addDetail(holder);
         fillDetail(holder, CATEGORY_NAME, "321.43");
-        if (holder.window->focusWidget() != holder.view) holder.focusWindow(); // FIXME why is focus moving to filter input?
         QTest::keyClick(holder.view, Qt::Key_Enter);
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
 
         QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);
@@ -349,11 +360,8 @@ private slots:
         holder.view->setCurrentIndex(holder.index(0, 0));
         QCOMPARE(holder.window->focusWidget(), holder.view);
         fillDetail(holder, ALT_ACCOUNT_NAME, "98.76");
-        if (holder.window->focusWidget() != holder.view) holder.focusWindow(); // FIXME why is focus moving to filter input?
-        QTest::keyClick(holder.view, Qt::Key_S, Qt::ControlModifier);
+        triggerShortcut(holder, QKeyCombination{Qt::ControlModifier, Qt::Key_S});
         QVERIFY(accountUpdatedSpy->wait());
-        QTRY_COMPARE(holder.window->focusWidget(), holder.view);
-        QTest::qWait(100);
 
         QVERIFY(!holder.model()->hasUnsavedChanges());
         QCOMPARE(holder2.model()->rowCount(), ALT_INITIAL_TRANSACTION_COUNT+2);

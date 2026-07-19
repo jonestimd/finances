@@ -1,0 +1,93 @@
+# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: CTest
+env:
+  QT_DIR: "/opt/Qt"
+  QT_VERSION: "6.11.1"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_DIR: ${{ github.workspace }}
+      BUILD_DIR: ${{ github.workspace }}/build
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install dev libs
+      shell: bash
+      run: sudo apt-get install -y libsqlite3-dev libpq-dev libmysqlclient-dev
+
+    - name: Create test databases
+      run: |
+        sudo sed -i -e "/^local .*\bpostgres\b/s/\bpeer$/trust/" /etc/postgresql/16/main/pg_hba.conf
+        sudo systemctl start postgresql.service
+        psql -h /var/run/postgresql -U postgres \
+            -c "create database test_finances" \
+            -c "create user test_finances with password 'test_finances'" \
+            -c "alter database test_finances owner to test_finances"
+        sudo sh -c 'echo "[mysqld]\nlog-bin-trust-function-creators=TRUE" > /etc/mysql/mysql.conf.d/99-functions.cnf'
+        sudo systemctl start mysql.service
+        mysql -S /var/run/mysqld/mysqld.sock -u root --password=root mysql \
+            -e "create database test_finances;" \
+            -e "create user test_finances identified by 'test_finances';" \
+            -e "grant all on test_finances.* to test_finances;"
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ env.QT_VERSION }}
+        host: linux
+        arch: linux_gcc_64
+        target: desktop
+        dir: /opt
+        cache: true
+        setup-python: false
+        archives: 'qtbase icu'
+        modules: 'qt5compat debug_info'
+        source: true
+        src-archives: 'qtbase'
+
+    - name: Compile Qt SQL drivers
+      run: |
+        export QT_PREFIX=$QT_DIR/$QT_VERSION
+        cd $QT_PREFIX/Src/qtbase/src/plugins/sqldrivers
+        mkdir build
+        cd build
+        cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_PREFIX/gcc_64 -DFEATURE_system_sqlite=ON
+        cmake --build .
+        cmake --install .
+
+    - name: Configure CMake and build
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      working-directory: ${{ env.SOURCE_DIR }}
+      env:
+        CMAKE_PREFIX_PATH: $${{ env.QT_DIR }}/$QT_VERSION/gcc_64/lib/cmake
+      run: |
+        cmake -S . -B ${{ env.BUILD_DIR }} -G Ninja
+        cmake --build ${{ env.BUILD_DIR }} -v
+
+    - name: Test
+      working-directory: ${{ env.BUILD_DIR }}
+      env:
+        MYSQL_ROOT_PASSWORD: root
+        QT_LOGGING_RULES: 'sql.debug=false;sql.info=false;'
+        TEST_PSQL_CONNECTION: '127.0.0.1|5432|test_finances|test_finances|test_finances'
+        TEST_MYSQL_CONNECTION: '127.0.0.1|3306|test_finances|test_finances|test_finances'
+      run: ctest
+
+    - name: Upload test logs
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-logs
+        path: build/Testing/Temporary/LastTest.log
+        retention-days: 2
+        overwrite: true

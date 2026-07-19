@@ -133,7 +133,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
 {
     connect(store, SIGNAL(accountLoaded(domain_id)), this, SLOT(accountLoaded(domain_id)));
     connect(store, SIGNAL(accountUpdated(domain_id)), this, SLOT(accountUpdated(domain_id)));
-    connect(store, SIGNAL(transactionsSaved(QList<const PendingTransaction*>)), this, SLOT(transactionsSaved(QList<const PendingTransaction*>)), Qt::DirectConnection);
+    connect(store, SIGNAL(transactionsSaved(QList<const PendingTransaction*>)), this, SLOT(transactionsSaved(QList<const PendingTransaction*>)));
     connect(store, SIGNAL(valuesUpdated(QList<domain_id>)), this, SLOT(transactionsUpdated(QList<domain_id>)), Qt::DirectConnection);
     connect(&store->detailStore, SIGNAL(valuesUpdated(QList<domain_id>)), this, SLOT(detailsUpdated(QList<domain_id>)), Qt::DirectConnection);
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
@@ -173,12 +173,8 @@ int TransactionTableModel::childCount(const QModelIndex &parent) const {
     return parent.isValid() ? getRow(parent)->detailIds.size() : rootIds.count();
 }
 
-PendingTransaction *TransactionTableModel::pendingTransaction(const QModelIndex &index) const {
-    return pendingAdds().at(index.row() - rootIds.count());
-}
-
 const QList<TransactionDetail*> TransactionTableModel::pendingDetails(const QModelIndex &parent) const {
-    if (isPendingAdd(parent)) return pendingTransaction(parent)->details;
+    if (isPendingAdd(parent)) return pendingAdd(parent)->details;
     return newDetails.value(parent.row(), QList<TransactionDetail*>());
 }
 
@@ -289,7 +285,7 @@ int TransactionTableModel::rowType(const QModelIndex &index) const {
 
 const TransactionDetail *TransactionTableModel::getDetail(const QModelIndex &index) const {
     if (isPendingAdd(index.parent())) {
-        return pendingTransaction(index.parent())->details.at(index.row());
+        return pendingAdd(index.parent())->details.at(index.row());
     }
     auto txDetailIds = getRow(index.parent())->detailIds;
     if (index.row() < txDetailIds.length()) {
@@ -568,7 +564,7 @@ QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {
         auto rowIndex = rowCount(parent);
         beginInsertRows(parent, rowIndex, rowIndex);
         if (isPendingAdd(parent)) {
-            pendingTransaction(parent)->details.append(new TransactionDetail);
+            pendingAdd(parent)->details.append(new TransactionDetail);
         } else {
             if (!newDetails.contains(parent.row())) newDetails.insert(parent.row(), QList<TransactionDetail*>());
             newDetails[parent.row()].append(new TransactionDetail(getRow(parent)->id.value()));

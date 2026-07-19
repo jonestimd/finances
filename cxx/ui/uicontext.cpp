@@ -3,19 +3,24 @@
 #include <QThread>
 
 class WindowMover : public QObject {
-    TransactionsWindow *const window;
+    TransactionsWindow* window;
     const QList<TransactionsWindow*> &windows;
     const QRect requestorRect;
     int waitCount{0}; // number of ignored events
 
-public:
-    QMetaObject::Connection connection;
+    QMetaObject::Connection waitConnection;
+    QMetaObject::Connection closeConnection;
 
+public:
     WindowMover(TransactionsWindow *window, const QList<TransactionsWindow*> &windows, QRect requestorRect)
         : window{window}
         , windows{windows}
         , requestorRect{requestorRect}
-    {}
+    {
+        auto dispatcher = QThread::currentThread()->eventDispatcher();
+        waitConnection = connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, this, &WindowMover::exposeWindow);
+        closeConnection = connect(window, &AppWindow::closed, this, &WindowMover::cleanup);
+    }
 
     void exposeWindow() {
         if (window->frameGeometry() != window->geometry() || waitCount++ == 10) { // wait till window is decorated
@@ -31,9 +36,15 @@ public:
                     }
                 }
             }
-            disconnect(connection);
-            deleteLater();
+            cleanup();
         }
+    }
+
+private:
+    void cleanup() {
+        disconnect(waitConnection);
+        disconnect(closeConnection);
+        deleteLater();
     }
 };
 
@@ -88,9 +99,7 @@ TransactionsWindow *UiContext::showTransactions(domain_id accountId, const QRect
     auto window = new TransactionsWindow(this, model, !accountLoaded);
     window->show();
     if (!transactionsWindows.isEmpty() || !requestorRect.isEmpty()) {
-        auto mover = new WindowMover(window, transactionsWindows, requestorRect);
-        auto dispatcher = QThread::currentThread()->eventDispatcher();
-        mover->connection = connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, mover, &WindowMover::exposeWindow);
+        new WindowMover(window, transactionsWindows, requestorRect);
     }
     transactionsWindows.append(window);
     return window;

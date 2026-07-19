@@ -8,7 +8,9 @@ add_subdirectory(service/)
 add_subdirectory(ui/)
 add_subdirectory(tests/)
 
-qt_add_translations(finances
-    TS_FILE_DIR ui/resources/i18n
-    QM_FILES_OUTPUT_VARIABLE qm_files
-)
+if(Qt6LinguistTools_FOUND)
+  qt_add_translations(finances
+      TS_FILE_DIR ui/resources/i18n
+      QM_FILES_OUTPUT_VARIABLE qm_files
+  )
+endif()

@@ -28,5 +28,5 @@ void TestDecimal::isValid() {
     QVERIFY(!variant.isNull());
 }
 
-QTEST_MAIN(TestDecimal)
+QTEST_APPLESS_MAIN(TestDecimal)
 #include "test_decimal.moc"

@@ -1,3 +1,4 @@
+#include "service/tests/dbtestcase.h"
 #include "tests/uitest.h"
 #include "ui/widget/accountswindow.h"
 #include "ui/widget/connectiondialog.h"
@@ -12,8 +13,6 @@
 #include <QTimer>
 
 #define LOCALHOST "127.0.0.1"
-#define MYSQL_PORT 3306
-#define PG_PORT 54320
 
 #define SQLITE_DB_FILE "testsqlite.dbfin"
 
@@ -33,6 +32,7 @@ static QString randomString(int length) {
 }
 
 static QString getMysqlPassword() {
+    if (qEnvironmentVariableIsSet("MYSQL_ROOT_PASSWORD")) return qEnvironmentVariable("MYSQL_ROOT_PASSWORD");
     QProcess docker{};
     docker.start("docker", {"logs", qEnvironmentVariable("TEST_DOCKER_MYSQL", "mysql-finances-test")});
     Q_ASSERT(docker.waitForFinished(2000));
@@ -46,10 +46,14 @@ static QString getMysqlPassword() {
 
 class TestConnectionDialog : public QObject {
     Q_OBJECT
-    const QString varRunPath = qEnvironmentVariable("TEST_VAR_RUN", "/var/run")
+    const QString pgSocketPath = qEnvironmentVariable("TEST_PG_SOCKET_PATH", "/var/run/postgresql")
+            .replace(QRegularExpression{"^~"}, qEnvironmentVariable("HOME"));
+    const QString mysqlSocketPath = qEnvironmentVariable("TEST_MYSQL_SOCKET_PATH")
             .replace(QRegularExpression{"^~"}, qEnvironmentVariable("HOME"));
     const QString testPassword{randomString(20)};
     const QString mySqlPassword{getMysqlPassword()};
+    int pgPort{DbTestCase::port(PG_DRIVER)};
+    int mysqlPort{DbTestCase::port(MYSQL_DRIVER)};
 
     void selectDbType(ConnectionDialog* dialog, const QString name) {
         dialog->findChild<QComboBox*>()->setCurrentText(name);
@@ -204,7 +208,7 @@ private slots:
         setInputText(&dialog, SCHEMA_INPUT, SQLITE_DB_FILE);
         answerConfirmReplace(&dialog, QMessageBox::NoRole);
 
-        QVERIFY(dialog.isActiveWindow());
+        QVERIFY(dialog.isVisible());
         QVERIFY(!uitest::findWindow<AccountsWindow>());
         dialog.close();
         QCOMPARE(QFile{SQLITE_DB_FILE}.size(), 0);
@@ -231,7 +235,7 @@ private slots:
     }
 
     void init_createPostgres() {
-        ConnectionSettings setting{PG_DRIVER, QString{varRunPath}.append("/postgresql"), PG_PORT, PG_ROOT_SCHEMA, PG_ROOT_USER, ""};
+        ConnectionSettings setting{PG_DRIVER, pgSocketPath, pgPort, PG_ROOT_SCHEMA, PG_ROOT_USER, ""};
         auto db = setting.connect();
         QSqlQuery query{db};
         query.exec("drop database " TEST_SCHEMA);
@@ -247,14 +251,14 @@ private slots:
         dialog.show();
         selectDbType(&dialog, PG_OPTION);
         setInputText(&dialog, "host", LOCALHOST);
-        setInputText(&dialog, "port", QString::number(PG_PORT));
+        setInputText(&dialog, "port", QString::number(pgPort));
         setInputText(&dialog, "user", TEST_SCHEMA);
         setInputText(&dialog, "password", testPassword);
         setInputText(&dialog, SCHEMA_INPUT, TEST_SCHEMA);
         QCOMPARE(getInput(&dialog, "adminUser")->text(), PG_ROOT_USER);
         QCOMPARE(getButton(&dialog, TEST_BUTTON_ROLE)->isEnabled(), true);
         QCOMPARE(getButton(&dialog, CREATE_BUTTON_ROLE)->isEnabled(), true);
-        setInputText(&dialog, "adminSocket", QString{varRunPath}.append("/postgresql"));
+        setInputText(&dialog, "adminSocket", pgSocketPath);
         clickButton(&dialog, CREATE_BUTTON_ROLE);
         QVERIFY(acceptedSpy.wait());
 
@@ -265,7 +269,7 @@ private slots:
     }
 
     void init_createMysql() {
-        ConnectionSettings setting{MYSQL_DRIVER, LOCALHOST, MYSQL_PORT, MYSQL_ROOT_SCHEMA, MYSQL_ROOT_USER, mySqlPassword};
+        ConnectionSettings setting{MYSQL_DRIVER, LOCALHOST, mysqlPort, MYSQL_ROOT_SCHEMA, MYSQL_ROOT_USER, mySqlPassword};
         auto db = setting.connect();
         QSqlQuery query{db};
         query.exec("drop database " TEST_SCHEMA);
@@ -281,7 +285,7 @@ private slots:
         dialog.show();
         selectDbType(&dialog, MYSQL_OPTION);
         setInputText(&dialog, "host", LOCALHOST);
-        setInputText(&dialog, "port", QString::number(MYSQL_PORT));
+        setInputText(&dialog, "port", QString::number(mysqlPort));
         setInputText(&dialog, "user", TEST_SCHEMA);
         setInputText(&dialog, "password", testPassword);
         setInputText(&dialog, SCHEMA_INPUT, TEST_SCHEMA);
@@ -289,6 +293,7 @@ private slots:
         QCOMPARE(getButton(&dialog, TEST_BUTTON_ROLE)->isEnabled(), true);
         QCOMPARE(getButton(&dialog, CREATE_BUTTON_ROLE)->isEnabled(), true);
         setInputText(&dialog, "adminPassword", mySqlPassword);
+        setInputText(&dialog, "adminSocket", mysqlSocketPath);
         clickButton(&dialog, CREATE_BUTTON_ROLE);
         QVERIFY(acceptedSpy.wait());
 

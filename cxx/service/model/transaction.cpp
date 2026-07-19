@@ -41,9 +41,10 @@ QString Transaction::toString() const {
 
 PendingTransaction::PendingTransaction() {}
 
-PendingTransaction::PendingTransaction(domain_id accountId) : Transaction{accountId} {
-    details.append(new TransactionDetail);
-}
+PendingTransaction::PendingTransaction(domain_id accountId)
+    : Transaction{accountId}
+    , details{new TransactionDetail}
+{}
 
 PendingTransaction::PendingTransaction(const PendingTransaction &that) : Transaction(that) {
     for (auto detail : std::as_const(that.details)) details.append(new TransactionDetail(*detail));

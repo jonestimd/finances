@@ -31,5 +31,5 @@ void TestComboBoxModel::sortsOptions() {
     QCOMPARE(names.join(","), "aaa,Bbb,bbb,zzz");
 }
 
-QTEST_MAIN(TestComboBoxModel)
+QTEST_APPLESS_MAIN(TestComboBoxModel)
 #include "test_comboboxmodel.moc"

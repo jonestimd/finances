@@ -1,6 +1,7 @@
+#TEST_SQLITE_FILE=test.db
 TEST_PSQL_CONNECTION=127.0.0.1|54320|test_finances|test_finances|test_finances
 TEST_MYSQL_CONNECTION=127.0.0.1|3306|test_finances|test_finances|test_finances
-TEST_VAR_RUN=~/.docker/mnt
+TEST_PG_SOCKET_PATH=~/.docker/mnt/postgresql
 QT_LOGGING_RULES=sql.debug=false;sql.info=false;
 #QT_DEBUG_PLUGINS=1
 #QT_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt6/plugins

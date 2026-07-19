@@ -40,7 +40,6 @@ protected:
 
     int childCount(const QModelIndex &index) const override;
 
-    PendingTransaction *pendingTransaction(const QModelIndex &index) const;
     const QList<TransactionDetail*> pendingDetails(const QModelIndex &parent) const;
 
     virtual qsizetype insertIndex(domain_id id) override;

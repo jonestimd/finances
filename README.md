@@ -1,4 +1,6 @@
 # Finances
+[![CTest](https://github.com/jonestimd/finances/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/jonestimd/finances/actions/workflows/run-tests.yml)
+
 An application for tracking personal finances using a SQL database.
 
 ## Database Support
@@ -16,7 +18,7 @@ and does not require a separate installation.
 ## Compile MySql and SQLite3 QT plugins
 
 * Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
-* Install `libsqlite3-dev`.
+* Install `libsqlite3-dev`, `libpq-dev` and `libmysqlclient-dev`
 * Compile and install the drivers:
 
 ```sh
@@ -38,7 +40,8 @@ or `CMake`.
 Prerequisites for building:
 * Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
 * Install `CMake`
-* Set the `CMAKE_PREFIX_PATH` env variable to the location of the Qt `cmake` executable
+* Set the `CMAKE_PREFIX_PATH` env variable to the location of the Qt `cmake` extensions
+  (e.g. `<QT install dir>/<QT version>/gcc_64/lib/cmake`)
 * If using Ninja
   * install Ninja
   * or add Qt's ninja to your `PATH` (e.g. `alias ninja=${QT_DIR}/../Tools/Ninja/ninja`)
@@ -57,20 +60,33 @@ The compiled executable will be at `out/finances`.
 ### Running tests with CTest
 
 ```sh
-cd build/Desktop_Qt_6.11.0-Debug/cxx
+cd out
 ctest
 ```
 
 #### Test environment variables
 
+The tests use the SQLite driver to interact with the database.  By default, an
+in memory database is used.  To use a file for the test database, set the
+`TEST_SQLITE_FILE` environment variable to the file name.
+
+The service tests will also verify compatability with Postgresql and MySQL if connection
+settings are provided by the `TEST_PSQL_CONNECTION` and `TEST_MYSQL_CONNECTION`
+environment variables.  The format for the values is:
+
+> *host*|*port*|*schema*|*user*|*password*
+
 **NOTE**: For MySQL using IPv4, use `127.0.0.1` instead of `localhost` for *host*.
 
-<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto">
-<pre>
-TEST_PSQL_CONNECTION=<em>host</em>|<em>port</em>|<em>schema</em>|<em>user</em>|<em>password</em>
-TEST_MYSQL_CONNECTION=<em>host</em>|<em>port</em>|<em>schema</em>|<em>user</em>|<em>password</em>
+The following environment variables also affect the tests.
+
+```sh
+# Don't show SQL queries and bindings:
 QT_LOGGING_RULES=sql.debug=false;sql.info=false
-QT_DEBUG_PLUGINS=1
-QT_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt6/plugins
-</pre>
-</div>
+
+# The following values can start with ~ to indicate your HOME directory
+# Directory containing the Postgres unix socket file (defaults to /var/run/postgresql)
+TEST_PG_SOCKET_PATH=
+# Directory containing the MySQL unix socket file (not used by default)
+TEST_MYSQL_SOCKET_PATH=
+```

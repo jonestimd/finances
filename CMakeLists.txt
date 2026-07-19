@@ -30,7 +30,7 @@ find_file(MAKE make ${PATH})
 find_file(COPY cp ${PATH})
 
 ExternalProject_Add(sqlite3
-    GIT_REPOSITORY git@github.com:sqlite/sqlite.git
+    GIT_REPOSITORY https://github.com/sqlite/sqlite.git
     GIT_TAG release
     CONFIGURE_COMMAND <SOURCE_DIR>/configure --disable-tcl
     BUILD_IN_SOURCE true
@@ -48,7 +48,7 @@ add_custom_target(decimal.so
 )
 
 ExternalProject_Add(qdecimal
-    GIT_REPOSITORY git@github.com:semihc/qdecimal.git
+    GIT_REPOSITORY https://github.com/semihc/qdecimal.git
     CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} -DCMAKE_C_FLAGS=-fPIC
     INSTALL_COMMAND ""
     BUILD_BYPRODUCTS
@@ -70,7 +70,10 @@ set_target_properties(libqdecimal
 )
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgetsl)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Concurrent Test LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED
+    COMPONENTS Widgets Sql Concurrent Test
+    OPTIONAL_COMPONENTS LinguistTools
+)
 find_package(SQLite3 REQUIRED)
 
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en)

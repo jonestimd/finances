@@ -4,4 +4,5 @@
 /.cache/
 /CMakeCache.txt
 /.qtcreator
+/.local
 .*.swp
