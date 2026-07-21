@@ -1,5 +1,5 @@
 # Finances
-[![CTest](https://github.com/jonestimd/finances/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/jonestimd/finances/actions/workflows/run-tests.yml)
+[![CTest](https://github.com/jonestimd/finances/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/jonestimd/finances/actions/workflows/tests.yml)
 
 An application for tracking personal finances using a SQL database.
 
