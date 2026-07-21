@@ -51,6 +51,7 @@ protected:
 private:
     void emitTransactionsUpdated(const QList<const Transaction*> deletes, const TransactionsData& updates);
     void emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates);
+    Q_INVOKABLE void applyUpdates(const QList<const PendingTransaction*> adds, QSharedPointer<TransactionUpdate> changes, TransactionsData updateData);
 };
 
 #endif // TRANSACTIONSTORE_H

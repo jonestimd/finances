@@ -24,28 +24,34 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
         adds.removeIf([](const PendingTransaction* tx) -> bool { return tx->isEmpty(); });
         auto deletes = model->unsavedDeletes(txRow);
         auto detailDeletes = model->unsavedDetailDeletes(txRow);
-        TransactionUpdate changes{model->unsavedChanges(txRow), adds, deletes,
-                                  model->unsavedDetailChanges(txRow), model->unsavedDetailAdds(txRow), detailDeletes};
-        auto updateData = service->update(changes, user);
-        emitTransactionsUpdated(changes.deletes, updateData);
-        emitDetailsUpdated(changes, updateData);
-        if (!adds.isEmpty()) emit transactionsSaved(adds);
-        for (const auto& id : std::as_const(updateData.deletedIds)) {
-            if (contains(id)) deletes.append(value(id));
-        }
-        QSet<domain_id> accountIds;
-        // TODO filter details for unloaded accounts
-        detailStore.update(updateData, detailDeletes, deletes);
-        for (auto detail: std::as_const(updateData.details)) {
-            auto tx = value(detail->transactionId);
-            if (tx) accountIds.insert(tx->accountId);
-        }
-        // TODO use shared status bar model
-        for (auto tx : updateData.transactions + deletes) accountIds.insert(tx->accountId);
-        // TODO filter tx's for unloaded accounts
-        update(updateData.transactions, deletes);
-        for (auto accountId : accountIds) emit accountUpdated(accountId);
+        QSharedPointer<TransactionUpdate> changes{
+            new TransactionUpdate{model->unsavedChanges(txRow), adds, deletes,
+                                  model->unsavedDetailChanges(txRow), model->unsavedDetailAdds(txRow), detailDeletes}};
+        auto updateData = service->update(*changes, user);
+        QMetaObject::invokeMethod(this, &TransactionStore::applyUpdates, Qt::QueuedConnection, adds, changes, updateData);
     });
+}
+
+void TransactionStore::applyUpdates(const QList<const PendingTransaction*> adds, QSharedPointer<TransactionUpdate> changes, TransactionsData updateData) {
+    emitTransactionsUpdated(changes->deletes, updateData);
+    emitDetailsUpdated(*changes, updateData);
+    if (!adds.isEmpty()) emit transactionsSaved(adds);
+    auto deletes = changes->deletes;
+    for (const auto& id : std::as_const(updateData.deletedIds)) {
+        if (contains(id)) deletes.append(value(id));
+    }
+    QSet<domain_id> accountIds;
+    // TODO filter details for unloaded accounts
+    auto detailDeletes = changes->detailDeletes;
+    detailStore.update(updateData, detailDeletes, deletes);
+    for (auto detail: std::as_const(updateData.details)) {
+        auto tx = value(detail->transactionId);
+        if (tx) accountIds.insert(tx->accountId);
+    }
+    for (auto tx : updateData.transactions + deletes) accountIds.insert(tx->accountId);
+    // TODO filter tx's for unloaded accounts
+    update(updateData.transactions, deletes);
+    for (auto accountId : accountIds) emit accountUpdated(accountId);
 }
 
 void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId) {
