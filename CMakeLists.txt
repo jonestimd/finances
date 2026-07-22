@@ -135,6 +135,7 @@ target_link_libraries(finances PRIVATE
     libqdecimal
     libdecnumber
     finances-ui
+    finances-service
 )
 
 add_subdirectory(cxx/)

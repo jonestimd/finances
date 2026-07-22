@@ -1,14 +1,8 @@
-get_target_property(DB_TEST_SOURCES finances SOURCES)
-list(FILTER DB_TEST_SOURCES INCLUDE REGEX ".*/service/.*")
-
 qt_add_library(dbtestcase OBJECT
     dbtestcase.h dbtestcase.cpp
-    ${DB_TEST_SOURCES}
 )
 
-set_target_properties(dbtestcase PROPERTIES
-    COMPILE_DEFINITIONS __FINANCES_TEST__
-)
+add_dependencies(dbtestcase finances-service)
 
 target_link_libraries(dbtestcase
     Qt${QT_VERSION_MAJOR}::Core
@@ -26,7 +20,7 @@ target_include_directories(dbtestcase PRIVATE
 function(add_service_test name)
     set(exec_name "test_${name}")
     qt_add_executable(${exec_name} ${exec_name}.cpp ${ARGN})
-    add_dependencies(${exec_name} qdecimal dbtestcase decimal.so)
+    add_dependencies(${exec_name} qdecimal decimal.so)
     set_target_properties(${exec_name} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
     )
@@ -44,6 +38,7 @@ function(add_service_test name)
     target_link_libraries(${exec_name} PRIVATE
         Qt${QT_VERSION_MAJOR}::Test
         dbtestcase
+        finances-service
     )
 
     # install(TARGETS ${exec_name}

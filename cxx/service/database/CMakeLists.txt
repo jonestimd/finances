@@ -1,4 +1,4 @@
-target_sources(finances
+target_sources(finances-service
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/accountdao.h ${CMAKE_CURRENT_LIST_DIR}/accountdao.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorydao.h ${CMAKE_CURRENT_LIST_DIR}/categorydao.cpp

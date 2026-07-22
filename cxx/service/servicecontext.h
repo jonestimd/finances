@@ -28,11 +28,7 @@ public:
     TransactionDetailService transationDetailService;
     TransactionService transationService;
 
-#ifndef __FINANCES_TEST__
-private:
-#endif
     ServiceContext(ConnectionPool *pool);
-public:
     ServiceContext(const ConnectionSettings &settings);
     ~ServiceContext();
 

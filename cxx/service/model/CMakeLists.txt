@@ -1,4 +1,4 @@
-target_sources(finances
+target_sources(finances-service
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/account.h ${CMAKE_CURRENT_LIST_DIR}/account.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accounttype.h ${CMAKE_CURRENT_LIST_DIR}/accounttype.cpp
