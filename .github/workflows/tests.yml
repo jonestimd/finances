@@ -72,7 +72,7 @@ jobs:
         CMAKE_PREFIX_PATH: $${{ env.QT_DIR }}/$QT_VERSION/gcc_64/lib/cmake
       run: |
         cmake -S . -B ${{ env.BUILD_DIR }} -G Ninja
-        cmake --build ${{ env.BUILD_DIR }} -v
+        cmake --build ${{ env.BUILD_DIR }}
 
     - name: Test
       working-directory: ${{ env.BUILD_DIR }}
