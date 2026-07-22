@@ -1,4 +1,4 @@
-target_sources(finances
+target_sources(finances-ui
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.h ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accountstore.h ${CMAKE_CURRENT_LIST_DIR}/accountstore.cpp

@@ -40,28 +40,14 @@ install(TARGETS test_decimal
 
 add_test(NAME test_decimal COMMAND test_decimal)
 
-get_target_property(UI_SOURCES finances SOURCES)
-list(FILTER UI_SOURCES INCLUDE REGEX ".*/ui/.*\\.(cpp|h)$")
-
-qt_add_library(finances-testlib OBJECT
+qt_add_library(finances-uitest OBJECT
     ${CMAKE_CURRENT_LIST_DIR}/uitest.h ${CMAKE_CURRENT_LIST_DIR}/uitest.cpp
-    ${UI_SOURCES}
 )
 
-set_target_properties(finances-testlib PROPERTIES
-    COMPILE_DEFINITIONS __FINANCES_TEST__
-)
-
-target_link_libraries(finances-testlib PUBLIC
+target_link_libraries(finances-uitest PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Gui
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Sql
-    ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
-    ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
-    ${QT_SQLITE_OBJ_FILE}
 )
 
-target_include_directories(finances-testlib PRIVATE
+target_include_directories(finances-uitest PRIVATE
     $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
 )

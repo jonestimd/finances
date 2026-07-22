@@ -1,4 +1,4 @@
-target_sources(finances
+target_sources(finances-ui
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/detailvalidator.h ${CMAKE_CURRENT_LIST_DIR}/detailvalidator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/validatorfactory.h ${CMAKE_CURRENT_LIST_DIR}/validatorfactory.cpp

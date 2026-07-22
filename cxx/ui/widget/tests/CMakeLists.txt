@@ -24,7 +24,7 @@ endfunction()
 function(add_window_test name)
     set(exec_name "test_${name}")
     qt_add_executable(${exec_name} ${exec_name}.cpp ${PROJECT_RESOURCES} ${ARGN})
-    add_dependencies(${exec_name} qdecimal decimal.so dbtestcase finances-testlib)
+    add_dependencies(${exec_name} qdecimal decimal.so dbtestcase finances-ui finances-uitest)
     set_target_properties(${exec_name} PROPERTIES
         COMPILE_DEFINITIONS __FINANCES_TEST__
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
@@ -40,7 +40,8 @@ function(add_window_test name)
     target_link_libraries(${exec_name} PRIVATE
         Qt${QT_VERSION_MAJOR}::Test
         dbtestcase
-        finances-testlib
+        finances-ui
+        finances-uitest
     )
 
     # install(TARGETS ${exec_name}

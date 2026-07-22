@@ -134,6 +134,7 @@ target_link_libraries(finances PRIVATE
     # comment out next 2 lines for initial build with Ninja
     libqdecimal
     libdecnumber
+    finances-ui
 )
 
 add_subdirectory(cxx/)
