@@ -1,4 +1,5 @@
 #include "securitystore.h"
+#include "ui/widget/statusmessage.h"
 
 SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore)
     : EntityStore{service, messageStore}
@@ -13,6 +14,13 @@ QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate
         }
     }
     return adjusted;
+}
+
+void SecurityStore::loadAccountSecurities(EntityView *view)  {
+    doInBackground(view->statusBar.parentWidget(), tr(LOADING_ACCOUNT_SECURITIES), [=, this]() {
+        auto accountSecurities = service->getAccountSecurities();
+        emit accountSecuritiesLoaded(accountSecurities.values());
+    });
 }
 
 void SecurityStore::transactionsUpdated(const QList<TransactionChange> changes) {

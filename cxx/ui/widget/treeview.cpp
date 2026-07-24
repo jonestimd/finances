@@ -1,8 +1,17 @@
 #include "treeview.h"
+#include "ui/model/adapteritemmodel.h"
 #include <QPainter>
 #include <QKeyEvent>
 #include <QSortFilterProxyModel>
 #include <QHeaderView>
+
+#define SECTION_VIEW_PROP "rootSpansAllColumns"
+#define rootSpansAllColumns() property(SECTION_VIEW_PROP).toBool()
+
+TreeView::TreeView() {
+    setUniformRowHeights(true);
+    setTabKeyNavigation(true);
+}
 
 bool TreeView::childInheritsBackground() const {
     return childInheritsBackground_;
@@ -13,21 +22,43 @@ void TreeView::setChildInheritsBackground(bool value) {
     if (value) setAlternatingRowColors(false);
 }
 
-TreeView::TreeView() {
-    setUniformRowHeights(true);
-    setTabKeyNavigation(true);
+void TreeView::setRootSpansAllColumns() {
+    Q_ASSERT_X(!model()->rowCount(), "setRootSpansAllColumns", "model contains data");
+    setProperty(SECTION_VIEW_PROP, true);
+    modelResetConnection = connect(model(), SIGNAL(modelReset()), this, SLOT(modelReset()));
+    rowsInsertedConnection = connect(model(), SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(modelReset()));
+}
+
+void TreeView::setModel(QAbstractItemModel *model) {
+    if (rootSpansAllColumns()) {
+        disconnect(modelResetConnection);
+        disconnect(rowsInsertedConnection);
+    }
+    QTreeView::setModel(model);
+    if (rootSpansAllColumns()) setRootSpansAllColumns();
+}
+
+void TreeView::modelReset() {
+    auto rootRows = model()->rowCount();
+    for (int i = 0; i < rootRows; i++) setFirstColumnSpanned(i, {}, true);
+}
+
+void TreeView::rowsInserted(QModelIndex parent, int first, int last) {
+    if (!parent.isValid()) {
+        for (int i = first; i <= last; i++) setFirstColumnSpanned(i, {}, true);
+    }
 }
 
 void TreeView::drawRow(QPainter *painter, const QStyleOptionViewItem &options, const QModelIndex &index) const {
     if (childInheritsBackground_) {
-        auto rootIndex = index;
-        while (rootIndex.parent().isValid()) {
-            rootIndex = rootIndex.parent();
-        }
+        auto rootIndex = AdapterItemModel::rootIndex(index);
         if (rootIndex.row() & 1) {
             auto background = palette().color(QPalette::AlternateBase);
             painter->fillRect(options.rect, background);
         }
+    }
+    if (rootSpansAllColumns() && !index.parent().isValid()) {
+        painter->fillRect(options.rect, QColor{"yellow"});
     }
     QTreeView::drawRow(painter, options, index);
     auto gridColor = style()->styleHint(QStyle::SH_Table_GridLineColor, nullptr, this);

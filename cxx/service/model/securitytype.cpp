@@ -9,6 +9,7 @@ SecurityType::SecurityType(const char *code, const QString name)
 QHash<const QString, const SecurityType*> SecurityType::values;
 
 const SecurityType SecurityType::bond("Bond", tr("Bond"));
+const SecurityType SecurityType::cd("CD", tr("CD"));
 const SecurityType SecurityType::moneyMarket("Money Market", tr("Money Market"));
 const SecurityType SecurityType::mutualFund("Mutual Fund", tr("Mutual Fund"));
 const SecurityType SecurityType::stock("Stock", tr("Stock"));

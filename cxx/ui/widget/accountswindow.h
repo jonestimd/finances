@@ -11,7 +11,7 @@
 
 class UiContext;
 
-class AccountsWindow : public AppWindow {
+class AccountsWindow : public EntityWindow<> {
     Q_OBJECT
     UiContext *const context;
     DataStore *const dataStore;
@@ -37,8 +37,5 @@ public Q_SLOTS:
 private:
     void addCompany(const QString &name);
     Q_INVOKABLE void newCompany(const Company *company);
-
-protected:
-    const char *settingsGroup() const override;
 };
 #endif // ACCOUNTSWINDOW_H

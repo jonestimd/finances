@@ -5,7 +5,7 @@
 #include "ui/model/datastore.h"
 #include "ui/model/grouptablemodel.h"
 
-class GroupsWindow : public AppWindow {
+class GroupsWindow : public EntityWindow<> {
     Q_OBJECT
     GroupStore *store;
 
@@ -20,9 +20,6 @@ public:
 
 public Q_SLOTS:
     void setGroups(const QList<domain_id> groupIds);
-
-protected:
-    const char *settingsGroup() const override;
 };
 
 #endif // GROUPSWINDOW_H

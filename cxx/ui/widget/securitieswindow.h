@@ -6,7 +6,7 @@
 #include "ui/model/securitytablemodel.h"
 #include <QTableView>
 
-class SecuritiesWindow : public AppWindow {
+class SecuritiesWindow : public EntityWindow<> {
     Q_OBJECT
     SecurityStore *store;
     QAction *hideZeroAction{finances::iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
@@ -26,9 +26,6 @@ public Q_SLOTS:
 
 private:
     bool nonZeroShares(const QModelIndex &sourceIndex) const;
-
-protected:
-    const char *settingsGroup() const override;
 };
 
 #endif // SECURITIESWINDOW_H

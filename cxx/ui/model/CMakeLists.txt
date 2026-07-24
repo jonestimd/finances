@@ -1,6 +1,7 @@
 target_sources(finances-ui
   PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.h ${CMAKE_CURRENT_LIST_DIR}/accounttablemodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/accountsecuritymodel.h ${CMAKE_CURRENT_LIST_DIR}/accountsecuritymodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/accountstore.h ${CMAKE_CURRENT_LIST_DIR}/accountstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.h ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorystore.h ${CMAKE_CURRENT_LIST_DIR}/categorystore.cpp

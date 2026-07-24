@@ -8,13 +8,17 @@
 
 class SecurityStore : public EntityStore<Security, SecurityService> {
     Q_OBJECT
-
     QMultiHash<domain_id, const StockSplit*>securitySplits{};
 
 public:
     SecurityStore(SecurityService *service, StatusMessageStore* messageStore);
 
     QDecNumber adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const;
+
+    void loadAccountSecurities(EntityView *view);
+
+Q_SIGNALS:
+    void accountSecuritiesLoaded(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
 
 public slots:
     void transactionsUpdated(const QList<TransactionChange> changes);

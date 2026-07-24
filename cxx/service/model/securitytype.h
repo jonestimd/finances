@@ -12,6 +12,7 @@ class SecurityType : public EnumValue {
     SecurityType(const char *code, const QString name);
 public:
     static const SecurityType bond;
+    static const SecurityType cd;
     static const SecurityType moneyMarket;
     static const SecurityType mutualFund;
     static const SecurityType stock;

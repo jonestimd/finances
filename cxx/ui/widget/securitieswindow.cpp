@@ -7,7 +7,7 @@
 #define SETTINGS_GROUP "securities"
 
 SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
-    : AppWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView(), &dataStore->messageStore}
+    : EntityWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView(), &dataStore->messageStore}
     , store{dataStore->securityStore}
 {
     entityView.addActions({hideZeroAction});
@@ -17,6 +17,7 @@ SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
 
     if (store->load(&entityView, tr(LOADING_SECURITIES))) model()->setRows(store->ids());
 
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
 
@@ -51,8 +52,4 @@ bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
     auto row = model()->getRow(sourceIndex);
     auto shares = row->shares;
     return !shares.isZero() && !shares.isNegative();
-}
-
-const char *SecuritiesWindow::settingsGroup() const {
-    return SETTINGS_GROUP;
 }

@@ -12,6 +12,8 @@ public:
     SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao, StockSplitDao &stockSplitDao);
 
     QHash<domain_id, const StockSplit*> getSplits();
+
+    QMultiHash<domain_id, const AccountSecurity*> getAccountSecurities() const;
 };
 
 #endif // SECURITYSERVICE_H

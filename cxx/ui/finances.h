@@ -82,10 +82,12 @@ namespace finances {
 
     Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
 
-    QIcon materialIcon(FontIcon icon, QColor color = {});
+    QIcon materialIcon(FontIcon icon, QColor color = {}, FontIcon overlayIcon = None);
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
-    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip);
-    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut);
+    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip);
+    QAction* initAction(QAction *action, QIcon icon, const QString &text, const QString &tooltip);
+    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut);
+    QAction* initAction(QAction *action, QIcon icon, const QString &text, const QKeySequence &shortcut);
     QAction* iconAction(FontIcon icon, const QString &text, QObject *parent = nullptr);
     QAction* iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled = true);
     QAction* iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
@@ -104,6 +106,8 @@ namespace finances {
     QLineEdit *whatsThisInput(QWidget *parent, const QString& helpText);
     QLineEdit* passwordInput(QWidget* parent);
     QFrame *separator(QFrame::Shape shape = QFrame::VLine);
+
+    QFont boldFont();
 
     void setColumnResize(QHeaderView *viewHeader);
 

@@ -117,7 +117,6 @@ private:
     int pendingDeleteCount(const QModelIndex &parent) const;
 
     bool isBoldColumn(int column) const;
-    static QFont boldFont();
 
 signals:
     void dataLoaded();

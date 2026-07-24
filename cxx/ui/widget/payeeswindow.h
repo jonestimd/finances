@@ -7,7 +7,7 @@
 #include <QMainWindow>
 #include <QTableView>
 
-class PayeesWindow : public AppWindow {
+class PayeesWindow : public EntityWindow<> {
     Q_OBJECT
     PayeeStore *store;
     QAction *mergeAction;
@@ -25,8 +25,5 @@ public Q_SLOTS:
     void setPayees(const QList<domain_id> payeeIds);
     void merge();
     void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
-
-protected:
-    const char *settingsGroup() const override;
 };
 #endif // PAYEESWINDOW_H

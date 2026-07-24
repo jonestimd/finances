@@ -16,6 +16,13 @@ class TestSecurityService : public QObject {
         QCOMPARE(normalize(security->costBasis), costBasis);
     }
 
+    void verifyAccountSecurity(const AccountSecurity* summary, domain_id securityId, QDecNumber shares, QDecNumber costBasis, int transactions) {
+        QCOMPARE(summary->id.securityId, securityId);
+        QCOMPARE(summary->shares, shares);
+        QCOMPARE(summary->costBasis, costBasis);
+        QCOMPARE(summary->transactions, transactions);
+    }
+
     domain_id addSplit(const QString &driver, domain_id securityId, QDate date, int sharesIn, int sharesOut) {
         Connection conn(dbTestCase.connectionPool(driver));
         StockSplit split{};
@@ -46,7 +53,6 @@ private slots:
             QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << accountId2 << securityId << securityId2;
         }
     }
-
 
     void getAll_returnsTransactionSummary() {
         QFETCH_GLOBAL(QString, driver);
@@ -114,6 +120,30 @@ private slots:
 
         auto updated = dbTestCase.loadSecurity(driver, security->id.value());
         QCOMPARE(updated->name, security->name);
+    }
+
+    void getAccountSecurities() {
+        QFETCH_GLOBAL(SecurityService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, accountId2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-1.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"1.00"}, {"-3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId2), {"-10.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId), {"-11.00"}, {"2"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId), {"-6.00"}, {"1"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"-6.00"}, {"4"});
+
+        const auto result = service->getAccountSecurities();
+
+        const auto summaries = result.values(accountId);
+        QCOMPARE(summaries.size(), 1);
+        verifyAccountSecurity(summaries.first(), securityId2, "5", "10.00", 1);
+        const auto summaries2 = result.values(accountId2);
+        QCOMPARE(summaries2.size(), 2);
+        verifyAccountSecurity(summaries2[0], securityId2, "4", "6.00", 1);
+        verifyAccountSecurity(summaries2[1], securityId, "3", "17.00", 2);
     }
 };
 

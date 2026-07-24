@@ -17,7 +17,7 @@
 #define CLEARED_WIDTH 30
 
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
-    : AppWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
+    : EntityWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
@@ -29,6 +29,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->categoriesAction(),
         context->groupsAction(),
         context->securitiesAction(),
+        context->accountSecuritiesAction(),
     });
     QMenuBar *menuBar = new QMenuBar();
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
@@ -54,6 +55,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(security()));
     entityView.viewHeader->setSectionHidden(model->securityColumn, !security());
     settings::restoreWindowState(SETTINGS_GROUP(security()), this, QSize{800, 600}, &entityView);
 
@@ -155,6 +157,7 @@ void TransactionsWindow::accountsLoaded() {
     companiesLoaded();
     auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
     if (hidden == security()) {
+        setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(hidden));
         settings::saveWindowState(SETTINGS_GROUP(!hidden), this, &entityView);
         entityView.viewHeader->setSectionHidden(model()->securityColumn, !hidden);
         settings::restoreWindowState(SETTINGS_GROUP(hidden), this, QSize{800, 600}, &entityView);
@@ -179,9 +182,9 @@ void TransactionsWindow::clearedBalanceChanged(const QDecNumber &balance) {
     clearedBalance->setText(tr("<b>Cleared Balance:</b> %1").arg(dollarFormat(balance)));
 }
 
-const char *TransactionsWindow::settingsGroup() const {
-    return SETTINGS_GROUP(security());
-}
+// const char *TransactionsWindow::settingsGroup() const {
+//     return SETTINGS_GROUP(security());
+// }
 
 static bool isEnter(const QKeyEvent *event) {
     auto key = event->key();

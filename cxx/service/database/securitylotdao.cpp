@@ -6,8 +6,8 @@
     "    change_date timestamp not null default current_timestamp,\n" \
     "    change_user varchar(50) not null,\n" \
     "    version bigint not null,\n" \
-    "    purchase_shares numeric(19,6) not null,\n" \
-    "    adjusted_shares numeric(19,6) not null,\n" \
+    "    purchase_shares numeric(19," SHARES_PRECISION ") not null,\n" \
+    "    adjusted_shares numeric(19," SHARES_PRECISION ") not null,\n" \
     "    purchase_tx_detail_id bigint,\n" \
     "    related_tx_detail_id bigint,\n" \
     "    constraint security_lot_purchase_tx_fk foreign key (purchase_tx_detail_id) references tx_detail (id),\n" \

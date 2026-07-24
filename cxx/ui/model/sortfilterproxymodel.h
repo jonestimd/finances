@@ -2,14 +2,14 @@
 #define SORTFILTERPROXYMODEL_H
 
 #include <QSortFilterProxyModel>
-#include "ui/widget/entityview.h"
 
 class AdapterItemModel;
+class EntityView;
 
 typedef std::function<bool(const QModelIndex &sourceIndex)> AcceptRow;
 
 class SortFilterProxyModel : public QSortFilterProxyModel {
-    friend void EntityView::setModel(AdapterItemModel*);
+    friend class EntityView;
     QList<AcceptRow> acceptFunctions{};
 
 public:

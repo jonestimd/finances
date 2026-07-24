@@ -2,6 +2,7 @@
 #define UICONTEXT_H
 
 #include "ui/model/datastore.h"
+#include "ui/widget/accountsecuritieswindow.h"
 #include "ui/widget/accountswindow.h"
 #include "ui/widget/categorieswindow.h"
 #include "ui/widget/groupswindow.h"
@@ -9,38 +10,43 @@
 #include "ui/widget/securitieswindow.h"
 #include <QObject>
 
-template<class T, typename... WindowArgs>
-requires std::is_base_of_v<AppWindow, T>
-class WindowAction : public QAction {
-    T *window{};
-
-public:
-    WindowAction(QObject* context, finances::FontIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
-        : QAction(finances::materialIcon(icon), title, context)
-    {
-        finances::initAction(this, icon, title, QKeySequence(shortcut));
-        connect(this, &QAction::triggered, this, [=, this]() {
-            if (!window) {
-                window = new T(args...);
-                connect(window, SIGNAL(opened(AppWindow*)), context, SLOT(windowOpened(AppWindow*)));
-                connect(window, SIGNAL(closed(AppWindow*)), context, SLOT(windowClosed(AppWindow*)));
-            }
-            window->show();
-        });
-    }
-
-    ~WindowAction() {
-        if (window) delete window;
-    }
-};
 
 class UiContext : public QObject {
     Q_OBJECT
+
+    template<class T, typename... WindowArgs>
+        requires std::is_base_of_v<AppWindow, T>
+    class WindowAction : public QAction {
+        T *window{};
+
+    public:
+        WindowAction(UiContext* context, QIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
+            : QAction(icon, title, context)
+        {
+            finances::initAction(this, icon, title, QKeySequence(shortcut));
+            connect(this, &QAction::triggered, this, [=, this]() {
+                if (!window) {
+                    window = new T(args...);
+                    connect(window, SIGNAL(closed(AppWindow*)), context, SLOT(windowClosed(AppWindow*)));
+                }
+                context->windowOpened(window);
+                window->show();
+            });
+        }
+        WindowAction(UiContext* context, finances::FontIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
+            : WindowAction(context, finances::materialIcon(icon), title, shortcut, args...) {}
+
+        ~WindowAction() {
+            if (window) delete window;
+        }
+    };
+
     WindowAction<AccountsWindow, UiContext*> accountsAction_;
     WindowAction<PayeesWindow, DataStore*> payeesAction_;
     WindowAction<CategoriesWindow, DataStore*> categoriesAction_;
     WindowAction<GroupsWindow, DataStore*> groupsAction_;
     WindowAction<SecuritiesWindow, DataStore*> securitiesAction_;
+    WindowAction<AccountSecuritiesWindow, UiContext*> accountSecuritiesAction_;
     QHash<domain_id, TransactionTableModel*> transactionModels{};
     QList<TransactionsWindow*> transactionsWindows{};
     int openWindows{0};
@@ -60,6 +66,7 @@ public:
     QAction *categoriesAction();
     QAction *groupsAction();
     QAction *securitiesAction();
+    QAction *accountSecuritiesAction();
 
     TransactionsWindow *showTransactions(domain_id accountId, const QRect& requestorRect = {});
     TransactionTableModel *transactionsModel(domain_id accountId);

@@ -14,29 +14,43 @@
 
 class AppWindow : public QMainWindow {
     Q_OBJECT
-protected:
-    EntityView entityView;
-
-    explicit AppWindow(const QString &entityName, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, StatusMessageStore* messageStore);
-
 public:
-    explicit AppWindow(const QString &entityName, AdapterItemModel *model, QTableView *itemView, StatusMessageStore* messageStore);
-    explicit AppWindow(const QString &entityName, AdapterItemModel *model, QTreeView *itemView, StatusMessageStore* messageStore);
+    explicit AppWindow(QWidget* parent = nullptr);
 
     Q_INVOKABLE virtual void loadData() = 0;
     Q_INVOKABLE virtual void saveData() = 0;
 
-    void show();
-
 signals:
-    void opened(AppWindow*);
     void closed(AppWindow*);
 
 protected:
-    virtual const char *settingsGroup() const = 0;
-
     void closeEvent(QCloseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
 };
+
+template<class View = EditEntityView, class Model = AdapterItemModel>
+    requires std::is_base_of_v<EntityView, View> && std::is_base_of_v<QAbstractItemModel, Model>
+class EntityWindow : public AppWindow {
+protected:
+    View entityView;
+
+    explicit EntityWindow(const QString &entityName, Model *model, QAbstractItemView *itemView,
+                          QHeaderView *viewHeader, StatusMessageStore* messageStore)
+        : AppWindow{}
+        , entityView{this, messageStore, model, itemView, viewHeader, entityName}
+    {}
+
+public:
+    explicit EntityWindow(const QString &entityName, Model *model, QTableView *itemView, StatusMessageStore* messageStore)
+        : EntityWindow{entityName, model, itemView, itemView->horizontalHeader(), messageStore} {}
+    explicit EntityWindow(const QString &entityName, Model *model, QTreeView *itemView, StatusMessageStore* messageStore)
+        : EntityWindow{entityName, model, itemView, itemView->header(), messageStore}
+    {
+        using enum QAbstractItemView::EditTrigger;
+        itemView->setSelectionBehavior(QAbstractItemView::SelectItems);
+        itemView->setEditTriggers(AllEditTriggers ^ CurrentChanged);
+    }
+};
+
+typedef EntityWindow<EntityView, QAbstractItemModel> ReadOnlyEntityWindow;
 
 #endif // APPWINDOW_H
