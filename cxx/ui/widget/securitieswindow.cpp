@@ -1,17 +1,22 @@
 #include "securitieswindow.h"
 #include "statusmessage.h"
 #include "ui/model/sortfilterproxymodel.h"
+#include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
 #define SETTINGS_GROUP "securities"
 
-SecuritiesWindow::SecuritiesWindow(DataStore *dataStore)
-    : EntityWindow{tr("Security"), new SecurityTableModel(dataStore->securityStore), new QTableView(), &dataStore->messageStore}
-    , store{dataStore->securityStore}
+SecuritiesWindow::SecuritiesWindow(UiContext *context)
+    : EntityWindow{tr("Security"), new SecurityTableModel(context->dataStore->securityStore), new QTableView(), &context->dataStore->messageStore}
+    , store{context->dataStore->securityStore}
 {
+    entityView.addActions({
+        context->accountsAction(),
+        context->accountSecuritiesAction(),
+    });
     entityView.addActions({hideZeroAction});
-    setWindowTitle(tr("%1 - Securities[*]").arg(dataStore->connectionName()));
+    setWindowTitle(tr("%1 - Securities[*]").arg(context->dataStore->connectionName()));
 
     connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setSecurities(QList<domain_id>)));
 

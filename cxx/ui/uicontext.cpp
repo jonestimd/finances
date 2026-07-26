@@ -56,13 +56,15 @@ UiContext::UiContext(DataStore *dataStore)
     , payeesAction_(this, Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
     , categoriesAction_(this, finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
     , groupsAction_(this, Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
-    , securitiesAction_(this, AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
+    , securitiesAction_(this, AreaChart, tr("Securities"), tr("alt+s", "securities"), this)
     , accountSecuritiesAction_(this, materialIcon(LibraryBooks, {}, AreaChart), tr("Account Securities"), tr("ctrl+shift+s", "account securities"), this)
 {}
 
 UiContext::UiContext(const ConnectionSettings &settings) : UiContext(new DataStore(settings)) {}
 
 UiContext::~UiContext() {
+    if (openWindows) qWarning("~UiContext(): open windows? %d", openWindows);
+    if (!transactionsWindows.empty()) qWarning("~UiContext(): open transaction windows? %lld", transactionsWindows.size());
     qDeleteAll(transactionsWindows);
     transactionsWindows.clear();
     qDeleteAll(transactionModels);

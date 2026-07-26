@@ -415,7 +415,7 @@ private slots:
     void renameSecurity_updatesTransactions() {
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
         dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, {}, securityId.value()), {"123.45"});
-        SecurityWindowHolder securityHolder(new SecuritiesWindow(dataStore));
+        SecurityWindowHolder securityHolder(new SecuritiesWindow(uiContext));
         testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }
 

@@ -29,8 +29,11 @@ class UiContext : public QObject {
                     window = new T(args...);
                     connect(window, SIGNAL(closed(AppWindow*)), context, SLOT(windowClosed(AppWindow*)));
                 }
-                context->windowOpened(window);
-                window->show();
+                if (!window->isVisible()) {
+                    context->windowOpened(window);
+                    window->show();
+                }
+                window->raise();
             });
         }
         WindowAction(UiContext* context, finances::FontIcon icon, const QString &title, const QString &shortcut, WindowArgs... args)
@@ -45,7 +48,7 @@ class UiContext : public QObject {
     WindowAction<PayeesWindow, DataStore*> payeesAction_;
     WindowAction<CategoriesWindow, DataStore*> categoriesAction_;
     WindowAction<GroupsWindow, DataStore*> groupsAction_;
-    WindowAction<SecuritiesWindow, DataStore*> securitiesAction_;
+    WindowAction<SecuritiesWindow, UiContext*> securitiesAction_;
     WindowAction<AccountSecuritiesWindow, UiContext*> accountSecuritiesAction_;
     QHash<domain_id, TransactionTableModel*> transactionModels{};
     QList<TransactionsWindow*> transactionsWindows{};

@@ -26,6 +26,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
         context->categoriesAction(),
         context->groupsAction(),
         context->securitiesAction(),
+        context->accountSecuritiesAction(),
         showAccount,
     });
     QMenuBar *menuBar = new QMenuBar();

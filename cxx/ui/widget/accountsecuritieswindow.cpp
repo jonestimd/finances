@@ -10,14 +10,16 @@ AccountSecuritiesWindow::AccountSecuritiesWindow(UiContext *context)
     : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView(), &context->dataStore->messageStore}
     , dataStore{context->dataStore}
 {
-    // entityView.addActions({showAccountsAction});
+    entityView.addActions({
+        context->accountsAction(),
+        context->securitiesAction(),
+    });
     setWindowTitle(tr("%1 - Account Securities").arg(dataStore->connectionName()));
     auto view = treeView();
     view->setItemsExpandable(false);
     view->setRootIsDecorated(false);
     view->setIndentation(5);
     view->setRootSpansAllColumns();
-    // TODO update TreeView to handle column spans and row colors
 
     connect(dataStore->securityStore, SIGNAL(accountSecuritiesLoaded(QList<const AccountSecurity*>)), entityView.model(), SLOT(setRows(QList<const AccountSecurity*>)));
     connect(entityView.model(), SIGNAL(modelReset()), this, SLOT(modelReset()));
@@ -43,6 +45,4 @@ void AccountSecuritiesWindow::saveData() {
 void AccountSecuritiesWindow::modelReset() {
     auto view = treeView();
     view->expandAll();
-    // auto rootRows = entityView.model()->rowCount();
-    // for (int i = 0; i < rootRows; i++) view->setFirstColumnSpanned(i, {}, true);
 }

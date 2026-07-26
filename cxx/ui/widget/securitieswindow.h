@@ -2,9 +2,10 @@
 #define SECURITIESWINDOW_H
 
 #include "appwindow.h"
-#include "ui/model/datastore.h"
 #include "ui/model/securitytablemodel.h"
 #include <QTableView>
+
+class UiContext;
 
 class SecuritiesWindow : public EntityWindow<> {
     Q_OBJECT
@@ -12,7 +13,7 @@ class SecuritiesWindow : public EntityWindow<> {
     QAction *hideZeroAction{finances::iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
 
 public:
-    SecuritiesWindow(DataStore *dataStore);
+    SecuritiesWindow(UiContext* context);
     ~SecuritiesWindow();
 
     SecurityTableModel *model() const;
