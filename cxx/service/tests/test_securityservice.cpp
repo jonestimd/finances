@@ -34,6 +34,15 @@ class TestSecurityService : public QObject {
         return split.id.value();
     }
 
+    QList<const AccountSecurity*> forAccount(const QList<const AccountSecurity*> &summaries, domain_id accountId) {
+        QList<const AccountSecurity*> matches;
+        for (auto summary : summaries) if (summary->id.accountId == accountId) matches.append(summary);
+        std::stable_sort(matches.begin(), matches.end(), [](const AccountSecurity* as1, const AccountSecurity* as2) {
+            return as1->id.securityId < as2->id.securityId;
+        });
+        return matches;
+    }
+
 private slots:
     void initTestCase_data() {
         dbTestCase.createDatabases();
@@ -137,13 +146,13 @@ private slots:
 
         const auto result = service->getAccountSecurities();
 
-        const auto summaries = result.values(accountId);
+        const auto summaries = forAccount(result.values(), accountId);
         QCOMPARE(summaries.size(), 1);
         verifyAccountSecurity(summaries.first(), securityId2, "5", "10.00", 1);
-        const auto summaries2 = result.values(accountId2);
+        const auto summaries2 = forAccount(result.values(), accountId2);
         QCOMPARE(summaries2.size(), 2);
-        verifyAccountSecurity(summaries2[0], securityId2, "4", "6.00", 1);
-        verifyAccountSecurity(summaries2[1], securityId, "3", "17.00", 2);
+        verifyAccountSecurity(summaries2[0], securityId, "3", "17.00", 2);
+        verifyAccountSecurity(summaries2[1], securityId2, "4", "6.00", 1);
     }
 };
 

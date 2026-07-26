@@ -6,6 +6,22 @@
 #include <QSqlDatabase>
 #include <QLoggingCategory>
 
+template<typename V>
+struct unwrap_value {
+    typedef V value_type;
+    static value_type get(V value) {
+        return value;
+    }
+};
+
+template<typename V>
+struct unwrap_value<std::optional<V>> {
+    typedef V value_type;
+    static value_type get(std::optional<V> value) {
+        return value.value();
+    }
+};
+
 typedef struct {
     const char *const createTableSql;
     const char *const getAllSql;
@@ -27,11 +43,14 @@ protected:
     const char* const className;
     const QString staleDataMessage;
 
-    QHash<domain_id, const Entity*> load(QSqlQuery &query) {
-        QHash<domain_id, const Entity*> entities;
+    template<class T = Entity, class ID = optional_id>
+    static auto load(QSqlQuery &query) {
+        typedef unwrap_value<ID> Key;
+        typedef typename Key::value_type KeyType;
+        QHash<KeyType, const T*> entities;
         while (query.next()) {
-            auto entity = new Entity(query.record());
-            entities.insert(entity->id.value(), entity);
+            auto entity = new T(query.record());
+            entities.insert(Key::get(entity->id), entity);
         }
         return entities;
     }

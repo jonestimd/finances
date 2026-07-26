@@ -219,16 +219,12 @@ QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Securit
     return updates;
 }
 
-QMultiHash<domain_id, const AccountSecurity *> SecurityDao::getAccountSecurities(const QSqlDatabase &db) const {
+QHash<const AccountSecurityId, const AccountSecurity*> SecurityDao::getAccountSecurities(const QSqlDatabase &db) const {
     QMultiHash<domain_id, const AccountSecurity*> entities;
     QSqlQuery query(db);
     query.prepare(accountSecuritiesSql);
     sql::exec(query, className, "getAccountSecurities");
-    while (query.next()) {
-        auto entity = new AccountSecurity(query.record());
-        entities.insert(entity->id.accountId, entity);
-    }
-    return entities;
+    return load<AccountSecurity, const AccountSecurityId>(query);
 }
 
 void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {

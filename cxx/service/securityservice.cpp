@@ -10,7 +10,7 @@ QHash<domain_id, const StockSplit *> SecurityService::getSplits() {
     return stockSplitDao.getAll(conn.db);
 }
 
-QMultiHash<domain_id, const AccountSecurity *> SecurityService::getAccountSecurities() const {
+QHash<const AccountSecurityId, const AccountSecurity*> SecurityService::getAccountSecurities() const {
     auto conn = Connection(connectionPool);
     return dao.getAccountSecurities(conn.db);
 }

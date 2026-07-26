@@ -20,7 +20,7 @@ public:
     virtual void remove(QSqlDatabase &db, QList<const Security*> securities) override;
     virtual QList<const Security*> update(QSqlDatabase &db, const QList<Security*> securities, const QString &user) override;
 
-    QMultiHash<domain_id, const AccountSecurity*> getAccountSecurities(const QSqlDatabase &db) const;
+    QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities(const QSqlDatabase &db) const;
 
 protected:
     virtual void bindUpdateValues(QSqlQuery &query, Security *security) override;
