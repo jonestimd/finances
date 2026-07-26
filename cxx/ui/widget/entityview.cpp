@@ -211,6 +211,7 @@ void EditEntityView::showValidation(const QModelIndex &index) {
 bool EditEntityView::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::Close) {
         confirmClose(static_cast<QCloseEvent*>(event), nullptr);
+        return !event->isAccepted() || EntityView::eventFilter(obj, event);
     }
-    return !event->isAccepted() || EntityView::eventFilter(obj, event);
+    return EntityView::eventFilter(obj, event);
 }

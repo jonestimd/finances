@@ -128,5 +128,3 @@ QVariant AccountSecurityTableModel::data(const QModelIndex &index, int role) con
     }
     return QVariant{};
 }
-
-#include "accountsecuritymodel.h"

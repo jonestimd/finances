@@ -182,10 +182,6 @@ void TransactionsWindow::clearedBalanceChanged(const QDecNumber &balance) {
     clearedBalance->setText(tr("<b>Cleared Balance:</b> %1").arg(dollarFormat(balance)));
 }
 
-// const char *TransactionsWindow::settingsGroup() const {
-//     return SETTINGS_GROUP(security());
-// }
-
 static bool isEnter(const QKeyEvent *event) {
     auto key = event->key();
     return !(event->modifiers() & ~Qt::KeypadModifier) && (key == Qt::Key_Enter || key == Qt::Key_Return);
