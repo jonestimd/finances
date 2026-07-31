@@ -16,6 +16,10 @@ public:
     explicit AccountSecurityTableModel(DataStore* dataStore);
     ~AccountSecurityTableModel();
 
+private:
+    void reset();
+
+public:
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     virtual QModelIndex index(int row, int column, const QModelIndex &parent) const override;
     virtual QModelIndex parent(const QModelIndex &child) const override;

@@ -115,7 +115,7 @@ static const auto sqliteCreateAccountSecuritySql = CREATE_ACCOUNT_SECURITY_QUERY
     "    from account_security\n" \
     "    group by security_id\n" \
     ")\n" \
-    "select a.*, s.type security_type, coalesce(sum.transactions, 0) transactions\n" \
+    "select a.*, s.type security_type, coalesce(sum.transactions, 0) use_count\n" \
     "     , coalesce(sum.shares, 0) shares, sum.first_acquired\n" \
     "     , coalesce(sum.cost_basis, 0) cost_basis\n" \
     "     , coalesce(sum.dividends, 0) dividends\n" \

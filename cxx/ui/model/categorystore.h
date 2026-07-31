@@ -28,7 +28,7 @@ public:
     using EntityStore::update;
 
 public slots:
-    void detailsUpdated(const QList<DetailChange> changes);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
 };
 
 #endif // CATEGORYSTORE_H

@@ -6,11 +6,6 @@ TransactionService::TransactionService(ConnectionPool *pool, TransactionDao &tra
     , detailDao{detailDao}
 {}
 
-QHash<domain_id, const Transaction *> TransactionService::getAll(domain_id accountId) {
-    Connection conn(connectionPool);
-    return dao.getAll(conn.db, accountId);
-}
-
 struct TxDetail {
     Transaction *transaction;
     TransactionDetail *detail;

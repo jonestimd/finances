@@ -5,16 +5,26 @@
 #include "securitytype.h"
 #include <QDate>
 
-class Security : public Asset {
+class SecurityStats {
+public:
+    mutable std::optional<QDate> firstAcquired{};
+    mutable QDecNumber shares{0}; // TODO update when transactions added/removed/updated
+    mutable QDecNumber costBasis{0};
+    mutable QDecNumber dividends{0};
+    mutable int transactions{0};
+
+    SecurityStats();
+    SecurityStats(const QSqlRecord &record);
+};
+
+class Security : public Asset, public SecurityStats {
 public:
     const SecurityType* securityType{&SecurityType::stock};
-    std::optional<QDate> firstAcquired{};
-    QDecNumber shares{0}; // TODO update when transactions added/removed/updated
-    QDecNumber costBasis{0};
-    QDecNumber dividends{0};
 
-    Security();
+    Security(const QString &name = "");
     Security(const QSqlRecord &record);
+
+    bool deletable() const;
 };
 
 struct AccountSecurityId {
@@ -29,15 +39,11 @@ struct AccountSecurityId {
 
 size_t qHash(const AccountSecurityId& key, size_t seed = 0);
 
-class AccountSecurity {
+class AccountSecurity : public SecurityStats {
 public:
     const AccountSecurityId id;
-    QDate firstAcquired{};
-    mutable QDecNumber shares{0}; // TODO update when transactions added/removed/updated
-    mutable QDecNumber costBasis{0};
-    mutable QDecNumber dividends{0};
-    mutable int transactions{0};
 
+    AccountSecurity(const AccountSecurityId &id);
     AccountSecurity(const QSqlRecord &record);
 };
 

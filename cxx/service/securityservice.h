@@ -5,7 +5,7 @@
 #include "service/database/securitydao.h"
 #include "service/database/stocksplitdao.h"
 
-class SecurityService : public EntityService<Security, SecurityDao> {
+class SecurityService : public NamedEntityService<Security, SecurityDao> {
     StockSplitDao &stockSplitDao;
 
 public:

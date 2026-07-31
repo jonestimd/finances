@@ -240,9 +240,9 @@ private slots:
         uitest::setConfigHome();
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
-        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
-        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
-        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id.value();
+        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, &AccountType::bank, companyId)->id.value();
+        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, &AccountType::bank, companyId)->id.value();
+        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, &AccountType::brokerage, companyId)->id.value();
         payeeId = dbTestCase.addPayee(driver, PAYEE_NAME);
         categoryId = dbTestCase.addCategory(driver, CATEGORY_NAME);
         groupId = dbTestCase.addGroup(driver, GROUP_NAME);

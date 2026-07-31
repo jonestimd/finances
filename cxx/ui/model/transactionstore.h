@@ -40,8 +40,7 @@ Q_SIGNALS:
     void accountLoaded(domain_id id);
     void accountUpdated(domain_id id);
     void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
-    void transactionsUpdated(const QList<TransactionChange> changes);
-    void detailsUpdated(const QList<DetailChange> changes);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
 
 protected:
     void setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) override;
@@ -49,8 +48,8 @@ protected:
     virtual void update(const QList<const Transaction*>& updates, const QList<const Transaction*> deletes) override;
 
 private:
-    void emitTransactionsUpdated(const QList<const Transaction*> deletes, const TransactionsData& updates);
-    void emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates);
+    QHash<domain_id, TransactionChange> transactionChanges(const QList<const Transaction*> deletes, const TransactionsData& updates);
+    QHash<domain_id, DetailChange> detailChanges(const TransactionUpdate& change, const TransactionsData& updates) const;
     Q_INVOKABLE void applyUpdates(const QList<const PendingTransaction*> adds, QSharedPointer<TransactionUpdate> changes, TransactionsData updateData);
 };
 

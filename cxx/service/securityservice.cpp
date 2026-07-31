@@ -1,7 +1,7 @@
 #include "securityservice.h"
 
 SecurityService::SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao, StockSplitDao &stockSplitDao)
-    : EntityService{connectionPool, securityDao}
+    : NamedEntityService{connectionPool, securityDao}
     , stockSplitDao{stockSplitDao}
 {}
 

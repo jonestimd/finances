@@ -33,8 +33,7 @@ void TransactionStore::update(QWidget *source, TransactionTableModel *model, con
 }
 
 void TransactionStore::applyUpdates(const QList<const PendingTransaction*> adds, QSharedPointer<TransactionUpdate> changes, TransactionsData updateData) {
-    emitTransactionsUpdated(changes->deletes, updateData);
-    emitDetailsUpdated(*changes, updateData);
+    emit transactionsUpdated(transactionChanges(changes->deletes, updateData), detailChanges(*changes, updateData));
     if (!adds.isEmpty()) emit transactionsSaved(adds);
     auto deletes = changes->deletes;
     for (const auto& id : std::as_const(updateData.deletedIds)) {
@@ -134,25 +133,25 @@ void TransactionStore::update(const QList<const Transaction*>& updates, const QL
     if (!detailCountIds.isEmpty()) emit valuesUpdated(detailCountIds);
 }
 
-void TransactionStore::emitTransactionsUpdated(const QList<const Transaction*> deletes, const TransactionsData& updates) {
-    QList<TransactionChange> deltas;
-    for (auto tx : deletes) deltas.append(TransactionChange{tx, nullptr});
-    for (auto tx : std::as_const(updates.transactions)) deltas.append(TransactionChange{value(tx->id.value()), tx});
-    for (const auto& txId : std::as_const(updates.deletedIds)) deltas.append(TransactionChange{value(txId), nullptr});
-    emit transactionsUpdated(deltas);
+QHash<domain_id, TransactionChange> TransactionStore::transactionChanges(const QList<const Transaction*> deletes, const TransactionsData& updates) {
+    QHash<domain_id, TransactionChange> deltas;
+    for (auto tx : deletes) deltas.insert(tx->id.value(), TransactionChange{tx, nullptr});
+    for (auto tx : std::as_const(updates.transactions)) deltas.insert(tx->id.value(), TransactionChange{value(tx->id.value()), tx});
+    for (const auto& txId : std::as_const(updates.deletedIds)) deltas.insert(txId, TransactionChange{value(txId), nullptr});
+    return deltas;
 }
 
-void TransactionStore::emitDetailsUpdated(const TransactionUpdate& change, const TransactionsData& updates) {
-    QList<DetailChange> deltas;
+QHash<domain_id, DetailChange> TransactionStore::detailChanges(const TransactionUpdate& change, const TransactionsData& updates) const {
+    QHash<domain_id, DetailChange> deltas;
     for (auto tx : change.deletes) {
-        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
+        for (const auto& detailId : tx->detailIds) deltas.insert(detailId, DetailChange{detailStore.value(detailId), nullptr});
     }
     for (const auto& txId : updates.deletedIds) {
         auto tx = value(txId);
-        for (const auto& detailId : tx->detailIds) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
+        for (const auto& detailId : tx->detailIds) deltas.insert(detailId, DetailChange{detailStore.value(detailId), nullptr});
     }
-    for (auto detail : change.detailDeletes) deltas.append(DetailChange{detail, nullptr});
-    for (auto detail : std::as_const(updates.details)) deltas.append(DetailChange{detailStore.value(detail->id.value()), detail});
-    for (const auto& detailId : std::as_const(updates.deletedDetailIds)) deltas.append(DetailChange{detailStore.value(detailId), nullptr});
-    emit detailsUpdated(deltas);
+    for (auto detail : change.detailDeletes) deltas.insert(detail->id.value(), DetailChange{detail, nullptr});
+    for (auto detail : std::as_const(updates.details)) deltas.insert(detail->id.value(), DetailChange{detailStore.value(detail->id.value()), detail});
+    for (const auto& detailId : std::as_const(updates.deletedDetailIds)) deltas.insert(detailId, DetailChange{detailStore.value(detailId), nullptr});
+    return deltas;
 }

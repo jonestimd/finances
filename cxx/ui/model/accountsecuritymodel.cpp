@@ -51,7 +51,7 @@ AccountSecurityTableModel::AccountSecurityTableModel(DataStore* dataStore)
         new SecurityColumnAdapter<QString>(dataStore->securityStore, tr("Security"), &Security::name),
         new SecurityTypeColumnAdapter(dataStore->securityStore),
         new SecurityColumnAdapter<QString>(dataStore->securityStore, tr("Symbol"), &Security::symbol),
-        new FormatColumnAdapter<AccountSecurity, QDate>(tr("First Acquired"), &AccountSecurity::firstAcquired, dateFormat, false),
+        new FormatColumnAdapter<AccountSecurity, std::optional<QDate>>(tr("First Acquired"), &AccountSecurity::firstAcquired, dateFormat, false),
         new NumberColumnAdapter<AccountSecurity, int>(tr("Transactions"), &AccountSecurity::transactions),
         new AmountColumnAdapter<AccountSecurity, QDecNumber>(tr("Shares"), &AccountSecurity::shares, securityShares, false),
         new AmountColumnAdapter<AccountSecurity, QDecNumber>(tr("Cost Basis"), &AccountSecurity::costBasis, dollarFormat, false),
@@ -60,22 +60,13 @@ AccountSecurityTableModel::AccountSecurityTableModel(DataStore* dataStore)
 
 AccountSecurityTableModel::~AccountSecurityTableModel() {
     qDeleteAll(columns);
-    for (auto i = byAccount.constBegin(); i != byAccount.constEnd(); i++) qDeleteAll(i.value());
+    reset();
 }
 
-void AccountSecurityTableModel::setRows(QList<const AccountSecurity*> rows) {
-    beginResetModel();
+void AccountSecurityTableModel::reset() {
     accountIds.clear();
+    for (auto i = byAccount.constBegin(); i != byAccount.constEnd(); i++) qDeleteAll(i.value());
     byAccount.clear();
-    for (const auto row: rows) {
-        auto accountId = row->id.accountId;
-        if (!accountIds.contains(accountId)) {
-            accountIds.append(accountId);
-            byAccount.insert(accountId, {});
-        }
-        byAccount[accountId].append(row);
-    }
-    endResetModel();
 }
 
 QVariant AccountSecurityTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
@@ -127,4 +118,18 @@ QVariant AccountSecurityTableModel::data(const QModelIndex &index, int role) con
         }
     }
     return QVariant{};
+}
+
+void AccountSecurityTableModel::setRows(QList<const AccountSecurity*> rows) {
+    beginResetModel();
+    reset();
+    for (const auto row: rows) {
+        auto accountId = row->id.accountId;
+        if (!accountIds.contains(accountId)) {
+            accountIds.append(accountId);
+            byAccount.insert(accountId, {});
+        }
+        byAccount[accountId].append(row);
+    }
+    endResetModel();
 }

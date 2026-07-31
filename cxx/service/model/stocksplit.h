@@ -16,6 +16,7 @@ public:
 
     StockSplit();
     StockSplit(const QSqlRecord &record);
+    StockSplit(domain_id securityId, QDate date, QDecNumber sharesIn, QDecNumber sharesOut);
 };
 
 #endif // STOCKSPLIT_H

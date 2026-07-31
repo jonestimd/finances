@@ -43,8 +43,8 @@ QString AccountStore::qualifiedName(domain_id accountId, QChar delimiter) const 
     return QString::number(accountId);
 }
 
-void AccountStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    if (updateTransactionCounts<domain_id>(changes, &Transaction::accountId)) {
+void AccountStore::transactionsUpdated(const QHash<domain_id, TransactionChange> changes) {
+    if (updateTransactionCounts<domain_id>(changes.values(), &Transaction::accountId)) {
         emit valuesLoaded(ids());
     }
 }

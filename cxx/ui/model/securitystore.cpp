@@ -23,8 +23,8 @@ void SecurityStore::loadAccountSecurities(EntityView *view)  {
     });
 }
 
-void SecurityStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    if (updateTransactionCounts(changes, &Transaction::securityId)) {
+void SecurityStore::transactionsUpdated(const QHash<domain_id, TransactionChange> changes) {
+    if (updateTransactionCounts(changes.values(), &Transaction::securityId)) {
         emit valuesLoaded(ids());
     }
 }

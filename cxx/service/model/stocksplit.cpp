@@ -10,3 +10,10 @@ StockSplit::StockSplit(const QSqlRecord &record)
     , sharesIn{sql::decimalValue(record, "shares_in").value()}
     , sharesOut{sql::decimalValue(record, "shares_out").value()}
 {}
+
+StockSplit::StockSplit(domain_id securityId, QDate date, QDecNumber sharesIn, QDecNumber sharesOut)
+    : securityId{securityId}
+    , date{date}
+    , sharesIn{sharesIn}
+    , sharesOut{sharesOut}
+{}

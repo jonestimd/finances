@@ -6,7 +6,7 @@
 #include "database/payeedao.h"
 #include "database/transactiondao.h"
 
-class PayeeService : public EntityService<Payee, PayeeDao> {
+class PayeeService : public NamedEntityService<Payee, PayeeDao> {
     TransactionDao &transactionDao;
 
 public:

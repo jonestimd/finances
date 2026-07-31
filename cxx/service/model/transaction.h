@@ -82,15 +82,15 @@ struct TransactionsData {
 };
 
 struct TransactionChange {
-    const Transaction* const oldTransaction;
-    const Transaction* const newTransaction;
+    const Transaction* oldTransaction;
+    const Transaction* newTransaction;
 
     TransactionChange(const Transaction* oldTx, const Transaction* newTx);
 };
 
 struct DetailChange {
-    const TransactionDetail* const oldDetail;
-    const TransactionDetail* const newDetail;
+    const TransactionDetail* oldDetail;
+    const TransactionDetail* newDetail;
 
     DetailChange(const TransactionDetail* oldTx, const TransactionDetail* newTx);
 };

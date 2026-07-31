@@ -54,8 +54,8 @@ private slots:
         QTest::addColumn<domain_id>("securityId2");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &dao = dbTestCase.securityDao(driver);
-            auto accountId = dbTestCase.addAccount(driver, "account 1", AccountType::bank.code)->id.value();
-            auto accountId2 = dbTestCase.addAccount(driver, "account 2", AccountType::bank.code)->id.value();
+            auto accountId = dbTestCase.addAccount(driver, "account 1", &AccountType::bank)->id.value();
+            auto accountId2 = dbTestCase.addAccount(driver, "account 2", &AccountType::bank)->id.value();
             auto securityId = dbTestCase.addSecurity(driver, "security 1")->id.value();
             auto securityId2 = dbTestCase.addSecurity(driver, "security 2")->id.value();
             auto service = new SecurityService{dbTestCase.connectionPool(driver), dao, dbTestCase.stockSplitDao(driver)};

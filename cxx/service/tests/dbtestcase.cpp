@@ -49,6 +49,21 @@ Daos::Daos(const QString &dbType)
 {};
 
 namespace factory {
+    Account* account(const QString& name, const AccountType* type, const optional_id companyId) {
+        Account *account = new Account;
+        account->name = name;
+        account->type = type;
+        account->companyId = companyId;
+        return account;
+    }
+
+    Security* security(const QString& name, const SecurityType* type) {
+        Security* security = new Security();
+        security->name = name;
+        security->securityType = type;
+        return security;
+    }
+
     Transaction* transaction(domain_id accountId, optional_id payeeId, optional_id securityId, const QDate &date) {
         Transaction* tx = new Transaction{accountId};
         tx->payeeId = payeeId;
@@ -67,11 +82,12 @@ namespace factory {
         return tx;
     }
 
-    TransactionDetail* detail(const char *amount, const optional_id& categoryId, const optional_id& groupId) {
+    TransactionDetail* detail(const char *amount, const optional_id& categoryId, const optional_id& groupId, const char *shares) {
         TransactionDetail* detail = new TransactionDetail;
         detail->amount = QDecNumber(amount);
         detail->categoryId = categoryId;
         detail->groupId = groupId;
+        if (shares) detail->assetQuantity = QDecNumber(shares);
         return detail;
     }
 }
@@ -187,23 +203,20 @@ domain_id DbTestCase::addCompany(const QString &driver, const QString &name) {
 }
 
 template<typename Entity, typename Dao, Dao &(DbTestCase::*dao)(const QString &)>
-void save(DbTestCase *test, const QString &driver, Entity *entity, QList<const Entity*> list) {
+void save(DbTestCase *test, const QString &driver, Entity *entity, QList<const Entity*>& list) {
     auto conn = Connection(test->connectionPool(driver));
     ((*test).*dao)(driver).add(conn.db, QList{entity}, TEST_USER);
     list.append(entity);
 }
 
-Account *DbTestCase::addAccount(const QString &driver, const QString &name, const QString &type, const optional_id companyId) {
-    Account *account = new Account;
-    account->name = name;
-    account->type = AccountType::values.value(type);
-    account->companyId = companyId;
+Account *DbTestCase::addAccount(const QString &driver, const QString &name, const AccountType* type, const optional_id companyId) {
+    auto account = factory::account(name, type, companyId);
     save<Account, AccountDao, &DbTestCase::accountDao>(this, driver, account, accounts);
     return account;
 }
 
 template<typename Entity, typename Dao, Dao &(DbTestCase::*dao)(const QString &)>
-const Entity* load(DbTestCase *test, const QString &driver, domain_id id, QList<const Entity*> list) {
+const Entity* load(DbTestCase *test, const QString &driver, domain_id id, QList<const Entity*>& list) {
     auto conn = Connection(test->connectionPool(driver));
     auto rows = ((*test).*dao)(driver).get(conn.db, QList<domain_id>{id});
     list.append(rows.values());
@@ -217,10 +230,8 @@ domain_id DbTestCase::addPayee(const QString &driver, const QString &name) {
     return payee.id.value();
 }
 
-Security* DbTestCase::addSecurity(const QString &driver, const QString &name, const char *type) {
-    Security* security = new Security();
-    security->name = name;
-    security->securityType = SecurityType::values.value(QString{type});
+Security* DbTestCase::addSecurity(const QString &driver, const QString &name, const SecurityType* type) {
+    auto security = factory::security(name, type);
     save<Security, SecurityDao, &DbTestCase::securityDao>(this, driver, security, securities);
     return security;
 }

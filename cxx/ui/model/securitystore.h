@@ -21,7 +21,7 @@ Q_SIGNALS:
     void accountSecuritiesLoaded(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
 
 public slots:
-    void transactionsUpdated(const QList<TransactionChange> changes);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> changes);
 
 protected:
     virtual void setValues(const QHash<domain_id, const Security*> values) override;

@@ -62,8 +62,8 @@ void CategoryStore::mergeCategories(QWidget *source, const Category *category, c
     });
 }
 
-void CategoryStore::detailsUpdated(const QList<DetailChange> changes) {
-    if (updateDetailCounts(changes, &TransactionDetail::categoryId)) {
+void CategoryStore::transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges) {
+    if (updateDetailCounts(detailChanges.values(), &TransactionDetail::categoryId)) {
         emit valuesLoaded(ids());
     }
 }

@@ -30,7 +30,7 @@ private slots:
     void getAll_returnsTransactionSummary() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(AccountService*, service);
-        auto account = dbTestCase.addAccount(driver, "account", "BANK");
+        auto account = dbTestCase.addAccount(driver, "account", &AccountType::bank);
         // for sqlite3: use amounts that will result in rounding errors if decimal extension is not loaded
         dbTestCase.saveTransaction(factory::transaction(account->id.value()), {"1.23"});
         dbTestCase.saveTransaction(factory::transaction(account->id.value()), {"2.34", "-5.00"});
@@ -45,7 +45,7 @@ private slots:
     void update_savesData() {
         QFETCH_GLOBAL(QString, driver);
         QFETCH_GLOBAL(AccountService*, service);
-        auto account = dbTestCase.addAccount(driver, "account", "BANK");
+        auto account = dbTestCase.addAccount(driver, "account", &AccountType::bank);
         account->name = "new name";
         account->description = "more info";
         account->accountNumber = "123-456";

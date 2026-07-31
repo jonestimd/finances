@@ -47,9 +47,11 @@ struct Daos {
 };
 
 namespace factory {
+    Account* account(const QString& name, const AccountType* type, const optional_id companyId = {});
+    Security* security(const QString& name, const SecurityType* type = &SecurityType::stock);
     Transaction *transaction(domain_id accountId, optional_id payeeId = {}, optional_id securityId = {}, const QDate &date = QDate::currentDate());
     PendingTransaction *pendingTransaction(domain_id accountId, QList<const char*> amounts, optional_id payeeId = {}, optional_id securityId = {}, const QDate &date = QDate::currentDate());
-    TransactionDetail *detail(const char *amount = "1.00", const optional_id& categoryId = {}, const optional_id& groupId = {});
+    TransactionDetail* detail(const char *amount = "1.00", const optional_id& categoryId = {}, const optional_id& groupId = {}, const char* shares = nullptr);
 }
 
 class DbTestCase {
@@ -89,9 +91,9 @@ public:
     void createDatabases();
     
     domain_id addCompany(const QString &driver, const QString &name);
-    Account *addAccount(const QString &driver, const QString &name, const QString &type, const optional_id companyId = {});
+    Account *addAccount(const QString &driver, const QString &name, const AccountType* type, const optional_id companyId = {});
     domain_id addPayee(const QString &driver, const QString &name);
-    Security* addSecurity(const QString &driver, const QString &name, const char *type = SecurityType::stock.code);
+    Security* addSecurity(const QString &driver, const QString &name, const SecurityType *type = &SecurityType::stock);
     domain_id addCategory(const QString &driver, const QString &name);
     domain_id addGroup(const QString &driver, const QString &name);
 

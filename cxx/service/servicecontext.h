@@ -4,17 +4,17 @@
 #include "database/connectionpool.h"
 
 #include "accountservice.h"
-#include "companyservice.h"
 #include "payeeservice.h"
 #include "categoryservice.h"
-#include "groupservice.h"
 #include "securityservice.h"
 #include "service/database/daocontext.h"
 #include "transactionservice.h"
 #include "transactiondetailservice.h"
 
-class ServiceContext
-{
+typedef NamedEntityService<Company, CompanyDao> CompanyService;
+typedef NamedEntityService<TransactionGroup, TransactionGroupDao> GroupService;
+
+class ServiceContext {
     ConnectionPool *pool;
     DaoContext daos;
 

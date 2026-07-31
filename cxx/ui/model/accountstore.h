@@ -30,7 +30,7 @@ public:
     }
 
 public slots:
-    void transactionsUpdated(const QList<TransactionChange> changes);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> changes);
 
 protected:
     void update(QWidget *source, QList<Account*> updates, const QList<const Account*> adds, const QList<const Account*> deletes);
