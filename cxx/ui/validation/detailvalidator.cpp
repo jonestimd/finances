@@ -22,14 +22,16 @@ const QString SharesValidatorFactory::isValid(const QModelIndex &index, QString 
             if (securityId.isNull() && !value.isEmpty()) {
                 return tr("%1 requires a security").arg(columnHeader(index));
             }
-            auto amount = index.siblingAtColumn(amountColumnIndex).data(Qt::EditRole).value<QDecNumber>();
-            if (isTransfer(index)) {
-                if (!amount.isZero()) {
-                    return tr("Transfer with %1 and %2 not allowed").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
+            auto amountVariant = index.siblingAtColumn(amountColumnIndex).data(Qt::EditRole);
+            if (amountVariant.isValid()) {
+                auto amount = amountVariant.value<QDecNumber>();
+                if (isTransfer(index)) {
+                    if (!amount.isZero()) {
+                        return tr("Transfer with %1 and %2 not allowed").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
+                    }
+                } else if (!amount.isZero() && amount.isNegative() == (shares < 0)) {
+                    return tr("%1 and %2 must have opposite signs").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
                 }
-            }
-            else if (amount.isNegative() == (shares < 0)) {
-                return tr("%1 and %2 must have opposite signs").arg(columnHeader(index), columnHeader(index, amountColumnIndex));
             }
         }
     }
