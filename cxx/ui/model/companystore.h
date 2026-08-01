@@ -2,7 +2,7 @@
 #define COMPANYSTORE_H
 
 #include "entitystore.h"
-#include "service/companyservice.h"
+#include "service/servicecontext.h"
 
 class AccountStore;
 

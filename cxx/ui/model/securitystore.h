@@ -8,7 +8,6 @@
 
 class SecurityStore : public EntityStore<Security, SecurityService> {
     Q_OBJECT
-
     QMultiHash<domain_id, const StockSplit*>securitySplits{};
 
 public:
@@ -16,8 +15,15 @@ public:
 
     QDecNumber adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const;
 
-public slots:
-    void transactionsUpdated(const QList<TransactionChange> changes);
+    void loadSecurities(EntityView *view, const QList<domain_id> securityIds);
+
+    void loadAccountSecurities(EntityView *view);
+    void loadAccountSecurities(EntityView *view, const QList<domain_id> accountIds, const QList<domain_id> securityIds);
+
+Q_SIGNALS:
+    void accountSecuritiesLoaded(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
+    void accountSecuritiesUpdated(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
+    void accountSecuritiesRemoved(QList<AccountSecurityId> accountSecurityIds);
 
 protected:
     virtual void setValues(const QHash<domain_id, const Security*> values) override;

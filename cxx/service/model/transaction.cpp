@@ -39,6 +39,13 @@ QString Transaction::toString() const {
            % "},cleared{" % (cleared ? "Y" : "N") % "}";
 }
 
+void Transaction::appendIds(QSet<domain_id> &accountIds, QSet<domain_id> &securityIds) const {
+    if (securityId.has_value()) {
+        accountIds.insert(accountId);
+        securityIds.insert(securityId.value());
+    }
+}
+
 PendingTransaction::PendingTransaction() {}
 
 PendingTransaction::PendingTransaction(domain_id accountId)
@@ -97,5 +104,22 @@ TransactionsData::TransactionsData(
 TransactionChange::TransactionChange(const Transaction *oldTx, const Transaction *newTx)
     : oldTransaction{oldTx}, newTransaction{newTx} {}
 
+domain_id TransactionChange::txId() const {
+    return oldTransaction ? oldTransaction->id.value() : newTransaction->id.value();
+}
+
+void TransactionChange::appendIds(QList<domain_id>& txIds, QSet<domain_id>& accountIds, QSet<domain_id>& securityIds) const {
+    txIds.append(txId());
+    if (oldTransaction) oldTransaction->appendIds(accountIds, securityIds);
+    if (newTransaction) newTransaction->appendIds(accountIds, securityIds);
+}
+
 DetailChange::DetailChange(const TransactionDetail *oldDetail, const TransactionDetail *newDetail)
     : oldDetail{oldDetail}, newDetail{newDetail} {}
+
+bool DetailChange::isSecurityChange() const {
+    if (oldDetail && oldDetail->assetQuantity.has_value()) {
+        return !newDetail || oldDetail->assetQuantity != newDetail->assetQuantity || oldDetail->amount != newDetail->amount;
+    }
+    return newDetail && newDetail->assetQuantity.has_value() && !oldDetail;
+}

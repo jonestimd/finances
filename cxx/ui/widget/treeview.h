@@ -6,6 +6,8 @@
 class TreeView : public QTreeView {
     Q_OBJECT
     bool childInheritsBackground_{false};
+    QMetaObject::Connection modelResetConnection;
+    QMetaObject::Connection rowsInsertedConnection;
 
 public:
     TreeView();
@@ -13,10 +15,18 @@ public:
     bool childInheritsBackground() const;
     void setChildInheritsBackground(bool value);
 
-protected:
-    virtual void drawRow(QPainter *painter, const QStyleOptionViewItem &options, const QModelIndex &index) const override;
+    void setRootSpansAllColumns();
 
-    virtual QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers) override;
+    void setModel(QAbstractItemModel *model) override;
+
+private Q_SLOTS:
+    void modelReset();
+    void rowsInserted(QModelIndex parent, int first, int last);
+
+protected:
+    void drawRow(QPainter *painter, const QStyleOptionViewItem &options, const QModelIndex &index) const override;
+
+    QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers) override;
 
 private:
     bool isHidden(const QModelIndex &index) const;

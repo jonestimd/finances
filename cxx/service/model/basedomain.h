@@ -9,6 +9,9 @@
 typedef qlonglong domain_id;
 typedef std::optional<domain_id> optional_id;
 
+#define SHARE_DECIMALS 6
+#define SHARES_PRECISION "6"
+
 namespace domain {
     template<class T>
     QList<T*> copy(const QList<const T*> entities) {

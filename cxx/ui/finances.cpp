@@ -53,26 +53,32 @@ namespace finances {
 
     class MaterialIconEngine : public QIconEngine {
         const FontIcon icon;
+        const FontIcon overlayIcon;
         const QColor color;
     public:
-        MaterialIconEngine(FontIcon icon, QColor color) : icon{icon}, color{color} {}
+        MaterialIconEngine(FontIcon icon, FontIcon overlayIcon, QColor color)
+            : icon{icon}, overlayIcon{overlayIcon}, color{color} {}
 
     public:
         void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override {
             QFont font = iconFont->font();
-            font.setPixelSize(qRound(rect.height() * 0.8));
+            font.setPixelSize(qRound(rect.height() * (overlayIcon == None ? 0.8 : 0.6)));
             auto colorGroup = mode == QIcon::Mode::Disabled ? QPalette::Disabled : QPalette::Normal;
             QColor textColor = color.isValid() ? color : QApplication::palette("QWidget").color(colorGroup, QPalette::Text);
+            auto alignment = overlayIcon == None ? Qt::AlignCenter : Qt::AlignTop | Qt::AlignLeft;
 
             painter->save();
             painter->setPen(textColor);
             painter->setFont(font);
-            painter->drawText(rect, Qt::AlignCenter, QChar{uint(icon)});
+            painter->drawText(rect, alignment, QChar{uint(icon)});
+            if (overlayIcon != None) {
+                painter->drawText(rect, Qt::AlignBottom | Qt::AlignRight, QChar{uint(overlayIcon)});
+            }
             painter->restore();
         }
 
         QIconEngine *clone() const override {
-            return new MaterialIconEngine(icon, color);
+            return new MaterialIconEngine(icon, overlayIcon, color);
         }
 
         QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override {
@@ -84,9 +90,9 @@ namespace finances {
             return pix;
         }
     };
-
-    QIcon materialIcon(FontIcon icon, QColor color) {
-        return QIcon(new MaterialIconEngine(icon, color));
+    
+    QIcon materialIcon(FontIcon icon, QColor color, FontIcon overlayIcon) {
+        return QIcon(new MaterialIconEngine(icon, overlayIcon, color));
     }
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
@@ -96,14 +102,22 @@ namespace finances {
         return label;
     }
 
-    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip) {
+    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip) {
+        return initAction(action, materialIcon(icon), text, tooltip);
+    }
+
+    QAction* initAction(QAction *action, QIcon icon, const QString &text, const QString &tooltip) {
         action->setText(text);
         action->setToolTip(tooltip);
-        action->setIcon(materialIcon(icon));
+        action->setIcon(icon);
         return action;
     }
 
-    QAction *initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
+    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
+        return initAction(action, materialIcon(icon), text, shortcut);
+    }
+
+    QAction* initAction(QAction *action, QIcon icon, const QString &text, const QKeySequence &shortcut) {
         QString tooltip(text);
         tooltip.remove('&');
         if (!shortcut.isEmpty()) tooltip.append(" (").append(shortcut.toString()).append(")");
@@ -443,4 +457,11 @@ namespace finances {
         frame->setFrameStyle(shape | QFrame::Raised);
         return frame;
     }
+
+    QFont boldFont() {
+        QFont font(qApp->font());
+        font.setBold(true);
+        return font;
+    }
+
 }

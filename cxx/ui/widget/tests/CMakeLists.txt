@@ -1,6 +1,6 @@
 function(add_widget_test name)
     set(exec_name "test_${name}")
-    qt_add_executable(${exec_name} ${exec_name}.cpp ../${name}.cpp ../${name}.h ${PROJECT_RESOURCES} ${ARGN})
+    qt_add_executable(${exec_name} ${exec_name}.cpp ${PROJECT_RESOURCES} ${ARGN})
     set_target_properties(${exec_name} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
         AUTOMOC ON
@@ -15,6 +15,8 @@ function(add_widget_test name)
     target_link_libraries(${exec_name} PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets
         Qt${QT_VERSION_MAJOR}::Test
+        finances-ui
+        finances-service
     )
 
     add_test(NAME ${exec_name} COMMAND ${exec_name} -platform offscreen)

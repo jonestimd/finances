@@ -5,7 +5,7 @@
 #include <QDecNumber.hh>
 
 SharesValidatorFactory::SharesValidatorFactory(int categoryColumnIndex, int securityColumnIndex, int amountColumnIndex)
-    : NumberValidatorFactory(std::bind_front(&SharesValidatorFactory::isRequired, this), 6)
+    : NumberValidatorFactory(std::bind_front(&SharesValidatorFactory::isRequired, this), SHARE_DECIMALS)
     , categoryColumnIndex{categoryColumnIndex}
     , securityColumnIndex{securityColumnIndex}
     , amountColumnIndex{amountColumnIndex}

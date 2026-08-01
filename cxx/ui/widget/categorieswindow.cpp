@@ -7,7 +7,7 @@
 #define SETTINGS_GROUP "categories"
 
 CategoriesWindow::CategoriesWindow(DataStore *dataStore)
-    : AppWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView(), &dataStore->messageStore}
+    : EntityWindow{tr("Category"), new CategoryTableModel(dataStore), new TreeView(), &dataStore->messageStore}
     , store{dataStore->categoryStore}
     , moveAction{finances::iconAction(finances::MoveUp, tr("Change parent"), tr("ctrl+m", "reparent category"), this, SLOT(reparent()), false)}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Categories"), tr("ctrl+y", "merge category"), this, SLOT(merge()), false)}
@@ -26,6 +26,7 @@ CategoriesWindow::CategoriesWindow(DataStore *dataStore)
 
     if (store->load(&entityView, tr(LOADING_CATEGORIES))) model()->setRows(store->ids());
 
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{600, 500}, &entityView);
 }
 
@@ -91,8 +92,4 @@ void CategoriesWindow::merge() {
 void CategoriesWindow::selectionChanged() {
     moveAction->setEnabled(model()->movable(entityView.selectedIndex()));
     mergeAction->setEnabled(entityView.selectedIndex().isValid());
-}
-
-const char *CategoriesWindow::settingsGroup() const {
-    return SETTINGS_GROUP;
 }

@@ -17,7 +17,7 @@ class CompaniesWindow : public QDialog {
     CompanyStore *store;
     CompanyTableModel model;
     QTableView *itemView{new QTableView(this)};
-    EntityView entityView;
+    EditEntityView entityView;
 
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);

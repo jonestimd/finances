@@ -3,6 +3,10 @@ QTreeView {
     accent-color: rgb(255, 160, 160);
 }
 
+QTreeView[rootSpansAllColumns="true"]::item:has-children {
+    background-color: rgb(100%, 95%, 70%);
+}
+
 QLineEdit[invalid="true"] {
     border: 1px solid rgb(128, 0, 0);
     border-radius: 2px;

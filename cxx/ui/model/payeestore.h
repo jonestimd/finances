@@ -15,7 +15,7 @@ public:
     void mergePayees(QWidget *source, const Payee *payee, domain_id destinationId);
 
 public slots:
-    void transactionsUpdated(const QList<TransactionChange> changes);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> changes);
 };
 
 #endif // PAYEESTORE_H

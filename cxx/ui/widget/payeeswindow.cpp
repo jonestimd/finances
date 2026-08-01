@@ -8,7 +8,7 @@
 #define SETTINGS_GROUP "payees"
 
 PayeesWindow::PayeesWindow(DataStore *dataStore)
-    : AppWindow{tr("Payee"), new PayeeTableModel(dataStore->payeeStore), new QTableView(), &dataStore->messageStore}
+    : EntityWindow{tr("Payee"), new PayeeTableModel(dataStore->payeeStore), new QTableView(), &dataStore->messageStore}
     , store{dataStore->payeeStore}
     , mergeAction{finances::iconAction(finances::MergeType, tr("Merge Payees"), tr("ctrl+y", "merge payee"), this, SLOT(merge()), false)}
 {
@@ -22,6 +22,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
 
     if (store->load(&entityView, tr(LOADING_PAYEES))) model()->setRows(store->ids());
 
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{400, 500}, &entityView);
 }
 
@@ -63,8 +64,4 @@ void PayeesWindow::merge() {
 
 void PayeesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
     mergeAction->setEnabled(entityView.selectedIndex().isValid());
-}
-
-const char *PayeesWindow::settingsGroup() const {
-    return SETTINGS_GROUP;
 }

@@ -2,7 +2,7 @@
 #include "service/database/transactiondao.h"
 
 PayeeService::PayeeService(ConnectionPool *connectionPool, PayeeDao &payeeDao, TransactionDao &transactionDao)
-    : EntityService{connectionPool, payeeDao}
+    : NamedEntityService{connectionPool, payeeDao}
     , transactionDao{transactionDao}
 {}
 

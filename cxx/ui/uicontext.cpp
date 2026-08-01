@@ -48,18 +48,23 @@ private:
     }
 };
 
+using namespace finances;
+
 UiContext::UiContext(DataStore *dataStore)
     : dataStore{dataStore}
-    , accountsAction_(this, finances::LibraryBooks, tr("Organize Accounts"), tr("alt+o", "accounts"), this)
-    , payeesAction_(this, finances::Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
+    , accountsAction_(this, LibraryBooks, tr("Organize Accounts"), tr("alt+o", "accounts"), this)
+    , payeesAction_(this, Person, tr("Payees"), tr("alt+p", "payees"), dataStore)
     , categoriesAction_(this, finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
-    , groupsAction_(this, finances::Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
-    , securitiesAction_(this, finances::AreaChart, tr("Securities"), tr("alt+s", "securities"), dataStore)
+    , groupsAction_(this, Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
+    , securitiesAction_(this, AreaChart, tr("Securities"), tr("alt+s", "securities"), this)
+    , accountSecuritiesAction_(this, materialIcon(LibraryBooks, {}, AreaChart), tr("Account Securities"), tr("ctrl+shift+s", "account securities"), this)
 {}
 
 UiContext::UiContext(const ConnectionSettings &settings) : UiContext(new DataStore(settings)) {}
 
 UiContext::~UiContext() {
+    if (openWindows) qWarning("~UiContext(): open windows? %d", openWindows);
+    if (!transactionsWindows.empty()) qWarning("~UiContext(): open transaction windows? %lld", transactionsWindows.size());
     qDeleteAll(transactionsWindows);
     transactionsWindows.clear();
     qDeleteAll(transactionModels);
@@ -68,7 +73,7 @@ UiContext::~UiContext() {
 }
 
 void UiContext::start(QRect requestorRect) {
-    auto lastViewed = finances::App::lastViewedAccount(dataStore->connectionSettings().configName());
+    auto lastViewed = App::lastViewedAccount(dataStore->connectionSettings().configName());
     if (lastViewed.isValid()) showTransactions(lastViewed.toLongLong(), requestorRect);
     else accountsAction_.trigger();
 }
@@ -91,6 +96,10 @@ QAction *UiContext::groupsAction() {
 
 QAction *UiContext::securitiesAction() {
     return &securitiesAction_;
+}
+
+QAction *UiContext::accountSecuritiesAction() {
+    return &accountSecuritiesAction_;
 }
 
 TransactionsWindow *UiContext::showTransactions(domain_id accountId, const QRect& requestorRect) {

@@ -7,8 +7,8 @@
     "    change_user varchar(50) not null,\n" \
     "    version bigint not null,\n" \
     "    date date not null,\n" \
-    "    shares_in numeric(19,6) not null,\n" \
-    "    shares_out numeric(19,6) not null,\n" \
+    "    shares_in numeric(19," SHARES_PRECISION ") not null,\n" \
+    "    shares_out numeric(19," SHARES_PRECISION ") not null,\n" \
     "    security_id bigint not null,\n" \
     "    constraint stock_split_ak unique (date, security_id),\n" \
     "    constraint stock_split_security_fk foreign key (security_id) references asset (id)\n" \

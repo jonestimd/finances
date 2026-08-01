@@ -9,7 +9,7 @@
 
 class UiContext;
 
-class TransactionsWindow : public AppWindow {
+class TransactionsWindow : public EntityWindow<> {
     Q_OBJECT
     UiContext *const context;
     QLabel *const clearedBalance{new QLabel()};
@@ -49,8 +49,6 @@ private Q_SLOTS:
     void clearedBalanceChanged(const QDecNumber& balance);
 
 protected:
-    const char* settingsGroup() const override;
-
     virtual void keyPressEvent(QKeyEvent* event) override;
 };
 

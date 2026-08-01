@@ -29,10 +29,12 @@ struct WindowHolder {
 
     Window* const window;
     View* const view;
+    QSignalSpy* loadedSpy;
 
-    WindowHolder(Window* window)
+    WindowHolder(Window* window, QSignalSpy* loadedSpy = nullptr)
         : window{window}
         , view{window->template findChild<View*>()}
+        , loadedSpy{loadedSpy}
     {}
 
     ~WindowHolder() {
@@ -50,6 +52,7 @@ struct WindowHolder {
 
     void showWindow() {
         window->show();
+        if (loadedSpy) QVERIFY(loadedSpy->wait());
         QVERIFY(QTest::qWaitForWindowActive(window));
         focusWindow();
         QCOMPARE(window->focusWidget(), view);
@@ -240,9 +243,9 @@ private slots:
         uitest::setConfigHome();
         dbTestCase.createDatabases();
         companyId = dbTestCase.addCompany(driver, COMPANY_NAME);
-        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
-        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, AccountType::bank.code, companyId)->id.value();
-        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, AccountType::brokerage.code, companyId)->id.value();
+        accountId = dbTestCase.addAccount(driver, ACCOUNT_NAME, &AccountType::bank, companyId)->id.value();
+        altAccountId = dbTestCase.addAccount(driver, ALT_ACCOUNT_NAME, &AccountType::bank, companyId)->id.value();
+        securityAccountId = dbTestCase.addAccount(driver, SECURITY_ACCOUNT_NAME, &AccountType::brokerage, companyId)->id.value();
         payeeId = dbTestCase.addPayee(driver, PAYEE_NAME);
         categoryId = dbTestCase.addCategory(driver, CATEGORY_NAME);
         groupId = dbTestCase.addGroup(driver, GROUP_NAME);
@@ -415,7 +418,8 @@ private slots:
     void renameSecurity_updatesTransactions() {
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
         dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, {}, securityId.value()), {"123.45"});
-        SecurityWindowHolder securityHolder(new SecuritiesWindow(dataStore));
+        QSignalSpy loadedSpy{dataStore->securityStore, &SecurityStore::valuesLoaded};
+        SecurityWindowHolder securityHolder(new SecuritiesWindow(uiContext), &loadedSpy);
         testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }
 

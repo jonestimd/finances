@@ -1,6 +1,8 @@
 #include "securitydao.h"
 #include "dbdialect.h"
 
+#include <QRegularExpression>
+
 #define CREATE_ASSET_TABLE_QUERY(idtype) \
     "create table asset (\n" \
     "    id " idtype ",\n" \
@@ -28,7 +30,7 @@ values ('USD', 'Currency', 2, '$', :user, 0))";
 
 static const auto pgCreateAdjustShares = R"(
 create function adjust_shares(_security_id bigint, _from_date timestamp, _shares numeric)
-  returns decimal(19,6) as $$
+  returns decimal(19,)" SHARES_PRECISION R"() as $$
 declare
   curs cursor for
     select ss.shares_out, ss.shares_in
@@ -47,13 +49,13 @@ $$ language plpgsql stable)";
 static const char *const sqliteCreateAdjustShares = nullptr;
 
 static const auto mysqlCreateAdjustShares = R"(
-create function adjust_shares(security_id bigint, from_date datetime, shares decimal(19,6))
-  returns decimal(19,6)
+create function adjust_shares(security_id bigint, from_date datetime, shares decimal(19,)" SHARES_PRECISION R"())
+  returns decimal(19,)" SHARES_PRECISION R"()
   deterministic reads sql data
 begin
   declare done boolean default false;
-  declare shares_in  decimal(19,6);
-  declare shares_out decimal(19,6);
+  declare shares_in  decimal(19,)" SHARES_PRECISION R"();
+  declare shares_out decimal(19,)" SHARES_PRECISION R"();
   declare cur cursor for
     select ss.shares_out, ss.shares_in
     from stock_split ss
@@ -89,7 +91,7 @@ end)";
     "    group by sx.account_id, sx.security_id, rx.account_id\n" \
     ")\n" \
     "select tx.account_id, tx.security_id\n" \
-    ", " sum "(adjust_shares(tx.security_id, tx.date, td.asset_quantity)) shares\n" \
+    ", round(" sum "(adjust_shares(tx.security_id, tx.date, td.asset_quantity)), " SHARES_PRECISION ") shares\n" \
     ", " sum "(case when td.asset_quantity > 0 and td.related_detail_id is null then abs(td.amount) else 0 end)\n" \
     "    - (select coalesce(" sum "(cost_basis), 0) from shares_out where account_id = tx.account_id and security_id = tx.security_id)\n" \
     "    + (select coalesce(" sum "(cost_basis), 0) from shares_out where xfer_account_id = tx.account_id and security_id = tx.security_id) cost_basis\n" \
@@ -115,7 +117,7 @@ static const auto sqliteCreateAccountSecuritySql = CREATE_ACCOUNT_SECURITY_QUERY
     "    from account_security\n" \
     "    group by security_id\n" \
     ")\n" \
-    "select a.*, s.type security_type, coalesce(sum.transactions, 0) transactions\n" \
+    "select a.*, s.type security_type, coalesce(sum.transactions, 0) use_count\n" \
     "     , coalesce(sum.shares, 0) shares, sum.first_acquired\n" \
     "     , coalesce(sum.cost_basis, 0) cost_basis\n" \
     "     , coalesce(sum.dividends, 0) dividends\n" \
@@ -139,6 +141,17 @@ static const auto insertSecurityQuery = "insert into security (asset_id, type) v
 
 static const auto deleteSecuritySql = "delete from security where asset_id = :id";
 
+#define ACCOUNT_SECURITIES_SQL(shares, inList) \
+    "select * from account_security\n" \
+    "where " shares " != 0\n" \
+    "-- and " inList(account_id, $accountIds) "\n" \
+    "-- and " inList(security_id, $securityIds) "\n" \
+    "order by account_id, security_id"
+
+static const auto pgAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("shares", PG_IN_LIST);
+static const auto mysqlAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("shares", MYSQL_IN_LIST);
+static const auto sqliteAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("cast(shares as decimal)", SQLITE_IN_LIST);
+
 #define DAO_QUERIES(idtype, sum) \
     .createTableSql = CREATE_ASSET_TABLE_QUERY(idtype),\
     .getAllSql = GET_ALL_QUERY(sum),\
@@ -161,6 +174,7 @@ SecurityDao::SecurityDao(const QString &dbType)
                                QObject::tr("Securities have been modified.  Please reload and try again")}
     , createAdjustSharesSql{DB_TYPE_QUERY(dbType, CreateAdjustShares)}
     , createAccountSecuritySql{dbType == SQLITE_DRIVER ? sqliteCreateAccountSecuritySql : pgMysqlCreateAccountSecuritySql}
+    , accountSecuritiesSql{DB_TYPE_QUERY(dbType, AccountSecuritiesSql)}
 {}
 
 void SecurityDao::createTable(const QSqlDatabase &db) const {
@@ -211,6 +225,28 @@ QList<const Security*> SecurityDao::update(QSqlDatabase &db, const QList<Securit
         sql::bindValue(query, ":securityType", security->securityType->code);
     }
     return updates;
+}
+
+QHash<const AccountSecurityId, const AccountSecurity*> SecurityDao::getAccountSecurities(const QSqlDatabase &db) const {
+    QMultiHash<domain_id, const AccountSecurity*> entities;
+    QSqlQuery query(db);
+    query.prepare(accountSecuritiesSql);
+    sql::exec(query, className, "getAccountSecurities");
+    return load<AccountSecurity, const AccountSecurityId>(query);
+}
+
+QHash<const AccountSecurityId, const AccountSecurity*> SecurityDao::getAccountSecurities(
+    const QSqlDatabase &db, const QList<domain_id> accountIds, const QList<domain_id> securityIds) const
+{
+    QString sql{accountSecuritiesSql};
+    sql.replace(QRegularExpression{"^-- ", QRegularExpression::MultilineOption}, "");
+    sql.replace('$', ':');
+    QSqlQuery query(db);
+    query.prepare(sql);
+    sql::bindList(query, ":accountIds", accountIds);
+    sql::bindList(query, ":securityIds", securityIds);
+    sql::exec(query, className, "getAccountSecuritiesByAccountAndSecurity");
+    return load<AccountSecurity, const AccountSecurityId>(query);
 }
 
 void SecurityDao::bindUpdateValues(QSqlQuery &query, Security *security) {

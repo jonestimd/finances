@@ -4,7 +4,7 @@
 #include "database/connectionpool.h"
 #include "model/bulkupdate.h"
 
-template<class Entity, class Dao>
+template<class Entity, class Dao, class... GetAllArgs>
 class EntityService {
 protected:
     Dao &dao;
@@ -12,9 +12,9 @@ protected:
 public:
     EntityService(ConnectionPool *connectionPool, Dao &dao) : dao{dao}, connectionPool{connectionPool} {}
 
-    QHash<domain_id, const Entity*> getAll() {
+    QHash<domain_id, const Entity*> getAll(GetAllArgs... args) {
         auto conn = Connection(connectionPool);
-        return dao.getAll(conn.db);
+        return dao.getAll(conn.db, args...);
     }
 
     virtual QList<const Entity*> update(BulkUpdate<Entity> &changes, const QString &user) {
@@ -32,19 +32,6 @@ public:
         }
     }
 
-    const Entity *add(const QString &name, const QString &user) {
-        auto entity = new Entity(name);
-        auto conn = Connection(connectionPool);
-        try {
-            dao.add(conn.db, QList{entity}, user);
-            return entity;
-        } catch(...) {
-            conn.db.rollback();
-            delete entity;
-            throw;
-        }
-    }
-
 protected:
     template<typename Result>
     Result doInTransaction(std::function<Result(QSqlDatabase&)> update) {
@@ -53,6 +40,27 @@ protected:
             return update(conn.db);
         } catch(...) {
             conn.db.rollback();
+            throw;
+        }
+    }
+};
+
+template<class Entity, class Dao>
+requires std::is_base_of_v<NamedEntity, Entity>
+class NamedEntityService : public EntityService<Entity, Dao> {
+public:
+    NamedEntityService(ConnectionPool *connectionPool, Dao &dao)
+        : EntityService<Entity, Dao>{connectionPool, dao} {}
+
+    const Entity *add(const QString &name, const QString &user) {
+        auto entity = new Entity(name);
+        auto conn = Connection(this->connectionPool);
+        try {
+            this->dao.add(conn.db, QList{entity}, user);
+            return entity;
+        } catch(...) {
+            conn.db.rollback();
+            delete entity;
             throw;
         }
     }

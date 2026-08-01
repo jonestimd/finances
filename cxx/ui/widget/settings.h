@@ -11,7 +11,7 @@ namespace settings {
 
     void saveWindowState(const QString &group, QWidget *widget, QAbstractItemModel* model = nullptr, QHeaderView *viewHeader = nullptr);
 
-    void saveWindowState(const char *group, QWidget *widget, EntityView *tableSort = nullptr);
+    void saveWindowState(const char *group, QWidget *widget, EditEntityView *tableSort = nullptr);
 
     void restoreWindowState(const QString &group, QWidget *widget, QSize defaultSize, QAbstractItemModel *model, QHeaderView *viewHeader);
 

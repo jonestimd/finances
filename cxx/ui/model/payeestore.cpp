@@ -16,8 +16,8 @@ void PayeeStore::mergePayees(QWidget *source, const Payee *payee, domain_id dest
     });
 }
 
-void PayeeStore::transactionsUpdated(const QList<TransactionChange> changes) {
-    if (updateTransactionCounts(changes, &Transaction::payeeId)) {
+void PayeeStore::transactionsUpdated(const QHash<domain_id, TransactionChange> changes) {
+    if (updateTransactionCounts(changes.values(), &Transaction::payeeId)) {
         emit valuesLoaded(ids());
     }
 }

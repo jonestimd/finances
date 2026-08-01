@@ -5,37 +5,38 @@
 #include "database/transactiondao.h"
 #include "database/transactiondetaildao.h"
 
-class TransactionService : EntityService<Transaction, TransactionDao> {
+class TransactionService : public EntityService<Transaction, TransactionDao, domain_id> {
     TransactionDetailDao &detailDao;
 
 public:
     TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao);
 
-    QHash<domain_id, const Transaction*> getAll(domain_id accountId);
+    /**
+     * @copydoc EntityService::getAll(GetAllArgs...)
+     * @param accountId
+     */
 
     /**
      * @return `TransactionsData`:
-     *   * `transactions`:
+     *   - `transactions`:
      *     - input `adds` converted to `Transaction`
      *     - input `updates`
      *     - transactions for deleted details
      *     - transactions for updated details (change transfer account)
      *     - new related transactions for added details
      *     - new related transactions for updated details
-     *   * `details`
+     *   - `details`:
      *     - input adds (from transaction `adds`)
      *     - input `detailUpdates`
      *     - new related details
      *     - updated related details
-     *   * `deletedIds`
-     *     - implicitly deleted transactions
-     *       - for changes to transfer details
-     *       - for deleted transfer (transaction or detail)
-     *   * `deletedDetailIds`
-     *     - implicitly deleted related details
-     *       - for changes to transfer details
-     *       - for deleted transfer transactions
-     *       - NOT for DELETED transfer details
+     *   - `deletedIds` - implicitly deleted transactions
+     *     - for changes to transfer details
+     *     - for deleted transfer (transaction or detail)
+     *   - `deletedDetailIds` - implicitly deleted related details
+     *     - for changes to transfer details
+     *     - for deleted transfer transactions
+     *     - \b NOT for \b DELETED transfer details
      */
     const TransactionsData update(TransactionUpdate &changes, const QString &user);
 };

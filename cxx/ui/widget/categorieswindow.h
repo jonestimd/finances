@@ -8,7 +8,7 @@
 #include <QTableView>
 #include <ui/model/comboboxmodel.h>
 
-class CategoriesWindow : public AppWindow {
+class CategoriesWindow : public EntityWindow<> {
     Q_OBJECT
     CategoryStore *store;
     QAction *moveAction;
@@ -29,8 +29,5 @@ public Q_SLOTS:
     void reparent();
     void merge();
     void selectionChanged();
-
-protected:
-    const char *settingsGroup() const override;
 };
 #endif // CATEGORIES_WINDOW_H

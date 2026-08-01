@@ -4,15 +4,17 @@
 #include "filterinput.h"
 #include "tableitemdelegate.h"
 #include "ui/model/adapteritemmodel.h"
+#include "ui/model/sortfilterproxymodel.h"
 #include "ui/model/statusmessagestore.h"
 #include <QStatusBar>
 #include <QTableView>
 #include <QTreeView>
 
-class SortFilterProxyModel;
+#define SETTINGS_GROUP_PROP "settingsGroup"
 
 class EntityView : public QObject {
     Q_OBJECT
+protected:
     QWidget *const window;
     TableItemDelegate itemDelegate;
     /** @brief Indexes of the last selected row and its parents. */
@@ -25,41 +27,65 @@ public:
     SortFilterProxyModel* sortModel;
     FilterInput *const filterInput;
     QToolBar toolbar;
-    QAction *const saveAction;
 
-    EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
-    EntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model, QTableView *itemView, const QString &entityName);
+    EntityView(QWidget *window, StatusMessageStore* messageStore, QAbstractItemModel *model,
+                 QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
 
-    template<class T = AdapterItemModel>
-    inline T *model() const {
-        return static_cast<T*>(sourceModel());
+    inline QAbstractItemModel* model() const {
+        return sortModel->sourceModel();
     }
-    void setModel(AdapterItemModel* model);
+    void setModel(QAbstractItemModel* model);
 
     void addActions(const QList<QAction*> &actions);
     void insertAction(qsizetype index, QAction* action);
 
     QModelIndex selectedIndex();
 
-    bool focusFilter(QKeyEvent *event);
-
-    bool confirmLoadData();
-    void confirmClose(QCloseEvent *event, const char *settingsGroup);
+    void focusItemView();
 
 public Q_SLOTS:
     void showStatusMessage(const QString message);
     void clearStatusMessage();
 
-public:
-    void focusItemView();
+protected:
+    /**
+     * @brief eventFilter Filters window events to handle "find" shortcut and save window's state when it closes.
+     */
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
-    QAbstractItemModel* sourceModel() const;
     void restoreSelection();
+};
+
+class EditEntityView : public EntityView {
+    Q_OBJECT
+
+public:
+    QAction *const saveAction;
+
+    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
+               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
+    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
+               QTableView *itemView, const QString &entityName);
+
+    template<class T = AdapterItemModel>
+    inline T *model() const {
+        return static_cast<T*>(sortModel->sourceModel());
+    }
+    void setModel(AdapterItemModel* model);
+
+    bool confirmLoadData();
+    void confirmClose(QCloseEvent *event, const char *settingsGroup);
 
 public Q_SLOTS:
     void dataChanged();
     void showValidation(const QModelIndex &index);
+
+protected:
+    /**
+     * @brief eventFilter Confirms closing the window when there are unsaved changes.
+     */
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
 };
 
 #endif // ENTITY_VIEW_H

@@ -82,9 +82,9 @@ private slots:
             auto &detailDao = dbTestCase.detailDao(driver);
             auto service = new TransactionService{dbTestCase.connectionPool(driver), txDao, detailDao};
             auto companyId = dbTestCase.addCompany(driver, "Bank 1");
-            auto accountId = dbTestCase.addAccount(driver, "Account 1", AccountType::bank.code, companyId)->id.value();
-            auto altAccountId = dbTestCase.addAccount(driver, "Account 2", AccountType::bank.code, companyId)->id.value();
-            auto altAccountId2 = dbTestCase.addAccount(driver, "Account 3", AccountType::bank.code, companyId)->id.value();
+            auto accountId = dbTestCase.addAccount(driver, "Account 1", &AccountType::bank, companyId)->id.value();
+            auto altAccountId = dbTestCase.addAccount(driver, "Account 2", &AccountType::bank, companyId)->id.value();
+            auto altAccountId2 = dbTestCase.addAccount(driver, "Account 3", &AccountType::bank, companyId)->id.value();
             auto payeeId = dbTestCase.addPayee(driver, "Payee 1");
             QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << altAccountId << altAccountId2 << payeeId;
         }

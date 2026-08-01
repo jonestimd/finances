@@ -12,7 +12,7 @@
     "    change_user varchar(50) not null,\n" \
     "    version bigint not null,\n" \
     "    amount numeric(19,2) not null,\n" \
-    "    asset_quantity numeric(19,6) default null,\n" \
+    "    asset_quantity numeric(19," SHARES_PRECISION ") default null,\n" \
     "    memo varchar(2000) default null,\n" \
     "    tx_category_id bigint,\n" \
     "    exchange_asset_id bigint,\n" \

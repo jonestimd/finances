@@ -6,7 +6,7 @@ CategoryService::CategoryService(ConnectionPool *connectionPool, CategoryDao &da
     , detailDao{detailDao}
 {}
 
-QList<const Category *> CategoryService::update(BulkUpdate<Category> &changes, const QString &user) {
+QList<const Category*> CategoryService::update(BulkUpdate<Category> &changes, const QString &user) {
     auto result = EntityService<Category, CategoryDao>::update(changes, user);
     if (!changes.deletes.isEmpty()) {
          // TODO add tests for updated parent returned with updated children

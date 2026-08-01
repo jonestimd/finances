@@ -315,7 +315,7 @@ QVariant TransactionTableModel::data(const QModelIndex &index, int role) const {
             return value.value<finances::TextHighlight>() + finances::Dimmed;
         }
     }
-    else if (role == Qt::FontRole && isBoldColumn(index.column())) return boldFont();
+    else if (role == Qt::FontRole && isBoldColumn(index.column())) return finances::boldFont();
     return PodItemModel::data(index, role);
 }
 
@@ -550,12 +550,6 @@ int TransactionTableModel::pendingDeleteCount(const QModelIndex &parent) const {
 
 bool TransactionTableModel::isBoldColumn(int column) const {
     return (column == payeeColumn || column == securityColumn || column == subtotalColumn);
-}
-
-QFont TransactionTableModel::boldFont() {
-    QFont font(qApp->font());
-    font.setBold(true);
-    return font;
 }
 
 QModelIndex TransactionTableModel::queueAdd(const QModelIndex &selectedIndex) {

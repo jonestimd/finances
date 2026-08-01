@@ -9,12 +9,9 @@ public:
     const AssetType* type{&AssetType::security};
     int scale;
     QString symbol{};
-    mutable int transactions{0};
 
-    Asset(const AssetType* type);
+    Asset(const AssetType* type, const QString &name = "");
     Asset(const QSqlRecord &record);
-
-    bool deletable() const;
 };
 
 #endif // ASSET_H

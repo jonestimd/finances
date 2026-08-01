@@ -2,17 +2,20 @@
 #define SECURITIESWINDOW_H
 
 #include "appwindow.h"
-#include "ui/model/datastore.h"
 #include "ui/model/securitytablemodel.h"
+#include "ui/model/transactionstore.h"
 #include <QTableView>
 
-class SecuritiesWindow : public AppWindow {
+class UiContext;
+
+class SecuritiesWindow : public EntityWindow<> {
     Q_OBJECT
-    SecurityStore *store;
+    SecurityStore* store;
+    TransactionStore* transactionStore;
     QAction *hideZeroAction{finances::iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
 
 public:
-    SecuritiesWindow(DataStore *dataStore);
+    SecuritiesWindow(UiContext* context);
     ~SecuritiesWindow();
 
     SecurityTableModel *model() const;
@@ -23,12 +26,13 @@ public:
 public Q_SLOTS:
     void setSecurities(const QList<domain_id> ids);
     void toggleZeroShares(bool hide);
+    void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
 
 private:
     bool nonZeroShares(const QModelIndex &sourceIndex) const;
 
 protected:
-    const char *settingsGroup() const override;
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif // SECURITIESWINDOW_H

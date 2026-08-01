@@ -66,5 +66,5 @@ void CompaniesWindow::closeEvent(QCloseEvent *event) {
 
 void CompaniesWindow::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, &model)) return;
-    if (!entityView.focusFilter(event)) QDialog::keyPressEvent(event);
+    QDialog::keyPressEvent(event);
 }

@@ -10,7 +10,7 @@
 using namespace finances;
 
 AccountsWindow::AccountsWindow(UiContext *context)
-    : AppWindow{
+    : EntityWindow{
         tr("Account"),
         new AccountTableModel(context->dataStore->accountStore, std::bind_front(&AccountsWindow::addCompany, this)),
         new QTableView(),
@@ -26,6 +26,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
         context->categoriesAction(),
         context->groupsAction(),
         context->securitiesAction(),
+        context->accountSecuritiesAction(),
         showAccount,
     });
     QMenuBar *menuBar = new QMenuBar();
@@ -54,6 +55,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
         model()->companiesLoaded(dataStore->accountStore->companyStore.ids());
     }
 
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
 
@@ -111,8 +113,4 @@ void AccountsWindow::newCompany(const Company *company) {
         model()->setData(index, QVariant::fromValue(static_cast<const NamedEntity*>(company)), Qt::EditRole);
     }
     entityView.itemView->setFocus(Qt::ActiveWindowFocusReason);
-}
-
-const char *AccountsWindow::settingsGroup() const {
-    return SETTINGS_GROUP;
 }

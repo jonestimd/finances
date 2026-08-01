@@ -19,6 +19,8 @@
 #define LOADING_SECURITIES "Loading Securities..."
 #define SAVING_SECURITIES "Saving Securities..."
 
+#define LOADING_ACCOUNT_SECURITIES "Loading Account Securities..."
+
 #define LOADING_TRANSACTIONS "Loading transactions..."
 #define SAVING_TRANSACTIONS "Saving transactions..."
 #define SAVING_TRANSACTION "Saving transaction..."
