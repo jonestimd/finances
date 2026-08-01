@@ -23,6 +23,21 @@ void SecurityStore::loadAccountSecurities(EntityView *view)  {
     });
 }
 
+void SecurityStore::loadAccountSecurities(EntityView *view, const QList<domain_id> accountIds, const QList<domain_id> securityIds) {
+    doInBackground(view->statusBar.parentWidget(), tr(LOADING_ACCOUNT_SECURITIES), [=, this]() {
+        auto accountSecurities = service->getAccountSecurities(accountIds, securityIds);
+        emit accountSecuritiesUpdated(accountSecurities.values());
+        QList<AccountSecurityId> removedIds;
+        for (auto accountId : accountIds) {
+            for (auto securityId : securityIds) {
+                auto id = AccountSecurityId{accountId, securityId};
+                if (!accountSecurities.contains(id)) removedIds.append(id);
+            }
+        }
+        if (!removedIds.isEmpty()) emit accountSecuritiesRemoved(removedIds);
+    });
+}
+
 void SecurityStore::transactionsUpdated(const QHash<domain_id, TransactionChange> changes) {
     if (updateTransactionCounts(changes.values(), &Transaction::securityId)) {
         emit valuesLoaded(ids());

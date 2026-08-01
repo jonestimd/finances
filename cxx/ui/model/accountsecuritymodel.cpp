@@ -133,3 +133,59 @@ void AccountSecurityTableModel::setRows(QList<const AccountSecurity*> rows) {
     }
     endResetModel();
 }
+
+void AccountSecurityTableModel::updateRows(QList<const AccountSecurity*> rows) {
+    for (const auto row : rows) {
+        auto accountId = row->id.accountId;
+        auto rowIndex = indexOf(row->id);
+        if (rowIndex.isValid()) {
+            auto& summaries = byAccount[accountId];
+            if (rowIndex.parent().isValid()) {
+                summaries[rowIndex.row()] = row;
+                emit dataChanged(rowIndex, rowIndex.siblingAtColumn(columns.size()-1));
+            } else {
+                beginInsertRows(rowIndex, summaries.size(), summaries.size());
+                summaries.append(row);
+                endInsertRows();
+            }
+        } else {
+            auto parent = index(accountIds.size(), 0);
+            beginInsertRows(parent, 0, 0);
+            accountIds.append(accountId);
+            byAccount.insert(accountId, {row});
+            endInsertRows();
+        }
+    }
+}
+
+void AccountSecurityTableModel::removeRows(const QList<AccountSecurityId> ids) {
+    for (auto id : ids) {
+        auto rowIndex = indexOf(id);
+        if (rowIndex.parent().isValid()) {
+            auto& summaries = byAccount[id.accountId];
+            if (summaries.size() > 1) {
+                beginRemoveRows(rowIndex.parent(), rowIndex.row(), rowIndex.row());
+                summaries.removeAt(rowIndex.row());
+                endRemoveRows();
+            } else {
+                beginRemoveRows({}, rowIndex.parent().row(), rowIndex.parent().row());
+                accountIds.removeOne(id.accountId);
+                byAccount.remove(id.accountId);
+                qDeleteAll(summaries);
+                endRemoveRows();
+            }
+        }
+    }
+}
+
+QModelIndex AccountSecurityTableModel::indexOf(AccountSecurityId id) {
+    if (byAccount.contains(id.accountId)) {
+        auto parent = index(accountIds.indexOf(id.accountId), 0, {});
+        auto summaries = byAccount[id.accountId];
+        for (auto i = summaries.cbegin(); i != summaries.cend(); i++) {
+            if ((*i)->id.securityId == id.securityId) return index(i - summaries.cbegin(), 0, parent);
+        }
+        return parent;
+    }
+    return {};
+}

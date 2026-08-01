@@ -14,3 +14,10 @@ QHash<const AccountSecurityId, const AccountSecurity*> SecurityService::getAccou
     auto conn = Connection(connectionPool);
     return dao.getAccountSecurities(conn.db);
 }
+
+QHash<const AccountSecurityId, const AccountSecurity *> SecurityService::getAccountSecurities(
+    const QList<domain_id> accountIds, const QList<domain_id> securityIds) const
+{
+    auto conn = Connection(connectionPool);
+    return dao.getAccountSecurities(conn.db, accountIds, securityIds);
+}

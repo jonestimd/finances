@@ -1,6 +1,8 @@
 #include "securitydao.h"
 #include "dbdialect.h"
 
+#include <QRegularExpression>
+
 #define CREATE_ASSET_TABLE_QUERY(idtype) \
     "create table asset (\n" \
     "    id " idtype ",\n" \
@@ -139,10 +141,16 @@ static const auto insertSecurityQuery = "insert into security (asset_id, type) v
 
 static const auto deleteSecuritySql = "delete from security where asset_id = :id";
 
-#define ACCOUNT_SECURITIES_SQL(shares) "select * from account_security where " shares " != 0 order by account_id, security_id"
+#define ACCOUNT_SECURITIES_SQL(shares, inList) \
+    "select * from account_security\n" \
+    "where " shares " != 0\n" \
+    "-- and " inList(account_id, $accountIds) "\n" \
+    "-- and " inList(security_id, $securityIds) "\n" \
+    "order by account_id, security_id"
 
-static const auto pgMysqlAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("shares");
-static const auto sqliteAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("cast(shares as decimal)");
+static const auto pgAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("shares", PG_IN_LIST);
+static const auto mysqlAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("shares", MYSQL_IN_LIST);
+static const auto sqliteAccountSecuritiesSql = ACCOUNT_SECURITIES_SQL("cast(shares as decimal)", SQLITE_IN_LIST);
 
 #define DAO_QUERIES(idtype, sum) \
     .createTableSql = CREATE_ASSET_TABLE_QUERY(idtype),\
@@ -166,7 +174,7 @@ SecurityDao::SecurityDao(const QString &dbType)
                                QObject::tr("Securities have been modified.  Please reload and try again")}
     , createAdjustSharesSql{DB_TYPE_QUERY(dbType, CreateAdjustShares)}
     , createAccountSecuritySql{dbType == SQLITE_DRIVER ? sqliteCreateAccountSecuritySql : pgMysqlCreateAccountSecuritySql}
-    , accountSecuritiesSql{dbType == SQLITE_DRIVER ? sqliteAccountSecuritiesSql : pgMysqlAccountSecuritiesSql}
+    , accountSecuritiesSql{DB_TYPE_QUERY(dbType, AccountSecuritiesSql)}
 {}
 
 void SecurityDao::createTable(const QSqlDatabase &db) const {
@@ -224,6 +232,20 @@ QHash<const AccountSecurityId, const AccountSecurity*> SecurityDao::getAccountSe
     QSqlQuery query(db);
     query.prepare(accountSecuritiesSql);
     sql::exec(query, className, "getAccountSecurities");
+    return load<AccountSecurity, const AccountSecurityId>(query);
+}
+
+QHash<const AccountSecurityId, const AccountSecurity*> SecurityDao::getAccountSecurities(
+    const QSqlDatabase &db, const QList<domain_id> accountIds, const QList<domain_id> securityIds) const
+{
+    QString sql{accountSecuritiesSql};
+    sql.replace(QRegularExpression{"^-- ", QRegularExpression::MultilineOption}, "");
+    sql.replace('$', ':');
+    QSqlQuery query(db);
+    query.prepare(sql);
+    sql::bindList(query, ":accountIds", accountIds);
+    sql::bindList(query, ":securityIds", securityIds);
+    sql::exec(query, className, "getAccountSecuritiesByAccountAndSecurity");
     return load<AccountSecurity, const AccountSecurityId>(query);
 }
 

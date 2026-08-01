@@ -14,6 +14,8 @@ public:
     QHash<domain_id, const StockSplit*> getSplits();
     
     QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities() const;
+    QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities(
+        const QList<domain_id> accountIds, const QList<domain_id> securityIds) const;
 };
 
 #endif // SECURITYSERVICE_H

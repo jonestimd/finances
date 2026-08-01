@@ -16,9 +16,12 @@ public:
     QDecNumber adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const;
 
     void loadAccountSecurities(EntityView *view);
+    void loadAccountSecurities(EntityView *view, const QList<domain_id> accountIds, const QList<domain_id> securityIds);
 
 Q_SIGNALS:
     void accountSecuritiesLoaded(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
+    void accountSecuritiesUpdated(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
+    void accountSecuritiesRemoved(QList<AccountSecurityId> accountSecurityIds);
 
 public slots:
     void transactionsUpdated(const QHash<domain_id, TransactionChange> changes);

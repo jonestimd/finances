@@ -21,7 +21,7 @@ private:
 
 public:
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    virtual QModelIndex index(int row, int column, const QModelIndex &parent = {}) const override;
     virtual QModelIndex parent(const QModelIndex &child) const override;
     virtual int rowCount(const QModelIndex &parent) const override;
     virtual int columnCount(const QModelIndex &parent) const override;
@@ -29,6 +29,12 @@ public:
 
 public slots:
     void setRows(QList<const AccountSecurity*> rows); // clazy:exclude=fully-qualified-moc-types
+    void updateRows(QList<const AccountSecurity*> rows); // clazy:exclude=fully-qualified-moc-types
+    void removeRows(const QList<AccountSecurityId> ids);
+
+private:
+    /** @return index of account security summary or index of parent account if there is no security summary. */
+    QModelIndex indexOf(AccountSecurityId id);
 };
 
 #endif // ACCOUNT_SECURITY_MODEL_H

@@ -31,6 +31,7 @@ public:
     Transaction *newTransfer(domain_id accountId) const;
 
     QString toString() const;
+    void appendIds(QSet<domain_id>& accountIds, QSet<domain_id>& securityIds) const;
 };
 
 class PendingTransaction : public Transaction {
@@ -86,6 +87,9 @@ struct TransactionChange {
     const Transaction* newTransaction;
 
     TransactionChange(const Transaction* oldTx, const Transaction* newTx);
+
+    domain_id txId() const;
+    void appendIds(QList<domain_id>& txIds, QSet<domain_id>& accountIds, QSet<domain_id>& securityIds) const;
 };
 
 struct DetailChange {
@@ -93,6 +97,8 @@ struct DetailChange {
     const TransactionDetail* newDetail;
 
     DetailChange(const TransactionDetail* oldTx, const TransactionDetail* newTx);
+
+    bool isSecurityChange() const;
 };
 
 #endif // TRANSACTION_H

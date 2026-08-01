@@ -154,6 +154,36 @@ private slots:
         verifyAccountSecurity(summaries2[0], securityId, "3", "17.00", 2);
         verifyAccountSecurity(summaries2[1], securityId2, "4", "6.00", 1);
     }
+
+    void getAccountSecuritiesByAccountAndSecurity() {
+        QFETCH_GLOBAL(SecurityService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, accountId2);
+        QFETCH_GLOBAL(domain_id, securityId);
+        QFETCH_GLOBAL(domain_id, securityId2);
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"-1.00"}, {"3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId), {"1.00"}, {"-3"});
+        dbTestCase.saveTransaction(factory::transaction(accountId, {}, securityId2), {"-10.00"}, {"5"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId), {"-11.00"}, {"2"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId), {"-6.00"}, {"1"});
+        dbTestCase.saveTransaction(factory::transaction(accountId2, {}, securityId2), {"-6.00"}, {"4"});
+
+        const auto result = service->getAccountSecurities({accountId}, {securityId2});
+
+        const auto summaries = forAccount(result.values(), accountId);
+        QCOMPARE(summaries.size(), 1);
+        verifyAccountSecurity(summaries.first(), securityId2, "5", "10.00", 1);
+        const auto summaries2 = forAccount(result.values(), accountId2);
+        QCOMPARE(summaries2.size(), 0);
+    }
+
+    void cleanup() {
+        QFETCH_GLOBAL(QString, driver);
+        Connection conn(dbTestCase.connectionPool(driver));
+        QSqlQuery query{conn.db};
+        query.exec("delete from tx_detail");
+        query.exec("delete from tx");
+    }
 };
 
 QTEST_GUILESS_MAIN(TestSecurityService)
