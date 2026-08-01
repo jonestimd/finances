@@ -2,7 +2,7 @@
 #define GROUPSWINDOW_H
 
 #include "appwindow.h"
-#include "ui/model/datastore.h"
+#include "ui/store/datastore.h"
 #include "ui/model/grouptablemodel.h"
 
 class GroupsWindow : public EntityWindow<> {

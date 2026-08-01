@@ -3,7 +3,7 @@
 
 #include "entityview.h"
 #include "ui/model/adapteritemmodel.h"
-#include "ui/model/statusmessagestore.h"
+#include "ui/store/statusmessagestore.h"
 #include <QBoxLayout>
 #include <QDialog>
 #include <QHeaderView>

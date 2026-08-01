@@ -2,7 +2,7 @@
 #define ACCOUNT_SECURITY_MODEL_H
 
 #include <QAbstractItemModel>
-#include "datastore.h"
+#include "ui/store/datastore.h"
 
 class AccountSecurityTableModel : public QAbstractItemModel {
     Q_OBJECT

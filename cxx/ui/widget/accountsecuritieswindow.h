@@ -2,7 +2,7 @@
 #define ACCOUNT_SECURITIES_WINDOW_H
 
 #include "treeview.h"
-#include "ui/model/datastore.h"
+#include "ui/store/datastore.h"
 #include "ui/widget/appwindow.h"
 
 class UiContext;

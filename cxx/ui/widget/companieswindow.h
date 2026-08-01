@@ -1,8 +1,8 @@
 #ifndef COMPANIESWINDOW_H
 #define COMPANIESWINDOW_H
 
-#include "../model/companytablemodel.h"
-#include "../model/datastore.h"
+#include "ui/model/companytablemodel.h"
+#include "ui/store/datastore.h"
 #include "entityview.h"
 #include <QBoxLayout>
 #include <QDialog>

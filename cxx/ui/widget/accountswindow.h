@@ -1,8 +1,8 @@
 #ifndef ACCOUNTSWINDOW_H
 #define ACCOUNTSWINDOW_H
 
-#include "../model/datastore.h"
-#include "../model/accounttablemodel.h"
+#include "ui/store/datastore.h"
+#include "ui/model/accounttablemodel.h"
 #include "appwindow.h"
 #include "companieswindow.h"
 #include "transactionswindow.h"

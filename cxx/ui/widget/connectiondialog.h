@@ -2,7 +2,7 @@
 #define CONNECTIONDIALOG_H
 
 #include "service/database/connectionpool.h"
-#include "ui/model/datastore.h"
+#include "ui/store/datastore.h"
 #include <QComboBox>
 #include <QDialog>
 #include <QLabel>

@@ -1,10 +1,10 @@
 #include "transactiontablemodel.h"
 #include "formatcolumnadapter.h"
 #include "relationcolumnadapter.h"
-#include "transactionstore.h"
 #include "amountcolumnadapter.h"
 #include "service/model/payee.h"
 #include "formats.h"
+#include "ui/store/transactionstore.h"
 #include <QDate>
 
 #define DETAIL_ROW_TYPE 1

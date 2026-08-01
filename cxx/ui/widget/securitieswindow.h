@@ -3,7 +3,7 @@
 
 #include "appwindow.h"
 #include "ui/model/securitytablemodel.h"
-#include "ui/model/transactionstore.h"
+#include "ui/store/transactionstore.h"
 #include <QTableView>
 
 class UiContext;

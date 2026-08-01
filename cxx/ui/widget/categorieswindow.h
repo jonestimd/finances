@@ -1,8 +1,8 @@
 #ifndef CATEGORIES_WINDOW_H
 #define CATEGORIES_WINDOW_H
 
-#include "../model/datastore.h"
-#include "../model/categorytablemodel.h"
+#include "ui/model/categorytablemodel.h"
+#include "ui/store/datastore.h"
 #include "appwindow.h"
 #include <QMainWindow>
 #include <QTableView>

@@ -1,9 +1,9 @@
 #include "accountsecuritymodel.h"
 #include "amountcolumnadapter.h"
-#include "datastore.h"
 #include "formatcolumnadapter.h"
 #include "formats.h"
 #include "numbercolumnadapter.h"
+#include "ui/store/datastore.h"
 
 #define CHILD_INDEX_ID(parent) (parent.row() + 1)
 #define PARENT_INDEX_ID (quintptr(0))

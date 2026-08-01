@@ -3,7 +3,7 @@
 
 #include "service/model/company.h"
 #include "podtablemodel.h"
-#include "ui/model/companystore.h"
+#include "ui/store/companystore.h"
 
 class CompanyTableModel : public PodTableModel<Company, CompanyStore> {
     Q_OBJECT

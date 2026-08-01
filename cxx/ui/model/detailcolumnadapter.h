@@ -2,9 +2,9 @@
 #define DETAILCOLUMNADAPTER_H
 
 #include "amountcolumnadapter.h"
-#include "datastore.h"
 #include "service/model/transactiondetail.h"
 #include "ui/model/columnadapter.h"
+#include "ui/store/datastore.h"
 
 class TransactionTableModel;
 

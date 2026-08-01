@@ -1,7 +1,7 @@
 #ifndef ENTITYSTORE_H
 #define ENTITYSTORE_H
 
-#include "comboboxmodel.h"
+#include "ui/model/comboboxmodel.h"
 #include "service/model/bulkupdate.h"
 #include "service/model/transaction.h"
 #include "statusmessagestore.h"

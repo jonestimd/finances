@@ -1,7 +1,7 @@
 #ifndef ACCOUNTSMENU_H
 #define ACCOUNTSMENU_H
 
-#include "ui/model/accountstore.h"
+#include "ui/store/accountstore.h"
 #include "transactionswindow.h"
 #include <QBasicTimer>
 #include <QMenu>

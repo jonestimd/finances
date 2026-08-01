@@ -1,7 +1,7 @@
 #ifndef FILEMENU_H
 #define FILEMENU_H
 
-#include "ui/model/datastore.h"
+#include "ui/store/datastore.h"
 #include "ui/widget/appwindow.h"
 #include <QMenu>
 

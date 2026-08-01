@@ -1,7 +1,7 @@
 #ifndef CATEGORY_TABLE_MODEL_H
 #define CATEGORY_TABLE_MODEL_H
 
-#include "datastore.h"
+#include "ui/store/datastore.h"
 #include "poditemmodel.h"
 #include "service/model/category.h"
 #include <QAbstractTableModel>

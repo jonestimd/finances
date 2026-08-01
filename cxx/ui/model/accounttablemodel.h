@@ -3,7 +3,7 @@
 
 #include "podtablemodel.h"
 #include "comboboxmodel.h"
-#include "accountstore.h"
+#include "ui/store/accountstore.h"
 #include "service/model/account.h"
 #include <QAbstractTableModel>
 

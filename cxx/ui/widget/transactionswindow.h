@@ -3,7 +3,7 @@
 
 #include "appwindow.h"
 #include "treeview.h"
-#include "ui/model/transactionstore.h"
+#include "ui/store/transactionstore.h"
 #include "ui/model/transactiontablemodel.h"
 #include <QTreeView>
 

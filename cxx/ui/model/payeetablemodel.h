@@ -2,8 +2,8 @@
 #define PAYEETABLEMODEL_H
 
 #include "service/model/payee.h"
-#include "payeestore.h"
 #include "podtablemodel.h"
+#include "ui/store/payeestore.h"
 
 class PayeeTableModel : public PodTableModel<Payee, PayeeStore> {
 public:

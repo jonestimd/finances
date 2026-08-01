@@ -18,5 +18,6 @@ target_include_directories(finances-ui PRIVATE
 )
 
 add_subdirectory(model/)
+add_subdirectory(store/)
 add_subdirectory(validation/)
 add_subdirectory(widget/)

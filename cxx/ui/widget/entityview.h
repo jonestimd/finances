@@ -5,7 +5,7 @@
 #include "tableitemdelegate.h"
 #include "ui/model/adapteritemmodel.h"
 #include "ui/model/sortfilterproxymodel.h"
-#include "ui/model/statusmessagestore.h"
+#include "ui/store/statusmessagestore.h"
 #include <QStatusBar>
 #include <QTableView>
 #include <QTreeView>

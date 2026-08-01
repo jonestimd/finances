@@ -2,7 +2,7 @@
 #define SECURITYTABLEMODEL_H
 
 #include "podtablemodel.h"
-#include "securitystore.h"
+#include "ui/store/securitystore.h"
 
 class SecurityTableModel : public PodTableModel<Security, SecurityStore> {
     Q_OBJECT

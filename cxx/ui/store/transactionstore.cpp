@@ -1,5 +1,5 @@
 #include "transactionstore.h"
-#include "transactiontablemodel.h"
+#include "ui/model/transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
 #include <QDate>
 

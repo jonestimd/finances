@@ -3,7 +3,7 @@
 
 #include "podtablemodel.h"
 #include "service/model/transactiongroup.h"
-#include "ui/model/groupstore.h"
+#include "ui/store/groupstore.h"
 
 class GroupTableModel : public PodTableModel<TransactionGroup, GroupStore> {
 public:

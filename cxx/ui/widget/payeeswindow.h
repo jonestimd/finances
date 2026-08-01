@@ -1,8 +1,8 @@
 #ifndef PAYEESWINDOW_H
 #define PAYEESWINDOW_H
 
-#include "../model/datastore.h"
-#include "../model/payeetablemodel.h"
+#include "ui/model/payeetablemodel.h"
+#include "ui/store/datastore.h"
 #include "appwindow.h"
 #include <QMainWindow>
 #include <QTableView>

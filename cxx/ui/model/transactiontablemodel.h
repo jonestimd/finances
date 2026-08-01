@@ -4,7 +4,7 @@
 #include "detailcolumnadapter.h"
 #include "poditemmodel.h"
 #include "service/model/transaction.h"
-#include "ui/model/datastore.h"
+#include "ui/store/datastore.h"
 
 class TransactionTableModel : public PodItemModel<Transaction, TransactionStore, PendingTransaction> {
     Q_OBJECT
