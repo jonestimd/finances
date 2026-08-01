@@ -7,7 +7,7 @@ SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messa
 
 QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const {
     auto adjusted = shares;
-    for (auto split : securitySplits.values(securityId.toLongLong())) {
+    for (auto split : stockSplits.values(securityId.toLongLong())) {
         if (date <= split->date) {
             adjusted = adjusted.multiply(split->sharesOut);
             adjusted = adjusted.divide(split->sharesIn);
@@ -47,12 +47,12 @@ void SecurityStore::loadAccountSecurities(EntityView *view, const QList<domain_i
 }
 
 void SecurityStore::setValues(const QHash<domain_id, const Security *> values) {
-    for (auto i = securitySplits.begin(); i != securitySplits.end(); i = securitySplits.erase(i)) {
+    for (auto i = stockSplits.begin(); i != stockSplits.end(); i = stockSplits.erase(i)) {
         delete i.value();
     }
     if (!values.isEmpty()) {
         auto const splits = service->getSplits();
-        for (auto split : splits) securitySplits.insert(split->securityId, split);
+        for (auto split : splits) stockSplits.insert(split->securityId, split);
     }
     EntityStore::setValues(values);
 }

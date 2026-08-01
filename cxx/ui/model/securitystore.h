@@ -8,7 +8,7 @@
 
 class SecurityStore : public EntityStore<Security, SecurityService> {
     Q_OBJECT
-    QMultiHash<domain_id, const StockSplit*>securitySplits{};
+    QMultiHash<domain_id, const StockSplit*> stockSplits{};
 
 public:
     SecurityStore(SecurityService *service, StatusMessageStore* messageStore);
