@@ -16,6 +16,14 @@ QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate
     return adjusted;
 }
 
+void SecurityStore::loadSecurities(EntityView *view, const QList<domain_id> securityIds) {
+    doInBackground(view->statusBar.parentWidget(), tr(LOADING_SECURITIES), [=, this]() {
+        auto securities = service->getSecurities(securityIds);
+        update(securities.values());
+        emit valuesLoaded(ids());
+    });
+}
+
 void SecurityStore::loadAccountSecurities(EntityView *view)  {
     doInBackground(view->statusBar.parentWidget(), tr(LOADING_ACCOUNT_SECURITIES), [=, this]() {
         auto accountSecurities = service->getAccountSecurities();
@@ -36,12 +44,6 @@ void SecurityStore::loadAccountSecurities(EntityView *view, const QList<domain_i
         }
         if (!removedIds.isEmpty()) emit accountSecuritiesRemoved(removedIds);
     });
-}
-
-void SecurityStore::transactionsUpdated(const QHash<domain_id, TransactionChange> changes) {
-    if (updateTransactionCounts(changes.values(), &Transaction::securityId)) {
-        emit valuesLoaded(ids());
-    }
 }
 
 void SecurityStore::setValues(const QHash<domain_id, const Security *> values) {

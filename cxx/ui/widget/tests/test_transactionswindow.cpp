@@ -29,10 +29,12 @@ struct WindowHolder {
 
     Window* const window;
     View* const view;
+    QSignalSpy* loadedSpy;
 
-    WindowHolder(Window* window)
+    WindowHolder(Window* window, QSignalSpy* loadedSpy = nullptr)
         : window{window}
         , view{window->template findChild<View*>()}
+        , loadedSpy{loadedSpy}
     {}
 
     ~WindowHolder() {
@@ -50,6 +52,7 @@ struct WindowHolder {
 
     void showWindow() {
         window->show();
+        if (loadedSpy) QVERIFY(loadedSpy->wait());
         QVERIFY(QTest::qWaitForWindowActive(window));
         focusWindow();
         QCOMPARE(window->focusWidget(), view);
@@ -415,7 +418,8 @@ private slots:
     void renameSecurity_updatesTransactions() {
         auto securityId = dbTestCase.addSecurity(driver, "security name")->id;
         dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, {}, securityId.value()), {"123.45"});
-        SecurityWindowHolder securityHolder(new SecuritiesWindow(uiContext));
+        QSignalSpy loadedSpy{dataStore->securityStore, &SecurityStore::valuesLoaded};
+        SecurityWindowHolder securityHolder(new SecuritiesWindow(uiContext), &loadedSpy);
         testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
     }
 

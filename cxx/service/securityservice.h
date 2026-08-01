@@ -11,6 +11,8 @@ class SecurityService : public NamedEntityService<Security, SecurityDao> {
 public:
     SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao, StockSplitDao &stockSplitDao);
 
+    QHash<domain_id, const Security*> getSecurities(const QList<domain_id> ids);
+
     QHash<domain_id, const StockSplit*> getSplits();
     
     QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities() const;

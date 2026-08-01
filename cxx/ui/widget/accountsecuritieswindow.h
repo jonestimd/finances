@@ -26,6 +26,9 @@ private:
 public Q_SLOTS:
     void modelReset();
     void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
+
+protected:
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif // ACCOUNT_SECURITIES_WINDOW_H

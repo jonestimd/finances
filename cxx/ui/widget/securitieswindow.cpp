@@ -10,6 +10,7 @@
 SecuritiesWindow::SecuritiesWindow(UiContext *context)
     : EntityWindow{tr("Security"), new SecurityTableModel(context->dataStore->securityStore), new QTableView(), &context->dataStore->messageStore}
     , store{context->dataStore->securityStore}
+    , transactionStore{context->dataStore->transactionStore}
 {
     entityView.addActions({
         context->accountsAction(),
@@ -19,6 +20,8 @@ SecuritiesWindow::SecuritiesWindow(UiContext *context)
     setWindowTitle(tr("%1 - Securities[*]").arg(context->dataStore->connectionName()));
 
     connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setSecurities(QList<domain_id>)));
+    connect(context->dataStore->transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
+            this, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)), Qt::DirectConnection);
 
     if (store->load(&entityView, tr(LOADING_SECURITIES))) model()->setRows(store->ids());
 
@@ -53,8 +56,32 @@ void SecuritiesWindow::toggleZeroShares(bool hide) {
     else entityView.sortModel->clearFilters();
 }
 
+void SecuritiesWindow::transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges) {
+    if (isVisible()) {
+        QSet<domain_id> accountIds, securityIds;
+        QList<domain_id> txIds;
+        for (auto i = txChanges.begin(); i != txChanges.end(); i++) {
+            i.value().appendIds(txIds, accountIds, securityIds);
+        }
+        for (auto i = detailChanges.begin(); i != detailChanges.end(); i++) {
+            auto txId = i.value().oldDetail ? i.value().oldDetail->transactionId : i.value().newDetail->transactionId;
+            if (!txIds.contains(txId) && i.value().isSecurityChange()) {
+                transactionStore->value(txId)->appendIds(accountIds, securityIds);
+            }
+        }
+        if (!securityIds.empty()) {
+            store->loadSecurities(&entityView, securityIds.values());
+        }
+    }
+}
+
 bool SecuritiesWindow::nonZeroShares(const QModelIndex &sourceIndex) const {
     auto row = model()->getRow(sourceIndex);
     auto shares = row->shares;
     return !shares.isZero() && !shares.isNegative();
+}
+
+void SecuritiesWindow::showEvent(QShowEvent *event) {
+    loadData();
+    EntityWindow::showEvent(event);
 }

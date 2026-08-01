@@ -12,16 +12,14 @@ DataStore::DataStore(ServiceContext *services)
     , securityStore{new SecurityStore{&services->securityService, &messageStore}}
     , transactionStore{new TransactionStore{services, this}}
 {
-    connect(transactionStore, SIGNAL(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)),
-            accountStore, SLOT(transactionsUpdated(const QHash<domain_id, TransactionChange>)), Qt::DirectConnection);
-    connect(transactionStore, SIGNAL(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)),
-            payeeStore, SLOT(transactionsUpdated(const QHash<domain_id, TransactionChange>)), Qt::DirectConnection);
-    connect(transactionStore, SIGNAL(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)),
-            securityStore, SLOT(transactionsUpdated(const QHash<domain_id, TransactionChange>)), Qt::DirectConnection);
-    connect(transactionStore, SIGNAL(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)),
-            categoryStore, SLOT(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)), Qt::DirectConnection);
-    connect(transactionStore, SIGNAL(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)),
-            groupStore, SLOT(transactionsUpdated(const QHash<domain_id, TransactionChange>, const QHash<domain_id, DetailChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
+            accountStore, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
+            payeeStore, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
+            categoryStore, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)), Qt::DirectConnection);
+    connect(transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
+            groupStore, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)), Qt::DirectConnection);
 }
 
 DataStore::DataStore(const ConnectionSettings &settings) : DataStore{new ServiceContext(settings)} {}
