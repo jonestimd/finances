@@ -16,6 +16,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/relationcolumnadapter.h
     ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/securitytablemodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.h ${CMAKE_CURRENT_LIST_DIR}/sortfilterproxymodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/stocksplitmodel.h ${CMAKE_CURRENT_LIST_DIR}/stocksplitmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiontablemodel.h ${CMAKE_CURRENT_LIST_DIR}/transactiontablemodel.cpp
 )
 

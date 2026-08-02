@@ -26,9 +26,8 @@ QTreeView[rootSpansAllColumns="true"]::item:has-children {
     background-color: rgb(100%, 95%, 70%);
 }
 
-QTableView QLineEdit,
-QTreeView QLineEdit,
-QTreeView QDateEdit {
+QAbstractItemView QLineEdit,
+QAbstractItemView QDateEdit {
     background: #ffffffff;
     selection-color: #ff000000;
     selection-background-color: rgb(0, 212, 232);

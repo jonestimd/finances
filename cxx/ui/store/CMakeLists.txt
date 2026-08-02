@@ -9,6 +9,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/payeestore.h ${CMAKE_CURRENT_LIST_DIR}/payeestore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/securitystore.h ${CMAKE_CURRENT_LIST_DIR}/securitystore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/statusmessagestore.h ${CMAKE_CURRENT_LIST_DIR}/statusmessagestore.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/stocksplitstore.h ${CMAKE_CURRENT_LIST_DIR}/stocksplitstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiondetailstore.h ${CMAKE_CURRENT_LIST_DIR}/transactiondetailstore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactionstore.h ${CMAKE_CURRENT_LIST_DIR}/transactionstore.cpp
 )

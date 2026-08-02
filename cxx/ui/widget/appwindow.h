@@ -37,7 +37,11 @@ protected:
                           QHeaderView *viewHeader, StatusMessageStore* messageStore)
         : AppWindow{}
         , entityView{this, messageStore, model, itemView, viewHeader, entityName}
-    {}
+    {
+        addToolBar(&entityView.toolbar);
+        setCentralWidget(itemView);
+        setStatusBar(&entityView.statusBar);
+    }
 
 public:
     explicit EntityWindow(const QString &entityName, Model *model, QTableView *itemView, StatusMessageStore* messageStore)
@@ -52,5 +56,21 @@ public:
 };
 
 typedef EntityWindow<EntityView, QAbstractItemModel> ReadOnlyEntityWindow;
+
+class EntityDialog : public QDialog {
+    Q_OBJECT
+protected:
+    QVBoxLayout layout;
+    EditEntityView entityView;
+
+    explicit EntityDialog(QMainWindow* parent, const QString& entityName, const char* settingsGroup, AdapterItemModel* model,
+                          QTableView* itemView, StatusMessageStore* messageStore);
+
+    void keyPressEvent(QKeyEvent *event) override;
+
+public:
+    Q_INVOKABLE virtual void loadData() = 0;
+    Q_INVOKABLE virtual void saveData() = 0;
+};
 
 #endif // APPWINDOW_H

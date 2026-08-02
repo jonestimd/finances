@@ -9,8 +9,9 @@ class FormatColumnAdapter : public FieldColumnAdapter<T, Value> {
 public:
     const FormatterType formatter;
 
-    FormatColumnAdapter(QString title, Value T::* field, FormatterType formatter, bool editable)
-        : FieldColumnAdapter<T, Value>(title, field, editable), formatter{formatter} {}
+    FormatColumnAdapter(QString title, Value T::* field, FormatterType formatter, bool editable, ValidatorFactory* validatorFactory = nullptr)
+        : FieldColumnAdapter<T, Value>(title, field, editable, validatorFactory)
+        , formatter{formatter} {}
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         QVariant value = FieldColumnAdapter<T, Value>::value(row, index, current, role);

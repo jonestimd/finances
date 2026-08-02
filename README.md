@@ -26,7 +26,11 @@ and does not require a separate installation.
 cd $QT_DIR/Src/qtbase/src/plugins/sqldrivers
 mkdir build
 cd build
-cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_DIR -DCMAKE_INSTALL_PREFIX=$QT_DIR/gcc_64 -DFEATURE_system_sqlite=ON
+cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_DIR -DCMAKE_INSTALL_PREFIX=$QT_DIR/gcc_64 -DFEATURE_system_sqlite=ON \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+# fetch external projects
+cmake --build . --target qdecimal
+# build default target
 cmake --build .
 cmake --install .
 ```

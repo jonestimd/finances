@@ -15,8 +15,8 @@ public:
 
     GroupTableModel *model();
 
-    Q_INVOKABLE void loadData() override;
-    Q_INVOKABLE void saveData() override;
+    void loadData() override;
+    void saveData() override;
 
 public Q_SLOTS:
     void setGroups(const QList<domain_id> groupIds);

@@ -11,8 +11,10 @@ class UiContext;
 class SecuritiesWindow : public EntityWindow<> {
     Q_OBJECT
     SecurityStore* store;
+    StatusMessageStore* messageStore;
     TransactionStore* transactionStore;
-    QAction *hideZeroAction{finances::iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
+    QAction *showSplitsAction{iconAction(finances::ArrowSplit, tr("Stock Splits"), tr("alt+s", "splits"), this, SLOT(showSplits()))};
+    QAction *hideZeroAction{iconToggle(finances::HideSource, tr("Hide 0 Shares"), tr("alt+0", "hide 0 shares"), this, SLOT(toggleZeroShares(bool)))};
 
 public:
     SecuritiesWindow(UiContext* context);
@@ -20,13 +22,14 @@ public:
 
     SecurityTableModel *model() const;
 
-    Q_INVOKABLE void loadData() override;
-    Q_INVOKABLE void saveData() override;
+    void loadData() override;
+    void saveData() override;
 
 public Q_SLOTS:
     void setSecurities(const QList<domain_id> ids);
     void toggleZeroShares(bool hide);
     void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
+    void showSplits();
 
 private:
     bool nonZeroShares(const QModelIndex &sourceIndex) const;

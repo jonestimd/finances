@@ -22,8 +22,8 @@ public:
 
     void showAccount(domain_id accountId);
 
-    void loadData() override;
-    void saveData() override;
+    Q_INVOKABLE void loadData() override;
+    Q_INVOKABLE void saveData() override;
 
 public Q_SLOTS:
     void modelReset();

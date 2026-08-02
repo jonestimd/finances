@@ -64,7 +64,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     dataStore->categoryStore->load(&entityView, tr(LOADING_CATEGORIES));
     dataStore->groupStore->load(&entityView, tr(LOADING_GROUPS));
     dataStore->payeeStore->load(&entityView, tr(LOADING_PAYEES));
-    dataStore->securityStore->load(&entityView, tr(LOADING_SECURITIES));
+    dataStore->securityStore->load(&entityView);
 
     entityView.sortModel->setRecursiveFilteringEnabled(true);
     entityView.sortModel->setAutoAcceptChildRows(true);

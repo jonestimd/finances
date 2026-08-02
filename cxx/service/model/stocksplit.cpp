@@ -17,3 +17,7 @@ StockSplit::StockSplit(domain_id securityId, QDate date, QDecNumber sharesIn, QD
     , sharesIn{sharesIn}
     , sharesOut{sharesOut}
 {}
+
+bool StockSplit::deletable() const {
+    return true;
+}

@@ -9,7 +9,7 @@ DataStore::DataStore(ServiceContext *services)
     , payeeStore{new PayeeStore(&services->payeeService, this)}
     , categoryStore{new CategoryStore(&services->categoryService, this)}
     , groupStore{new GroupStore{&services->groupService, &messageStore}}
-    , securityStore{new SecurityStore{&services->securityService, &messageStore}}
+    , securityStore{new SecurityStore{&services->securityService, &messageStore, &services->stockSplitService}}
     , transactionStore{new TransactionStore{services, this}}
 {
     connect(transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),

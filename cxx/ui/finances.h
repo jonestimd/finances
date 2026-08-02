@@ -42,6 +42,7 @@ namespace finances {
         AddCircle = 0xe147,
         AreaChart  = 0xe770,
         ArrowRight = 0xf81c,
+        ArrowSplit = 0xe985, // stock split
         Category = 0xe574,
         Checked = 0xe834,
         Filter = 0xe152,
