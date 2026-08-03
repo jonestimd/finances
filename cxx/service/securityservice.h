@@ -3,17 +3,12 @@
 
 #include "entityservice.h"
 #include "service/database/securitydao.h"
-#include "service/database/stocksplitdao.h"
 
 class SecurityService : public NamedEntityService<Security, SecurityDao> {
-    StockSplitDao &stockSplitDao;
-
 public:
-    SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao, StockSplitDao &stockSplitDao);
+    SecurityService(ConnectionPool *connectionPool, SecurityDao &securityDao);
 
     QHash<domain_id, const Security*> getSecurities(const QList<domain_id> ids);
-
-    QHash<domain_id, const StockSplit*> getSplits();
     
     QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities() const;
     QHash<const AccountSecurityId, const AccountSecurity*> getAccountSecurities(

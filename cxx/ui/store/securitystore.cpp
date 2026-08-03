@@ -1,19 +1,15 @@
 #include "securitystore.h"
 #include "ui/widget/statusmessage.h"
 
-SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore)
+SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore, StockSplitService* stockSplitService)
     : EntityStore{service, messageStore}
+    , stockSplitStore{stockSplitService, messageStore}
 {}
 
-QDecNumber SecurityStore::adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const {
-    auto adjusted = shares;
-    for (auto split : stockSplits.values(securityId.toLongLong())) {
-        if (date <= split->date) {
-            adjusted = adjusted.multiply(split->sharesOut);
-            adjusted = adjusted.divide(split->sharesIn);
-        }
-    }
-    return adjusted;
+bool SecurityStore::load(EntityView *view, bool reload) {
+    bool loaded = EntityStore::load(view, tr(LOADING_SECURITIES), reload);
+    if (!loaded) stockSplitStore.load(view, tr(LOADING_STOCK_SPLITS), true);
+    return loaded;
 }
 
 void SecurityStore::loadSecurities(EntityView *view, const QList<domain_id> securityIds) {
@@ -44,15 +40,4 @@ void SecurityStore::loadAccountSecurities(EntityView *view, const QList<domain_i
         }
         if (!removedIds.isEmpty()) emit accountSecuritiesRemoved(removedIds);
     });
-}
-
-void SecurityStore::setValues(const QHash<domain_id, const Security *> values) {
-    for (auto i = stockSplits.begin(); i != stockSplits.end(); i = stockSplits.erase(i)) {
-        delete i.value();
-    }
-    if (!values.isEmpty()) {
-        auto const splits = service->getSplits();
-        for (auto split : splits) stockSplits.insert(split->securityId, split);
-    }
-    EntityStore::setValues(values);
 }

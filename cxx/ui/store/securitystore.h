@@ -4,17 +4,17 @@
 #include <QDate>
 #include <QDecNumber.hh>
 #include "entitystore.h"
+#include "stocksplitstore.h"
 #include "service/securityservice.h"
 
 class SecurityStore : public EntityStore<Security, SecurityService> {
     Q_OBJECT
-    QMultiHash<domain_id, const StockSplit*> stockSplits{};
-
 public:
-    SecurityStore(SecurityService *service, StatusMessageStore* messageStore);
+    StockSplitStore stockSplitStore;
 
-    QDecNumber adjustedShares(const QVariant &securityId, const QDate &date, const QDecNumber &shares) const;
+    SecurityStore(SecurityService *service, StatusMessageStore* messageStore, StockSplitService* stockSplitService);
 
+    bool load(EntityView* view, bool reload = false);
     void loadSecurities(EntityView *view, const QList<domain_id> securityIds);
 
     void loadAccountSecurities(EntityView *view);
@@ -24,9 +24,6 @@ Q_SIGNALS:
     void accountSecuritiesLoaded(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
     void accountSecuritiesUpdated(QList<const AccountSecurity*> accountSecurities); // clazy:exclude=fully-qualified-moc-types
     void accountSecuritiesRemoved(QList<AccountSecurityId> accountSecurityIds);
-
-protected:
-    virtual void setValues(const QHash<domain_id, const Security*> values) override;
 };
 
 #endif // SECURITYSTORE_H

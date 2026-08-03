@@ -8,6 +8,7 @@
 class UniqueValidatorFactory : public ValidatorFactory {
     Q_OBJECT
     const int columnIndex;
+    /** @brief row indexes keyed by values in validated columns */
     QMultiHash<QStringList, int> values;
     QAbstractItemModel *model;
 

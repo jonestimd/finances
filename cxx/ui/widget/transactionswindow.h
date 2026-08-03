@@ -22,8 +22,8 @@ public:
 
     void showAccount(domain_id accountId);
 
-    void loadData() override;
-    void saveData() override;
+    Q_INVOKABLE void loadData() override;
+    Q_INVOKABLE void saveData() override;
 
 public Q_SLOTS:
     void modelReset();
@@ -39,7 +39,7 @@ private:
     void initializeData();
 
     inline TreeView* treeView() const;
-    bool security() const;
+    bool isSecurity() const;
 
 private Q_SLOTS:
     void accountsLoaded();

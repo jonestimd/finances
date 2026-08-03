@@ -1,5 +1,6 @@
 #include "securitieswindow.h"
 #include "statusmessage.h"
+#include "stocksplitswindow.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
@@ -7,15 +8,19 @@
 
 #define SETTINGS_GROUP "securities"
 
+using namespace finances;
+
 SecuritiesWindow::SecuritiesWindow(UiContext *context)
     : EntityWindow{tr("Security"), new SecurityTableModel(context->dataStore->securityStore), new QTableView(), &context->dataStore->messageStore}
     , store{context->dataStore->securityStore}
+    , messageStore{&context->dataStore->messageStore}
     , transactionStore{context->dataStore->transactionStore}
 {
     entityView.addActions({
         context->accountsAction(),
         context->accountSecuritiesAction(),
     });
+    entityView.addActions({showSplitsAction});
     entityView.addActions({hideZeroAction});
     setWindowTitle(tr("%1 - Securities[*]").arg(context->dataStore->connectionName()));
 
@@ -23,7 +28,7 @@ SecuritiesWindow::SecuritiesWindow(UiContext *context)
     connect(context->dataStore->transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
             this, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)), Qt::DirectConnection);
 
-    if (store->load(&entityView, tr(LOADING_SECURITIES))) model()->setRows(store->ids());
+    if (store->load(&entityView)) model()->setRows(store->ids());
 
     setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
@@ -38,7 +43,7 @@ SecurityTableModel *SecuritiesWindow::model() const {
 }
 
 void SecuritiesWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_SECURITIES), true);
+    if (entityView.confirmLoadData()) store->load(&entityView, true);
 }
 
 void SecuritiesWindow::saveData() {
@@ -72,6 +77,16 @@ void SecuritiesWindow::transactionsUpdated(const QHash<domain_id, TransactionCha
         if (!securityIds.empty()) {
             store->loadSecurities(&entityView, securityIds.values());
         }
+    }
+}
+
+void SecuritiesWindow::showSplits() {
+    if (entityView.selectedIndex().isValid()) {
+        auto securityId = model()->getRow(entityView.selectedIndex())->id.value();
+        auto splitsWindow = new StockSplitsWindow{this, store, messageStore, securityId};
+        splitsWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+        splitsWindow->setWindowModality(Qt::WindowModal);
+        splitsWindow->show();
     }
 }
 

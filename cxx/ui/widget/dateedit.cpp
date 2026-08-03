@@ -1,4 +1,5 @@
 #include "dateedit.h"
+#include "ui/model/formats.h"
 #include <QCalendarWidget>
 #include <QKeyEvent>
 #include <QStyle>
@@ -8,7 +9,7 @@ DateEdit::DateEdit(QWidget *parent)
     : QDateEdit(parent)
 {
     setMinimumDate(QDate(100, 1, 1));
-    setDisplayFormat(tr("MM/dd/yyyy"));
+    setDisplayFormat(*dateEditFormat);
     setCalendarPopup(true);
 }
 

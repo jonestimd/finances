@@ -10,13 +10,15 @@
 class StockSplit : public BaseDomain {
 public:
     domain_id securityId;
-    QDate date;
-    QDecNumber sharesIn;
-    QDecNumber sharesOut;
+    QDate date{QDate::currentDate()};
+    QDecNumber sharesIn{"NaN"};
+    QDecNumber sharesOut{"NaN"};
 
     StockSplit();
     StockSplit(const QSqlRecord &record);
-    StockSplit(domain_id securityId, QDate date, QDecNumber sharesIn, QDecNumber sharesOut);
+    StockSplit(domain_id securityId, QDate date = QDate::currentDate(), QDecNumber sharesIn = "NaN", QDecNumber sharesOut = "NaN");
+
+    bool deletable() const;
 };
 
 #endif // STOCKSPLIT_H

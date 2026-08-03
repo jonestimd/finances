@@ -26,7 +26,7 @@ public:
 /////////////// EntityView ///////////////
 
 EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstractItemModel *model, QAbstractItemView *itemView,
-                           QHeaderView *viewHeader, const QString &entityName)
+                       QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
     , sortModel{new SortFilterProxyModel(window)}
@@ -59,12 +59,6 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
 
     finances::setColumnResize(viewHeader);
     window->installEventFilter(this);
-    auto mainWindow = qobject_cast<QMainWindow*>(window);
-    if (mainWindow) {
-        mainWindow->addToolBar(&toolbar);
-        mainWindow->setCentralWidget(itemView);
-        mainWindow->setStatusBar(&statusBar);
-    }
     auto tableView = qobject_cast<QTableView*>(itemView);
     if (tableView) {
         tableView->resizeColumnsToContents();

@@ -1,14 +1,15 @@
 #include "numeric.h"
 #include "ui/validation/required.h"
 
-NumberValidatorFactory::NumberValidatorFactory(int decimals, bool required)
-    : NumberValidatorFactory([=](const QModelIndex &) { return required; }, decimals)
+NumberValidatorFactory::NumberValidatorFactory(int decimals, bool required, double minValue, bool inclusive)
+    : NumberValidatorFactory([=](const QModelIndex &) { return required; }, decimals, minValue, inclusive)
 {}
 
-NumberValidatorFactory::NumberValidatorFactory(IsRequired isRequired, int decimals)
+NumberValidatorFactory::NumberValidatorFactory(IsRequired isRequired, int decimals, double minValue, bool inclusive)
     : ValidatorFactory(false)
-    , validator(-INFINITY, INFINITY, decimals)
+    , validator(minValue, INFINITY, decimals)
     , isRequired{isRequired}
+    , inclusive{inclusive}
 {
     validator.setNotation(QDoubleValidator::StandardNotation);
 }
@@ -20,6 +21,9 @@ const QString NumberValidatorFactory::isValid(const QModelIndex &index, QString 
     }
     int pos{0};
     if (validator.validate(value, pos) == QValidator::Invalid) return tr("%1 is invalid").arg(columnHeader(index));
+    if (!inclusive && value.toDouble() == validator.bottom()) {
+        return tr("%1 must be greater that %2").arg(columnHeader(index)).arg(validator.bottom());
+    }
     return nullptr;
 }
 

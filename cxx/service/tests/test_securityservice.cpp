@@ -1,6 +1,7 @@
 #include <QTest>
 #include "dbtestcase.h"
 #include "service/securityservice.h"
+#include "service/servicecontext.h"
 
 class TestSecurityService : public QObject {
     Q_OBJECT
@@ -48,6 +49,7 @@ private slots:
         dbTestCase.createDatabases();
         QTest::addColumn<QString>("driver");
         QTest::addColumn<SecurityService*>("service");
+        QTest::addColumn<StockSplitService*>("splitService");
         QTest::addColumn<domain_id>("accountId");
         QTest::addColumn<domain_id>("accountId2");
         QTest::addColumn<domain_id>("securityId");
@@ -58,8 +60,9 @@ private slots:
             auto accountId2 = dbTestCase.addAccount(driver, "account 2", &AccountType::bank)->id.value();
             auto securityId = dbTestCase.addSecurity(driver, "security 1")->id.value();
             auto securityId2 = dbTestCase.addSecurity(driver, "security 2")->id.value();
-            auto service = new SecurityService{dbTestCase.connectionPool(driver), dao, dbTestCase.stockSplitDao(driver)};
-            QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << accountId2 << securityId << securityId2;
+            auto service = new SecurityService{dbTestCase.connectionPool(driver), dao};
+            auto splitService = new StockSplitService{dbTestCase.connectionPool(driver), dbTestCase.stockSplitDao(driver)};
+            QTest::newRow(driver.toLocal8Bit()) << driver << service << splitService << accountId << accountId2 << securityId << securityId2;
         }
     }
 
@@ -102,14 +105,14 @@ private slots:
     void getSplits_returnsAllSplits() {
         QFETCH_GLOBAL(QString, driver);
         dbTestCase.resetDatabase(driver);
-        QFETCH_GLOBAL(SecurityService*, service);
+        QFETCH_GLOBAL(StockSplitService*, splitService);
         QFETCH_GLOBAL(domain_id, securityId);
         QFETCH_GLOBAL(domain_id, securityId2);
         auto splitId = addSplit(driver, securityId, QDate{2010, 2, 15}, 1, 2);
         addSplit(driver, securityId, QDate{2015, 12, 15}, 1, 3);
         addSplit(driver, securityId2, QDate{2019, 10, 31}, 3, 2);
 
-        auto result = service->getSplits();
+        auto result = splitService->getAll();
 
         QCOMPARE(result.size(), 3);
         auto split = result.value(splitId);

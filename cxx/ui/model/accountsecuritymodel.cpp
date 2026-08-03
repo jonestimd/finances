@@ -43,6 +43,8 @@ namespace accountsecuritymodel {
 
 using namespace accountsecuritymodel;
 
+#define SHARES_COLUMN 5
+
 AccountSecurityTableModel::AccountSecurityTableModel(DataStore* dataStore)
     : QAbstractItemModel{}
     , accountStore{dataStore->accountStore}
@@ -56,7 +58,9 @@ AccountSecurityTableModel::AccountSecurityTableModel(DataStore* dataStore)
         new AmountColumnAdapter<AccountSecurity, QDecNumber>(tr("Shares"), &AccountSecurity::shares, securityShares, false),
         new AmountColumnAdapter<AccountSecurity, QDecNumber>(tr("Cost Basis"), &AccountSecurity::costBasis, dollarFormat, false),
     }
-{}
+{
+    connect(&securityStore->stockSplitStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(splitsLoaded()));
+}
 
 AccountSecurityTableModel::~AccountSecurityTableModel() {
     qDeleteAll(columns);
@@ -174,6 +178,17 @@ void AccountSecurityTableModel::removeRows(const QList<AccountSecurityId> ids) {
                 qDeleteAll(summaries);
                 endRemoveRows();
             }
+        }
+    }
+}
+
+void AccountSecurityTableModel::splitsLoaded() {
+    auto rows = rowCount({});
+    for (int r = 0; r < rows; r++) {
+        auto childCount = rowCount(index(r, 0));
+        if (childCount > 0) {
+            auto parent = index(r, 0);
+            emit dataChanged(index(0, SHARES_COLUMN, parent), index(childCount-1, SHARES_COLUMN, parent));
         }
     }
 }

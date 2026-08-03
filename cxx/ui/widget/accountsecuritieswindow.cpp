@@ -41,8 +41,8 @@ AccountSecuritiesWindow::~AccountSecuritiesWindow() {
 
 void AccountSecuritiesWindow::loadData() {
     dataStore->securityStore->loadAccountSecurities(&entityView);
-    dataStore->accountStore->load(&entityView, true);
-    dataStore->securityStore->load(&entityView, tr(LOADING_SECURITIES), true);
+    dataStore->accountStore->load(&entityView);
+    dataStore->securityStore->load(&entityView);
 }
 
 void AccountSecuritiesWindow::saveData() {

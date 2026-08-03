@@ -31,5 +31,5 @@ QString securityShares(const QVariant &amount) {
 }
 
 QString dateFormat(const QVariant &date) {
-    return date.value<QDate>().toString(Qt::ISODate);
+    return date.value<QDate>().toString(*dateDisplayFormat);
 }

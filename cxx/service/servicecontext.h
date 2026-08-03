@@ -13,6 +13,7 @@
 
 typedef NamedEntityService<Company, CompanyDao> CompanyService;
 typedef NamedEntityService<TransactionGroup, TransactionGroupDao> GroupService;
+typedef EntityService<StockSplit, StockSplitDao> StockSplitService;
 
 class ServiceContext {
     ConnectionPool *pool;
@@ -25,6 +26,7 @@ public:
     CategoryService categoryService;
     GroupService groupService;
     SecurityService securityService;
+    StockSplitService stockSplitService;
     TransactionDetailService transationDetailService;
     TransactionService transationService;
 

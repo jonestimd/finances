@@ -98,7 +98,7 @@ QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIn
             auto securityId = index.parent().siblingAtColumn(securityColumn).data(finances::EntityIdRole);
             auto date = index.parent().siblingAtColumn(dateColumn).data(Qt::EditRole);
             auto shares = AmountColumnAdapter::value(row, index, current, Qt::EditRole).value<QDecNumber>();
-            auto adjustedShares = securityStore->adjustedShares(securityId, date.value<QDate>(), shares);
+            auto adjustedShares = securityStore->stockSplitStore.adjustedShares(securityId.toLongLong(), date.value<QDate>(), shares);
             if (shares != adjustedShares) return formatter(QVariant::fromValue(adjustedShares));
         }
         return QVariant{};

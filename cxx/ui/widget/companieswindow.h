@@ -3,7 +3,7 @@
 
 #include "ui/model/companytablemodel.h"
 #include "ui/store/datastore.h"
-#include "entityview.h"
+#include "appwindow.h"
 #include <QBoxLayout>
 #include <QDialog>
 #include <QMainWindow>
@@ -11,29 +11,25 @@
 #include <QStatusBar>
 #include <QTableView>
 
-class CompaniesWindow : public QDialog {
+class CompaniesWindow : public EntityDialog {
     Q_OBJECT
-    QVBoxLayout layout;
     CompanyStore *store;
-    CompanyTableModel model;
-    QTableView *itemView{new QTableView(this)};
-    EditEntityView entityView;
 
 public:
     CompaniesWindow(QMainWindow *parent, DataStore *dataStore);
 
-    Q_INVOKABLE void loadData();
-    Q_INVOKABLE void saveData();
+    void loadData() override;
+    void saveData() override;
 
 protected Q_SLOTS:
     void setCompanies(const QList<domain_id> companyIds);
 
 protected:
-    bool confirmDelete(const QSet<const QModelIndex> rowIndex);
+    inline CompanyTableModel* model() {
+        return entityView.model<CompanyTableModel>();
+    }
 
-    // QWidget interface
-    void closeEvent(QCloseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
+    bool confirmDelete(const QSet<const QModelIndex> rowIndex);
 };
 
 #endif // COMPANIESWINDOW_H
