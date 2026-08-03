@@ -7,6 +7,11 @@
 
 class UiContext;
 
+/**
+ * @brief `AccountSecuritiesWindow` displays a summary of securities held in each account.
+ * @details The data in the window is updated when the window is shown or when transactions
+ * are saved while the window is visible.
+ */
 class AccountSecuritiesWindow : public ReadOnlyEntityWindow {
     Q_OBJECT
     DataStore *const dataStore;

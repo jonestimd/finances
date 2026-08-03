@@ -8,6 +8,11 @@
 
 class UiContext;
 
+/**
+ * @brief `SecuritiesWindow` displays a summary of securities in the `security` and `asset` database tables.
+ * @details The data in the window is updated when the window is shown or when transactions
+ * are saved while the window is visible.
+ */
 class SecuritiesWindow : public EntityWindow<> {
     Q_OBJECT
     SecurityStore* store;
