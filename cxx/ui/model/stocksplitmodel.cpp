@@ -25,7 +25,5 @@ void StockSplitTableModel::setRows() {
 }
 
 StockSplit *StockSplitTableModel::newRow() {
-    auto split = PodTableModel::newRow();
-    split->securityId = securityId;
-    return split;
+    return new StockSplit{securityId};
 }

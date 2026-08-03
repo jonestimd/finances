@@ -16,7 +16,7 @@ public:
 
     StockSplit();
     StockSplit(const QSqlRecord &record);
-    StockSplit(domain_id securityId, QDate date, QDecNumber sharesIn, QDecNumber sharesOut);
+    StockSplit(domain_id securityId, QDate date = QDate::currentDate(), QDecNumber sharesIn = "NaN", QDecNumber sharesOut = "NaN");
 
     bool deletable() const;
 };

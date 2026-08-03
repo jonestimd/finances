@@ -4,7 +4,7 @@
 #include <QAbstractItemModel>
 #include "ui/store/datastore.h"
 
-class AccountSecurityTableModel : public QAbstractItemModel {
+class AccountSecurityTableModel : public QAbstractItemModel { // TODO extract change tracking from AdapterItemModel
     Q_OBJECT
     const QList<ColumnAdapter<AccountSecurity>*> columns;
     QHash<domain_id, QList<const AccountSecurity*>> byAccount{};
@@ -31,6 +31,7 @@ public slots:
     void setRows(QList<const AccountSecurity*> rows); // clazy:exclude=fully-qualified-moc-types
     void updateRows(QList<const AccountSecurity*> rows); // clazy:exclude=fully-qualified-moc-types
     void removeRows(const QList<AccountSecurityId> ids);
+    void splitsLoaded();
 
 private:
     /** @return index of account security summary or index of parent account if there is no security summary. */

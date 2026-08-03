@@ -140,6 +140,7 @@ TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id acc
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsUpdated()));
     connect(dataStore->payeeStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(payeesUpdated()));
     connect(dataStore->securityStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(securitiesUpdated()));
+    connect(&dataStore->securityStore->stockSplitStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(securitiesUpdated()));
     connect(dataStore->categoryStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(updateBalances()));
     connect(dataStore->groupStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(groupsUpdated()));
 }

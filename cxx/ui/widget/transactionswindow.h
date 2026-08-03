@@ -39,7 +39,7 @@ private:
     void initializeData();
 
     inline TreeView* treeView() const;
-    bool security() const;
+    bool isSecurity() const;
 
 private Q_SLOTS:
     void accountsLoaded();

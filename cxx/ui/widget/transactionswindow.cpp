@@ -55,9 +55,9 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
-    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(security()));
-    entityView.viewHeader->setSectionHidden(model->securityColumn, !security());
-    settings::restoreWindowState(SETTINGS_GROUP(security()), this, QSize{800, 600}, &entityView);
+    setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(isSecurity()));
+    entityView.viewHeader->setSectionHidden(model->securityColumn, !isSecurity());
+    settings::restoreWindowState(SETTINGS_GROUP(isSecurity()), this, QSize{800, 600}, &entityView);
 
     accountStore()->load(&entityView);
     accountStore()->companyStore.load(&entityView, tr(LOADING_COMPANIES));
@@ -156,7 +156,7 @@ void TransactionsWindow::initializeData() {
 void TransactionsWindow::accountsLoaded() {
     companiesLoaded();
     auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
-    if (hidden == security()) {
+    if (hidden == isSecurity()) {
         setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(hidden));
         settings::saveWindowState(SETTINGS_GROUP(!hidden), this, &entityView);
         entityView.viewHeader->setSectionHidden(model()->securityColumn, !hidden);
@@ -202,7 +202,7 @@ TreeView *TransactionsWindow::treeView() const {
     return static_cast<TreeView*>(entityView.itemView);
 }
 
-bool TransactionsWindow::security() const {
+bool TransactionsWindow::isSecurity() const {
     auto account = accountStore()->value(model()->accountId);
     return account && account->security();
 }
