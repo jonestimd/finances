@@ -37,10 +37,8 @@ inline bool selectEditColumn(QModelIndex &index) {
     while (true) {
         if ((index.flags() & Qt::ItemIsEditable) && !index.data(Qt::EditRole).isValid()) return true;
         auto next = index.siblingAtColumn(index.column() + 1);
-        if (next.isValid())
-            index = next;
-        else
-            break;
+        if (next.isValid()) index = next;
+        else break;
     }
     return false;
 }
