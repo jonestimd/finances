@@ -182,10 +182,8 @@ void AdapterItemModel::revalidateRow(const QModelIndex &index) {
         auto i = index.siblingAtColumn(c);
         auto message = validate(i);
         if (message.isEmpty()) {
-            if (errors.remove(i)) {
-                emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
-                removeStaleErrors();
-            }
+            if (errors.remove(i)) emit dataChanged(i, i, QList<int>{finances::ValidationMessageRole});
+            removeStaleErrors();
         } else {
             if (!errors.contains(i) || message != errors.value(i)) {
                 errors.insert(i, message);
