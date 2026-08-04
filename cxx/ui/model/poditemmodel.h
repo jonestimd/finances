@@ -50,7 +50,7 @@ protected:
      */
     virtual int childCount(const QModelIndex &parent) const {
         Q_ASSERT(!parent.isValid());
-        return parent.isValid() ? 0 : this->rootIds.length();
+        return this->rootIds.length();
     }
 
     /** @brief Set a field value on a row entity. Used for new rows and for returning unsaved changes. */
