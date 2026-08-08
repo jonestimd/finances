@@ -10,7 +10,7 @@ AbstractEntityStore::AbstractEntityStore(StatusMessageStore* messageStore, QObje
 
 const QString AbstractEntityStore::user{std::optional(std::getenv("USER")).value_or(std::getenv("USERNAME"))};
 
-void AbstractEntityStore::doInBackground(QWidget* source, const QString& message, Runnable task, Runnable onError) {
+void AbstractEntityStore::doInBackground(QWidget* source, const QString& message, Runnable task, Runnable onError) const {
     messageStore->addMessage(message);
     QThreadPool::globalInstance()->start([=, this]() {
         try {

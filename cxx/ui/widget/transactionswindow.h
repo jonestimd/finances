@@ -24,6 +24,7 @@ public:
 
     Q_INVOKABLE void loadData() override;
     Q_INVOKABLE void saveData() override;
+    Q_INVOKABLE void showRecent(const QList<PendingTransaction*> transactions);
 
 public Q_SLOTS:
     void modelReset();

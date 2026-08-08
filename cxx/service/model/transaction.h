@@ -7,6 +7,7 @@
 
 #include <QDate>
 
+class CategoryStore;
 class Transaction;
 class TransactionDetail;
 class TransactionDetailUpdate;
@@ -32,6 +33,8 @@ public:
 
     QString toString() const;
     void appendIds(QSet<domain_id>& accountIds, QSet<domain_id>& securityIds) const;
+
+    friend bool operator<(const Transaction& left, const Transaction& right);
 };
 
 class PendingTransaction : public Transaction {
@@ -44,6 +47,8 @@ public:
     ~PendingTransaction();
 
     bool isEmpty() const;
+
+    static PendingTransaction* copyRecent(const Transaction* tx, const QHash<domain_id, const TransactionDetail*> details);
 };
 
 struct TransactionUpdate : public BulkUpdate<Transaction, PendingTransaction> {

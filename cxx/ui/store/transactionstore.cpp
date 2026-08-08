@@ -1,7 +1,9 @@
 #include "transactionstore.h"
 #include "ui/model/transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
+#include "ui/widget/transactionswindow.h"
 #include <QDate>
+#include <QWindow>
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
 
@@ -53,7 +55,7 @@ void TransactionStore::applyUpdates(const QList<const PendingTransaction*> adds,
     for (auto accountId : accountIds) emit accountUpdated(accountId);
 }
 
-void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId) {
+void TransactionStore::replacePayee(domain_id oldPayeeId, domain_id newPayeeId) {
     QList<const Transaction*> updates;
     forEachEntry([&](domain_id id, const Transaction* tx) {
         if (tx->payeeId.has_value() && tx->payeeId.value() == oldPayeeId) {
@@ -64,6 +66,19 @@ void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id 
         }
     });
     if (!updates.isEmpty()) update(updates, {});
+}
+
+void TransactionStore::findRecentForPayee(domain_id accountId, domain_id payeeId) const {
+    TransactionsWindow *window = qobject_cast<TransactionsWindow *>(qApp->activeWindow());
+    if (window) {
+        doInBackground(window, tr(LOADING_TRANSACTIONS), [=, this]() {
+            auto transactions = service->getRecentForPayee(accountId, payeeId);
+            QMetaObject::invokeMethod(window, &TransactionsWindow::showRecent, transactions);
+        });
+    } else {
+        auto focusWindow = qApp->focusWindow();
+        qWarning() << "expected a transactions window:" << (focusWindow ? focusWindow->title() : "no focus window");
+    }
 }
 
 const QList<domain_id> TransactionStore::transactionIds(domain_id accountId) const {
@@ -96,9 +111,7 @@ void TransactionStore::sort(QList<domain_id> &txIds) const {
 }
 
 bool TransactionStore::lessThan(domain_id txId1, domain_id txId2) const {
-    auto d1 = value(txId1)->date;
-    auto d2 = value(txId2)->date;
-    return d1 == d2 ? txId1 < txId2 : d1 < d2;
+    return *value(txId1) < *value(txId2);
 }
 
 void TransactionStore::clearData(domain_id accountId) {

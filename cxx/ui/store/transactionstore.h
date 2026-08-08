@@ -7,6 +7,7 @@
 #include "service/model/transaction.h"
 #include "service/servicecontext.h"
 
+class TransactionsWindow;
 class TransactionTableModel;
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, domain_id> {
@@ -23,7 +24,8 @@ public:
     bool load(EntityView *view, domain_id accountId, bool reload = false);
 
     void update(QWidget *source, TransactionTableModel *model, const QString message, int txRow = -1);
-    void replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId);
+    void replacePayee(domain_id oldPayeeId, domain_id newPayeeId);
+    void findRecentForPayee(domain_id accountId, domain_id payeeId) const;
 
     const QList<domain_id> transactionIds(domain_id accountId) const;
     

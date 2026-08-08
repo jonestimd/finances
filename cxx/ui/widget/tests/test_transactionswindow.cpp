@@ -156,6 +156,11 @@ private:
         enterText(holder.view, refNumber);
         QTest::keyClick(holder.view, Qt::Key_Tab);
         selectValue(holder.view, payee);
+        QTimer::singleShot(10, holder.window, [&]() {
+            QMenu* recentsPopup;
+            QTRY_VERIFY(recentsPopup = uitest::findWindow<QMenu>());
+            QTest::keyClick(recentsPopup, Qt::Key_Escape);
+        });
         QTest::keyClick(holder.view, Qt::Key_Tab);
         enterText(holder.view, description);
     }

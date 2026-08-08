@@ -99,7 +99,9 @@ void EntityView::focusItemView() {
 void EntityView::showStatusMessage(const QString message) {
     if (itemView->isEnabled()) {
         lastSelection.clear();
-        for (auto i = itemView->currentIndex(); i.isValid(); i = i.parent()) lastSelection.insert(0, i.row());
+        auto index = itemView->currentIndex();
+        lastColumn = index.column();
+        for (; index.isValid(); index = index.parent()) lastSelection.insert(0, index.row());
         itemView->setEnabled(false);
     }
     statusBar.showMessage(message);
@@ -129,12 +131,14 @@ bool EntityView::eventFilter(QObject *obj, QEvent *event) {
 
 void EntityView::restoreSelection() {
     if (!lastSelection.isEmpty()) {
-        QModelIndex index;
+        QModelIndex index{};
         for (int row : std::as_const(lastSelection)) {
             int count = sortModel->rowCount(index);
-            index = sortModel->index(row < count ? row : count-1, 0, index);
+            index = sortModel->index(std::min(row, count-1), 0, index);
         }
-        itemView->setCurrentIndex(index);
+        int column = std::min(lastColumn, sortModel->columnCount({})-1);
+        itemView->setCurrentIndex(index.siblingAtColumn(column));
+        lastSelection = {};
     }
 }
 

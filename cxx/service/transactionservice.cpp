@@ -1,11 +1,6 @@
 #include "transactionservice.h"
 #include "database/transactiondetaildao.h"
 
-TransactionService::TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao)
-    : EntityService{pool, transactionDao}
-    , detailDao{detailDao}
-{}
-
 struct TxDetail {
     Transaction *transaction;
     TransactionDetail *detail;
@@ -62,6 +57,26 @@ public:
         return data;
     }
 };
+
+TransactionService::TransactionService(ConnectionPool* pool, TransactionDao& transactionDao, TransactionDetailDao& detailDao, AccountDao& accountDao)
+    : EntityService{pool, transactionDao}
+    , detailDao{detailDao}
+    , accountDao{accountDao}
+{}
+
+QList<PendingTransaction*> TransactionService::getRecentForPayee(domain_id accountId, domain_id payeeId) {
+    Connection conn(connectionPool);
+    QSharedPointer<const Account> account{accountDao.get(conn.db, {accountId}).constFirst()};
+    auto transactions = dao.getRecentForPayee(conn.db, accountId, payeeId, account->type->security);
+    auto details = detailDao.getByTransactionIds(conn.db, getEntityIds(transactions));
+    QList<PendingTransaction*> pending;
+    for (auto tx : std::as_const(transactions)) {
+        pending.append(PendingTransaction::copyRecent(tx, details));
+    }
+    qDeleteAll(transactions);
+    qDeleteAll(details);
+    return pending;
+}
 
 const TransactionsData TransactionService::update(TransactionUpdate &changes, const QString &user) {
     Connection conn(connectionPool);
@@ -137,7 +152,7 @@ const TransactionsData TransactionService::update(TransactionUpdate &changes, co
                 else txIds.append(detail->transactionId);
             }
         }
-        if (!txIds.isEmpty()) session.add(dao.get(conn.db, txIds).values());
+        if (!txIds.isEmpty()) session.add(dao.get(conn.db, txIds));
         return session.result(detailAdds, deletedIds, deletedDetailIds);
     } catch(...) {
         conn.db.rollback();

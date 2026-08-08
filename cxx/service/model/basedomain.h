@@ -20,6 +20,13 @@ namespace domain {
         return copies;
     }
 
+    template<class T>
+    QHash<domain_id, const T*> byId(const QList<const T*> entities) {
+        QHash<domain_id, const T*> byId;
+        for (auto entity : entities) byId.insert(entity->id.value(), entity);
+        return byId;
+    }
+
     QString toString(const optional_id& id);
 }
 

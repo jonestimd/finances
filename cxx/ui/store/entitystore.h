@@ -20,7 +20,7 @@ protected:
     static const QString user;
     StatusMessageStore* const messageStore;
 
-    void doInBackground(QWidget* source, const QString& message, Runnable task, Runnable onError = nullptr);
+    void doInBackground(QWidget* source, const QString& message, Runnable task, Runnable onError = nullptr) const;
 
 public:
     AbstractEntityStore(StatusMessageStore* messageStore, QObject* parent = nullptr);

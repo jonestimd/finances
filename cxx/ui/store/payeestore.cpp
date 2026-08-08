@@ -11,7 +11,7 @@ void PayeeStore::mergePayees(QWidget *source, const Payee *payee, domain_id dest
     doInBackground(source, tr(SAVING_PAYEES), [this, payee, destinationId] {
         auto payees = service->merge(payee, destinationId, user);
         dataStore->transactionStore->replacePayee(payee->id.value(), destinationId);
-        update(payees.values(), QList{payee});
+        update(payees, QList{payee});
         emit valuesLoaded(ids());
     });
 }

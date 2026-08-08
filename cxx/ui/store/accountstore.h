@@ -23,7 +23,7 @@ public:
 
     void update(QWidget *source, AccountTableModel *model);
 
-    QString qualifiedName(domain_id accountId, QChar delimiter) const;
+    QString qualifiedName(domain_id accountId, QChar delimiter = ':') const;
 
     inline void setValues(const QHash<domain_id, const Account*> values, FriendKey key) {
         EntityStore::setValues(values);

@@ -43,16 +43,16 @@ class TestTransactionService : public QObject {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.transactionDao(driver).get(conn.db, QList{id});
-        dbTestCase.transactions.append(result.values());
-        return result.value(id);
+        dbTestCase.transactions.append(result);
+        return result.isEmpty() ? nullptr : result.constFirst();
     }
 
     const TransactionDetail* loadDetail(const domain_id id) {
         QFETCH_GLOBAL(QString, driver);
         Connection conn(dbTestCase.connectionPool(driver));
         auto result = dbTestCase.detailDao(driver).get(conn.db, QList{id});
-        dbTestCase.details.append(result.values());
-        return result.value(id);
+        dbTestCase.details.append(result);
+        return result.isEmpty() ? nullptr : result.constFirst();
     }
 
     PendingTransaction* unsavedTransaction(QList<const char*> amounts) {
@@ -80,7 +80,8 @@ private slots:
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &txDao = dbTestCase.transactionDao(driver);
             auto &detailDao = dbTestCase.detailDao(driver);
-            auto service = new TransactionService{dbTestCase.connectionPool(driver), txDao, detailDao};
+            auto &accountDao = dbTestCase.accountDao(driver);
+            auto service = new TransactionService{dbTestCase.connectionPool(driver), txDao, detailDao, accountDao};
             auto companyId = dbTestCase.addCompany(driver, "Bank 1");
             auto accountId = dbTestCase.addAccount(driver, "Account 1", &AccountType::bank, companyId)->id.value();
             auto altAccountId = dbTestCase.addAccount(driver, "Account 2", &AccountType::bank, companyId)->id.value();
@@ -94,7 +95,21 @@ private slots:
         QFETCH_GLOBAL(TransactionService*, service);
         QFETCH_GLOBAL(domain_id, accountId);
 
-        service->getAll(accountId);
+        auto result = service->getAll(accountId);
+
+        QVERIFY(result.isEmpty());
+        qDeleteAll(result);
+    }
+
+    void getRecentForPayee() {
+        QFETCH_GLOBAL(TransactionService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, payeeId);
+
+        auto result = service->getRecentForPayee(accountId, payeeId);
+
+        QVERIFY(result.isEmpty());
+        qDeleteAll(result);
     }
 
     void update_addsNewTransaction() {

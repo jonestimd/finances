@@ -18,3 +18,5 @@ target_sources(finances-service
     ${CMAKE_CURRENT_LIST_DIR}/securitylot.h ${CMAKE_CURRENT_LIST_DIR}/securitylot.cpp
     ${CMAKE_CURRENT_LIST_DIR}/stocksplit.h ${CMAKE_CURRENT_LIST_DIR}/stocksplit.cpp
 )
+
+add_subdirectory(tests/)

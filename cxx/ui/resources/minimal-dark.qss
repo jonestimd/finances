@@ -12,3 +12,13 @@ QLineEdit[invalid="true"] {
     border-radius: 2px;
     padding: 2px 0px;
 }
+
+QMenu#recents {
+    padding-left: 2px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: palette(shadow);
+}
+QMenu#recents::item QWidget {
+    margin: 2px;
+}

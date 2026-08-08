@@ -87,7 +87,7 @@ void CategoryDao::createTable(const QSqlDatabase &db) const {
     if (IS_SQLITE(db)) sql::exec(db, uniqueIndexQuery, className, "addUniqueIndex");
 }
 
-QHash<domain_id, const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const optional_id &parentId, const QString user) {
+QList<const Category*> CategoryDao::setParent(QSqlDatabase &db, const Category *category, const optional_id &parentId, const QString user) {
     QSqlQuery query(db);
     QList<domain_id> ids{category->id.value()};
     if (category->parentId.has_value()) ids.append(category->parentId.value());

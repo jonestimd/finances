@@ -2,6 +2,7 @@
 #define UITEST_H
 
 #include <QApplication>
+#include <QWidget>
 
 namespace uitest {
     void setConfigHome();
@@ -10,8 +11,10 @@ namespace uitest {
     T* findWindow() {
         const auto windows = QApplication::topLevelWidgets();
         for (auto win : windows) {
-            T* window = qobject_cast<T*>(win);
-            if (window) return window;
+            if (win->isVisible()) {
+                T* window = qobject_cast<T*>(win);
+                if (window) return window;
+            }
         }
         return nullptr;
     }

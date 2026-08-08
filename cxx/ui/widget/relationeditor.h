@@ -5,11 +5,12 @@
 #include <ui/model/comboboxmodel.h>
 #include <QLineEdit>
 
-class RelationEditor : public QLineEdit
-{
+class RelationEditor : public QLineEdit {
     Q_OBJECT
     ComboBoxModel *model;
-    const NamedEntity *entity_;
+    // const NamedEntity *entity_;
+    QModelIndex selectedIndex{};
+
 public:
     RelationEditor(ComboBoxModel *model, QWidget *parent = nullptr);
 

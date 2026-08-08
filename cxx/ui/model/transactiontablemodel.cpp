@@ -247,6 +247,21 @@ void TransactionTableModel::setRows(const QList<domain_id> transactionIds) {
     emit clearedBalanceChanged(clearedBalance_);
 }
 
+void TransactionTableModel::replacePendingAdd(PendingTransaction *transaction) {
+    Q_ASSERT(pendingAdds().size() == 1);
+    auto rowIndex = index(rootIds.count(), 0);
+    auto current = pendingAdd(rowIndex);
+    transaction->date = current->date;
+    transaction->referenceNumber = current->referenceNumber;
+    beginRemoveRows(rowIndex, 0, current->details.count()-1);
+    endRemoveRows();
+    newRows[{}][0] = transaction;
+    emit dataChanged(rowIndex, rowIndex.siblingAtColumn(columnCount(rowIndex)-1));
+    beginInsertRows(rowIndex, 0, transaction->details.count()-1);
+    endInsertRows();
+    delete current;
+}
+
 QVariant TransactionTableModel::balance(const optional_id &transactionId) const {
     return transactionId.has_value() ? balances.value(transactionId.value()) : QVariant{};
 }
@@ -330,6 +345,13 @@ bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &va
                 if (data(index.parent().siblingAtColumn(clearedColumn)).toBool()) updateClearedBalance(delta);
                 auto changeIndex = index.parent().siblingAtColumn(subtotalColumn);
                 emit dataChanged(changeIndex, changeIndex);
+            }
+        } else if (index.column() == payeeColumn) {
+            auto payee = value.value<const NamedEntity *>();
+            if (isPendingAdd(index) && payee) {
+                QMetaObject::invokeMethod(this, [=, this](domain_id payeeId) {
+                    store->findRecentForPayee(accountId, payeeId);
+                }, Qt::QueuedConnection, payee->id.value());
             }
         } else if (index.column() == clearedColumn) {
             if (value != data(index, Qt::DisplayRole)) {

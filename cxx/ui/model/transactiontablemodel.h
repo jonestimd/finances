@@ -55,6 +55,7 @@ protected:
 
 public:
     void setRows(const QList<domain_id> transactionIds) override;
+    void replacePendingAdd(PendingTransaction* transaction);
     
     QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;

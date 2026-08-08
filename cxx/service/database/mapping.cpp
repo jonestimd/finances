@@ -8,13 +8,14 @@ namespace mapping {
         return boolValue.toBool() ? "Y" : "N";
     }
 
-    QList<qlonglong> jsonToIntList(const QVariant &value) {
+    QList<qlonglong> jsonToSortedIntList(const QVariant &value) {
         auto json = value.toByteArray();
         QList<qlonglong> values;
         if (!json.isEmpty()) {
             auto jsonArray = QJsonDocument::fromJson(json).array();
             for (auto i = jsonArray.cbegin(); i != jsonArray.cend(); i++) values.append((*i).toInteger());
         }
+        std::stable_sort(values.begin(), values.end());
         return values;
     }
 

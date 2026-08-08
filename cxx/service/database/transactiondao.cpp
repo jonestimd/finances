@@ -4,6 +4,8 @@
 #include "sql.h"
 #include <QSqlQuery>
 
+#define RECENT_LIMIT 5
+
 #define CREATE_TABLE_QUERY(idtype) \
     "create table tx (\n" \
     "    id " idtype ",\n" \
@@ -26,7 +28,7 @@ static const auto createPayeeIndexSql = "create index tx_payee on tx (payee_id)"
 
 #define GET_ALL_QUERY(jsonArrayAgg) \
     "with detail_summary as (\n" \
-    "    select tx_id, " jsonArrayAgg "(id) detail_ids\n" \
+    "    select tx_id, " jsonArrayAgg "(id) detail_ids, count(id) count\n" \
     "    from tx_detail\n" \
     "    group by tx_id\n" \
     "), tx_data as (\n" \
@@ -40,14 +42,42 @@ static const auto createPayeeIndexSql = "create index tx_payee on tx (payee_id)"
     "from tx_data tx\n" \
     "join detail_summary ds on ds.tx_id = tx.id"
 
-#define GET_BY_ACCOUNT_QUERY(jsonArrayAgg) GET_ALL_QUERY(jsonArrayAgg) \
-    "\n    where :accountId in (tx.account_id, tx.related_account_id)" \
+#define GET_BY_ACCOUNT_QUERY(jsonArrayAgg) GET_ALL_QUERY(jsonArrayAgg) "\n" \
+    "where :accountId in (tx.account_id, tx.related_account_id)"
 
 static const auto pgGetByAccountSql = GET_BY_ACCOUNT_QUERY(DEFAULT_JSON_ARRAY_AGG);
 static const auto mysqlGetByAccountSql = pgGetByAccountSql;
 static const auto sqliteGetByAccountSql = GET_BY_ACCOUNT_QUERY(SQLITE_JSON_ARRAY_AGG);
 
 static const auto getOneQuery = "select * from tx where id = :id";
+
+#define GET_RECENT_FOR_PAYEE_QUERY(stringAgg) \
+    "with detail_key as (\n" \
+    "    select td.id, td.tx_id, concat_ws('|', td.tx_category_id, rx.account_id, td.tx_group_id, td.amount, td.asset_quantity) detail_key\n" \
+    "    from tx_detail td\n" \
+    "    left join tx_detail rd on rd.id = td.related_detail_id\n" \
+    "    left join tx rx on rx.id = rd.tx_id\n" \
+    "), details_key as (\n" \
+    "    select tx_id, count(id) count, " stringAgg(detail_key, '|', id) " details_key\n" \
+    "    from detail_key\n" \
+    "    group by tx_id\n" \
+    "), tx_key as (\n" \
+    "    select date, max(id) id\n" \
+    "    from tx\n" \
+    "    where payee_id is not null\n" \
+    "    group by date, payee_id\n" \
+    ")\n" \
+    "select tx.id, dk.details_key\n" \
+    "from tx_key tk\n" \
+    "join tx on tx.id = tk.id\n" \
+    "join details_key dk on tx.id = dk.tx_id\n" \
+    "where tx.payee_id = :payeeId\n" \
+    "  and (:allowSecurity or tx.security_id is null)\n" \
+    "order by tx.account_id != :accountId, dk.count desc, tx.date desc"
+
+static const auto pgGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(PG_STRING_AGG);
+static const auto mysqlGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(MYSQL_STRING_AGG);
+static const auto sqliteGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(SQLITE_STRING_AGG);
 
 static const auto insertQuery = R"(
 insert into tx (account_id, date, reference_number, memo, payee_id, security_id, cleared, version, change_user, change_date)
@@ -103,6 +133,7 @@ TransactionDao::TransactionDao(const QString &dbType)
     : EntityDao<Transaction>{DB_TYPE_QUERY(dbType, Queries), "TransactionDao",
                              QObject::tr("Transactions have been modified.  Please reload and try again.")}
     , getByAccountSql{DB_TYPE_QUERY(dbType, GetByAccountSql)}
+    , getRecentForPayeeSql{DB_TYPE_QUERY(dbType, GetRecentForPayeeSql)}
 {}
 
 void TransactionDao::createTable(const QSqlDatabase &db) const {
@@ -116,6 +147,26 @@ QHash<domain_id, const Transaction*> TransactionDao::getAll(const QSqlDatabase &
     sql::bindValue(query, ":accountId", accountId);
     sql::exec(query, className, "getByAccount");
     return load(query);
+}
+
+QList<const Transaction*> TransactionDao::getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity) {
+    QSqlQuery query(db);
+    query.prepare(getRecentForPayeeSql);
+    sql::bindValue(query, ":accountId", accountId);
+    sql::bindValue(query, ":payeeId", payeeId);
+    sql::bindValue(query, ":allowSecurity", allowSecurity);
+    sql::exec(query, className, "getRecentForPayee");
+    QList<domain_id> ids;
+    QList<QString> keys;
+    while (query.next() && ids.size() < RECENT_LIMIT) {
+        auto key = query.value("details_key").toString();
+        if (!keys.contains(key)) {
+            keys.append(key);
+            ids.append(query.value("id").toLongLong());
+        }
+    }
+    query.finish();
+    return get(db, ids);
 }
 
 const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QList<PendingTransaction*> adds, const QString &user) {

@@ -4,7 +4,7 @@ SecurityService::SecurityService(ConnectionPool *connectionPool, SecurityDao &se
     : NamedEntityService{connectionPool, securityDao}
 {}
 
-QHash<domain_id, const Security*> SecurityService::getSecurities(const QList<domain_id> ids) {
+QList<const Security*> SecurityService::getSecurities(const QList<domain_id> ids) {
     auto conn = Connection(connectionPool);
     return dao.get(conn.db, ids);
 }

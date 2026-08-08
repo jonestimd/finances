@@ -8,6 +8,7 @@
 
 class TransactionDao : public EntityDao<Transaction> {
     const char *getByAccountSql;
+    const char *getRecentForPayeeSql;
 
 public:
     TransactionDao(const QString &dbType);
@@ -15,6 +16,8 @@ public:
     virtual void createTable(const QSqlDatabase &db) const override;
 
     QHash<domain_id, const Transaction*> getAll(const QSqlDatabase &db, domain_id accountId);
+
+    QList<const Transaction*> getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity);
 
     using EntityDao::add;
     /**

@@ -1,5 +1,6 @@
 #include "accountsmenu.h"
 #include "filemenu.h"
+#include "recenttxaction.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/model/formats.h"
@@ -9,6 +10,7 @@
 #include <QCloseEvent>
 #include <QMenu>
 #include <QMenuBar>
+#include <QWidgetAction>
 
 #define TRANSACTION_SETTINGS "transactions"
 #define SECURITY_TRANSACTION_SETTINGS "security." TRANSACTION_SETTINGS
@@ -114,6 +116,19 @@ void TransactionsWindow::saveData() {
     store()->update(this, model(), tr(SAVING_TRANSACTIONS));
 }
 
+void TransactionsWindow::showRecent(const QList<PendingTransaction*> transactions) {
+    if (!transactions.isEmpty()) {
+        QMenu popup{};
+        popup.setObjectName("recents");
+        for (auto transaction : transactions) {
+            popup.addAction(new RecentTxAction{&popup, model(), transaction, context->dataStore});
+        }
+        auto cellIndex = entityView.itemView->currentIndex().siblingAtColumn(0);
+        auto rect = entityView.itemView->visualRect(cellIndex);
+        popup.exec(entityView.itemView->viewport()->mapToGlobal(rect.bottomLeft()));
+    }
+}
+
 void TransactionsWindow::modelReset() {
     treeView()->expandAll();
 }
@@ -165,7 +180,7 @@ void TransactionsWindow::accountsLoaded() {
 }
 
 void TransactionsWindow::companiesLoaded() {
-    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
+    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId)));
 }
 
 void TransactionsWindow::transactionsLoaded() {

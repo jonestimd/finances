@@ -10,8 +10,8 @@ public:
     CategoryDao(const QString &dbType);
 
     virtual void createTable(const QSqlDatabase &db) const override;
-
-    QHash<domain_id, const Category*> setParent(QSqlDatabase &db, const Category* category, const optional_id& parentId, const QString user);
+    
+    QList<const Category *> setParent(QSqlDatabase &db, const Category* category, const optional_id& parentId, const QString user);
     void moveChildren(QSqlDatabase &db, const Category* category, const domain_id destinationId, const QString user) const;
 
 protected:
