@@ -8,7 +8,6 @@
 class RelationEditor : public QLineEdit {
     Q_OBJECT
     ComboBoxModel *model;
-    // const NamedEntity *entity_;
     QModelIndex selectedIndex{};
 
 public:

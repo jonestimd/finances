@@ -12,7 +12,6 @@
 RelationEditor::RelationEditor(ComboBoxModel *model, QWidget *parent)
     : QLineEdit(parent)
     , model{model}
-    // , entity_{nullptr}
 {
     model->setParent(this);
     auto completer = new QCompleter(model, this);

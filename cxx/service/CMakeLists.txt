@@ -7,7 +7,6 @@ qt_add_library(finances-service OBJECT
     ${CMAKE_CURRENT_LIST_DIR}/securityservice.h ${CMAKE_CURRENT_LIST_DIR}/securityservice.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactiondetailservice.h ${CMAKE_CURRENT_LIST_DIR}/transactiondetailservice.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactionservice.h ${CMAKE_CURRENT_LIST_DIR}/transactionservice.cpp
-    model/tests/CMakeLists.txt
 )
 
 add_dependencies(finances-service libdecnumber)

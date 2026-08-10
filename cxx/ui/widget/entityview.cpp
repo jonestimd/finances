@@ -138,7 +138,7 @@ void EntityView::restoreSelection() {
         }
         int column = std::min(lastColumn, sortModel->columnCount({})-1);
         itemView->setCurrentIndex(index.siblingAtColumn(column));
-        lastSelection = {};
+        lastSelection.clear();
     }
 }
 
