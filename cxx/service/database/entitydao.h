@@ -86,7 +86,7 @@ public:
         return load(query);
     }
 
-    QList<const Entity*> get(const QSqlDatabase &db, QList<domain_id> ids) {
+    QList<const Entity*> get(const QSqlDatabase &db, QList<domain_id> ids) const {
         QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
         return loadRows(query);

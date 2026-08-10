@@ -78,6 +78,19 @@ QList<PendingTransaction*> TransactionService::getRecentForPayee(domain_id accou
     return pending;
 }
 
+QList<PendingTransaction *> TransactionService::getRecentForSecurity(domain_id accountId, domain_id securityId) {
+    Connection conn(connectionPool);
+    auto transactions = dao.getRecentForSecurity(conn.db, accountId, securityId);
+    auto details = detailDao.getByTransactionIds(conn.db, getEntityIds(transactions));
+    QList<PendingTransaction*> pending;
+    for (auto tx : std::as_const(transactions)) {
+        pending.append(PendingTransaction::copyRecent(tx, details));
+    }
+    qDeleteAll(transactions);
+    qDeleteAll(details);
+    return pending;
+}
+
 const TransactionsData TransactionService::update(TransactionUpdate &changes, const QString &user) {
     Connection conn(connectionPool);
     try {

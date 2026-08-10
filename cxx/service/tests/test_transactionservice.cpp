@@ -77,6 +77,7 @@ private slots:
         QTest::addColumn<domain_id>("altAccountId");
         QTest::addColumn<domain_id>("altAccountId2");
         QTest::addColumn<domain_id>("payeeId");
+        QTest::addColumn<domain_id>("securityId");
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &txDao = dbTestCase.transactionDao(driver);
             auto &detailDao = dbTestCase.detailDao(driver);
@@ -87,7 +88,9 @@ private slots:
             auto altAccountId = dbTestCase.addAccount(driver, "Account 2", &AccountType::bank, companyId)->id.value();
             auto altAccountId2 = dbTestCase.addAccount(driver, "Account 3", &AccountType::bank, companyId)->id.value();
             auto payeeId = dbTestCase.addPayee(driver, "Payee 1");
-            QTest::newRow(driver.toLocal8Bit()) << driver << service << accountId << altAccountId << altAccountId2 << payeeId;
+            auto securityId = dbTestCase.addSecurity(driver, "Security 1")->id.value();
+            QTest::newRow(driver.toLocal8Bit()) << driver << service
+                << accountId << altAccountId << altAccountId2 << payeeId << securityId;
         }
     }
 
@@ -107,6 +110,17 @@ private slots:
         QFETCH_GLOBAL(domain_id, payeeId);
 
         auto result = service->getRecentForPayee(accountId, payeeId);
+
+        QVERIFY(result.isEmpty());
+        qDeleteAll(result);
+    }
+
+    void getRecentForSecurity() {
+        QFETCH_GLOBAL(TransactionService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, securityId);
+
+        auto result = service->getRecentForSecurity(accountId, securityId);
 
         QVERIFY(result.isEmpty());
         qDeleteAll(result);

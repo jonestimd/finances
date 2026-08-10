@@ -51,7 +51,7 @@ static const auto sqliteGetByAccountSql = GET_BY_ACCOUNT_QUERY(SQLITE_JSON_ARRAY
 
 static const auto getOneQuery = "select * from tx where id = :id";
 
-#define GET_RECENT_FOR_PAYEE_QUERY(stringAgg) \
+#define GET_RECENT_QUERY(stringAgg, txColumn, placeholder, filter) \
     "with detail_key as (\n" \
     "    select td.id, td.tx_id, concat_ws('|', td.tx_category_id, rx.account_id, td.tx_group_id, td.amount, td.asset_quantity) detail_key\n" \
     "    from tx_detail td\n" \
@@ -64,20 +64,29 @@ static const auto getOneQuery = "select * from tx where id = :id";
     "), tx_key as (\n" \
     "    select date, max(id) id\n" \
     "    from tx\n" \
-    "    where payee_id is not null\n" \
-    "    group by date, payee_id\n" \
+    "    where " #txColumn " is not null\n" \
+    "    group by date, " #txColumn "\n" \
     ")\n" \
     "select tx.id, dk.details_key\n" \
     "from tx_key tk\n" \
     "join tx on tx.id = tk.id\n" \
     "join details_key dk on tx.id = dk.tx_id\n" \
-    "where tx.payee_id = :payeeId\n" \
-    "  and (:allowSecurity or tx.security_id is null)\n" \
+    "where tx." #txColumn " = " #placeholder "\n" \
+    filter \
     "order by tx.account_id != :accountId, dk.count desc, tx.date desc"
+
+#define GET_RECENT_FOR_PAYEE_QUERY(stringAgg) \
+    GET_RECENT_QUERY(stringAgg, payee_id, :payeeId, "  and (:allowSecurity or tx.security_id is null)\n")
 
 static const auto pgGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(PG_STRING_AGG);
 static const auto mysqlGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(MYSQL_STRING_AGG);
 static const auto sqliteGetRecentForPayeeSql = GET_RECENT_FOR_PAYEE_QUERY(SQLITE_STRING_AGG);
+
+#define GET_RECENT_FOR_SECURITY_QUERY(stringAgg) GET_RECENT_QUERY(stringAgg, security_id, :securityId, "")
+
+static const auto pgGetRecentForSecuritySql = GET_RECENT_FOR_SECURITY_QUERY(PG_STRING_AGG);
+static const auto mysqlGetRecentForSecuritySql = GET_RECENT_FOR_SECURITY_QUERY(MYSQL_STRING_AGG);
+static const auto sqliteGetRecentForSecuritySql = GET_RECENT_FOR_SECURITY_QUERY(SQLITE_STRING_AGG);
 
 static const auto insertQuery = R"(
 insert into tx (account_id, date, reference_number, memo, payee_id, security_id, cleared, version, change_user, change_date)
@@ -134,6 +143,7 @@ TransactionDao::TransactionDao(const QString &dbType)
                              QObject::tr("Transactions have been modified.  Please reload and try again.")}
     , getByAccountSql{DB_TYPE_QUERY(dbType, GetByAccountSql)}
     , getRecentForPayeeSql{DB_TYPE_QUERY(dbType, GetRecentForPayeeSql)}
+    , getRecentForSecuritySql{DB_TYPE_QUERY(dbType, GetRecentForSecuritySql)}
 {}
 
 void TransactionDao::createTable(const QSqlDatabase &db) const {
@@ -149,13 +159,11 @@ QHash<domain_id, const Transaction*> TransactionDao::getAll(const QSqlDatabase &
     return load(query);
 }
 
-QList<const Transaction*> TransactionDao::getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity) {
+static QList<domain_id> getRecentIds(const QSqlDatabase &db, QString sql, const QHash<const QString, QVariant> bindValues) {
     QSqlQuery query(db);
-    query.prepare(getRecentForPayeeSql);
-    sql::bindValue(query, ":accountId", accountId);
-    sql::bindValue(query, ":payeeId", payeeId);
-    sql::bindValue(query, ":allowSecurity", allowSecurity);
-    sql::exec(query, className, "getRecentForPayee");
+    query.prepare(sql);
+    sql::bindValues(query, bindValues);
+    sql::exec(query, "TransactionDao", "getRecent");
     QList<domain_id> ids;
     QList<QString> keys;
     while (query.next() && ids.size() < RECENT_LIMIT) {
@@ -166,7 +174,15 @@ QList<const Transaction*> TransactionDao::getRecentForPayee(const QSqlDatabase &
         }
     }
     query.finish();
-    return get(db, ids);
+    return ids;;
+}
+
+QList<const Transaction*> TransactionDao::getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity) const {
+    return get(db, getRecentIds(db, getRecentForPayeeSql, {{":accountId", accountId}, {":payeeId", payeeId}, {":allowSecurity", allowSecurity}}));
+}
+
+QList<const Transaction*> TransactionDao::getRecentForSecurity(const QSqlDatabase &db, domain_id accountId, domain_id securityId) const {
+    return get(db, getRecentIds(db, getRecentForSecuritySql, {{":accountId", accountId}, {":securityId", securityId}}));
 }
 
 const QList<PendingTransaction*> TransactionDao::add(QSqlDatabase &db, const QList<PendingTransaction*> adds, const QString &user) {

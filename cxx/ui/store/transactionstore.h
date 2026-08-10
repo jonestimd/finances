@@ -26,7 +26,11 @@ public:
     void update(QWidget *source, TransactionTableModel *model, const QString message, int txRow = -1);
     void replacePayee(domain_id oldPayeeId, domain_id newPayeeId);
     void findRecentForPayee(domain_id accountId, domain_id payeeId) const;
+    void findRecentForSecurity(domain_id accountId, domain_id securityId) const;
+private:
+    void findRecent(domain_id accountId, domain_id searchId, QList<PendingTransaction*> (TransactionService::*search)(domain_id, domain_id)) const;
 
+public:
     const QList<domain_id> transactionIds(domain_id accountId) const;
     
     QDecNumber amount(domain_id transactionId) const;

@@ -18,6 +18,7 @@ public:
     TransactionService(ConnectionPool* pool, TransactionDao& transactionDao, TransactionDetailDao& detailDao, AccountDao& accountDao);
 
     QList<PendingTransaction*> getRecentForPayee(domain_id accountId, domain_id payeeId);
+    QList<PendingTransaction*> getRecentForSecurity(domain_id accountId, domain_id securityId);
 
     /**
      * @return `TransactionsData`:

@@ -7,8 +7,9 @@
 #include <QSqlDatabase>
 
 class TransactionDao : public EntityDao<Transaction> {
-    const char *getByAccountSql;
-    const char *getRecentForPayeeSql;
+    const char* const getByAccountSql;
+    const char* const getRecentForPayeeSql;
+    const char* const getRecentForSecuritySql;
 
 public:
     TransactionDao(const QString &dbType);
@@ -17,7 +18,8 @@ public:
 
     QHash<domain_id, const Transaction*> getAll(const QSqlDatabase &db, domain_id accountId);
 
-    QList<const Transaction*> getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity);
+    QList<const Transaction*> getRecentForPayee(const QSqlDatabase &db, domain_id accountId, domain_id payeeId, bool allowSecurity) const;
+    QList<const Transaction*> getRecentForSecurity(const QSqlDatabase &db, domain_id accountId, domain_id securityId) const;
 
     using EntityDao::add;
     /**

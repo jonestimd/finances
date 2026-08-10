@@ -36,7 +36,11 @@ namespace sql {
 
     void bindValue(QSqlQuery &query, const char *name, const QString &value);
 
-    void bindValue(QSqlQuery &query, const char *name, const QVariant &value);
+    void bindValue(QSqlQuery &query, const QString& name, const QVariant &value);
+
+    inline void bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
+        bindValue(query, QString{name}, value);
+    }
 
     inline void bindValue(QSqlQuery &query, const char *name, qlonglong value) {
         bindValue(query, name, QVariant{value});
@@ -45,6 +49,8 @@ namespace sql {
     void bindValue(QSqlQuery &query, const char *name, const QDecNumber& value);
 
     void bindValue(QSqlQuery &query, const char *name, const std::optional<QDecNumber>& value);
+
+    void bindValues(QSqlQuery &query, const QHash<const QString, QVariant> values);
 
     void bindList(QSqlQuery &query, const char *name, const QList<qlonglong> &values);
 

@@ -69,10 +69,18 @@ void TransactionStore::replacePayee(domain_id oldPayeeId, domain_id newPayeeId) 
 }
 
 void TransactionStore::findRecentForPayee(domain_id accountId, domain_id payeeId) const {
+    findRecent(accountId, payeeId, &TransactionService::getRecentForPayee);
+}
+
+void TransactionStore::findRecentForSecurity(domain_id accountId, domain_id securityId) const {
+    findRecent(accountId, securityId, &TransactionService::getRecentForSecurity);
+}
+
+void TransactionStore::findRecent(domain_id accountId, domain_id searchId, QList<PendingTransaction*> (TransactionService::*search)(domain_id, domain_id)) const {
     TransactionsWindow *window = qobject_cast<TransactionsWindow *>(qApp->activeWindow());
     if (window) {
         doInBackground(window, tr(LOADING_TRANSACTIONS), [=, this]() {
-            auto transactions = service->getRecentForPayee(accountId, payeeId);
+            auto transactions = (service->*search)(accountId, searchId);
             QMetaObject::invokeMethod(window, &TransactionsWindow::showRecent, transactions);
         });
     } else {

@@ -353,6 +353,13 @@ bool TransactionTableModel::setData(const QModelIndex &index, const QVariant &va
                     store->findRecentForPayee(accountId, payeeId);
                 }, Qt::QueuedConnection, payee->id.value());
             }
+        } else if (index.column() == securityColumn) {
+            auto security = value.value<const NamedEntity *>();
+            if (isPendingAdd(index) && security) {
+                QMetaObject::invokeMethod(this, [=, this](domain_id securityId) {
+                    store->findRecentForSecurity(accountId, securityId);
+                }, Qt::QueuedConnection, security->id.value());
+            }
         } else if (index.column() == clearedColumn) {
             if (value != data(index, Qt::DisplayRole)) {
                 auto amount = data(index.siblingAtColumn(subtotalColumn), Qt::EditRole).value<QDecNumber>();
