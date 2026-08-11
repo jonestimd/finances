@@ -19,6 +19,10 @@ void ComboBoxModel::addOption(const QString &name) {
     if (createValue) createValue(name);
 }
 
+QModelIndex ComboBoxModel::indexOf(const NamedEntity *entity) const {
+    return index(options.indexOf(entity));
+}
+
 int ComboBoxModel::rowCount(const QModelIndex &parent) const {
     return parent.isValid() ? 0 : options.length();
 }

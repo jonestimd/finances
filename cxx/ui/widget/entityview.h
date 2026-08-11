@@ -17,8 +17,9 @@ class EntityView : public QObject {
 protected:
     QWidget *const window;
     TableItemDelegate itemDelegate;
-    /** @brief Indexes of the last selected row and its parents. */
+    /** @brief Index of the last selected cell. */
     QList<int> lastSelection;
+    int lastColumn;
 
 public:
     QStatusBar statusBar{};
@@ -29,7 +30,7 @@ public:
     QToolBar toolbar;
 
     EntityView(QWidget *window, StatusMessageStore* messageStore, QAbstractItemModel *model,
-                 QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
+               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
 
     inline QAbstractItemModel* model() const {
         return sortModel->sourceModel();

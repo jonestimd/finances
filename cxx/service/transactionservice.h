@@ -4,17 +4,21 @@
 #include "entityservice.h"
 #include "database/transactiondao.h"
 #include "database/transactiondetaildao.h"
+#include "service/database/accountdao.h"
 
+/**
+ * @copydoc EntityService::getAll(GetAllArgs...)
+ * @param accountId
+ */
 class TransactionService : public EntityService<Transaction, TransactionDao, domain_id> {
-    TransactionDetailDao &detailDao;
+    TransactionDetailDao& detailDao;
+    AccountDao& accountDao;
 
 public:
-    TransactionService(ConnectionPool *pool, TransactionDao &transactionDao, TransactionDetailDao &detailDao);
+    TransactionService(ConnectionPool* pool, TransactionDao& transactionDao, TransactionDetailDao& detailDao, AccountDao& accountDao);
 
-    /**
-     * @copydoc EntityService::getAll(GetAllArgs...)
-     * @param accountId
-     */
+    QList<PendingTransaction*> getRecentForPayee(domain_id accountId, domain_id payeeId);
+    QList<PendingTransaction*> getRecentForSecurity(domain_id accountId, domain_id securityId);
 
     /**
      * @return `TransactionsData`:

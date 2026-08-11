@@ -6,7 +6,7 @@
 namespace mapping {
     QVariant toYesNo(const QVariant &value);
 
-    QList<qlonglong> jsonToIntList(const QVariant &value);
+    QList<qlonglong> jsonToSortedIntList(const QVariant &value);
 };
 
 #endif // MAPPING_H

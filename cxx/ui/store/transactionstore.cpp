@@ -1,7 +1,9 @@
 #include "transactionstore.h"
 #include "ui/model/transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
+#include "ui/widget/transactionswindow.h"
 #include <QDate>
+#include <QWindow>
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
 
@@ -53,7 +55,7 @@ void TransactionStore::applyUpdates(const QList<const PendingTransaction*> adds,
     for (auto accountId : accountIds) emit accountUpdated(accountId);
 }
 
-void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId) {
+void TransactionStore::replacePayee(domain_id oldPayeeId, domain_id newPayeeId) {
     QList<const Transaction*> updates;
     forEachEntry([&](domain_id id, const Transaction* tx) {
         if (tx->payeeId.has_value() && tx->payeeId.value() == oldPayeeId) {
@@ -64,6 +66,23 @@ void TransactionStore::replacePayee(const domain_id oldPayeeId, const domain_id 
         }
     });
     if (!updates.isEmpty()) update(updates, {});
+}
+
+void TransactionStore::findRecentForPayee(domain_id accountId, domain_id payeeId) const {
+    findRecent(accountId, payeeId, &TransactionService::getRecentForPayee);
+}
+
+void TransactionStore::findRecentForSecurity(domain_id accountId, domain_id securityId) const {
+    findRecent(accountId, securityId, &TransactionService::getRecentForSecurity);
+}
+
+void TransactionStore::findRecent(domain_id accountId, domain_id searchId, QList<PendingTransaction*> (TransactionService::*search)(domain_id, domain_id)) const {
+    auto window = qApp->activeWindow();
+    if (!window) qWarning() << "expected an active window";
+    doInBackground(window, tr(LOADING_TRANSACTIONS), [=, this]() {
+        auto transactions = (service->*search)(accountId, searchId);
+        emit showRecents(transactions);
+    });
 }
 
 const QList<domain_id> TransactionStore::transactionIds(domain_id accountId) const {
@@ -96,9 +115,7 @@ void TransactionStore::sort(QList<domain_id> &txIds) const {
 }
 
 bool TransactionStore::lessThan(domain_id txId1, domain_id txId2) const {
-    auto d1 = value(txId1)->date;
-    auto d2 = value(txId2)->date;
-    return d1 == d2 ? txId1 < txId2 : d1 < d2;
+    return *value(txId1) < *value(txId2);
 }
 
 void TransactionStore::clearData(domain_id accountId) {

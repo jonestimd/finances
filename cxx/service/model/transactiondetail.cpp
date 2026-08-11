@@ -46,3 +46,14 @@ void TransactionDetail::initTransfer(domain_id transactionId, TransactionDetail 
         relatedDetail.assetQuantity.emplace(QDecNumber{}).copyNegate(assetQuantity.value());
     }
 }
+
+TransactionDetail *TransactionDetail::copyRecent(const TransactionDetail *detail) {
+    auto copy = new TransactionDetail;
+    copy->categoryId = detail->categoryId;
+    copy->transferAccountId = detail->transferAccountId;
+    copy->groupId = detail->groupId;
+    copy->amount = detail->amount;
+    copy->assetQuantity = detail->assetQuantity;
+    copy->memo = detail->memo;
+    return copy;
+}

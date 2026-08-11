@@ -28,19 +28,24 @@
     "    constraint tx_detail_tx_type_fk foreign key (tx_category_id) references tx_category (id)\n" \
     ")"
 
-static const auto getAllQuery = R"(
-select td.*, rx.account_id transfer_account_id
-from tx_detail td
-left join tx_detail rd on rd.id = td.related_detail_id
-left join tx rx on rx.id = rd.tx_id)";
+#define GET_ALL_QUERY \
+    "select td.*, rx.account_id transfer_account_id\n" \
+    "from tx_detail td\n" \
+    "left join tx_detail rd on rd.id = td.related_detail_id\n" \
+    "left join tx rx on rx.id = rd.tx_id" \
 
-static const auto getByAccountQuery = R"(
-select td.*, rx.account_id transfer_account_id
-from tx_detail td
-join tx on td.tx_id = tx.id
-left join tx_detail rd on rd.id = td.related_detail_id
-left join tx rx on rx.id = rd.tx_id
-where :accountId in (tx.account_id, rx.account_id))";
+static const auto getAllQuery = GET_ALL_QUERY;
+
+static const auto getByAccountQuery = GET_ALL_QUERY "\n" \
+    "join tx on td.tx_id = tx.id\n" \
+    "where :accountId in (tx.account_id, rx.account_id)";
+
+#define GET_BY_TX_QUERY(inList) GET_ALL_QUERY "\n" \
+    "where " inList(td.tx_id, :txIds)
+
+static const auto pgGetByTxIdsSql = GET_BY_TX_QUERY(PG_IN_LIST);
+static const auto sqliteGetByTxIdsSql = GET_BY_TX_QUERY(SQLITE_IN_LIST);
+static const auto mysqlGetByTxIdsSql = GET_BY_TX_QUERY(MYSQL_IN_LIST);
 
 #define GET_RELATED_IDS_QUERY(inList) \
     "select td.id, td.related_detail_id, tx.account_id, rx.id related_tx_id, rx.account_id transfer_account_id\n" \
@@ -127,6 +132,7 @@ TransactionDetailDao::TransactionDetailDao(const QString &dbType)
     , deleteByIdsSql{DB_TYPE_QUERY(dbType, DeleteByIdsSql)}
     , updateTransferAmountSql{DB_TYPE_QUERY(dbType, UpdateTransferAmountSql)}
     , getRelatedIdsSql{DB_TYPE_QUERY(dbType, GetRelatedIdsSql)}
+    , getByTransactionIdsSql{DB_TYPE_QUERY(dbType, GetByTxIdsSql)}
 {}
 
 QHash<domain_id, const TransactionDetail*> TransactionDetailDao::getAll(const QSqlDatabase &db, domain_id accountId) {
@@ -134,6 +140,14 @@ QHash<domain_id, const TransactionDetail*> TransactionDetailDao::getAll(const QS
     query.prepare(getByAccountQuery);
     sql::bindValue(query, ":accountId", accountId);
     sql::exec(query, className, "getByAccount");
+    return load(query);
+}
+
+QHash<domain_id, const TransactionDetail *> TransactionDetailDao::getByTransactionIds(const QSqlDatabase &db, QList<domain_id> txIds) {
+    QSqlQuery query(db);
+    query.prepare(getByTransactionIdsSql);
+    sql::bindList(query, ":txIds", txIds);
+    sql::exec(query, className, "getByTransactionIds");
     return load(query);
 }
 
@@ -146,7 +160,7 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
     bindInsertValues(query, &relatedDetail);
     sql::exec(query, className, "insert");
     auto id = query.lastInsertId().toLongLong();
-    return get(db, QList<domain_id>{id}).value(id);
+    return get(db, QList<domain_id>{id}).constFirst();
 }
 
 QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id>& relatedTransactionIds) {
@@ -190,7 +204,7 @@ QList<const TransactionDetail *> TransactionDetailDao::update(QSqlDatabase &db, 
         sql::bindList(query, ":ids", relatedIds);
         sql::bindValue(query, ":user", user);
         sql::exec(query, className, "updateTransferAmount");
-        updates.append(get(db, relatedIds).values()); // TODO assumes related details are not in entities
+        updates.append(get(db, relatedIds)); // TODO assumes related details are not in entities
     }
     return updates;
 }

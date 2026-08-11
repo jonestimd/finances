@@ -12,7 +12,7 @@ class PayeeService : public NamedEntityService<Payee, PayeeDao> {
 public:
     PayeeService(ConnectionPool *connectionPool, PayeeDao &payeeDao, TransactionDao &transactionDao);
 
-    QHash<domain_id, const Payee*> merge(const Payee *payee, domain_id destinationId, const QString &user);
+    QList<const Payee*> merge(const Payee *payee, domain_id destinationId, const QString &user);
 };
 
 #endif // PAYEESERVICE_H

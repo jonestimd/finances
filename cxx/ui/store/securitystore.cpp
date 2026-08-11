@@ -15,7 +15,7 @@ bool SecurityStore::load(EntityView *view, bool reload) {
 void SecurityStore::loadSecurities(EntityView *view, const QList<domain_id> securityIds) {
     doInBackground(view->statusBar.parentWidget(), tr(LOADING_SECURITIES), [=, this]() {
         auto securities = service->getSecurities(securityIds);
-        update(securities.values());
+        update(securities);
         emit valuesLoaded(ids());
     });
 }

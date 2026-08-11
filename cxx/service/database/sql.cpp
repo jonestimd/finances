@@ -54,7 +54,7 @@ void sql::bindValue(QSqlQuery &query, const char *name, const QString &value) {
     qCDebug(sqlLogger) << "-" << name << "=" << (value.isEmpty() ? "{null}" : value);
 }
 
-void sql::bindValue(QSqlQuery &query, const char *name, const QVariant &value) {
+void sql::bindValue(QSqlQuery &query, const QString &name, const QVariant &value) {
     query.bindValue(name, value);
     qCDebug(sqlLogger) << "-" << name << "=" << (value);
 }
@@ -69,6 +69,12 @@ void sql::bindValue(QSqlQuery &query, const char *name, const std::optional<QDec
     else {
         query.bindValue(name, QVariant{});
         qCDebug(sqlLogger) << "-" << name << "= null";
+    }
+}
+
+void sql::bindValues(QSqlQuery &query, const QHash<const QString, QVariant> values) {
+    for (auto i = values.cbegin(); i != values.cend(); i++) {
+        sql::bindValue(query, i.key(), i.value());
     }
 }
 

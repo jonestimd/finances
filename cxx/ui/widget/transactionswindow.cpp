@@ -1,5 +1,6 @@
 #include "accountsmenu.h"
 #include "filemenu.h"
+#include "recenttxaction.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/model/formats.h"
@@ -9,6 +10,7 @@
 #include <QCloseEvent>
 #include <QMenu>
 #include <QMenuBar>
+#include <QWidgetAction>
 
 #define TRANSACTION_SETTINGS "transactions"
 #define SECURITY_TRANSACTION_SETTINGS "security." TRANSACTION_SETTINGS
@@ -51,6 +53,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(companiesLoaded()));
+    connect(dataStore->transactionStore, SIGNAL(showRecents(QList<PendingTransaction*>)), this, SLOT(showRecent(QList<PendingTransaction*>)));
     connect(entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -127,6 +130,19 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     }
 }
 
+void TransactionsWindow::showRecent(const QList<PendingTransaction*> transactions) {
+    if (isActiveWindow() && !transactions.isEmpty()) {
+        QMenu popup{};
+        popup.setObjectName("recents");
+        for (auto transaction : transactions) {
+            popup.addAction(new RecentTxAction{&popup, model(), transaction, context->dataStore});
+        }
+        auto cellIndex = entityView.itemView->currentIndex().siblingAtColumn(0);
+        auto rect = entityView.itemView->visualRect(cellIndex);
+        popup.exec(entityView.itemView->viewport()->mapToGlobal(rect.bottomLeft()));
+    }
+}
+
 TransactionStore *TransactionsWindow::store() const {
     return context->dataStore->transactionStore;
 }
@@ -165,7 +181,7 @@ void TransactionsWindow::accountsLoaded() {
 }
 
 void TransactionsWindow::companiesLoaded() {
-    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId, ':')));
+    setWindowTitle(QString("%1 - %2[*]").arg(connectionName(), accountStore()->qualifiedName(model()->accountId)));
 }
 
 void TransactionsWindow::transactionsLoaded() {

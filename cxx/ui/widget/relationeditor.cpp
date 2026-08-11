@@ -12,7 +12,6 @@
 RelationEditor::RelationEditor(ComboBoxModel *model, QWidget *parent)
     : QLineEdit(parent)
     , model{model}
-    , entity_{nullptr}
 {
     model->setParent(this);
     auto completer = new QCompleter(model, this);
@@ -22,35 +21,42 @@ RelationEditor::RelationEditor(ComboBoxModel *model, QWidget *parent)
     completer->setFilterMode(Qt::MatchContains);
     setValidator(&model->validator);
     connect(completer, SIGNAL(activated(QModelIndex)), this, SLOT(activated(QModelIndex)));
+    connect(completer, SIGNAL(highlighted(QModelIndex)), this, SLOT(activated(QModelIndex)));
     connect(this, SIGNAL(textChanged(QString)), this, SLOT(inputTextChanged(QString)));
 }
 
 const NamedEntity *RelationEditor::entity() const {
-    return entity_;
+    return selectedIndex.isValid() ? selectedIndex.data(finances::EntityPtrRole).value<const NamedEntity*>() : nullptr;
 }
 
 void RelationEditor::setEntity(const NamedEntity *entity) {
-    entity_ = entity;
-    if (entity) setText(entity->name);
-    else setText("");
+    if (entity) {
+        selectedIndex = model->indexOf(entity);
+        setText(selectedIndex.data().toString());
+    } else {
+        selectedIndex = {};
+        setText("");
+    }
 }
 
 void RelationEditor::inputTextChanged(const QString &text) {
-    if (entity_) {
-        if (text != entity_->name) {
-            entity_ = nullptr;
-            emit entityChanged(entity_);
+    if (selectedIndex.isValid()) {
+        if (text != selectedIndex.data()) {
+            selectedIndex = {};
+            emit entityChanged(entity());
         }
-    }
-    else if (completer()->completionCount() == 1) {
+    } else if (completer()->completionCount() == 1) {
         auto index = completer()->completionModel()->index(0, 0);
-        if (text == index.data()) activated(index);
+        if (text == index.data()) {
+            selectedIndex = index;
+            activated(index);
+        }
     }
 }
 
 void RelationEditor::activated(const QModelIndex &index) {
-    entity_ = index.data(finances::EntityPtrRole).value<const NamedEntity*>();
-    emit entityChanged(entity_);
+    selectedIndex = index;
+    emit entityChanged(entity());
 }
 
 void RelationEditor::keyPressEvent(QKeyEvent *event) {

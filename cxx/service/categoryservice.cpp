@@ -19,20 +19,20 @@ QList<const Category*> CategoryService::update(BulkUpdate<Category> &changes, co
         }
         if (!parentIds.isEmpty()) {
             auto conn = Connection(connectionPool);
-            result += dao.get(conn.db, parentIds).values();
+            result += dao.get(conn.db, parentIds);
         }
     }
     return result;
 }
 
-QHash<domain_id, const Category*> CategoryService::setParent(const Category *category, const optional_id& parentId, const QString &user) {
-    return doInTransaction<QHash<domain_id, const Category*>>([=, this](QSqlDatabase &db) {
+QList<const Category*> CategoryService::setParent(const Category *category, const optional_id& parentId, const QString &user) {
+    return doInTransaction<QList<const Category*>>([=, this](QSqlDatabase &db) {
         return dao.setParent(db, category, parentId, user);
     });
 }
 
-QHash<domain_id, const Category*> CategoryService::merge(const Category *category, const domain_id destinationId, const QString &user) {
-    return doInTransaction<QHash<domain_id, const Category*>>([=, this](QSqlDatabase &db) {
+QList<const Category*> CategoryService::merge(const Category *category, const domain_id destinationId, const QString &user) {
+    return doInTransaction<QList<const Category*>>([=, this](QSqlDatabase &db) {
         detailDao.replaceCategory(db, category, destinationId, user);
         dao.moveChildren(db, category, destinationId, user);
         dao.remove(db, QList{category});

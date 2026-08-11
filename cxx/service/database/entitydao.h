@@ -31,17 +31,22 @@ typedef struct {
 } DaoQueries;
 
 template<class Entity>
-class EntityDao {
-    const char *const createTableSql;
-    const char *const getAllSql;
-    const char *const updateSql;
-    const char *const insertSql;
-    const char *const deleteSql;
+class EntityDao : protected DaoQueries {
     const char *const idColumn;
 
 protected:
     const char* const className;
     const QString staleDataMessage;
+
+    template<class T = Entity>
+    static auto loadRows(QSqlQuery &query) {
+        QList<const T*> entities;
+        while (query.next()) {
+            auto entity = new T(query.record());
+            entities.append(entity);
+        }
+        return entities;
+    }
 
     template<class T = Entity, class ID = optional_id>
     static auto load(QSqlQuery &query) {
@@ -63,11 +68,7 @@ protected:
     virtual void bindInsertValues(QSqlQuery &query, Entity *entity) = 0;
 
     EntityDao(const DaoQueries &queries, const char *className, const QString staleDataMessage, const char *idColumn = "id")
-        : createTableSql{queries.createTableSql}
-        , getAllSql{queries.getAllSql}
-        , updateSql{queries.updateSql}
-        , insertSql{queries.insertSql}
-        , deleteSql{queries.deleteSql}
+        : DaoQueries{queries}
         , className{className}
         , staleDataMessage{staleDataMessage}
         , idColumn{idColumn}
@@ -85,10 +86,10 @@ public:
         return load(query);
     }
 
-    QHash<domain_id, const Entity*> get(QSqlDatabase &db, QList<domain_id> ids) {
+    QList<const Entity*> get(const QSqlDatabase &db, QList<domain_id> ids) const {
         QSqlQuery query = dbDialect::prepareGetByIds(db, getAllSql, ids, idColumn);
         sql::exec(query, className, "getByIds");
-        return load(query);
+        return loadRows(query);
     }
 
     /**

@@ -20,7 +20,7 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     case Qt::DisplayRole:
         if (current.isValid() && current.isNull()) return "";
         if (typeId.id.has_value()) {
-            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id.value(), ':'); // .prepend("\u279c ");
+            if (typeId.transfer) return dataStore->accountStore->qualifiedName(typeId.id.value()); // .prepend("\u279c ");
             return dataStore->categoryStore->displayName(typeId.id.value());
         }
         break;
@@ -70,7 +70,7 @@ QVariant TransactionTypeColumnAdapter::getId(const QVariant &value) const {
 
 QString TransactionTypeColumnAdapter::optionText(const NamedEntity* option) const {
     auto type = static_cast<const TransactionType*>(option);
-    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id.value(), ':');
+    if (type->transfer) return dataStore->accountStore->qualifiedName(option->id.value());
     return dataStore->categoryStore->displayName(option->id.value());
 }
 

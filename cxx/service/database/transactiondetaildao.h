@@ -18,15 +18,18 @@ struct RelatedDetailIds {
 };
 
 class TransactionDetailDao : public EntityDao<TransactionDetail> {
-    const char *deleteIdsByTransactionSql;
-    const char *deleteByIdsSql;
-    const char *updateTransferAmountSql;
-    const char *getRelatedIdsSql;
+    const char* const deleteIdsByTransactionSql;
+    const char* const deleteByIdsSql;
+    const char* const updateTransferAmountSql;
+    const char* const getRelatedIdsSql;
+    const char* const getByTransactionIdsSql;
 
 public:
     TransactionDetailDao(const QString &dbType);
 
     QHash<domain_id, const TransactionDetail*> getAll(const QSqlDatabase &db, domain_id accountId);
+
+    QHash<domain_id, const TransactionDetail*> getByTransactionIds(const QSqlDatabase &db, QList<domain_id> txIds);
     
     const TransactionDetail* addRelatedDetail(QSqlDatabase& db, domain_id txId, const TransactionDetail* detail, const QString& user);
 

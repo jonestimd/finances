@@ -29,6 +29,7 @@ public:
     explicit ComboBoxModel(const QList<const NamedEntity*> values, GetName getName, CreateValue newValue = nullptr);
 
     void addOption(const QString &name);
+    QModelIndex indexOf(const NamedEntity* entity) const;
 
     // QAbstractItemModel interface
     int rowCount(const QModelIndex &parent) const override;

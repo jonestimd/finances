@@ -11,7 +11,7 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , securityService{pool, daos.securityDao}
     , stockSplitService{pool, daos.stockSplitDao}
     , transationDetailService{pool, daos.transactionDetailDao}
-    , transationService{pool, daos.transactionDao, daos.transactionDetailDao}
+    , transationService{pool, daos.transactionDao, daos.transactionDetailDao, daos.accountDao}
 {}
 
 ServiceContext::ServiceContext(const ConnectionSettings &settings) : ServiceContext{new ConnectionPool(settings)} {}

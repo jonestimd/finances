@@ -19,6 +19,10 @@
 #define DEFAULT_GREATEST "greatest"
 #define DEFAULT_JSON_ARRAY_AGG "json_arrayagg"
 
+#define PG_STRING_AGG(column, delim, sort_column) "string_agg(" #column ", " #delim " order by " #sort_column ")"
+#define MYSQL_STRING_AGG(column, delim, sort_column) "group_concat(" #column " order by " #sort_column " separator " #delim ")"
+#define SQLITE_STRING_AGG(column, delim, sort_column) PG_STRING_AGG(column, delim, sort_column)
+
 #define SQLITE_SUM "decimal_sum"
 #define SQLITE_GREATEST "max"
 #define SQLITE_JSON_ARRAY_AGG "json_group_array"

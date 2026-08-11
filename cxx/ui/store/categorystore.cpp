@@ -48,7 +48,7 @@ bool CategoryStore::hasChild(domain_id categoryId, const QString &name) const {
 void CategoryStore::setParent(QWidget *source, const Category *category, const optional_id& parentId) {
     doInBackground(source, tr(SAVING_CATEGORIES), [this, category, parentId] {
         auto categories = service->setParent(category, parentId, user);
-        update(categories.values());
+        update(categories);
         emit valuesLoaded(ids());
     });
 }
@@ -57,7 +57,7 @@ void CategoryStore::mergeCategories(QWidget *source, const Category *category, c
     doInBackground(source, tr(SAVING_CATEGORIES), [this, category, destinationId] {
         auto categories = service->merge(category, destinationId, user);
         dataStore->transactionStore->detailStore.replaceCategory(category->id, destinationId);
-        update(categories.values(), QList{category});
+        update(categories, QList{category});
         emit valuesLoaded(ids());
     });
 }

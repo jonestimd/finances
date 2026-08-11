@@ -16,7 +16,7 @@ Transaction::Transaction(const QSqlRecord &record)
     , referenceNumber{sql::getString(record, "reference_number")}
     , memo{sql::getString(record, "memo")}
     , cleared{sql::yesNoValue(record, "cleared")}
-    , detailIds(mapping::jsonToIntList(record.value("detail_ids")))
+    , detailIds(mapping::jsonToSortedIntList(record.value("detail_ids")))
 {}
 
 bool Transaction::deletable() const {
@@ -46,6 +46,13 @@ void Transaction::appendIds(QSet<domain_id> &accountIds, QSet<domain_id> &securi
     }
 }
 
+bool operator<(const Transaction& left, const Transaction &right) {
+    if (left.date.isValid() && left.date == right.date) {
+        return left.id.has_value() && (!right.id.has_value() || left.id.value() < right.id.value());
+    }
+    return left.date.isValid() && (!right.date.isValid() || left.date < right.date);
+}
+
 PendingTransaction::PendingTransaction() {}
 
 PendingTransaction::PendingTransaction(domain_id accountId)
@@ -55,6 +62,17 @@ PendingTransaction::PendingTransaction(domain_id accountId)
 
 PendingTransaction::PendingTransaction(const PendingTransaction &that) : Transaction(that) {
     for (auto detail : std::as_const(that.details)) details.append(new TransactionDetail(*detail));
+}
+
+PendingTransaction* PendingTransaction::copyRecent(const Transaction* tx, const QHash<domain_id, const TransactionDetail*> details) {
+    auto copy = new PendingTransaction;
+    copy->payeeId = tx->payeeId;
+    copy->securityId = tx->securityId;
+    copy->memo = tx->memo;
+    for (auto id : std::as_const(tx->detailIds)) {
+        copy->details.append(TransactionDetail::copyRecent(details.value(id)));
+    }
+    return copy;
 }
 
 PendingTransaction::~PendingTransaction() {
@@ -123,3 +141,5 @@ bool DetailChange::isSecurityChange() const {
     }
     return newDetail && newDetail->assetQuantity.has_value() && !oldDetail;
 }
+
+

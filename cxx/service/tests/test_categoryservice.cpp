@@ -39,7 +39,7 @@ private slots:
         auto parent = addCategory(driver, "parent");
         auto child = addCategory(driver, "child", parent);
 
-        auto result = service->setParent(child, {}, TEST_USER);
+        auto result = domain::byId(service->setParent(child, {}, TEST_USER));
 
         QCOMPARE(result.size(), 2);
         QCOMPARE(result.value(parent->id.value())->name, parent->name);
@@ -54,7 +54,7 @@ private slots:
         auto child = addCategory(driver, "child", parent);
         auto newParent = addCategory(driver, "new parent");
 
-        auto result = service->setParent(child, newParent->id.value(), TEST_USER);
+        auto result = domain::byId(service->setParent(child, newParent->id.value(), TEST_USER));
 
         QCOMPARE(result.size(), 3);
         QCOMPARE(result.value(parent->id.value())->name, parent->name);
@@ -72,7 +72,7 @@ private slots:
         auto toMerge = addCategory(driver, "other parent");
         auto otherChild = addCategory(driver, "other child", toMerge);
 
-        auto result = service->merge(toMerge, parent->id.value(), TEST_USER);
+        auto result = domain::byId(service->merge(toMerge, parent->id.value(), TEST_USER));
 
         QCOMPARE(result.size(), 2);
         QCOMPARE(result.value(parent->id.value())->name, parent->name);

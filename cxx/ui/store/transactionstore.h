@@ -7,6 +7,7 @@
 #include "service/model/transaction.h"
 #include "service/servicecontext.h"
 
+class TransactionsWindow;
 class TransactionTableModel;
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, domain_id> {
@@ -23,8 +24,13 @@ public:
     bool load(EntityView *view, domain_id accountId, bool reload = false);
 
     void update(QWidget *source, TransactionTableModel *model, const QString message, int txRow = -1);
-    void replacePayee(const domain_id oldPayeeId, const domain_id newPayeeId);
+    void replacePayee(domain_id oldPayeeId, domain_id newPayeeId);
+    void findRecentForPayee(domain_id accountId, domain_id payeeId) const;
+    void findRecentForSecurity(domain_id accountId, domain_id securityId) const;
+private:
+    void findRecent(domain_id accountId, domain_id searchId, QList<PendingTransaction*> (TransactionService::*search)(domain_id, domain_id)) const;
 
+public:
     const QList<domain_id> transactionIds(domain_id accountId) const;
     
     QDecNumber amount(domain_id transactionId) const;
@@ -41,6 +47,7 @@ Q_SIGNALS:
     void accountUpdated(domain_id id);
     void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
+    void showRecents(QList<PendingTransaction*> recents) const; // clazy:exclude=fully-qualified-moc-types
 
 protected:
     void setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) override;

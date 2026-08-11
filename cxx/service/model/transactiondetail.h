@@ -24,6 +24,8 @@ public:
 
     TransactionDetail *newTransfer(const optional_id& transferAccountId, domain_id transactionId) const;
     void initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const;
+
+    static TransactionDetail* copyRecent(const TransactionDetail* detail);
 };
 
 #endif // TRANSACTIONDETAIL_H

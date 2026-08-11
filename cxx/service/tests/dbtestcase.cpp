@@ -219,8 +219,8 @@ template<typename Entity, typename Dao, Dao &(DbTestCase::*dao)(const QString &)
 const Entity* load(DbTestCase *test, const QString &driver, domain_id id, QList<const Entity*>& list) {
     auto conn = Connection(test->connectionPool(driver));
     auto rows = ((*test).*dao)(driver).get(conn.db, QList<domain_id>{id});
-    list.append(rows.values());
-    return rows.value(id);
+    list.append(rows);
+    return rows.isEmpty() ? nullptr : rows.constFirst();
 }
 
 domain_id DbTestCase::addPayee(const QString &driver, const QString &name) {
