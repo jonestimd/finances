@@ -53,6 +53,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(companiesLoaded()));
+    connect(dataStore->transactionStore, SIGNAL(showRecents(QList<PendingTransaction*>)), this, SLOT(showRecent(QList<PendingTransaction*>)));
     connect(entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
@@ -116,19 +117,6 @@ void TransactionsWindow::saveData() {
     store()->update(this, model(), tr(SAVING_TRANSACTIONS));
 }
 
-void TransactionsWindow::showRecent(const QList<PendingTransaction*> transactions) {
-    if (!transactions.isEmpty()) {
-        QMenu popup{};
-        popup.setObjectName("recents");
-        for (auto transaction : transactions) {
-            popup.addAction(new RecentTxAction{&popup, model(), transaction, context->dataStore});
-        }
-        auto cellIndex = entityView.itemView->currentIndex().siblingAtColumn(0);
-        auto rect = entityView.itemView->visualRect(cellIndex);
-        popup.exec(entityView.itemView->viewport()->mapToGlobal(rect.bottomLeft()));
-    }
-}
-
 void TransactionsWindow::modelReset() {
     treeView()->expandAll();
 }
@@ -139,6 +127,19 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
         for (int row = first; row <= last; ++row) {
             view->expand(entityView.sortModel->index(row, 0));
         }
+    }
+}
+
+void TransactionsWindow::showRecent(const QList<PendingTransaction*> transactions) {
+    if (isActiveWindow() && !transactions.isEmpty()) {
+        QMenu popup{};
+        popup.setObjectName("recents");
+        for (auto transaction : transactions) {
+            popup.addAction(new RecentTxAction{&popup, model(), transaction, context->dataStore});
+        }
+        auto cellIndex = entityView.itemView->currentIndex().siblingAtColumn(0);
+        auto rect = entityView.itemView->visualRect(cellIndex);
+        popup.exec(entityView.itemView->viewport()->mapToGlobal(rect.bottomLeft()));
     }
 }
 

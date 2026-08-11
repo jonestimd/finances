@@ -24,12 +24,11 @@ public:
 
     Q_INVOKABLE void loadData() override;
     Q_INVOKABLE void saveData() override;
-    Q_INVOKABLE void showRecent(const QList<PendingTransaction*> transactions);
 
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex& parent, int first, int last);
-    // TODO transactions/details loaded
+    void showRecent(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
 
 private:
     TransactionStore* store() const;

@@ -47,6 +47,7 @@ Q_SIGNALS:
     void accountUpdated(domain_id id);
     void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
+    void showRecents(QList<PendingTransaction*> recents) const; // clazy:exclude=fully-qualified-moc-types
 
 protected:
     void setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) override;

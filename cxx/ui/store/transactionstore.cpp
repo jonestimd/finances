@@ -77,16 +77,12 @@ void TransactionStore::findRecentForSecurity(domain_id accountId, domain_id secu
 }
 
 void TransactionStore::findRecent(domain_id accountId, domain_id searchId, QList<PendingTransaction*> (TransactionService::*search)(domain_id, domain_id)) const {
-    TransactionsWindow *window = qobject_cast<TransactionsWindow *>(qApp->activeWindow());
-    if (window) {
-        doInBackground(window, tr(LOADING_TRANSACTIONS), [=, this]() {
-            auto transactions = (service->*search)(accountId, searchId);
-            QMetaObject::invokeMethod(window, &TransactionsWindow::showRecent, transactions);
-        });
-    } else {
-        auto focusWindow = qApp->focusWindow();
-        qWarning() << "expected a transactions window:" << (focusWindow ? focusWindow->title() : "no focus window");
-    }
+    auto window = qApp->activeWindow();
+    if (!window) qWarning() << "expected an active window";
+    doInBackground(window, tr(LOADING_TRANSACTIONS), [=, this]() {
+        auto transactions = (service->*search)(accountId, searchId);
+        emit showRecents(transactions);
+    });
 }
 
 const QList<domain_id> TransactionStore::transactionIds(domain_id accountId) const {

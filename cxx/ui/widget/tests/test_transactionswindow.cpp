@@ -149,18 +149,21 @@ private:
         QVERIFY(editSpy.wait());
     }
 
-    static void fillTransaction(TxWindowHolder& holder, const char* refNumber, const char* payee, const char* description) {
+    void fillTransaction(TxWindowHolder& holder, const char* refNumber, const char* payee, const char* description) {
         if (holder.window->focusWidget() != holder.view) holder.focusWindow();
         QTRY_COMPARE(holder.window->focusWidget(), holder.view);
+        QSignalSpy recentsSpy{dataStore->transactionStore, &TransactionStore::showRecents};
+        QVERIFY(recentsSpy.isValid());
         QTest::keyClick(holder.view, Qt::Key_Tab);
         enterText(holder.view, refNumber);
         QTest::keyClick(holder.view, Qt::Key_Tab);
         selectValue(holder.view, payee);
-        QTimer::singleShot(10, holder.window, [&]() {
-            QMenu* recentsPopup;
-            QTRY_VERIFY(recentsPopup = uitest::findWindow<QMenu>());
-            QTest::keyClick(recentsPopup, Qt::Key_Escape);
+        QTimer::singleShot(10, [](){
+            auto popup = uitest::findWindow<QMenu>();
+            if (popup) QTest::keyClick(popup, Qt::Key_Escape);
         });
+        QVERIFY(recentsSpy.wait());
+        QTRY_VERIFY(!uitest::findWindow<QMenu>());
         QTest::keyClick(holder.view, Qt::Key_Tab);
         enterText(holder.view, description);
     }
