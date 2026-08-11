@@ -66,7 +66,7 @@ void AccountTableModel::companiesLoaded(const QList<domain_id> companyIds) {
     for (auto [parentIndex, children] : newRows.asKeyValueRange()) {
         for (qsizetype i = 0; i < children.length(); i++) {
             auto account = children.at(i);
-            if (!companyIds.contains(account->companyId.value())) {
+            if (account->companyId.has_value() && !companyIds.contains(account->companyId.value())) {
                 setData(index(rootIds.length() + i, COMPANY_COLUMN, parentIndex), QVariant{}, Qt::EditRole);
             }
         }
