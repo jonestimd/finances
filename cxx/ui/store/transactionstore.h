@@ -42,6 +42,8 @@ public:
 
     void clearData(domain_id accountId);
 
+    void moveTransaction(TransactionsWindow* window, const Transaction* transaction, domain_id accountId);
+
 Q_SIGNALS:
     void accountLoaded(domain_id id);
     void accountUpdated(domain_id id);

@@ -131,6 +131,16 @@ void TransactionStore::clearData(domain_id accountId) {
     }
 }
 
+void TransactionStore::moveTransaction(TransactionsWindow *window, const Transaction *transaction, domain_id accountId) {
+    doInBackground(window, tr(SAVING_TRANSACTION), [=, this]() {
+        auto updatedTx = new Transaction{*transaction};
+        updatedTx->accountId = accountId;
+        QSharedPointer<TransactionUpdate> changes{new TransactionUpdate{{updatedTx}, {}, {}, {}, {}, {}}};
+        auto updateData = service->update(*changes, user);
+        QMetaObject::invokeMethod(this, &TransactionStore::applyUpdates, Qt::QueuedConnection, QList<const PendingTransaction*>{}, changes, updateData);
+    });
+}
+
 void TransactionStore::setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) {
     loadedAccounts.append(accountId);
     EntityStore::setValues(accountId, values);

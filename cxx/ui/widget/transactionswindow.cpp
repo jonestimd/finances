@@ -1,4 +1,5 @@
 #include "accountsmenu.h"
+#include "entityselectiondialog.h"
 #include "filemenu.h"
 #include "recenttxaction.h"
 #include "statusmessage.h"
@@ -21,9 +22,12 @@
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
     : EntityWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
+    , moveAction{finances::iconAction(finances::MoveItem, tr("Move Transaction"), tr("ctrl+m"), this, SLOT(showMoveDialog()))}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
+    moveAction->setEnabled(false);
+    entityView.insertAction(2, moveAction);
     entityView.addActions({finances::iconAction(finances::NewWindow, tr("New Window"), tr("alt+n"), this, SLOT(newWindow()))});
     entityView.addActions({
         context->accountsAction(),
@@ -53,9 +57,10 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto dataStore = context->dataStore;
     connect(dataStore->accountStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(accountsLoaded()));
     connect(&dataStore->accountStore->companyStore, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(companiesLoaded()));
-    connect(dataStore->transactionStore, SIGNAL(showRecents(QList<PendingTransaction*>)), this, SLOT(showRecent(QList<PendingTransaction*>)));
+    connect(dataStore->transactionStore, SIGNAL(showRecents(QList<PendingTransaction*>)), this, SLOT(showRecentsMenu(QList<PendingTransaction*>)));
     connect(entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
     setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(isSecurity()));
@@ -130,7 +135,11 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     }
 }
 
-void TransactionsWindow::showRecent(const QList<PendingTransaction*> transactions) {
+void TransactionsWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+    moveAction->setEnabled(!model()->transactionHasChanges(current));
+}
+
+void TransactionsWindow::showRecentsMenu(const QList<PendingTransaction*> transactions) {
     if (isActiveWindow() && !transactions.isEmpty()) {
         QMenu popup{};
         popup.setObjectName("recents");
@@ -140,6 +149,30 @@ void TransactionsWindow::showRecent(const QList<PendingTransaction*> transaction
         auto cellIndex = entityView.itemView->currentIndex().siblingAtColumn(0);
         auto rect = entityView.itemView->visualRect(cellIndex);
         popup.exec(entityView.itemView->viewport()->mapToGlobal(rect.bottomLeft()));
+    }
+}
+
+void TransactionsWindow::showMoveDialog() {
+    QList<const NamedEntity*> options;
+    QHash<domain_id, QString> disabledOptions;
+    auto transaction = model()->getRow(entityView.selectedIndex());
+    bool hasSecurity = transaction->securityId.has_value();
+    auto accountStore = context->dataStore->accountStore;
+    accountStore->forEachEntry([&](domain_id id, const Account* account) {
+        auto message = tr("\"%1\" does not support security transactions").arg(account->name);
+        if (account->id.value() != transaction->accountId) {
+            options.append(account);
+            if (hasSecurity && !account->type->security) disabledOptions.insert(account->id.value(), message);
+        }
+    });
+    auto getName = [accountStore](const NamedEntity* entity) {
+        return accountStore->qualifiedName(entity->id.value());
+    };
+    auto model = new ComboBoxModel(options, getName);
+    EntitySelectionDialog dialog(this, model, tr("Move Transaction"), tr("Select an account"), disabledOptions);
+    if (dialog.exec() == QDialog::Accepted) {
+        auto selectedId = dialog.selectedId();
+        if (selectedId.has_value()) context->dataStore->transactionStore->moveTransaction(this, transaction, selectedId.value());
     }
 }
 
