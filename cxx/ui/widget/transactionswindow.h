@@ -11,8 +11,9 @@ class UiContext;
 
 class TransactionsWindow : public EntityWindow<> {
     Q_OBJECT
-    UiContext *const context;
-    QLabel *const clearedBalance{new QLabel()};
+    UiContext* const context;
+    QLabel* const clearedBalance{new QLabel()};
+    QAction* moveAction;
 
 public:
     TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
@@ -28,7 +29,9 @@ public:
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex& parent, int first, int last);
-    void showRecent(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
+    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void showRecentsMenu(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
+    void showMoveDialog();
 
 private:
     TransactionStore* store() const;

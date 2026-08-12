@@ -323,6 +323,10 @@ bool TransactionTableModel::isPendingDelete(const QModelIndex &index) const {
     return PodItemModel::isPendingDelete(index) || index.parent().isValid() && isPendingDelete(index.parent());
 }
 
+const Transaction *TransactionTableModel::getRow(const QModelIndex &index) const {
+    return index.parent().isValid() ? PodItemModel::getRow(index.parent()) : PodItemModel::getRow(index);
+}
+
 QVariant TransactionTableModel::data(const QModelIndex &index, int role) const {
     if (index.parent().isValid()) {
         switch (role) {
