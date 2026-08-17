@@ -4,6 +4,7 @@
 #include "ui/widget/transactionswindow.h"
 #include <QDate>
 #include <QWindow>
+#include <qhashfunctions.h>
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
 
@@ -138,6 +139,13 @@ void TransactionStore::moveTransaction(TransactionsWindow *window, const Transac
         QSharedPointer<TransactionUpdate> changes{new TransactionUpdate{{updatedTx}, {}, {}, {}, {}, {}}};
         auto updateData = service->update(*changes, user);
         QMetaObject::invokeMethod(this, &TransactionStore::applyUpdates, Qt::QueuedConnection, QList<const PendingTransaction*>{}, changes, updateData);
+    });
+}
+
+void TransactionStore::findTransactions(QWidget* window, const QString text) {
+    doInBackground(window, tr(SEARCHING_TRANSACTIONS), [=, this]() {
+        auto details = detailStore.service->findTransactionDetails(text);
+        emit showTransactions(details); // TODO connect to the UiContext
     });
 }
 

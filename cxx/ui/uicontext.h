@@ -75,6 +75,8 @@ public:
     TransactionTableModel *transactionsModel(domain_id accountId);
     int windowCount(const TransactionTableModel* model);
 
+    void findTransactions(const QString searchText);
+
     /**
      * @brief transactionsModelRemoved Signals that a window is no longer using a model.
      */

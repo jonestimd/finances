@@ -25,6 +25,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.h ${CMAKE_CURRENT_LIST_DIR}/tableitemdelegate.cpp
     ${CMAKE_CURRENT_LIST_DIR}/treeview.h ${CMAKE_CURRENT_LIST_DIR}/treeview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.h ${CMAKE_CURRENT_LIST_DIR}/transactionswindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/transactiondetailswindow.h ${CMAKE_CURRENT_LIST_DIR}/transactiondetailswindow.cpp
 )
 
 add_subdirectory(tests/)

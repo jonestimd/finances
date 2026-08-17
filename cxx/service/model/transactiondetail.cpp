@@ -57,3 +57,18 @@ TransactionDetail *TransactionDetail::copyRecent(const TransactionDetail *detail
     copy->memo = detail->memo;
     return copy;
 }
+
+SearchTransactionDetail::SearchTransactionDetail() {}
+
+SearchTransactionDetail::SearchTransactionDetail(const QSqlRecord& record)
+    : TransactionDetail(record)
+    , transactionDate{sql::getDate(record, "date").value()}
+    , accountId{sql::getInt(record, "account_id").value()}
+    , payeeId{sql::getInt(record, "payee_id")}
+    , securityId{sql::getInt(record, "security_id")}
+    , transactionMemo{sql::getString(record, "tx_memo")}
+{}
+
+bool SearchTransactionDetail::deletable() const {
+    return false;
+}

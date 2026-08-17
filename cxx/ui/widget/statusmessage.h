@@ -27,6 +27,7 @@
 #define LOADING_TRANSACTIONS "Loading transactions..."
 #define SAVING_TRANSACTIONS "Saving transactions..."
 #define SAVING_TRANSACTION "Saving transaction..."
+#define SEARCHING_TRANSACTIONS "Searching transactions..."
 
 #define LOADING_DETAILS "Loading details..."
 

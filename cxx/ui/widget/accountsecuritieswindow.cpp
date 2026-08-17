@@ -4,10 +4,10 @@
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 
-#define SETTINGS_GROUP "accountSecuritiess"
+#define SETTINGS_GROUP "accountSecurities"
 
 AccountSecuritiesWindow::AccountSecuritiesWindow(UiContext *context)
-    : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView(), &context->dataStore->messageStore}
+    : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView, &context->dataStore->messageStore}
     , dataStore{context->dataStore}
 {
     entityView.addActions({

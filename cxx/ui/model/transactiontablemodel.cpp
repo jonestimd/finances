@@ -5,17 +5,10 @@
 #include "service/model/payee.h"
 #include "formats.h"
 #include "ui/store/transactionstore.h"
+#include "ui/titles.h"
 #include <QDate>
 
 #define DETAIL_ROW_TYPE 1
-
-#define DATE_TITLE "Date"
-#define REF_TITLE "Ref #"
-#define PAYEE_TITLE "Payee"
-#define SECURITY_TITLE "Security"
-#define CLEARED_TITLE "🮱"
-#define SUBTOTAL_TITLE "Subtotal"
-#define BALANCE_TITLE "Balance"
 
 #define CHILD_INDEX_ID(parent) (parent.row() + 1)
 #define PARENT_INDEX_ID (quintptr(0))
@@ -100,35 +93,36 @@ namespace transactiontablemodel {
 
 using namespace transactiontablemodel;
 
+const int TransactionTableModel::dateColumn{0};
+const int TransactionTableModel::refColumn{1};
+const int TransactionTableModel::payeeColumn{2};
+const int TransactionTableModel::securityColumn{4};
+const int TransactionTableModel::clearedColumn{6};
+const int TransactionTableModel::subtotalColumn{7};
+const int TransactionTableModel::balanceColumn{8};
+
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id accountId)
     : PodItemModel{dataStore->transactionStore, {
         new TxDateColumnAdapter{tr(DATE_TITLE)},
         new FieldColumnAdapter<Transaction, QString>(tr(REF_TITLE), &Transaction::referenceNumber),
         new RelationColumnAdapter<Transaction, Payee, PayeeStore, optional_id>(tr(PAYEE_TITLE), &Transaction::payeeId, dataStore->payeeStore),
-        new FieldColumnAdapter<Transaction, QString>(tr("Description"), &Transaction::memo),
+        new FieldColumnAdapter<Transaction, QString>(tr(TX_MEMO_TITLE), &Transaction::memo),
         new RelationColumnAdapter<Transaction, Security, SecurityStore, optional_id>(tr(SECURITY_TITLE), &Transaction::securityId, dataStore->securityStore),
         new TxAmountColumnAdapter(tr(SUBTOTAL_TITLE), this),
         new FieldColumnAdapter<Transaction, bool>(tr(CLEARED_TITLE), &Transaction::cleared),
         new BalanceColumnAdapter(tr(BALANCE_TITLE), this),
     }}
-    , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr("Category"), dataStore, accountId)}
+    , transactionTypeAdapter{new TransactionTypeColumnAdapter(tr(CATEGORY_TITLE), dataStore, accountId)}
     , detailColumns{
         new EmptyColumnAdapter(), // TODO notification icons (missing lots)
-        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore, optional_id>(tr("Group"), &TransactionDetail::groupId, dataStore->groupStore),
+        new RelationColumnAdapter<TransactionDetail, TransactionGroup, GroupStore, optional_id>(tr(GROUP_TITLE), &TransactionDetail::groupId, dataStore->groupStore),
         transactionTypeAdapter,
-        new FieldColumnAdapter<TransactionDetail, QString>(tr("Memo"), &TransactionDetail::memo),
-        new SharesColumnAdapter(tr("Shares"), this, dataStore->securityStore),
-        new DetailAmountColumnAdapter(tr("Amount")),
+        new FieldColumnAdapter<TransactionDetail, QString>(tr(DETAIL_MEMO_TITLE), &TransactionDetail::memo),
+        new SharesColumnAdapter(tr(SHARES_TITLE), this, dataStore->securityStore),
+        new DetailAmountColumnAdapter(tr(AMOUNT_TITLE)),
         new EmptyColumnAdapter(),
         new EmptyColumnAdapter(),
     }
-    , dateColumn{columnIndex(tr(DATE_TITLE))}
-    , refColumn{columnIndex(tr(REF_TITLE))}
-    , payeeColumn{columnIndex(tr(PAYEE_TITLE))}
-    , securityColumn{columnIndex(tr(SECURITY_TITLE))}
-    , clearedColumn{columnIndex(tr(CLEARED_TITLE))}
-    , subtotalColumn{columnIndex(tr(SUBTOTAL_TITLE))}
-    , balanceColumn{columnIndex(tr(BALANCE_TITLE))}
     , accountId{accountId}
 {
     connect(store, SIGNAL(accountLoaded(domain_id)), this, SLOT(accountLoaded(domain_id)));
@@ -238,6 +232,14 @@ PendingTransaction *TransactionTableModel::newRow() {
 void TransactionTableModel::rootIdsChanged() {
     store->sort(rootIds);
     updateBalances();
+}
+
+QVariant TransactionTableModel::transactionDetailDate(const QModelIndex &index) {
+    return index.parent().siblingAtColumn(dateColumn).data(Qt::EditRole);
+}
+
+QVariant TransactionTableModel::transactionDetailSecurityId(const QModelIndex &index) {
+    return index.parent().siblingAtColumn(securityColumn).data(finances::EntityIdRole);
 }
 
 void TransactionTableModel::setRows(const QList<domain_id> transactionIds) {

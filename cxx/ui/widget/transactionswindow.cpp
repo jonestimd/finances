@@ -4,11 +4,13 @@
 #include "recenttxaction.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
+#include "ui/finances.h"
 #include "ui/model/formats.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMenuBar>
 #include <QWidgetAction>
@@ -23,6 +25,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     : EntityWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
     , moveAction{finances::iconAction(finances::MoveItem, tr("Move Transaction"), tr("ctrl+m"), this, SLOT(showMoveDialog()))}
+    , searchAction{finances::iconAction(finances::Search, tr("Search Transactions"), tr("ctrl+shift+f"), this, SLOT(showSearchDialog()))}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
@@ -37,6 +40,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->securitiesAction(),
         context->accountSecuritiesAction(),
     });
+    entityView.addActions({searchAction});
     QMenuBar *menuBar = new QMenuBar();
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
@@ -174,6 +178,11 @@ void TransactionsWindow::showMoveDialog() {
         auto selectedId = dialog.selectedId();
         if (selectedId.has_value()) context->dataStore->transactionStore->moveTransaction(this, transaction, selectedId.value());
     }
+}
+
+void TransactionsWindow::showSearchDialog() {
+    auto text = QInputDialog::getText(this, tr("Enter search text"), tr("Find:"));
+    if (!text.isEmpty()) context->findTransactions(text);
 }
 
 TransactionStore *TransactionsWindow::store() const {
