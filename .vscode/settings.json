@@ -1,0 +1,5 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/out",
+    "cmake.generator": "Ninja",
+    "cmake.buildTask": true
+}
