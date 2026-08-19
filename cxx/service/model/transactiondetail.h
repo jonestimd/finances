@@ -44,10 +44,12 @@ public:
 
 struct DetailSearchCriteria {
     QString text;
+    optional_id payeeId;
+    optional_id securityId;
     optional_id categoryId;
 
     DetailSearchCriteria() = default;
-    DetailSearchCriteria(const QString text, optional_id categoryId);
+    DetailSearchCriteria(const QString text, optional_id payeeId, optional_id securityId, optional_id categoryId);
 };
 
 #endif // TRANSACTIONDETAIL_H

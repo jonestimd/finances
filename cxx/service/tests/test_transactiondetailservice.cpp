@@ -41,7 +41,7 @@ private slots:
         detail->memo = "find me";
         dbTestCase.saveTransaction(driver, transaction, {detail, factory::detail()});
 
-        auto result = service->findTransactionDetails({detail->memo, {}});
+        auto result = service->findTransactionDetails({detail->memo, {}, {}, {}});
 
         QCOMPARE(result.size(), 1);
         QCOMPARE(result[0]->id.value(), detail->id.value());
@@ -59,7 +59,7 @@ private slots:
         auto detail2 = factory::detail("2.00", categoryId);
         dbTestCase.saveTransaction(driver, transaction, {detail1, detail2, factory::detail()});
 
-        auto result = service->findTransactionDetails({"", {categoryId}});
+        auto result = service->findTransactionDetails({"", {}, {}, {categoryId}});
 
         QCOMPARE(result.size(), 2);
         qDeleteAll(result);
@@ -77,7 +77,43 @@ private slots:
         detail1->memo = "find me";
         dbTestCase.saveTransaction(driver, transaction, {detail1, detail2, factory::detail()});
 
-        auto result = service->findTransactionDetails({detail1->memo, {categoryId}});
+        auto result = service->findTransactionDetails({detail1->memo, {}, {}, {categoryId}});
+
+        QCOMPARE(result.size(), 1);
+        QCOMPARE(result[0]->id.value(), detail1->id.value());
+        qDeleteAll(result);
+    }
+
+    void findByPayee() {
+        QFETCH_GLOBAL(QString, driver);
+        QFETCH_GLOBAL(TransactionDetailService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, payeeId);
+        auto transaction = factory::transaction(accountId, payeeId);
+        auto detail1 = factory::detail("1.00");
+        detail1->memo = "find me";
+        dbTestCase.saveTransaction(driver, transaction, {detail1});
+        dbTestCase.saveTransaction(driver, factory::transaction(accountId), {factory::detail()});
+
+        auto result = service->findTransactionDetails({detail1->memo, {payeeId}, {}, {}});
+
+        QCOMPARE(result.size(), 1);
+        QCOMPARE(result[0]->id.value(), detail1->id.value());
+        qDeleteAll(result);
+    }
+
+    void findBySecurity() {
+        QFETCH_GLOBAL(QString, driver);
+        QFETCH_GLOBAL(TransactionDetailService*, service);
+        QFETCH_GLOBAL(domain_id, accountId);
+        QFETCH_GLOBAL(domain_id, securityId);
+        auto transaction = factory::transaction(accountId, {}, securityId);
+        auto detail1 = factory::detail("1.00");
+        detail1->memo = "find me";
+        dbTestCase.saveTransaction(driver, transaction, {detail1});
+        dbTestCase.saveTransaction(driver, factory::transaction(accountId), {factory::detail()});
+
+        auto result = service->findTransactionDetails({detail1->memo, {}, {securityId}, {}});
 
         QCOMPARE(result.size(), 1);
         QCOMPARE(result[0]->id.value(), detail1->id.value());

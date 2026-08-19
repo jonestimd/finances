@@ -12,6 +12,8 @@ class SearchDialog : public QDialog {
     Q_OBJECT
     QVBoxLayout layout;
     QLineEdit searchText;
+    RelationEditor payeeInput;
+    RelationEditor securityInput;
     RelationEditor categoryInput;
     QPushButton* okButton;
 
@@ -22,6 +24,8 @@ public:
 
 private slots:
     void searchTextChanged();
+    void payeeChanged(const NamedEntity* payee);
+    void securityChanged(const NamedEntity* payee);
     void categoryChanged(const NamedEntity* category);
 
 private:

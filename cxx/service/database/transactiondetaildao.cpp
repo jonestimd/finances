@@ -185,6 +185,14 @@ QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatab
            "   or lower(td.memo) like :text\n" \
            "   or lower(g.name) like :text)\n");
     }
+    if (criteria.payeeId.has_value()) {
+        values.insert(":payeeId", criteria.payeeId.value());
+        where.append("tx.payee_id = :payeeId\n");
+    }
+    if (criteria.securityId.has_value()) {
+        values.insert(":securityId", criteria.securityId.value());
+        where.append("tx.security_id = :securityId\n");
+    }
     if (criteria.categoryId.has_value()) {
         values.insert(":categoryId", criteria.categoryId.value());
         sql.prepend(withCategoryChildrenSql);

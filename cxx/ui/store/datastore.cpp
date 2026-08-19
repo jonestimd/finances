@@ -59,6 +59,8 @@ void DataStore::loadAccounts(OpenHandler handler) {
 QString DataStore::toString(const DetailSearchCriteria& criteria) const {
     QStringList result;
     if (!criteria.text.isEmpty()) result.append(QString{"contains \"%1\""}.arg(criteria.text));
+    if (criteria.payeeId.has_value()) result.append(QString{"payee = %1"}.arg(payeeStore->value(criteria.payeeId.value())->name));
+    if (criteria.securityId.has_value()) result.append(QString{"security = %1"}.arg(securityStore->value(criteria.securityId.value())->name));
     if (criteria.categoryId.has_value()) result.append(QString{"category = %1"}.arg(categoryStore->displayName(criteria.categoryId.value())));
     return result.join(" and ");
 }
