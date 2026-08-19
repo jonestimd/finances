@@ -1,6 +1,7 @@
 #include "transactionstore.h"
 #include "ui/model/transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
+#include "ui/widget/transactiondetailswindow.h"
 #include "ui/widget/transactionswindow.h"
 #include <QDate>
 #include <QWindow>
@@ -142,10 +143,10 @@ void TransactionStore::moveTransaction(TransactionsWindow *window, const Transac
     });
 }
 
-void TransactionStore::findTransactions(QWidget* window, const DetailSearchCriteria& criteria) {
+void TransactionStore::findTransactions(TransactionDetailsWindow* window, const DetailSearchCriteria& criteria) {
     doInBackground(window, tr(SEARCHING_TRANSACTIONS), [=, this]() {
         auto details = detailStore.service->findTransactionDetails(criteria);
-        emit showTransactions(details);
+        QMetaObject::invokeMethod(window->model(), &TransactionDetailTableModel::setRows, details);
     });
 }
 

@@ -9,6 +9,7 @@
 #include "service/servicecontext.h"
 
 class TransactionsWindow;
+class TransactionDetailsWindow;
 class TransactionTableModel;
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, domain_id> {
@@ -44,7 +45,7 @@ public:
     void clearData(domain_id accountId);
 
     void moveTransaction(TransactionsWindow* window, const Transaction* transaction, domain_id accountId);
-    void findTransactions(QWidget* window, const DetailSearchCriteria &criteria);
+    void findTransactions(TransactionDetailsWindow *window, const DetailSearchCriteria &criteria);
 
 Q_SIGNALS:
     void accountLoaded(domain_id id);
@@ -52,7 +53,6 @@ Q_SIGNALS:
     void transactionsSaved(const QList<const PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void transactionsUpdated(const QHash<domain_id, TransactionChange> txChanges, const QHash<domain_id, DetailChange> detailChanges);
     void showRecents(QList<PendingTransaction*> recents) const; // clazy:exclude=fully-qualified-moc-types
-    void showTransactions(QList<const SearchTransactionDetail*> recents) const; // clazy:exclude=fully-qualified-moc-types
 
 protected:
     void setValues(domain_id accountId, const QHash<domain_id, const Transaction*> values) override;

@@ -10,14 +10,12 @@ TransactionDetailsWindow::TransactionDetailsWindow(UiContext* context, const Det
     , context{context}
     , criteria{criteria}
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     entityView.addActions({
         finances::iconAction(finances::Input, tr("Goto Transaction"), tr("ctrl+g"), this, SLOT(gotoTransaction()))
     });
     auto dataStore = context->dataStore;
     setWindowTitle(tr("%1 - Transactions for {%2}").arg(dataStore->connectionName(), dataStore->toString(criteria)));
-
-    connect(dataStore->transactionStore, SIGNAL(showTransactions(QList<const SearchTransactionDetail*>)),
-        entityView.model(), SLOT(setRows(QList<const SearchTransactionDetail*>)));
 
     setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{600, 800}, &entityView);

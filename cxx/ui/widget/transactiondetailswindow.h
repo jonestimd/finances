@@ -21,11 +21,11 @@ public:
     void loadData() override;
     void saveData() override;
 
-private:
     inline TransactionDetailTableModel* model() const {
         return static_cast<TransactionDetailTableModel*>(entityView.model());
     }
 
+private:
     inline QTableView* tableView() const {
         return static_cast<QTableView*>(entityView.itemView);
     }
