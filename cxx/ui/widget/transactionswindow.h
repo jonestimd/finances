@@ -27,6 +27,8 @@ public:
     Q_INVOKABLE void loadData() override;
     Q_INVOKABLE void saveData() override;
 
+    void select(domain_id transactionId);
+
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex& parent, int first, int last);
@@ -45,6 +47,8 @@ private:
 
     inline TreeView* treeView() const;
     bool isSecurity() const;
+
+    void scrollTo(const QModelIndex& index);
 
 private Q_SLOTS:
     void accountsLoaded();

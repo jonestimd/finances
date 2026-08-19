@@ -74,8 +74,9 @@ public:
     TransactionsWindow *showTransactions(domain_id accountId, const QRect& requestorRect = {});
     TransactionTableModel *transactionsModel(domain_id accountId);
     int windowCount(const TransactionTableModel* model);
-
-    void findTransactions(const QString searchText);
+    
+    void findTransactions(const DetailSearchCriteria criteria);
+    void showTransaction(domain_id accountId, domain_id transactionId, const QRect& requestorRect = {});
 
     /**
      * @brief transactionsModelRemoved Signals that a window is no longer using a model.

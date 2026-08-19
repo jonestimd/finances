@@ -70,6 +70,10 @@ QVariant TransactionDetailTableModel::data(const QModelIndex& index, int role) c
     return QVariant();
 }
 
+const SearchTransactionDetail* TransactionDetailTableModel::getRow(const QModelIndex &index) const {
+    return details.at(index.row());
+}
+
 QVariant TransactionDetailTableModel::detailDate(const QModelIndex &index) {
     return index.siblingAtColumn(dateColumn).data(Qt::EditRole);
 }

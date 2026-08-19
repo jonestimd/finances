@@ -94,7 +94,7 @@ public:
         }
     }
 
-    ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const {
+    ComboBoxModel *newComboBoxModel(ComboBoxModel::CreateValue createValue = nullptr) const requires std::is_base_of_v<NamedEntity, T> {
         QReadLocker locker(&byIdLock);
         QList<const NamedEntity*> options;
         for (auto i = byId.cbegin(); i != byId.cend(); i++) options.append(i.value());

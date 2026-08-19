@@ -142,10 +142,10 @@ void TransactionStore::moveTransaction(TransactionsWindow *window, const Transac
     });
 }
 
-void TransactionStore::findTransactions(QWidget* window, const QString text) {
+void TransactionStore::findTransactions(QWidget* window, const DetailSearchCriteria& criteria) {
     doInBackground(window, tr(SEARCHING_TRANSACTIONS), [=, this]() {
-        auto details = detailStore.service->findTransactionDetails(text);
-        emit showTransactions(details); // TODO connect to the UiContext
+        auto details = detailStore.service->findTransactionDetails(criteria);
+        emit showTransactions(details);
     });
 }
 

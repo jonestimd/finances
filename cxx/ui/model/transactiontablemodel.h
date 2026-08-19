@@ -63,6 +63,8 @@ public:
     QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;
 
+    QModelIndex indexOf(domain_id transactionId);
+
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &child) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

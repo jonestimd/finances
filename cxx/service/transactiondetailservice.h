@@ -12,8 +12,8 @@
 class TransactionDetailService : public EntityService<TransactionDetail, TransactionDetailDao, domain_id> {
 public:
     TransactionDetailService(ConnectionPool *pool, TransactionDetailDao &transactionDetailDao);
-
-    QList<const SearchTransactionDetail*> findTransactionDetails(const QString& text);
+    
+    QList<const SearchTransactionDetail*> findTransactionDetails(const DetailSearchCriteria &criteria);
 };
 
 #endif // TRANSACTIONDETAILSERVICE_H

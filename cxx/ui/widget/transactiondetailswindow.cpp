@@ -5,15 +5,16 @@
 
 #define SETTINGS_GROUP "transactionDetails"
 
-TransactionDetailsWindow::TransactionDetailsWindow(UiContext* context, const QString searchText)
+TransactionDetailsWindow::TransactionDetailsWindow(UiContext* context, const DetailSearchCriteria criteria)
     : ReadOnlyEntityWindow{tr("Transaction Details"), new TransactionDetailTableModel{context->dataStore}, new QTableView, &context->dataStore->messageStore}
-    , dataStore{context->dataStore}
-    , searchText{searchText}
+    , context{context}
+    , criteria{criteria}
 {
-    // entityView.addActions({
-    //     gotoTransactionAction
-    // });
-    setWindowTitle(tr("%1 - Transactions for \"%2\"").arg(dataStore->connectionName(), searchText));
+    entityView.addActions({
+        finances::iconAction(finances::Input, tr("Goto Transaction"), tr("ctrl+g"), this, SLOT(gotoTransaction()))
+    });
+    auto dataStore = context->dataStore;
+    setWindowTitle(tr("%1 - Transactions for {%2}").arg(dataStore->connectionName(), dataStore->toString(criteria)));
 
     connect(dataStore->transactionStore, SIGNAL(showTransactions(QList<const SearchTransactionDetail*>)),
         entityView.model(), SLOT(setRows(QList<const SearchTransactionDetail*>)));
@@ -27,10 +28,18 @@ TransactionDetailsWindow::~TransactionDetailsWindow() {
 }
 
 void TransactionDetailsWindow::loadData() {
-    dataStore->transactionStore->findTransactions(this, searchText);
+    context->dataStore->transactionStore->findTransactions(this, criteria);
 }
 
 void TransactionDetailsWindow::saveData() {}
+
+void TransactionDetailsWindow::gotoTransaction() {
+    auto index = entityView.selectedIndex();
+    if (index.isValid()) {
+        auto detail = model()->getRow(index);
+        context->showTransaction(detail->accountId, detail->transactionId);
+    }
+}
 
 void TransactionDetailsWindow::showEvent(QShowEvent * event) {
     loadData();

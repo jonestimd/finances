@@ -272,6 +272,11 @@ QDecNumber TransactionTableModel::clearedBalance() const {
     return clearedBalance_;
 }
 
+QModelIndex TransactionTableModel::indexOf(domain_id transactionId) {
+    auto rowIndex = rootIds.indexOf(transactionId);
+    return rowIndex >= 0 ? index(rowIndex, 0) : QModelIndex{};
+}
+
 QModelIndex TransactionTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (hasIndex(row, column, parent)) {
         if (parent.isValid()) return createIndex(row, column, CHILD_INDEX_ID(parent));

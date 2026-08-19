@@ -31,7 +31,7 @@ public:
 
     QHash<domain_id, const TransactionDetail*> getByTransactionIds(const QSqlDatabase &db, QList<domain_id> txIds);
 
-    QList<const SearchTransactionDetail*> findByString(const QSqlDatabase& db, const QString& text);
+    QList<const SearchTransactionDetail*> find(const QSqlDatabase& db, const DetailSearchCriteria& criteria);
 
     const TransactionDetail* addRelatedDetail(QSqlDatabase& db, domain_id txId, const TransactionDetail* detail, const QString& user);
 

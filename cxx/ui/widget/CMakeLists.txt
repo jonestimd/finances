@@ -19,6 +19,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.h ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.h ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.cpp
     ${CMAKE_CURRENT_LIST_DIR}/relationeditor.h ${CMAKE_CURRENT_LIST_DIR}/relationeditor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/searchdialog.h ${CMAKE_CURRENT_LIST_DIR}/searchdialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/securitieswindow.h ${CMAKE_CURRENT_LIST_DIR}/securitieswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/settings.h ${CMAKE_CURRENT_LIST_DIR}/settings.cpp
     ${CMAKE_CURRENT_LIST_DIR}/stocksplitswindow.h ${CMAKE_CURRENT_LIST_DIR}/stocksplitswindow.cpp

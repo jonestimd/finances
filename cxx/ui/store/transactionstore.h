@@ -44,7 +44,7 @@ public:
     void clearData(domain_id accountId);
 
     void moveTransaction(TransactionsWindow* window, const Transaction* transaction, domain_id accountId);
-    void findTransactions(QWidget* window, const QString text);
+    void findTransactions(QWidget* window, const DetailSearchCriteria &criteria);
 
 Q_SIGNALS:
     void accountLoaded(domain_id id);

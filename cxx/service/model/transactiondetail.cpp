@@ -72,3 +72,5 @@ SearchTransactionDetail::SearchTransactionDetail(const QSqlRecord& record)
 bool SearchTransactionDetail::deletable() const {
     return false;
 }
+DetailSearchCriteria::DetailSearchCriteria(const QString text, optional_id categoryId)
+    : text{text}, categoryId{categoryId} {}

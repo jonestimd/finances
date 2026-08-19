@@ -42,4 +42,12 @@ public:
     bool deletable() const;
 };
 
+struct DetailSearchCriteria {
+    QString text;
+    optional_id categoryId;
+
+    DetailSearchCriteria() = default;
+    DetailSearchCriteria(const QString text, optional_id categoryId);
+};
+
 #endif // TRANSACTIONDETAIL_H

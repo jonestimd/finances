@@ -48,6 +48,7 @@ namespace finances {
         Filter = 0xe152,
         Help = 0xe887,
         HideSource = 0xf023,
+        Input = 0xe890, // goto transaction
         LibraryBooks = 0xe02f,
         Merge = 0xeb98,
         MergeType = 0xe252, // merge category

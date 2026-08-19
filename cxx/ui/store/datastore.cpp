@@ -56,6 +56,13 @@ void DataStore::loadAccounts(OpenHandler handler) {
     });
 }
 
+QString DataStore::toString(const DetailSearchCriteria& criteria) const {
+    QStringList result;
+    if (!criteria.text.isEmpty()) result.append(QString{"contains \"%1\""}.arg(criteria.text));
+    if (criteria.categoryId.has_value()) result.append(QString{"category = %1"}.arg(categoryStore->displayName(criteria.categoryId.value())));
+    return result.join(" and ");
+}
+
 void DataStore::shutdown() {
     services->shutdown();
     finances::App::addRecentName(services->connectionSettings().configName());

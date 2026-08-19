@@ -2,6 +2,7 @@
 #include "entityselectiondialog.h"
 #include "filemenu.h"
 #include "recenttxaction.h"
+#include "searchdialog.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
 #include "ui/finances.h"
@@ -20,6 +21,8 @@
 #define SETTINGS_GROUP(security) (security ? SECURITY_TRANSACTION_SETTINGS : TRANSACTION_SETTINGS)
 #define HIDE_CLOSED_ACCOUNTS "hideClosedAccounts"
 #define CLEARED_WIDTH 30
+
+#define PENDING_SELECTION_PROP "pendingSelection"
 
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
     : EntityWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
@@ -126,6 +129,12 @@ void TransactionsWindow::saveData() {
     store()->update(this, model(), tr(SAVING_TRANSACTIONS));
 }
 
+void TransactionsWindow::select(domain_id transactionId) {
+    auto index = model()->indexOf(transactionId);
+    if (index.isValid()) scrollTo(index);
+    else setProperty(PENDING_SELECTION_PROP, transactionId);
+}
+
 void TransactionsWindow::modelReset() {
     treeView()->expandAll();
 }
@@ -181,8 +190,8 @@ void TransactionsWindow::showMoveDialog() {
 }
 
 void TransactionsWindow::showSearchDialog() {
-    auto text = QInputDialog::getText(this, tr("Enter search text"), tr("Find:"));
-    if (!text.isEmpty()) context->findTransactions(text);
+    SearchDialog dialog{this, context->dataStore};
+    if (dialog.exec() == QDialog::Accepted) context->findTransactions(dialog.criteria);
 }
 
 TransactionStore *TransactionsWindow::store() const {
@@ -211,6 +220,13 @@ void TransactionsWindow::initializeData() {
     if (accountStore()->contains(model()->accountId)) accountsLoaded();
 }
 
+void TransactionsWindow::scrollTo(const QModelIndex &index) {
+    auto sortIndex = entityView.sortModel->mapFromSource(index);
+    entityView.itemView->setCurrentIndex(sortIndex);
+    entityView.focusItemView();
+    entityView.itemView->scrollTo(sortIndex, QAbstractItemView::PositionAtCenter);
+}
+
 void TransactionsWindow::accountsLoaded() {
     companiesLoaded();
     auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
@@ -227,9 +243,14 @@ void TransactionsWindow::companiesLoaded() {
 }
 
 void TransactionsWindow::transactionsLoaded() {
-    auto m = model();
-    entityView.itemView->setCurrentIndex(entityView.sortModel->mapFromSource(m->index(m->rowCount()-1, 0)));
-    entityView.focusItemView();
+    auto selection = property(PENDING_SELECTION_PROP);
+    if (selection.isValid()) {
+        setProperty(PENDING_SELECTION_PROP, {});
+        scrollTo(model()->indexOf(selection.toLongLong()));
+    } else {
+        auto m = model();
+        scrollTo(m->index(m->rowCount()-1, 0));
+    }
 }
 
 void TransactionsWindow::newWindow() {

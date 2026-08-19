@@ -4,7 +4,7 @@ TransactionDetailService::TransactionDetailService(ConnectionPool *pool, Transac
     : EntityService{pool, transactionDetailDao}
 {}
 
-QList<const SearchTransactionDetail*> TransactionDetailService::findTransactionDetails(const QString& text) {
+QList<const SearchTransactionDetail*> TransactionDetailService::findTransactionDetails(const DetailSearchCriteria& criteria) {
     Connection conn(connectionPool);
-    return dao.findByString(conn.db, text);
+    return dao.find(conn.db, criteria);
 }

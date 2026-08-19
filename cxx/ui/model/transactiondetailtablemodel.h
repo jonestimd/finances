@@ -26,6 +26,8 @@ public:
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
 
+    const SearchTransactionDetail* getRow(const QModelIndex& index) const;
+
     static QVariant detailDate(const QModelIndex& index);
     static QVariant detailSecurityId(const QModelIndex& index);
 
