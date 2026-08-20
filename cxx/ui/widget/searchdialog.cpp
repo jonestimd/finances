@@ -14,14 +14,11 @@ SearchDialog::SearchDialog(QWidget *parent, DataStore* dataStore)
     setWindowModality(Qt::WindowModal);
     setWindowTitle(tr("Enter search criteria"));
 
-    layout.addWidget(new QLabel{tr("Contains text:")}, Qt::AlignLeading);
-    layout.addWidget(&searchText);
-    layout.addWidget(new QLabel{tr("For payee:")}, Qt::AlignLeading);
-    layout.addWidget(&payeeInput);
-    layout.addWidget(new QLabel{tr("For security:")}, Qt::AlignLeading);
-    layout.addWidget(&securityInput);
-    layout.addWidget(new QLabel{tr("For category:")}, Qt::AlignLeading);
-    layout.addWidget(&categoryInput);
+    layout.setLabelAlignment(Qt::AlignRight);
+    layout.addRow(tr("Contains &text:"), &searchText);
+    layout.addRow(tr("For &payee:"), &payeeInput);
+    layout.addRow(tr("For &security:"), &securityInput);
+    layout.addRow(tr("For &category:"), &categoryInput);
     auto buttonBox = new QDialogButtonBox{QDialogButtonBox::Ok, this};
     okButton = buttonBox->button(QDialogButtonBox::Ok);
     okButton->setEnabled(false);

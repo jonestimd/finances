@@ -5,12 +5,12 @@
 #include "relationeditor.h"
 #include "ui/store/datastore.h"
 #include <QDialog>
+#include <QFormLayout>
 #include <QLineEdit>
-#include <QVBoxLayout>
 
 class SearchDialog : public QDialog {
     Q_OBJECT
-    QVBoxLayout layout;
+    QFormLayout layout;
     QLineEdit searchText;
     RelationEditor payeeInput;
     RelationEditor securityInput;
