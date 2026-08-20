@@ -30,3 +30,11 @@ void EntityDialog::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, entityView.model())) return;
     QDialog::keyPressEvent(event);
 }
+
+ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTableView *itemView, StatusMessageStore *messageStore)
+    : EntityWindow{entityName, model, itemView, messageStore} {}
+
+ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTreeView *itemView, StatusMessageStore *messageStore)
+    : EntityWindow{entityName, model, itemView, messageStore} {}
+
+void ReadOnlyEntityWindow::saveData() {}

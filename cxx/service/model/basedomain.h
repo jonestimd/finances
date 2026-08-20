@@ -71,6 +71,7 @@ public:
     TransactionType(bool transfer);
     TransactionType(bool transfer, const QSqlRecord &record, const char *nameColumn = "name");
 
+    static QVariant getId(const QVariant& value);
     static const TransactionType *get(const QVariant &value);
     static const Category *getCategory(const QVariant &value);
 };

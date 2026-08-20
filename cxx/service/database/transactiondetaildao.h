@@ -30,7 +30,9 @@ public:
     QHash<domain_id, const TransactionDetail*> getAll(const QSqlDatabase &db, domain_id accountId);
 
     QHash<domain_id, const TransactionDetail*> getByTransactionIds(const QSqlDatabase &db, QList<domain_id> txIds);
-    
+
+    QList<const SearchTransactionDetail*> find(const QSqlDatabase& db, const DetailSearchCriteria& criteria);
+
     const TransactionDetail* addRelatedDetail(QSqlDatabase& db, domain_id txId, const TransactionDetail* detail, const QString& user);
 
     /**
@@ -38,7 +40,7 @@ public:
      *  @returns IDs of deleted related transaction details.
      */
     QList<domain_id> removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id> &relatedTransactionIds);
-    
+
     void replaceCategory(QSqlDatabase &db, const Category *category, const domain_id newCategoryId, const QString &user);
 
     /**
@@ -48,7 +50,7 @@ public:
     virtual QList<const TransactionDetail*> update(QSqlDatabase &db, const QList<TransactionDetail*> details, const QString &user) override;
 
     void setRelatedDetailIds(QSqlDatabase &db, const QHash<TransactionDetail*, domain_id> relatedIds);
-    
+
     QHash<domain_id, RelatedDetailIds> getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates);
 
     using EntityDao<TransactionDetail>::remove;

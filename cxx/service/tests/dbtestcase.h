@@ -94,7 +94,7 @@ public:
     Account *addAccount(const QString &driver, const QString &name, const AccountType* type, const optional_id companyId = {});
     domain_id addPayee(const QString &driver, const QString &name);
     Security* addSecurity(const QString &driver, const QString &name, const SecurityType *type = &SecurityType::stock);
-    domain_id addCategory(const QString &driver, const QString &name);
+    domain_id addCategory(const QString &driver, const QString &name, optional_id parentId = {});
     domain_id addGroup(const QString &driver, const QString &name);
 
     const Account *loadAccount(const QString &driver, domain_id id);

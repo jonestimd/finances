@@ -236,10 +236,11 @@ Security* DbTestCase::addSecurity(const QString &driver, const QString &name, co
     return security;
 }
 
-domain_id DbTestCase::addCategory(const QString &driver, const QString &name) {
+domain_id DbTestCase::addCategory(const QString &driver, const QString &name, optional_id parentId) {
     auto conn = Connection(connectionPool(driver));
     Category category;
     category.name = name;
+    category.parentId = parentId;
     categoryDao(driver).add(conn.db, QList{&category}, TEST_USER);
     return category.id.value();
 }

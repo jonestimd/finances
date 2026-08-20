@@ -28,4 +28,28 @@ public:
     static TransactionDetail* copyRecent(const TransactionDetail* detail);
 };
 
+class SearchTransactionDetail : public TransactionDetail {
+public:
+    QDate transactionDate{};
+    domain_id accountId;
+    optional_id payeeId;
+    optional_id securityId;
+    QString transactionMemo;
+
+    SearchTransactionDetail();
+    SearchTransactionDetail(const QSqlRecord &record);
+
+    bool deletable() const;
+};
+
+struct DetailSearchCriteria {
+    QString text;
+    optional_id payeeId;
+    optional_id securityId;
+    optional_id categoryId;
+
+    DetailSearchCriteria() = default;
+    DetailSearchCriteria(const QString text, optional_id payeeId, optional_id securityId, optional_id categoryId);
+};
+
 #endif // TRANSACTIONDETAIL_H

@@ -108,6 +108,27 @@ update tx_detail
 set tx_category_id = :categoryId, change_user = :user, change_date = current_timestamp, version = version + 1
 where tx_category_id = :oldCategoryId)";
 
+static const auto findByCriteriaSql = R"(
+select td.*, tx.account_id, tx.date, tx.payee_id, tx.security_id, tx.memo tx_memo
+from tx_detail td
+join tx on td.tx_id = tx.id
+left join payee p on tx.payee_id = p.id
+left join asset s on tx.security_id = s.id
+left join tx_group g on td.tx_group_id = g.id
+where {criteria}
+order by tx.date desc, tx.id desc, td.id)";
+
+static const auto withCategoryChildrenSql = R"(
+with recursive category as (
+    select id, parent_id
+    from tx_category
+    where id = :categoryId
+    union all
+    select c.id, c.parent_id
+    from tx_category c
+    join category on c.parent_id = category.id
+))";
+
 #define DAO_QUERIES(idtype) \
     .createTableSql = CREATE_TABLE_QUERY(idtype),\
     .getAllSql = getAllQuery,\
@@ -149,6 +170,39 @@ QHash<domain_id, const TransactionDetail *> TransactionDetailDao::getByTransacti
     sql::bindList(query, ":txIds", txIds);
     sql::exec(query, className, "getByTransactionIds");
     return load(query);
+}
+
+QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatabase& db, const DetailSearchCriteria& criteria) {
+    QSqlQuery query(db);
+    auto sql = QString{findByCriteriaSql};
+    QStringList where;
+    QHash<const QString, QVariant> values;
+    if (!criteria.text.isEmpty()) {
+        values.insert(":text", criteria.text);
+        where.append("(lower(p.name) like :text\n" \
+           "   or lower(s.name) like :text\n" \
+           "   or lower(tx.memo) like :text\n" \
+           "   or lower(td.memo) like :text\n" \
+           "   or lower(g.name) like :text)\n");
+    }
+    if (criteria.payeeId.has_value()) {
+        values.insert(":payeeId", criteria.payeeId.value());
+        where.append("tx.payee_id = :payeeId\n");
+    }
+    if (criteria.securityId.has_value()) {
+        values.insert(":securityId", criteria.securityId.value());
+        where.append("tx.security_id = :securityId\n");
+    }
+    if (criteria.categoryId.has_value()) {
+        values.insert(":categoryId", criteria.categoryId.value());
+        sql.prepend(withCategoryChildrenSql);
+        where.append("td.tx_category_id in (select id from category)\n");
+    }
+    sql.replace("{criteria}", where.join("  and "));
+    query.prepare(sql);
+    sql::bindValues(query, values);
+    sql::exec(query, className, "findByCriteria");
+    return loadRows<SearchTransactionDetail>(query);
 }
 
 const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, domain_id txId, const TransactionDetail *detail, const QString &user) {

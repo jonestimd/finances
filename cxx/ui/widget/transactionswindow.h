@@ -14,6 +14,7 @@ class TransactionsWindow : public EntityWindow<> {
     UiContext* const context;
     QLabel* const clearedBalance{new QLabel()};
     QAction* moveAction;
+    QAction* searchAction;
 
 public:
     TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
@@ -26,12 +27,15 @@ public:
     Q_INVOKABLE void loadData() override;
     Q_INVOKABLE void saveData() override;
 
+    void select(domain_id transactionId);
+
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex& parent, int first, int last);
     void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void showRecentsMenu(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void showMoveDialog();
+    void showSearchDialog();
 
 private:
     TransactionStore* store() const;
@@ -43,6 +47,8 @@ private:
 
     inline TreeView* treeView() const;
     bool isSecurity() const;
+
+    void scrollTo(const QModelIndex& index);
 
 private Q_SLOTS:
     void accountsLoaded();

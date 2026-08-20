@@ -1,6 +1,7 @@
 #include "accountswindow.h"
 #include "filemenu.h"
 #include "settings.h"
+#include "ui/titles.h"
 #include "ui/uicontext.h"
 
 #include <QMenuBar>
@@ -11,7 +12,7 @@ using namespace finances;
 
 AccountsWindow::AccountsWindow(UiContext *context)
     : EntityWindow{
-        tr("Account"),
+        tr(ACCOUNT_TITLE),
         new AccountTableModel(context->dataStore->accountStore, std::bind_front(&AccountsWindow::addCompany, this)),
         new QTableView(),
         &context->dataStore->messageStore

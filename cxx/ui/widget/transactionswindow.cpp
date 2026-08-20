@@ -2,13 +2,16 @@
 #include "entityselectiondialog.h"
 #include "filemenu.h"
 #include "recenttxaction.h"
+#include "searchdialog.h"
 #include "statusmessage.h"
 #include "transactionswindow.h"
+#include "ui/finances.h"
 #include "ui/model/formats.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMenuBar>
 #include <QWidgetAction>
@@ -19,10 +22,13 @@
 #define HIDE_CLOSED_ACCOUNTS "hideClosedAccounts"
 #define CLEARED_WIDTH 30
 
+#define PENDING_SELECTION_PROP "pendingSelection"
+
 TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel *model, bool initializeModel)
     : EntityWindow{tr("Detail"), model, new TreeView(), &context->dataStore->messageStore}
     , context{context}
     , moveAction{finances::iconAction(finances::MoveItem, tr("Move Transaction"), tr("ctrl+m"), this, SLOT(showMoveDialog()))}
+    , searchAction{finances::iconAction(finances::Search, tr("Search Transactions"), tr("ctrl+shift+f"), this, SLOT(showSearchDialog()))}
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
@@ -37,6 +43,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->securitiesAction(),
         context->accountSecuritiesAction(),
     });
+    entityView.addActions({searchAction});
     QMenuBar *menuBar = new QMenuBar();
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
@@ -122,6 +129,12 @@ void TransactionsWindow::saveData() {
     store()->update(this, model(), tr(SAVING_TRANSACTIONS));
 }
 
+void TransactionsWindow::select(domain_id transactionId) {
+    auto index = model()->indexOf(transactionId);
+    if (index.isValid()) scrollTo(index);
+    else setProperty(PENDING_SELECTION_PROP, transactionId);
+}
+
 void TransactionsWindow::modelReset() {
     treeView()->expandAll();
 }
@@ -176,6 +189,11 @@ void TransactionsWindow::showMoveDialog() {
     }
 }
 
+void TransactionsWindow::showSearchDialog() {
+    SearchDialog dialog{this, context->dataStore};
+    if (dialog.exec() == QDialog::Accepted) context->findTransactions(dialog.criteria);
+}
+
 TransactionStore *TransactionsWindow::store() const {
     return context->dataStore->transactionStore;
 }
@@ -202,6 +220,13 @@ void TransactionsWindow::initializeData() {
     if (accountStore()->contains(model()->accountId)) accountsLoaded();
 }
 
+void TransactionsWindow::scrollTo(const QModelIndex &index) {
+    auto sortIndex = entityView.sortModel->mapFromSource(index);
+    entityView.itemView->setCurrentIndex(sortIndex);
+    entityView.focusItemView();
+    entityView.itemView->scrollTo(sortIndex, QAbstractItemView::PositionAtCenter);
+}
+
 void TransactionsWindow::accountsLoaded() {
     companiesLoaded();
     auto hidden = entityView.viewHeader->isSectionHidden(model()->securityColumn);
@@ -218,9 +243,14 @@ void TransactionsWindow::companiesLoaded() {
 }
 
 void TransactionsWindow::transactionsLoaded() {
-    auto m = model();
-    entityView.itemView->setCurrentIndex(entityView.sortModel->mapFromSource(m->index(m->rowCount()-1, 0)));
-    entityView.focusItemView();
+    auto selection = property(PENDING_SELECTION_PROP);
+    if (selection.isValid()) {
+        setProperty(PENDING_SELECTION_PROP, {});
+        scrollTo(model()->indexOf(selection.toLongLong()));
+    } else {
+        auto m = model();
+        scrollTo(m->index(m->rowCount()-1, 0));
+    }
 }
 
 void TransactionsWindow::newWindow() {

@@ -207,7 +207,7 @@ private:
     }
 
     template<class Holder>
-    void testRenameTxReference(domain_id accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int TransactionTableModel::* txColumn) {
+    void testRenameTxReference(domain_id accountId, Holder& refHolder, int refRow, int refNameColumn, const QObject* refStore, const int txColumn) {
         TxWindowHolder holder(openWindow(accountId));
         QSignalSpy modelSpy(holder.model(), SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)));
         QVERIFY(modelSpy.isValid());
@@ -222,8 +222,8 @@ private:
 
         QVERIFY(!modelSpy.isEmpty());
         for (const auto& args : std::as_const(modelSpy)) {
-            QCOMPARE(args.at(0).value<QModelIndex>().column(), holder.model()->*(txColumn));
-            QCOMPARE(args.at(1).value<QModelIndex>().column(), holder.model()->*(txColumn));
+            QCOMPARE(args.at(0).value<QModelIndex>().column(), txColumn);
+            QCOMPARE(args.at(1).value<QModelIndex>().column(), txColumn);
         }
     }
 
@@ -420,7 +420,7 @@ private slots:
 
     void renamePayee_updatesTransactions() {
         PayeeWindowHolder payeeHolder(new PayeesWindow(dataStore));
-        testRenameTxReference(accountId, payeeHolder, 0, 0, dataStore->payeeStore, &TransactionTableModel::payeeColumn);
+        testRenameTxReference(accountId, payeeHolder, 0, 0, dataStore->payeeStore, TransactionTableModel::payeeColumn);
     }
 
     void renameSecurity_updatesTransactions() {
@@ -428,7 +428,7 @@ private slots:
         dbTestCase.saveTransaction(driver, factory::transaction(securityAccountId, {}, securityId.value()), {"123.45"});
         QSignalSpy loadedSpy{dataStore->securityStore, &SecurityStore::valuesLoaded};
         SecurityWindowHolder securityHolder(new SecuritiesWindow(uiContext), &loadedSpy);
-        testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, &TransactionTableModel::securityColumn);
+        testRenameTxReference(securityAccountId, securityHolder, 0, 0, dataStore->securityStore, TransactionTableModel::securityColumn);
     }
 
     void mergeCategories_updatesTransactionDetails() {
@@ -448,7 +448,7 @@ private slots:
     void renameAccount_updatesTransactionDetails() {
         auto txDetails = dbTestCase.saveTransfer(driver, accountId, altAccountId, {"65.78"});
         AccountWindowHolder accountHolder(new AccountsWindow(uiContext));
-        testRenameTxReference(accountId, accountHolder, 1, 2, dataStore->accountStore, &TransactionTableModel::payeeColumn);
+        testRenameTxReference(accountId, accountHolder, 1, 2, dataStore->accountStore, TransactionTableModel::payeeColumn);
     }
 
     void renameGroup_updatesTransactionDetails() {
@@ -457,7 +457,7 @@ private slots:
         auto detail = factory::detail("65.78", categoryId, groupId);
         dbTestCase.saveTransaction(driver, tx, {detail});
         GroupWindowHolder groupHolder(new GroupsWindow(dataStore));
-        testRenameTxReference(accountId, groupHolder, 0, 0, dataStore->groupStore, &TransactionTableModel::refColumn);
+        testRenameTxReference(accountId, groupHolder, 0, 0, dataStore->groupStore, TransactionTableModel::refColumn);
     }
 
     void renameCompany_updatesTransactionDetails() {

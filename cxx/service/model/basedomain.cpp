@@ -36,6 +36,11 @@ TransactionType::TransactionType(bool transfer, const QSqlRecord &record, const 
     , transfer{transfer}
 {}
 
+QVariant TransactionType::getId(const QVariant &value) {
+    auto tt = static_cast<const TransactionType*>(value.value<const NamedEntity*>());
+    return tt ? QVariant::fromValue(TransactionTypeId(tt)) : QVariant{};
+}
+
 const TransactionType *TransactionType::get(const QVariant &value) {
     return value.isValid() ? static_cast<const TransactionType*>(value.value<const NamedEntity*>()) : nullptr;
 }

@@ -7,6 +7,7 @@
 #include "ui/store/datastore.h"
 
 class TransactionTableModel;
+class TransactionDetailTableModel;
 
 /**
  * @brief The TransactionTypeColumnAdapter class displays the detail's category
@@ -14,18 +15,16 @@ class TransactionTableModel;
  */
 class TransactionTypeColumnAdapter : public ColumnAdapter<TransactionDetail>  {
     DataStore *const dataStore;
-    const domain_id accountId;
+    const optional_id accountId;
 
 public:
-    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, domain_id accountId);
+    TransactionTypeColumnAdapter(const QString &title, DataStore *dataStore, optional_id accountId);
 
     QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
     QVariant rowValue(const TransactionDetail *row) const override;
     void setValue(TransactionDetail *model, QVariant value) const override;
 
 private:
-    QVariant getId(const QVariant &value) const;
-
     QString optionText(const NamedEntity* option) const;
 
     ComboBoxModel *getOptions() const;
@@ -33,11 +32,12 @@ private:
 
 class SharesColumnAdapter : public AmountColumnAdapter<TransactionDetail, std::optional<QDecNumber>> {
     const SecurityStore *securityStore;
-    const int dateColumn;
-    const int securityColumn;
+    const std::function<QVariant(const QModelIndex&)> getDate;
+    const std::function<QVariant(const QModelIndex&)> getSecurityId;
 
 public:
     SharesColumnAdapter(const QString &title, const TransactionTableModel *model, const SecurityStore *securityStore);
+    SharesColumnAdapter(const QString &title, const TransactionDetailTableModel *model, const SecurityStore *securityStore);
 
     virtual QVariant value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const override;
 };

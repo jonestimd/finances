@@ -1,13 +1,12 @@
 #include "accountsecuritieswindow.h"
-#include "statusmessage.h"
 #include "ui/model/accountsecuritymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
 
-#define SETTINGS_GROUP "accountSecuritiess"
+#define SETTINGS_GROUP "accountSecurities"
 
 AccountSecuritiesWindow::AccountSecuritiesWindow(UiContext *context)
-    : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView(), &context->dataStore->messageStore}
+    : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView, &context->dataStore->messageStore}
     , dataStore{context->dataStore}
 {
     entityView.addActions({
@@ -43,9 +42,6 @@ void AccountSecuritiesWindow::loadData() {
     dataStore->securityStore->loadAccountSecurities(&entityView);
     dataStore->accountStore->load(&entityView);
     dataStore->securityStore->load(&entityView);
-}
-
-void AccountSecuritiesWindow::saveData() {
 }
 
 void AccountSecuritiesWindow::modelReset() {

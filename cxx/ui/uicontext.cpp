@@ -1,4 +1,5 @@
 #include "uicontext.h"
+#include "ui/widget/transactiondetailswindow.h"
 #include <QAbstractEventDispatcher>
 #include <QThread>
 
@@ -127,6 +128,25 @@ int UiContext::windowCount(const TransactionTableModel *model) {
     int count = 0;
     for (const auto window : std::as_const(transactionsWindows)) if (window->model() == model) count++;
     return count;
+}
+
+void UiContext::findTransactions(const DetailSearchCriteria criteria) {
+    openWindows++;
+    auto resultWindow = new TransactionDetailsWindow{this, criteria};
+    connect(resultWindow, SIGNAL(closed(AppWindow*)), this, SLOT(windowClosed(AppWindow*)));
+    resultWindow->show();
+}
+
+void UiContext::showTransaction(domain_id accountId, domain_id transactionId, const QRect &requestorRect) {
+    for (auto window : std::as_const(transactionsWindows)) {
+        if (window->model()->accountId == accountId) {
+            window->raise();
+            window->select(transactionId);
+            return;
+        }
+    }
+    auto window = showTransactions(accountId, requestorRect);
+    window->select(transactionId);
 }
 
 void UiContext::transactionsModelRemoved(TransactionTableModel *model) {

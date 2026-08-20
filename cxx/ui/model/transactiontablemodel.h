@@ -8,7 +8,7 @@
 
 class TransactionTableModel : public PodItemModel<Transaction, TransactionStore, PendingTransaction> {
     Q_OBJECT
-    TransactionTypeColumnAdapter *const transactionTypeAdapter;
+    TransactionTypeColumnAdapter* const transactionTypeAdapter;
     // const TransactionStore *const store;
 
     QHash<int, QList<TransactionDetail*>> newDetails{};
@@ -17,13 +17,13 @@ class TransactionTableModel : public PodItemModel<Transaction, TransactionStore,
     QDecNumber clearedBalance_{0};
 
 public:
-    const int dateColumn;
-    const int refColumn;
-    const int payeeColumn;
-    const int securityColumn;
-    const int clearedColumn;
-    const int subtotalColumn;
-    const int balanceColumn;
+    static const int dateColumn;
+    static const int refColumn;
+    static const int payeeColumn;
+    static const int securityColumn;
+    static const int clearedColumn;
+    static const int subtotalColumn;
+    static const int balanceColumn;
     const domain_id accountId;
 
 private:
@@ -54,11 +54,16 @@ protected:
     virtual void rootIdsChanged() override;
 
 public:
+    static QVariant transactionDetailDate(const QModelIndex& index);
+    static QVariant transactionDetailSecurityId(const QModelIndex& index);
+
     void setRows(const QList<domain_id> transactionIds) override;
     void replacePendingAdd(PendingTransaction* transaction);
-    
+
     QVariant balance(const optional_id &transactionId) const;
     QDecNumber clearedBalance() const;
+
+    QModelIndex indexOf(domain_id transactionId);
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &child) const override;

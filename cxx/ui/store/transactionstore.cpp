@@ -1,9 +1,11 @@
 #include "transactionstore.h"
 #include "ui/model/transactiontablemodel.h"
 #include "ui/widget/statusmessage.h"
+#include "ui/widget/transactiondetailswindow.h"
 #include "ui/widget/transactionswindow.h"
 #include <QDate>
 #include <QWindow>
+#include <qhashfunctions.h>
 
 Q_STATIC_LOGGING_CATEGORY(logger, "store.transaction")
 
@@ -138,6 +140,13 @@ void TransactionStore::moveTransaction(TransactionsWindow *window, const Transac
         QSharedPointer<TransactionUpdate> changes{new TransactionUpdate{{updatedTx}, {}, {}, {}, {}, {}}};
         auto updateData = service->update(*changes, user);
         QMetaObject::invokeMethod(this, &TransactionStore::applyUpdates, Qt::QueuedConnection, QList<const PendingTransaction*>{}, changes, updateData);
+    });
+}
+
+void TransactionStore::findTransactions(TransactionDetailsWindow* window, const DetailSearchCriteria& criteria) {
+    doInBackground(window, tr(SEARCHING_TRANSACTIONS), [=, this]() {
+        auto details = detailStore.service->findTransactionDetails(criteria);
+        QMetaObject::invokeMethod(window->model(), &TransactionDetailTableModel::setRows, details);
     });
 }
 

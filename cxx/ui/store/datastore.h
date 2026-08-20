@@ -35,6 +35,8 @@ public:
     /** @brief Verify connection parameters before creating a `UiContext`. */
     void loadAccounts(OpenHandler handler);
 
+    QString toString(const DetailSearchCriteria& criteria) const;
+
     void shutdown();
 
     static const QString user;

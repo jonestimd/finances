@@ -4,10 +4,12 @@
 #include "categorystore.h"
 #include "entitystore.h"
 #include "transactiondetailstore.h"
+#include "service/model/transactiondetail.h"
 #include "service/model/transaction.h"
 #include "service/servicecontext.h"
 
 class TransactionsWindow;
+class TransactionDetailsWindow;
 class TransactionTableModel;
 
 class TransactionStore : public EntityStore<Transaction, TransactionService, domain_id> {
@@ -32,7 +34,7 @@ private:
 
 public:
     const QList<domain_id> transactionIds(domain_id accountId) const;
-    
+
     QDecNumber amount(domain_id transactionId) const;
 
     /** @brief Sorts `ids` using transaction date. */
@@ -43,6 +45,7 @@ public:
     void clearData(domain_id accountId);
 
     void moveTransaction(TransactionsWindow* window, const Transaction* transaction, domain_id accountId);
+    void findTransactions(TransactionDetailsWindow *window, const DetailSearchCriteria &criteria);
 
 Q_SIGNALS:
     void accountLoaded(domain_id id);

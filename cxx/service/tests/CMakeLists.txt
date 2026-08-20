@@ -61,6 +61,7 @@ function(add_service_test name)
 endfunction()
 
 add_service_test(transactionservice)
+add_service_test(transactiondetailservice)
 add_service_test(categoryservice)
 add_service_test(accountservice)
 add_service_test(securityservice)

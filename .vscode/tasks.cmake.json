@@ -1,0 +1,38 @@
+{
+    "tasks": [{
+        "type": "process",
+        "label": "C/C++: configure CMake",
+        "command": "/usr/bin/cmake",
+        "args": [
+            "-S",
+            ".",
+            "-B",
+            "${workspaceFolder}/out",
+            "-G",
+            "Ninja"
+        ],
+        "options": {
+            "cwd": "${workspaceFolder}"
+        },
+        "group": {
+            "kind": "build",
+            "isDefault": false
+        }
+    },{
+        "type": "process",
+        "label": "C/C++: build",
+        "command": "/usr/bin/cmake",
+        "args": [
+            "--build",
+            "${workspaceFolder}/out"
+        ],
+        "options": {
+            "cwd": "${workspaceFolder}"
+        },
+        "group": {
+            "kind": "build",
+            "isDefault": false
+        }
+    }],
+    "version": "2.0.0"
+}

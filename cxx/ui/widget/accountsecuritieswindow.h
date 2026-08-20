@@ -21,7 +21,6 @@ public:
     ~AccountSecuritiesWindow();
 
     virtual void loadData() override;
-    virtual void saveData() override;
 
 private:
     inline TreeView* treeView() const {
