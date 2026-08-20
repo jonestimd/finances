@@ -26,7 +26,7 @@ public:
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
 
-    void setRows(QList<const SearchTransactionDetail*> rows); // clazy:exclude=fully-qualified-moc-types
+    void setRows(QList<const SearchTransactionDetail*> rows);
     const SearchTransactionDetail* getRow(const QModelIndex& index) const;
 
     static QVariant detailDate(const QModelIndex& index);
