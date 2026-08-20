@@ -29,8 +29,6 @@ void TransactionDetailsWindow::loadData() {
     context->dataStore->transactionStore->findTransactions(this, criteria);
 }
 
-void TransactionDetailsWindow::saveData() {}
-
 void TransactionDetailsWindow::gotoTransaction() {
     auto index = entityView.selectedIndex();
     if (index.isValid()) {

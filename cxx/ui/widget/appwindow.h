@@ -43,7 +43,6 @@ protected:
         setStatusBar(&entityView.statusBar);
     }
 
-public:
     explicit EntityWindow(const QString &entityName, Model *model, QTableView *itemView, StatusMessageStore* messageStore)
         : EntityWindow{entityName, model, itemView, itemView->horizontalHeader(), messageStore} {}
     explicit EntityWindow(const QString &entityName, Model *model, QTreeView *itemView, StatusMessageStore* messageStore)
@@ -55,7 +54,14 @@ public:
     }
 };
 
-typedef EntityWindow<EntityView, QAbstractItemModel> ReadOnlyEntityWindow;
+class ReadOnlyEntityWindow : public EntityWindow<EntityView, QAbstractItemModel> {
+protected:
+    explicit ReadOnlyEntityWindow(const QString& entityName, QAbstractItemModel* model, QTableView* itemView, StatusMessageStore* messageStore);
+    explicit ReadOnlyEntityWindow(const QString& entityName, QAbstractItemModel* model, QTreeView* itemView, StatusMessageStore* messageStore);
+
+public:
+    Q_INVOKABLE void saveData() override;
+};
 
 class EntityDialog : public QDialog {
     Q_OBJECT

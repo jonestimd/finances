@@ -1,5 +1,4 @@
 #include "accountsecuritieswindow.h"
-#include "statusmessage.h"
 #include "ui/model/accountsecuritymodel.h"
 #include "ui/uicontext.h"
 #include "ui/widget/settings.h"
@@ -43,9 +42,6 @@ void AccountSecuritiesWindow::loadData() {
     dataStore->securityStore->loadAccountSecurities(&entityView);
     dataStore->accountStore->load(&entityView);
     dataStore->securityStore->load(&entityView);
-}
-
-void AccountSecuritiesWindow::saveData() {
 }
 
 void AccountSecuritiesWindow::modelReset() {

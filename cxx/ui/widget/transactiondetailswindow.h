@@ -19,7 +19,6 @@ public:
     ~TransactionDetailsWindow();
 
     void loadData() override;
-    void saveData() override;
 
     inline TransactionDetailTableModel* model() const {
         return static_cast<TransactionDetailTableModel*>(entityView.model());
