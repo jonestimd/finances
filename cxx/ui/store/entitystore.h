@@ -151,7 +151,7 @@ protected:
         if (!updateIds.isEmpty()) emit valuesUpdated(updateIds);
         if (!addIds.isEmpty()) emit valuesAdded(addIds);
         if (!deletes.isEmpty()) {
-            auto ids = getEntityIds(deletes);
+            auto ids = domain::getIds(deletes);
             emit valuesToBeRemoved(ids);
             locker.relock();
             for (auto entity : deletes) delete byId.take(entity->id.value());

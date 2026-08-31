@@ -1,4 +1,5 @@
 #include "accountsmenu.h"
+#include "editlotsdialog.h"
 #include "entityselectiondialog.h"
 #include "filemenu.h"
 #include "recenttxaction.h"
@@ -29,11 +30,14 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     , context{context}
     , moveAction{finances::iconAction(finances::MoveItem, tr("Move Transaction"), tr("ctrl+m"), this, SLOT(showMoveDialog()))}
     , searchAction{finances::iconAction(finances::Search, tr("Search Transactions"), tr("ctrl+shift+f"), this, SLOT(showSearchDialog()))}
+    , editLotsAction(finances::iconAction(finances::Stacks, tr("Edit Lots"), tr("ctrl+l"), this, SLOT(showEditLotsDialog())))
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
     moveAction->setEnabled(false);
     entityView.insertAction(2, moveAction);
+    editLotsAction->setEnabled(false);
+    entityView.insertAction(3, editLotsAction);
     entityView.addActions({finances::iconAction(finances::NewWindow, tr("New Window"), tr("alt+n"), this, SLOT(newWindow()))});
     entityView.addActions({
         context->accountsAction(),
@@ -151,6 +155,10 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
 void TransactionsWindow::selectionChanged(const QModelIndex &current) {
     auto index = entityView.sortModel->mapToSource(current);
     moveAction->setEnabled(!model()->transactionHasChanges(index));
+    if (index.parent().isValid()) {
+        auto detail = model()->getDetail(index);
+        editLotsAction->setEnabled(detail->assetQuantity.has_value() && detail->assetQuantity.value().isNegative());
+    } else editLotsAction->setEnabled(false);
 }
 
 void TransactionsWindow::showRecentsMenu(const QList<PendingTransaction*> transactions) {
@@ -193,6 +201,12 @@ void TransactionsWindow::showMoveDialog() {
 void TransactionsWindow::showSearchDialog() {
     SearchDialog dialog{this, context->dataStore};
     if (dialog.exec() == QDialog::Accepted) context->findTransactions(dialog.criteria);
+}
+
+void TransactionsWindow::showEditLotsDialog() {
+    auto sale = model()->getDetail(entityView.selectedIndex());
+    EditLotsDialog dialog{this, context, sale};
+    if (dialog.exec() == QDialog::Accepted) qDebug("here");
 }
 
 TransactionStore *TransactionsWindow::store() const {

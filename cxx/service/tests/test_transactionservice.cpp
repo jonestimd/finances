@@ -196,7 +196,7 @@ private slots:
         auto result = service->update(changes, TEST_USER);
 
         QCOMPARE(result.transactions.size(), 1);
-        auto detailIds = getEntityIds(details);
+        auto detailIds = domain::getIds(details);
         detailIds.append(changes.detailAdds.at(0)->id.value());
         QCOMPARE(result.transactions.at(0)->detailIds.size(), 3);
         QCOMPARE(result.transactions.at(0)->detailIds, detailIds);

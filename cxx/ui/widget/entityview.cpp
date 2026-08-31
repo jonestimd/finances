@@ -2,6 +2,7 @@
 #include "dialog.h"
 #include "tableitemdelegate.h"
 #include "entityrowaction.h"
+#include "ui/widget/itemview.h"
 #include "ui/widget/settings.h"
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -29,26 +30,14 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
                        QHeaderView *viewHeader, const QString &entityName)
     : QObject(window)
     , window{window}
-    , sortModel{new SortFilterProxyModel(window)}
+    , sortModel{new SortFilterProxyModel{window}}
     , itemView{itemView}
     , viewHeader{viewHeader}
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), sortModel, window)}
     , toolbar{window}
-    , itemDelegate{window, &statusBar}
 {
     setModel(model);
-    sortModel->setSortRole(finances::SortRole);
-    sortModel->setFilterKeyColumn(-1);
-    sortModel->setSortCaseSensitivity(Qt::CaseInsensitive);
-
-    itemView->setProperty("sortingEnabled", true);
-    itemView->setModel(sortModel);
-    itemView->setItemDelegate(&itemDelegate);
-    itemView->setAlternatingRowColors(true);
-
-    viewHeader->setSectionsMovable(true);
-    viewHeader->setSortIndicatorShown(true);
-    viewHeader->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
+    itemview::init(window, sortModel, itemView, viewHeader, &statusBar);
 
     toolbar.setMovable(false);
     toolbar.addAction(finances::reloadAction(window));
@@ -57,7 +46,6 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
     connect(messageStore, SIGNAL(statusMessage(QString)), this, SLOT(showStatusMessage(QString)));
     connect(messageStore, SIGNAL(isReady()), this, SLOT(clearStatusMessage()));
 
-    finances::setColumnResize(viewHeader);
     window->installEventFilter(this);
     auto tableView = qobject_cast<QTableView*>(itemView);
     if (tableView) {
@@ -144,16 +132,20 @@ void EntityView::restoreSelection() {
 
 /////////////// EditEntityView ///////////////
 
-EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-                       QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName)
+EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
+                               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName,
+                               bool addRemove)
     : EntityView{window, messageStore, model, itemView, viewHeader, entityName}
     , saveAction{finances::saveAction(window)}
 {
+    // TODO replace setModel() with connect(sortModel, SIGNAL(sourceModelChanged()), this, SLOT(modelChanged()));
     setModel(model);
-
+    auto itemDelegate = static_cast<TableItemDelegate*>(itemView->itemDelegate());
     auto firstAction = toolbar.actions().constFirst();
-    toolbar.insertAction(firstAction, new AddRowAction(entityName, &itemDelegate, sortModel, itemView, this));
-    toolbar.insertAction(firstAction, new DeleteRowAction(entityName, sortModel, itemView, this));
+    if (addRemove) {
+        toolbar.insertAction(firstAction, new AddRowAction(entityName, itemDelegate, sortModel, itemView, this));
+        toolbar.insertAction(firstAction, new DeleteRowAction(entityName, sortModel, itemView, this));
+    }
     toolbar.insertAction(firstAction, new UndoChangeAction(sortModel, itemView, this));
     toolbar.insertAction(firstAction, saveAction);
 
@@ -162,12 +154,12 @@ EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore
             [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
 }
 
-EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-                       QTableView *view, const QString &entityName)
-    : EditEntityView(window, messageStore, model, view, view->horizontalHeader(), entityName)
+EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
+                               QTableView *view, const QString &entityName, bool addRemove)
+    : EditEntityView(window, messageStore, model, view, view->horizontalHeader(), entityName, addRemove)
 {}
 
-void EditEntityView::setModel(AdapterItemModel *model) {
+void EditEntityView::setModel(ChangeTrackingItemModel* model) {
     // need to connect to the source model because some signals are emitted by the proxy model before
     // the source model has completed the change.
     auto oldModel = sortModel->sourceModel();

@@ -19,8 +19,9 @@ private slots:
         for (auto &driver : dbTestCase.connectionPoolNames()) {
             auto &txDao = dbTestCase.transactionDao(driver);
             auto &detailDao = dbTestCase.detailDao(driver);
+            auto &securityLotDao = dbTestCase.securityLotDao(driver);
             auto &accountDao = dbTestCase.accountDao(driver);
-            auto service = new TransactionDetailService{dbTestCase.connectionPool(driver), detailDao};
+            auto service = new TransactionDetailService{dbTestCase.connectionPool(driver), detailDao, securityLotDao};
             auto companyId = dbTestCase.addCompany(driver, "Bank 1");
             auto accountId = dbTestCase.addAccount(driver, "Account 1", &AccountType::bank, companyId)->id.value();
             auto categoryId = dbTestCase.addCategory(driver, "parent");

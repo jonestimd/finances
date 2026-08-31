@@ -2,7 +2,6 @@
 #define ENTITY_VIEW_H
 
 #include "filterinput.h"
-#include "tableitemdelegate.h"
 #include "ui/model/adapteritemmodel.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/store/statusmessagestore.h"
@@ -16,7 +15,6 @@ class EntityView : public QObject {
     Q_OBJECT
 protected:
     QWidget *const window;
-    TableItemDelegate itemDelegate;
     /** @brief Index of the last selected cell. */
     QList<int> lastSelection;
     int lastColumn;
@@ -64,16 +62,16 @@ class EditEntityView : public EntityView {
 public:
     QAction *const saveAction;
 
-    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
-    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-               QTableView *itemView, const QString &entityName);
+    EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
+               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName, bool addRemove = true);
+    EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
+               QTableView *itemView, const QString &entityName, bool addRemove = true);
 
-    template<class T = AdapterItemModel>
-    inline T *model() const {
+    template<class T = ChangeTrackingItemModel>
+    inline T *model() const requires std::is_base_of_v<ChangeTrackingItemModel, T> {
         return static_cast<T*>(sortModel->sourceModel());
     }
-    void setModel(AdapterItemModel* model);
+    void setModel(ChangeTrackingItemModel* model);
 
     bool confirmLoadData();
     void confirmClose(QCloseEvent *event, const char *settingsGroup);

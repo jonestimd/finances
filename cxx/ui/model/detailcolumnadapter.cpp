@@ -37,7 +37,7 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     case finances::OptionsRole:
         return accountId.has_value() ? QVariant::fromValue(getOptions()) : QVariant{};
     case Qt::DecorationRole:
-        return value.isValid() && typeId.transfer ? finances::ArrowRight : finances::None;
+        return value.isValid() && typeId.transfer ? finances::RightBlackArrow: finances::None;
     }
     return QVariant{};
 }

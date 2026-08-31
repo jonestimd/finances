@@ -91,7 +91,7 @@ ConnectionDialog::ConnectionDialog(QWidget *parent, Mode mode)
         connect(checkbox, SIGNAL(toggled(bool)), this, SLOT(modeChanged(bool)));
         layout->addWidget(checkbox);
     }
-    auto formLayout = new QFormLayout();
+    auto formLayout = new QFormLayout;
     formLayout->setLabelAlignment(Qt::AlignRight);
     layout->addLayout(formLayout);
 

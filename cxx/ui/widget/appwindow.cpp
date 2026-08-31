@@ -8,11 +8,13 @@ void AppWindow::closeEvent(QCloseEvent *event) {
     emit closed(this);
 }
 
-EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, AdapterItemModel *model,
-                           QTableView *itemView, StatusMessageStore *messageStore)
+////////////// EntityDialog //////////////
+
+EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, ChangeTrackingItemModel *model,
+    QTableView *itemView, StatusMessageStore *messageStore, bool addRemove)
     : QDialog{parent}
     , layout{this}
-    , entityView{this, messageStore, model, itemView, entityName}
+    , entityView{this, messageStore, model, itemView, entityName, addRemove}
 {
     layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
@@ -30,6 +32,8 @@ void EntityDialog::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, entityView.model())) return;
     QDialog::keyPressEvent(event);
 }
+
+////////////// ReadOnlyEntityWindow //////////////
 
 ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTableView *itemView, StatusMessageStore *messageStore)
     : EntityWindow{entityName, model, itemView, messageStore} {}

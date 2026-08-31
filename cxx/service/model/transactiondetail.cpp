@@ -58,6 +58,27 @@ TransactionDetail *TransactionDetail::copyRecent(const TransactionDetail *detail
     return copy;
 }
 
+SecurityPurchase::SecurityPurchase() : TransactionDetail{} {}
+
+SecurityPurchase::SecurityPurchase(const QSqlRecord &record)
+    : TransactionDetail{record}
+    , transactionDate{sql::getDate(record, "date").value()}
+    , totalShares{sql::decimalValue(record, "total_shares").value()}
+    , allocatedShares{sql::decimalValue(record, "allocated_shares").value_or(QDecNumber{0})}
+{}
+
+QDecNumber SecurityPurchase::availableShares() const {
+    return (totalShares - allocatedShares).max(0);
+}
+
+QDecNumber SecurityPurchase::cost() const {
+    return (amount * totalShares / assetQuantity.value()).abs();
+}
+
+QDecNumber SecurityPurchase::price() const {
+    return (amount / assetQuantity.value()).abs().rescale({-2});
+}
+
 SearchTransactionDetail::SearchTransactionDetail() {}
 
 SearchTransactionDetail::SearchTransactionDetail(const QSqlRecord& record)

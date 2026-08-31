@@ -9,6 +9,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/connectiondialog.h ${CMAKE_CURRENT_LIST_DIR}/connectiondialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dateedit.h ${CMAKE_CURRENT_LIST_DIR}/dateedit.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dialog.h ${CMAKE_CURRENT_LIST_DIR}/dialog.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/editlotsdialog.h ${CMAKE_CURRENT_LIST_DIR}/editlotsdialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.h ${CMAKE_CURRENT_LIST_DIR}/entityrowaction.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.h ${CMAKE_CURRENT_LIST_DIR}/entityselectiondialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/entityview.h ${CMAKE_CURRENT_LIST_DIR}/entityview.cpp
@@ -16,6 +17,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/filemenu.h ${CMAKE_CURRENT_LIST_DIR}/filemenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/filterinput.h ${CMAKE_CURRENT_LIST_DIR}/filterinput.cpp
     ${CMAKE_CURRENT_LIST_DIR}/groupswindow.h ${CMAKE_CURRENT_LIST_DIR}/groupswindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/itemview.h ${CMAKE_CURRENT_LIST_DIR}/itemview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.h ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.h ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.cpp
     ${CMAKE_CURRENT_LIST_DIR}/relationeditor.h ${CMAKE_CURRENT_LIST_DIR}/relationeditor.cpp

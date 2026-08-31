@@ -41,10 +41,11 @@ namespace finances {
         AccountBalance = 0xe84f, // company
         AddCircle = 0xe147,
         AreaChart  = 0xe770,
-        ArrowRight = 0xf81c,
         ArrowSplit = 0xe985, // stock split
         Category = 0xe574,
         Checked = 0xe834,
+        ClockArrowDown = 0xf382,
+        ClockArrowUp = 0xf381,
         Filter = 0xe152,
         Help = 0xe887,
         HideSource = 0xf023,
@@ -58,9 +59,13 @@ namespace finances {
         NewWindow = 0xf710,
         OpenInNew = 0xe89e,
         Person = 0xe7fd,
+        PlaylistRemove= 0xeb80, // discard lots
         Refresh = 0xe5d5,
+        RightBlackArrow = 0x2b95,
         Save = 0xe161,
         Search = 0xe8b6,
+        Sort = 0xe164, // highest/lowest price
+        Stacks = 0xf500, // security lots
         Table = 0xf191,
         Trash = 0xe872,
         Unchecked = 0xe835,
@@ -83,19 +88,28 @@ namespace finances {
         QFont font(int pointSize);
     };
 
-    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular");
+    struct MaterialIcon {
+        const FontIcon symbol;
+        const FontIcon overlay;
+        const bool mirrorY;
 
-    QIcon materialIcon(FontIcon icon, QColor color = {}, FontIcon overlayIcon = None);
+        MaterialIcon(FontIcon symbol, FontIcon overlay = None);
+        MaterialIcon(FontIcon symbol, bool mirrorY);
+    };
+
+    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2", "Regular");
+
+    QIcon materialIcon(MaterialIcon icon, QColor color = {});
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);
-    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip);
+    QAction* initAction(QAction *action, MaterialIcon icon, const QString &text, const QString &tooltip);
     QAction* initAction(QAction *action, QIcon icon, const QString &text, const QString &tooltip);
-    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut);
+    QAction* initAction(QAction *action, MaterialIcon icon, const QString &text, const QKeySequence &shortcut);
     QAction* initAction(QAction *action, QIcon icon, const QString &text, const QKeySequence &shortcut);
-    QAction* iconAction(FontIcon icon, const QString &text, QObject *parent = nullptr);
-    QAction* iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled = true);
-    QAction* iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
+    QAction* iconAction(MaterialIcon icon, const QString &text, QObject *parent = nullptr);
+    QAction* iconAction(MaterialIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled = true);
+    QAction* iconAction(MaterialIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver = nullptr, const char *slot = nullptr, bool enabled = true);
     QAction* iconAction(const char *iconFile, const QString &text, QObject *parent = nullptr);
-    QAction* iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
+    QAction* iconToggle(MaterialIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
 
     QAction *saveAction(QWidget *window, const char *invokable = "saveData");
     QAction *reloadAction(QWidget *window, const char *invokable = "loadData");

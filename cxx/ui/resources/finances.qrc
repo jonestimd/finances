@@ -4,7 +4,7 @@
         <file>invalid.svg</file>
     </qresource>
     <qresource prefix="/fonts">
-        <file>MaterialSymbolsRounded_Filled-Regular.ttf</file>
+        <file>MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2</file>
     </qresource>
     <qresource prefix="/styles">
         <file>minimal-dark.qss</file>

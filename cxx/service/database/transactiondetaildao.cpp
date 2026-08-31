@@ -129,6 +129,43 @@ with recursive category as (
     join category on c.parent_id = category.id
 ))";
 
+static const auto findAvalableLots = R"(
+with sale as (
+    select *
+    from tx
+    where id = :saleTxId
+), xfer_shares as (
+    select td.id purchase_id, sum(lot.purchase_shares) shares
+    from sale
+    join tx on tx.date <= sale.date and tx.account_id = sale.account_id and tx.security_id = sale.security_id
+    join tx_detail xd on xd.tx_id = tx.id and xd.asset_quantity > 0
+    join tx_detail sd on sd.related_detail_id = xd.id
+    join security_lot lot on lot.related_tx_detail_id = sd.id
+    join tx_detail td on td.id = lot.purchase_tx_detail_id
+    group by td.id
+), sale_shares as (
+    select td.id purchase_id, sum(lot.purchase_shares) shares
+    from sale
+    join tx on tx.account_id = sale.account_id and tx.security_id = sale.security_id
+    join tx_detail sd on sd.tx_id = tx.id and sd.asset_quantity < 0
+    join security_lot lot on lot.related_tx_detail_id = sd.id
+    join tx_detail td on td.id = lot.purchase_tx_detail_id
+    group by td.id
+)
+-- shares transfered from other accounts --
+select td.*, xs.shares total_shares, ss.shares allocated_shares, tx.date
+from tx_detail td
+join tx on td.tx_id = tx.id
+join xfer_shares xs on xs.purchase_id = td.id
+left join sale_shares ss on ss.purchase_id = td.id
+union
+-- purchases from the account --
+select td.*, td.asset_quantity total_shares, ss.shares allocated_shares, tx.date
+from sale
+join tx on tx.date <= sale.date and tx.account_id = sale.account_id and tx.security_id = sale.security_id
+join tx_detail td on td.tx_id = tx.id and td.asset_quantity > 0 and td.related_detail_id is null
+left join sale_shares ss on ss.purchase_id = td.id)";
+
 #define DAO_QUERIES(idtype) \
     .createTableSql = CREATE_TABLE_QUERY(idtype),\
     .getAllSql = getAllQuery,\
@@ -205,6 +242,14 @@ QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatab
     return loadRows<SearchTransactionDetail>(query);
 }
 
+QList<const SecurityPurchase*> TransactionDetailDao::findPreviousPurchases(const QSqlDatabase &db, domain_id saleTxId) const {
+    QSqlQuery query(db);
+    query.prepare(findAvalableLots);
+    sql::bindValue(query, ":saleTxId", saleTxId);
+    sql::exec(query, className, "findPreviousPurchases");
+    return loadRows<SecurityPurchase>(query);
+}
+
 const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, domain_id txId, const TransactionDetail *detail, const QString &user) {
     QSqlQuery query(db);
     query.prepare(insertQuery);
@@ -220,7 +265,7 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
 QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id>& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
-    sql::bindList(query, ":txIds", getEntityIds(transactions));
+    sql::bindList(query, ":txIds", domain::getIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
     QList<domain_id> ids{}, relatedDetailIds{};
     while (query.next()) {
@@ -276,7 +321,7 @@ void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<Tra
 
 QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
     QSqlQuery query(db);
-    auto ids = getEntityIds(updates);
+    auto ids = domain::getIds(updates);
     query.prepare(getRelatedIdsSql);
     sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "getRelatedDetailIds");
@@ -290,7 +335,7 @@ QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
 
 void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const TransactionDetail*> details) {
     QSqlQuery query(db);
-    auto ids = getEntityIds(details);
+    auto ids = domain::getIds(details);
     for (auto detail : details) if (detail->relatedDetailId.has_value()) ids.append(detail->relatedDetailId.value());
     removeByIds(db, ids);
 }

@@ -8,6 +8,7 @@
 #include "service/model/transaction.h"
 #include "service/servicecontext.h"
 
+class EditLotsDialog;
 class TransactionsWindow;
 class TransactionDetailsWindow;
 class TransactionTableModel;
@@ -46,6 +47,7 @@ public:
 
     void moveTransaction(TransactionsWindow* window, const Transaction* transaction, domain_id accountId);
     void findTransactions(TransactionDetailsWindow *window, const DetailSearchCriteria &criteria);
+    void findPurchases(EditLotsDialog* dialog, const TransactionDetail* sale);
 
 Q_SIGNALS:
     void accountLoaded(domain_id id);

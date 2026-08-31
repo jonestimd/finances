@@ -1,4 +1,5 @@
 #include "securitylotdao.h"
+#include "service/model/transactiondetail.h"
 
 #define CREATE_TABLE_QUERY(idtype) \
     "create table security_lot (\n" \
@@ -25,6 +26,11 @@ set purchase_tx_detail_id = :purchaseDetailId, related_detail_id = :relatedDetai
     change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";
 
+static const auto finBySaleSql = R"(
+select *
+from security_lot
+where related_tx_detail_id = :saleId)";
+
 #define DAO_QUERIES(idtype) \
     .createTableSql = CREATE_TABLE_QUERY(idtype),\
     .getAllSql = "select * from security_lot",\
@@ -46,6 +52,15 @@ SecurityLotDao::SecurityLotDao(const QString &dbType)
     : EntityDao<SecurityLot>{DB_TYPE_QUERY(dbType, Queries), "SecurityLotDao",
                              QObject::tr("Security lots have been modified.  Please reload and try again")}
 {}
+
+QList<const SecurityLot*> SecurityLotDao::findBySale(QSqlDatabase& db, const TransactionDetail* sale) {
+    auto saleId = sale->relatedDetailId.has_value() && sale->assetQuantity.value() > 0 ? sale->relatedDetailId.value() : sale->id.value();
+    QSqlQuery query{db};
+    query.prepare(finBySaleSql);
+    sql::bindValue(query, ":saleId", saleId);
+    sql::exec(query, className, "findBySale");
+    return loadRows(query);
+}
 
 void SecurityLotDao::bindInsertValues(QSqlQuery &query, SecurityLot *lot) {
     sql::bindValue(query, ":purchaseDetailId", lot->purchaseDetailId);

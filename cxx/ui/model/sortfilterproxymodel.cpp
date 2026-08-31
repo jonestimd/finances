@@ -1,7 +1,12 @@
 #include "sortfilterproxymodel.h"
 #include "ui/finances.h"
 
-SortFilterProxyModel::SortFilterProxyModel(QObject *parent) : QSortFilterProxyModel{parent} {}
+SortFilterProxyModel::SortFilterProxyModel(QObject *parent) : QSortFilterProxyModel{parent}
+{
+    setSortRole(finances::SortRole);
+    setFilterKeyColumn(-1);
+    setSortCaseSensitivity(Qt::CaseInsensitive);
+}
 
 void SortFilterProxyModel::addFilter(AcceptRow acceptFunction) {
     beginFilterChange();
@@ -13,10 +18,6 @@ void SortFilterProxyModel::clearFilters() {
     beginFilterChange();
     acceptFunctions.clear();
     endFilterChange(Direction::Rows);
-}
-
-void SortFilterProxyModel::setSourceModel(QAbstractItemModel* model) {
-    QSortFilterProxyModel::setSourceModel(model);
 }
 
 bool SortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {

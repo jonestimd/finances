@@ -15,6 +15,7 @@ class TransactionsWindow : public EntityWindow<> {
     QLabel* const clearedBalance{new QLabel()};
     QAction* moveAction;
     QAction* searchAction;
+    QAction* editLotsAction;
 
 public:
     TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
@@ -36,6 +37,7 @@ public Q_SLOTS:
     void showRecentsMenu(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void showMoveDialog();
     void showSearchDialog();
+    void showEditLotsDialog();
 
 private:
     TransactionStore* store() const;

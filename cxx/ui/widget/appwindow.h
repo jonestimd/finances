@@ -69,8 +69,8 @@ protected:
     QVBoxLayout layout;
     EditEntityView entityView;
 
-    explicit EntityDialog(QMainWindow* parent, const QString& entityName, const char* settingsGroup, AdapterItemModel* model,
-                          QTableView* itemView, StatusMessageStore* messageStore);
+    explicit EntityDialog(QMainWindow* parent, const QString& entityName, const char* settingsGroup, ChangeTrackingItemModel* model,
+                          QTableView* itemView, StatusMessageStore* messageStore, bool addRemove = true);
 
     void keyPressEvent(QKeyEvent *event) override;
 

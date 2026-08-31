@@ -1,5 +1,7 @@
 #include "transactionstore.h"
+#include "ui/model/securitylottablemodel.h"
 #include "ui/model/transactiontablemodel.h"
+#include "ui/widget/editlotsdialog.h"
 #include "ui/widget/statusmessage.h"
 #include "ui/widget/transactiondetailswindow.h"
 #include "ui/widget/transactionswindow.h"
@@ -147,6 +149,13 @@ void TransactionStore::findTransactions(TransactionDetailsWindow* window, const 
     doInBackground(window, tr(SEARCHING_TRANSACTIONS), [=, this]() {
         auto details = detailStore.service->findTransactionDetails(criteria);
         QMetaObject::invokeMethod(window->model(), &TransactionDetailTableModel::setRows, details);
+    });
+}
+
+void TransactionStore::findPurchases(EditLotsDialog* dialog, const TransactionDetail* sale) {
+    doInBackground(dialog, tr("Loading Security Lots"), [=, this]() {
+        auto [lots, purchases] = detailStore.service->findAvailableLots(sale);
+        QMetaObject::invokeMethod(dialog->model(), &SecurityLotTableModel::setRows, purchases, lots);
     });
 }
 

@@ -10,7 +10,7 @@ ServiceContext::ServiceContext(ConnectionPool *pool)
     , groupService{pool, daos.transactionGroupDao}
     , securityService{pool, daos.securityDao}
     , stockSplitService{pool, daos.stockSplitDao}
-    , transationDetailService{pool, daos.transactionDetailDao}
+    , transationDetailService{pool, daos.transactionDetailDao, daos.securityLotDao}
     , transationService{pool, daos.transactionDao, daos.transactionDetailDao, daos.accountDao}
 {}
 

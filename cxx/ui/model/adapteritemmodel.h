@@ -11,11 +11,20 @@ concept Copyable = requires(Row &t){
     { new Row(t) } -> std::convertible_to<Row*>;
 };
 
+class ChangeTrackingItemModel : public QAbstractItemModel {
+public:
+    ChangeTrackingItemModel(QObject* parent = nullptr);
+
+    virtual bool hasUnsavedChanges() const = 0;
+    virtual void clearChanges() = 0;
+    virtual bool isValid() const = 0;
+};
+
 /**
  * @brief The AdapterItemModel class provides the base implementation for
  * models that display entities from a data store (see `PodItemModel` and `PodTableModel`).
  */
-class AdapterItemModel : public QAbstractItemModel {
+class AdapterItemModel : public ChangeTrackingItemModel {
     Q_OBJECT
 protected:
     QList<domain_id> rootIds;
@@ -26,9 +35,9 @@ protected:
 public:
     explicit AdapterItemModel(QObject *parent = nullptr);
 
-    virtual bool hasUnsavedChanges() const;
-    virtual void clearChanges();
-    virtual bool isValid() const;
+    bool hasUnsavedChanges() const override;
+    void clearChanges() override;
+    bool isValid() const override;
     virtual bool enableDelete(const QModelIndex &index) const = 0;
 
     QVariant data(const QModelIndex &index, int role) const override;

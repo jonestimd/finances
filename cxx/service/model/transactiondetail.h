@@ -18,7 +18,7 @@ public:
 
     TransactionDetail();
     TransactionDetail(domain_id transactionId);
-    TransactionDetail(const QSqlRecord &record);
+    TransactionDetail(const QSqlRecord& record);
 
     bool isEmpty() const;
 
@@ -26,6 +26,20 @@ public:
     void initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const;
 
     static TransactionDetail* copyRecent(const TransactionDetail* detail);
+};
+
+class SecurityPurchase : public TransactionDetail {
+public:
+    QDate transactionDate{};
+    QDecNumber totalShares{0};
+    QDecNumber allocatedShares{0};
+
+    SecurityPurchase();
+    SecurityPurchase(const QSqlRecord& record);
+
+    QDecNumber availableShares() const;
+    QDecNumber cost() const;
+    QDecNumber price() const;
 };
 
 class SearchTransactionDetail : public TransactionDetail {

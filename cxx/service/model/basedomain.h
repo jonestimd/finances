@@ -27,6 +27,20 @@ namespace domain {
         return byId;
     }
 
+    template<class T>
+    QList<domain_id> getIds(const QList<T*> entities) {
+        QList<domain_id> ids{};
+        for (auto entity : entities) ids.append(entity->id.value());
+        return ids;
+    }
+
+    template<class T, class V, V T::*field>
+    QList<V> getValues(const QList<const T*> entities) {
+        QList<V> values;
+        for (auto entity : entities) values.append(entity->*field);
+        return values;
+    }
+
     QString toString(const optional_id& id);
 }
 
@@ -40,13 +54,6 @@ public:
     BaseDomain();
     BaseDomain(const QSqlRecord &record);
 };
-
-template<class T>
-QList<domain_id> getEntityIds(const QList<T*> items) {
-    QList<domain_id> ids{};
-    for (auto item : items) ids.append(item->id.value());
-    return ids;
-}
 
 class NamedEntity : public BaseDomain {
 public:

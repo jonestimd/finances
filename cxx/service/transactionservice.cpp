@@ -68,7 +68,7 @@ QList<PendingTransaction*> TransactionService::getRecentForPayee(domain_id accou
     Connection conn(connectionPool);
     QSharedPointer<const Account> account{accountDao.get(conn.db, {accountId}).constFirst()};
     auto transactions = dao.getRecentForPayee(conn.db, accountId, payeeId, account->type->security);
-    auto details = detailDao.getByTransactionIds(conn.db, getEntityIds(transactions));
+    auto details = detailDao.getByTransactionIds(conn.db, domain::getIds(transactions));
     QList<PendingTransaction*> pending;
     for (auto tx : std::as_const(transactions)) {
         pending.append(PendingTransaction::copyRecent(tx, details));
@@ -81,7 +81,7 @@ QList<PendingTransaction*> TransactionService::getRecentForPayee(domain_id accou
 QList<PendingTransaction *> TransactionService::getRecentForSecurity(domain_id accountId, domain_id securityId) {
     Connection conn(connectionPool);
     auto transactions = dao.getRecentForSecurity(conn.db, accountId, securityId);
-    auto details = detailDao.getByTransactionIds(conn.db, getEntityIds(transactions));
+    auto details = detailDao.getByTransactionIds(conn.db, domain::getIds(transactions));
     QList<PendingTransaction*> pending;
     for (auto tx : std::as_const(transactions)) {
         pending.append(PendingTransaction::copyRecent(tx, details));
