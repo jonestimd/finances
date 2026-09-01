@@ -253,6 +253,7 @@ void TransactionTableModel::replacePendingAdd(PendingTransaction *transaction) {
     Q_ASSERT(pendingAdds().size() == 1);
     auto rowIndex = index(rootIds.count(), 0);
     auto current = pendingAdd(rowIndex);
+    transaction->accountId = accountId;
     transaction->date = current->date;
     transaction->referenceNumber = current->referenceNumber;
     beginRemoveRows(rowIndex, 0, current->details.count()-1);
