@@ -97,9 +97,9 @@ const int TransactionTableModel::dateColumn{0};
 const int TransactionTableModel::refColumn{1};
 const int TransactionTableModel::payeeColumn{2};
 const int TransactionTableModel::securityColumn{4};
+const int TransactionTableModel::subtotalColumn{5};
 const int TransactionTableModel::clearedColumn{6};
-const int TransactionTableModel::subtotalColumn{7};
-const int TransactionTableModel::balanceColumn{8};
+const int TransactionTableModel::balanceColumn{7};
 
 TransactionTableModel::TransactionTableModel(DataStore *dataStore, domain_id accountId)
     : PodItemModel{dataStore->transactionStore, {
