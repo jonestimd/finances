@@ -40,6 +40,7 @@ public:
     bool hasUnsavedChanges() const override;
     void clearChanges() override;
     bool isValid() const override;
+    void undoChange(const QModelIndex& index) override;
 
     /** @brief Returns shares for an existing security lot. */
     QDecNumber lotShares(domain_id purchaseId) const;

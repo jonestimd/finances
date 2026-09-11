@@ -6,6 +6,7 @@
 #include "ui/store/payeestore.h"
 
 class PayeeTableModel : public PodTableModel<Payee, PayeeStore> {
+    Q_OBJECT
 public:
     explicit PayeeTableModel(PayeeStore *payeeStore);
 };

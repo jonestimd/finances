@@ -1,5 +1,6 @@
 #include "entityrowaction.h"
 #include "ui/finances.h"
+#include "ui/model/adapteritemmodel.h"
 #include <QAbstractItemView>
 
 EntityRowAction::EntityRowAction(finances::FontIcon icon, const QString &text, const QKeySequence &shortcut,
@@ -9,10 +10,6 @@ EntityRowAction::EntityRowAction(finances::FontIcon icon, const QString &text, c
 {
     finances::initAction(this, icon, text, shortcut);
     connect(this, SIGNAL(triggered(bool)), this, SLOT(doAction()));
-}
-
-AdapterItemModel *EntityRowAction::model() const {
-    return static_cast<AdapterItemModel*>(sortModel->sourceModel());
 }
 
 AddRowAction::AddRowAction(const QString &entityName, TableItemDelegate *itemDelegate,
@@ -45,7 +42,7 @@ inline bool selectEditColumn(QModelIndex &index) {
 
 void AddRowAction::doAction() {
     auto selectedIndex = sortModel->mapToSource(itemView->selectionModel()->currentIndex());
-    auto rowIndex = model()->queueAdd(selectedIndex);
+    auto rowIndex = model<AdapterItemModel>()->queueAdd(selectedIndex);
     if (rowIndex.isValid()) {
         auto index = sortModel->mapFromSource(rowIndex).siblingAtColumn(0);
         if (index.isValid() && selectEditColumn(index)) {
@@ -67,13 +64,13 @@ DeleteRowAction::DeleteRowAction(const QString &entityName, SortFilterProxyModel
 void DeleteRowAction::selectionChanged() {
     auto indexes = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
     bool enabled = !indexes.empty();
-    for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= model()->enableDelete(*i);
+    for (auto i = indexes.cbegin(); enabled && i != indexes.cend(); ++i) enabled &= model<AdapterItemModel>()->enableDelete(*i);
     setEnabled(enabled);
 }
 
 void DeleteRowAction::doAction() {
     auto selection = sortModel->mapSelectionToSource(selectionModel->selection()).indexes();
-    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model()->queueDelete(*i);
+    for (auto i = selection.cbegin(), end = selection.cend(); i != end; i++) model<AdapterItemModel>()->queueDelete(*i);
     selectionChanged();
 }
 

@@ -16,7 +16,10 @@ namespace securitylottable {
             auto purchase = model->getRow(index);
             auto shares = QDecNumber{value.toLocal8Bit().constData()};
             if (shares > purchase->availableShares() + model->lotShares(purchase->id.value())) {
-                return tr("%1 must be less than the purchase shares").arg(columnHeader(index));
+                return tr("%1 exceeds the purchase shares").arg(columnHeader(index));
+            }
+            if (shares > model->sale->assetQuantity.value().abs()) {
+                return tr("%1 exceeds the sale shares").arg(columnHeader(index));
             }
             auto message = NumberValidatorFactory::isValid(index, value);
             return message;
@@ -98,7 +101,7 @@ QVariant SecurityLotTableModel::data(const QModelIndex& index, int role) const {
         auto purchase = purchases.at(index.row());
         switch (role) {
         case finances::ValidationMessageRole:
-            break; // TODO
+            break;
         case finances::UnsavedRole:
             if (index.column() == columns.size()-1 && sharesByPurchaseId.contains(purchase->id.value())) return finances::Update;
             return QVariant();
@@ -151,6 +154,16 @@ void SecurityLotTableModel::clearChanges() {
 
 bool SecurityLotTableModel::isValid() const {
     return totalAllocatedShares() <= sale->assetQuantity.value().abs();
+}
+
+void SecurityLotTableModel::undoChange(const QModelIndex& index) {
+    if (index.column() == AllocatedShares) {
+        auto purchaseId = purchases.at(index.row())->id.value();
+        if (sharesByPurchaseId.contains(purchaseId)) {
+            sharesByPurchaseId.remove(purchaseId);
+            emit dataChanged(index, index);
+        }
+    }
 }
 
 QDecNumber SecurityLotTableModel::lotShares(domain_id purchaseId) const {

@@ -6,6 +6,7 @@
 #include "ui/store/groupstore.h"
 
 class GroupTableModel : public PodTableModel<TransactionGroup, GroupStore> {
+    Q_OBJECT
 public:
     GroupTableModel(GroupStore *groupStore);
 };

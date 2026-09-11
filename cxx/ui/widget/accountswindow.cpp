@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "ui/titles.h"
 #include "ui/uicontext.h"
+#include "ui/widget/dialog.h"
 
 #include <QMenuBar>
 
@@ -70,7 +71,7 @@ AccountTableModel *AccountsWindow::model() {
 }
 
 void AccountsWindow::loadData() {
-    if (entityView.confirmLoadData()) dataStore->accountStore->load(&entityView, true);
+    if (dialog::confirmDiscardChanges(this, model())) dataStore->accountStore->load(&entityView, true);
 }
 
 void AccountsWindow::saveData() {

@@ -23,7 +23,7 @@ QFormLayout* formLayout() {
 
 EditLotsDialog::EditLotsDialog(QMainWindow* parent, UiContext* context, const TransactionDetail* sale)
     : EntityDialog{parent, tr("Security Lot"), SETTINGS_GROUP, new SecurityLotTableModel{context->dataStore, sale},
-        new QTableView, &context->dataStore->messageStore, false}
+        new QTableView, &context->dataStore->messageStore}
     , context{context}
     , purchaseSharesField{readOnlyLineEdit("")}
 {

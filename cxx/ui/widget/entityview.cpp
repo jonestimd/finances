@@ -2,6 +2,7 @@
 #include "dialog.h"
 #include "tableitemdelegate.h"
 #include "entityrowaction.h"
+#include "ui/model/adapteritemmodel.h"
 #include "ui/widget/itemview.h"
 #include "ui/widget/settings.h"
 #include <QHeaderView>
@@ -36,10 +37,19 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
     , filterInput{new FilterInput(tr("%1 filter").arg(entityName), sortModel, window)}
     , toolbar{window}
 {
-    setModel(model);
+    sortModel->setSourceModel(model);
     itemview::init(window, sortModel, itemView, viewHeader, &statusBar);
 
     toolbar.setMovable(false);
+    if (this->model<AdapterItemModel>()) {
+        auto itemDelegate = static_cast<TableItemDelegate*>(itemView->itemDelegate());
+        toolbar.addAction(new AddRowAction(entityName, itemDelegate, sortModel, itemView, this));
+        toolbar.addAction(new DeleteRowAction(entityName, sortModel, itemView, this));
+    }
+    if (this->model<ChangeTrackingItemModel>()) {
+        toolbar.addAction(new UndoChangeAction(sortModel, itemView, this));
+        toolbar.addAction(finances::saveAction(window, sortModel));
+    }
     toolbar.addAction(finances::reloadAction(window));
     toolbar.addWidget(filterInput);
 
@@ -47,15 +57,19 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
     connect(messageStore, SIGNAL(isReady()), this, SLOT(clearStatusMessage()));
 
     window->installEventFilter(this);
+    if (this->model<ChangeTrackingItemModel>()) {
+        new ChangeHandler{this, sortModel, [window](const ChangeTrackingItemModel* model) {
+            window->setWindowModified(model->hasUnsavedChanges());
+        }};
+        connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
+        connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
+            [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
+    }
     auto tableView = qobject_cast<QTableView*>(itemView);
     if (tableView) {
         tableView->resizeColumnsToContents();
         // tableView->verticalHeader()->setDefaultSectionSize(5); // minimize row height
     }
-}
-
-void EntityView::setModel(QAbstractItemModel *model) {
-    sortModel->setSourceModel(model);
 }
 
 void EntityView::addActions(const QList<QAction *> &actions) {
@@ -103,6 +117,15 @@ void EntityView::clearStatusMessage() {
     restoreSelection();
 }
 
+void EntityView::showValidation(const QModelIndex& index) {
+    auto selectionModel = itemView->selectionModel();
+    // make sure index is in selection
+    if (!selectionModel->hasSelection()) selectionModel->select(index, QItemSelectionModel::Select);
+    auto message = index.data(finances::ValidationMessageRole);
+    if (!message.isNull()) statusBar.showMessage(message.toString());
+    else statusBar.clearMessage();
+}
+
 bool EntityView::eventFilter(QObject *obj, QEvent *event) {
     if (event->isInputEvent() && event->type() == QEvent::ShortcutOverride) {
         auto keyEvent = static_cast<QKeyEvent*>(event);
@@ -111,6 +134,11 @@ bool EntityView::eventFilter(QObject *obj, QEvent *event) {
             return true;
         }
     } else if (event->type() == QEvent::Close) {
+        auto model = this->model<ChangeTrackingItemModel>();
+        if (model && !dialog::confirmDiscardChanges(window, model)) {
+            event->ignore();
+            return true;
+        }
         auto settingsGroup = window->property(SETTINGS_GROUP_PROP);
         if (settingsGroup.isValid()) settings::saveWindowState(settingsGroup.toString(), window, sortModel->sourceModel(), viewHeader);
     }
@@ -128,80 +156,4 @@ void EntityView::restoreSelection() {
         itemView->setCurrentIndex(index.siblingAtColumn(column));
         lastSelection.clear();
     }
-}
-
-/////////////// EditEntityView ///////////////
-
-EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
-                               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName,
-                               bool addRemove)
-    : EntityView{window, messageStore, model, itemView, viewHeader, entityName}
-    , saveAction{finances::saveAction(window)}
-{
-    // TODO replace setModel() with connect(sortModel, SIGNAL(sourceModelChanged()), this, SLOT(modelChanged()));
-    setModel(model);
-    auto itemDelegate = static_cast<TableItemDelegate*>(itemView->itemDelegate());
-    auto firstAction = toolbar.actions().constFirst();
-    if (addRemove) {
-        toolbar.insertAction(firstAction, new AddRowAction(entityName, itemDelegate, sortModel, itemView, this));
-        toolbar.insertAction(firstAction, new DeleteRowAction(entityName, sortModel, itemView, this));
-    }
-    toolbar.insertAction(firstAction, new UndoChangeAction(sortModel, itemView, this));
-    toolbar.insertAction(firstAction, saveAction);
-
-    connect(itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(showValidation(QModelIndex)));
-    connect(itemView->itemDelegate(), &TableItemDelegate::closeEditor, this,
-            [this]() { showValidation(this->itemView->selectionModel()->currentIndex()); });
-}
-
-EditEntityView::EditEntityView(QWidget *window, StatusMessageStore* messageStore, ChangeTrackingItemModel *model,
-                               QTableView *view, const QString &entityName, bool addRemove)
-    : EditEntityView(window, messageStore, model, view, view->horizontalHeader(), entityName, addRemove)
-{}
-
-void EditEntityView::setModel(ChangeTrackingItemModel* model) {
-    // need to connect to the source model because some signals are emitted by the proxy model before
-    // the source model has completed the change.
-    auto oldModel = sortModel->sourceModel();
-    if (oldModel) {
-        disconnect(oldModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-        disconnect(oldModel, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
-        disconnect(oldModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
-        disconnect(oldModel, SIGNAL(modelReset()), this, SLOT(dataChanged()));
-    }
-    EntityView::setModel(model);
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(dataChanged()));
-    connect(model, SIGNAL(modelReset()), this, SLOT(dataChanged()));
-}
-
-bool EditEntityView::confirmLoadData() {
-    return dialog::confirmDiscardChanges(window, model());
-}
-
-void EditEntityView::confirmClose(QCloseEvent *event, const char *settingsGroup) {
-    if (!dialog::confirmDiscardChanges(window, model())) event->ignore();
-}
-
-void EditEntityView::dataChanged() {
-    auto model = this->model();
-    saveAction->setEnabled(model->hasUnsavedChanges() && model->isValid());
-    window->setWindowModified(model->hasUnsavedChanges());
-}
-
-void EditEntityView::showValidation(const QModelIndex &index) {
-    // make sure index is in selection
-    if (!itemView->selectionModel()->hasSelection()) itemView->selectionModel()->select(index, QItemSelectionModel::Select);
-    auto message = index.data(finances::ValidationMessageRole);
-    if (!message.isNull()) statusBar.showMessage(message.toString());
-    else statusBar.clearMessage();
-}
-
-bool EditEntityView::eventFilter(QObject *obj, QEvent *event) {
-    if (event->type() == QEvent::Close) {
-        confirmClose(static_cast<QCloseEvent*>(event), nullptr);
-        return !event->isAccepted() || EntityView::eventFilter(obj, event);
-    }
-    return EntityView::eventFilter(obj, event);
 }

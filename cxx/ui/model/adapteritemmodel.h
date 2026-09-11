@@ -2,6 +2,7 @@
 #define ADAPTER_ITEM_MODEL_H
 
 #include "columnadapter.h"
+#include "changetrackingitemmodel.h"
 #include "service/model/basedomain.h"
 #include <QAbstractItemModel>
 
@@ -9,15 +10,6 @@ template<class Row>
 concept Copyable = requires(Row &t){
     { new Row() } -> std::convertible_to<Row*>;
     { new Row(t) } -> std::convertible_to<Row*>;
-};
-
-class ChangeTrackingItemModel : public QAbstractItemModel {
-public:
-    ChangeTrackingItemModel(QObject* parent = nullptr);
-
-    virtual bool hasUnsavedChanges() const = 0;
-    virtual void clearChanges() = 0;
-    virtual bool isValid() const = 0;
 };
 
 /**
@@ -44,10 +36,11 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
+    void undoChange(const QModelIndex &index) override;
+
 public Q_SLOTS:
     virtual QModelIndex queueAdd(const QModelIndex &selectedIndex = QModelIndex{}) = 0;
     virtual void queueDelete(const QModelIndex &index);
-    virtual void undoChange(const QModelIndex &index);
     /** @brief Handle values added to the store. `PodItemModel` adds the connection to the store. */
     virtual void valuesAdded(const QList<domain_id>& ids);
     /** @brief Handle values being removed from the store. `PodItemModel` adds the connection to the store. */

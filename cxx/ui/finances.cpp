@@ -1,5 +1,6 @@
 #include "finances.h"
 #include "uicontext.h"
+#include "ui/model/changetrackingitemmodel.h"
 #include "ui/widget/connectiondialog.h"
 #include <QFile>
 #include <QFontDatabase>
@@ -187,8 +188,12 @@ namespace finances {
         }
     };
 
-    QAction *saveAction(QWidget *window, const char *invokable) {
-        return new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+    QAction *saveAction(QWidget *window, SortFilterProxyModel* sortModel, const char *invokable) {
+        auto action = new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+        new ChangeHandler{window, sortModel, [action](const ChangeTrackingItemModel* model) {
+            action->setEnabled(model->hasUnsavedChanges() && model->isValid());
+        }};
+        return action;
     }
 
     QAction *reloadAction(QWidget *window, const char *invokable) {

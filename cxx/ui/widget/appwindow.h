@@ -27,11 +27,11 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 };
 
-template<class View = EditEntityView, class Model = AdapterItemModel>
-    requires std::is_base_of_v<EntityView, View> && std::is_base_of_v<QAbstractItemModel, Model>
+template<class Model = AdapterItemModel>
+    requires std::is_base_of_v<QAbstractItemModel, Model>
 class EntityWindow : public AppWindow {
 protected:
-    View entityView;
+    EntityView entityView;
 
     explicit EntityWindow(const QString &entityName, Model *model, QAbstractItemView *itemView,
                           QHeaderView *viewHeader, StatusMessageStore* messageStore)
@@ -54,7 +54,7 @@ protected:
     }
 };
 
-class ReadOnlyEntityWindow : public EntityWindow<EntityView, QAbstractItemModel> {
+class ReadOnlyEntityWindow : public EntityWindow<QAbstractItemModel> {
 protected:
     explicit ReadOnlyEntityWindow(const QString& entityName, QAbstractItemModel* model, QTableView* itemView, StatusMessageStore* messageStore);
     explicit ReadOnlyEntityWindow(const QString& entityName, QAbstractItemModel* model, QTreeView* itemView, StatusMessageStore* messageStore);
@@ -67,10 +67,10 @@ class EntityDialog : public QDialog {
     Q_OBJECT
 protected:
     QVBoxLayout layout;
-    EditEntityView entityView;
+    EntityView entityView;
 
     explicit EntityDialog(QMainWindow* parent, const QString& entityName, const char* settingsGroup, ChangeTrackingItemModel* model,
-                          QTableView* itemView, StatusMessageStore* messageStore, bool addRemove = true);
+                          QTableView* itemView, StatusMessageStore* messageStore);
 
     void keyPressEvent(QKeyEvent *event) override;
 

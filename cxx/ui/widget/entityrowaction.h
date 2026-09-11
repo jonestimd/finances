@@ -3,7 +3,7 @@
 
 #include "tableitemdelegate.h"
 #include "ui/finances.h"
-#include "ui/model/adapteritemmodel.h"
+#include "ui/model/changetrackingitemmodel.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include <QAction>
 #include <QItemSelectionModel>
@@ -18,7 +18,10 @@ public:
                              SortFilterProxyModel *sortModel, QObject *parent);
 
 protected:
-    AdapterItemModel *model() const;
+    template<class Model = ChangeTrackingItemModel>
+    Model* model() const {
+        return static_cast<Model*>(sortModel->sourceModel());
+    }
     Q_SLOT virtual void doAction() = 0;
 };
 

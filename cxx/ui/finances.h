@@ -13,6 +13,8 @@
 
 #define APP_NAME "finances"
 
+class SortFilterProxyModel;
+
 namespace finances {
     enum ItemDataRole {
         TextHighlightRole = Qt::UserRole,
@@ -111,7 +113,7 @@ namespace finances {
     QAction* iconAction(const char *iconFile, const QString &text, QObject *parent = nullptr);
     QAction* iconToggle(MaterialIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot);
 
-    QAction *saveAction(QWidget *window, const char *invokable = "saveData");
+    QAction *saveAction(QWidget *window, SortFilterProxyModel* sortModel, const char *invokable = "saveData");
     QAction *reloadAction(QWidget *window, const char *invokable = "loadData");
 
     /** @return `true` if `name` already has one of the `extensions`. */

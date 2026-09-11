@@ -10,6 +10,7 @@
 #include "ui/model/formats.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
+#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 #include <QInputDialog>
@@ -113,11 +114,11 @@ void TransactionsWindow::showAccount(domain_id accountId) {
     auto oldModel = model();
     if (accountId != oldModel->accountId) {
         auto windowCount = context->windowCount(oldModel);
-        if (windowCount > 1 || entityView.confirmLoadData()) {
+        if (windowCount > 1 || dialog::confirmDiscardChanges(this, oldModel)) {
             if (windowCount == 1) oldModel->clearChanges();
             disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
             disconnect(oldModel, SIGNAL(dataLoaded()), this, SLOT(transactionsLoaded()));
-            entityView.setModel(context->transactionsModel(accountId));
+            entityView.sortModel->setSourceModel(context->transactionsModel(accountId));
             context->transactionsModelRemoved(oldModel);
             connectModel(model());
             initializeData();
@@ -126,7 +127,7 @@ void TransactionsWindow::showAccount(domain_id accountId) {
 }
 
 void TransactionsWindow::loadData() {
-    if (entityView.confirmLoadData()) store()->load(&entityView, model()->accountId, true);
+    if (dialog::confirmDiscardChanges(this, model())) store()->load(&entityView, model()->accountId, true);
 }
 
 void TransactionsWindow::saveData() {

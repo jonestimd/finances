@@ -11,10 +11,10 @@ void AppWindow::closeEvent(QCloseEvent *event) {
 ////////////// EntityDialog //////////////
 
 EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, ChangeTrackingItemModel *model,
-    QTableView *itemView, StatusMessageStore *messageStore, bool addRemove)
+    QTableView *itemView, StatusMessageStore *messageStore)
     : QDialog{parent}
     , layout{this}
-    , entityView{this, messageStore, model, itemView, entityName, addRemove}
+    , entityView{this, messageStore, model, itemView, itemView->horizontalHeader(), entityName}
 {
     layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
@@ -29,7 +29,8 @@ EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const
 }
 
 void EntityDialog::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, entityView.model())) return;
+    auto model = entityView.model<ChangeTrackingItemModel>();
+    if (model && event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, model)) return;
     QDialog::keyPressEvent(event);
 }
 

@@ -4,6 +4,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/accountsecuritymodel.h ${CMAKE_CURRENT_LIST_DIR}/accountsecuritymodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.h ${CMAKE_CURRENT_LIST_DIR}/adapteritemmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/categorytablemodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/changetrackingitemmodel.h ${CMAKE_CURRENT_LIST_DIR}/changetrackingitemmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/columnadapter.h ${CMAKE_CURRENT_LIST_DIR}/columnadapter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/comboboxmodel.h ${CMAKE_CURRENT_LIST_DIR}/comboboxmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/companytablemodel.h ${CMAKE_CURRENT_LIST_DIR}/companytablemodel.cpp

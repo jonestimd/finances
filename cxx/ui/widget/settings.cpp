@@ -35,7 +35,7 @@ void settings::saveWindowState(const QString &group, QWidget *widget, QAbstractI
     if (model && viewHeader) saveSizes(settings, group, model, viewHeader);
 }
 
-void settings::saveWindowState(const char *group, QWidget *widget, EditEntityView *entityView) {
+void settings::saveWindowState(const char *group, QWidget *widget, EntityView *entityView) {
     auto model = entityView ? entityView->model() : nullptr;
     auto viewHeader = entityView ? entityView->viewHeader : nullptr;
     saveWindowState(group, widget, model, viewHeader);

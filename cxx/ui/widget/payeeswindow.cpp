@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "statusmessage.h"
 #include "ui/model/comboboxmodel.h"
+#include "ui/widget/dialog.h"
 
 #define SETTINGS_GROUP "payees"
 
@@ -34,7 +35,7 @@ PayeeTableModel *PayeesWindow::model() const {
 }
 
 void PayeesWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_PAYEES), true);
+    if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_PAYEES), true);
 }
 
 void PayeesWindow::saveData() {
