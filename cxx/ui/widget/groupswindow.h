@@ -5,15 +5,13 @@
 #include "ui/store/datastore.h"
 #include "ui/model/grouptablemodel.h"
 
-class GroupsWindow : public EntityWindow<> {
+class GroupsWindow : public EntityWindow<GroupTableModel> {
     Q_OBJECT
     GroupStore *store;
 
 public:
     GroupsWindow(DataStore *dataStore);
     ~GroupsWindow();
-
-    GroupTableModel *model();
 
     void loadData() override;
     void saveData() override;

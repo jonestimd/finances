@@ -39,10 +39,6 @@ SecuritiesWindow::~SecuritiesWindow() {
     delete model();
 }
 
-SecurityTableModel *SecuritiesWindow::model() const {
-    return entityView.model<SecurityTableModel>();
-}
-
 void SecuritiesWindow::loadData() {
     if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, true);
 }

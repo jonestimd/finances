@@ -4,6 +4,10 @@
 
 AppWindow::AppWindow(QWidget *parent) : QMainWindow{parent} {}
 
+void AppWindow::saveData() {
+    qCritical("saveData not implemented");
+}
+
 void AppWindow::closeEvent(QCloseEvent *event) {
     emit closed(this);
 }
@@ -33,13 +37,3 @@ void EntityDialog::keyPressEvent(QKeyEvent *event) {
     if (model && event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, model)) return;
     QDialog::keyPressEvent(event);
 }
-
-////////////// ReadOnlyEntityWindow //////////////
-
-ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTableView *itemView, StatusMessageStore *messageStore)
-    : EntityWindow{entityName, model, itemView, messageStore} {}
-
-ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTreeView *itemView, StatusMessageStore *messageStore)
-    : EntityWindow{entityName, model, itemView, messageStore} {}
-
-void ReadOnlyEntityWindow::saveData() {}

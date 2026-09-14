@@ -24,10 +24,6 @@ GroupsWindow::~GroupsWindow() {
     delete model();
 }
 
-GroupTableModel *GroupsWindow::model() {
-    return entityView.model<GroupTableModel>();
-}
-
 void GroupsWindow::loadData() {
     if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_GROUPS), true);
 }

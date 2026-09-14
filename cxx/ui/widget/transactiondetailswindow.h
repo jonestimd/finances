@@ -9,7 +9,7 @@ class UiContext;
 /**
  * @brief `TransactionDetailsWindow` displays transaction search results.
  */
-class TransactionDetailsWindow : public ReadOnlyEntityWindow {
+class TransactionDetailsWindow : public EntityWindow<TransactionDetailTableModel> {
     Q_OBJECT
     UiContext* const context;
     const DetailSearchCriteria criteria;
@@ -19,10 +19,6 @@ public:
     ~TransactionDetailsWindow();
 
     void loadData() override;
-
-    inline TransactionDetailTableModel* model() const {
-        return static_cast<TransactionDetailTableModel*>(entityView.model());
-    }
 
 private:
     inline QTableView* tableView() const {

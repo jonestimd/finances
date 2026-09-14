@@ -35,10 +35,6 @@ CategoriesWindow::~CategoriesWindow() {
     delete model();
 }
 
-CategoryTableModel *CategoriesWindow::model() {
-    return entityView.model<CategoryTableModel>();
-}
-
 void CategoriesWindow::loadData() {
     if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_CATEGORIES), true);
 }

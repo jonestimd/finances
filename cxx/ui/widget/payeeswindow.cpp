@@ -30,10 +30,6 @@ PayeesWindow::~PayeesWindow() {
     delete model();
 }
 
-PayeeTableModel *PayeesWindow::model() const {
-    return entityView.model<PayeeTableModel>();
-}
-
 void PayeesWindow::loadData() {
     if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_PAYEES), true);
 }

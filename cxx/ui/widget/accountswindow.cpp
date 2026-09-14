@@ -66,10 +66,6 @@ AccountsWindow::~AccountsWindow() {
     if (companiesDialog) delete companiesDialog;
 }
 
-AccountTableModel *AccountsWindow::model() {
-    return entityView.model<AccountTableModel>();
-}
-
 void AccountsWindow::loadData() {
     if (dialog::confirmDiscardChanges(this, model())) dataStore->accountStore->load(&entityView, true);
 }

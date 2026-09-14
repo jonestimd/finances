@@ -106,10 +106,6 @@ TransactionsWindow::~TransactionsWindow() {
     context->transactionsWindowClosed(this);
 }
 
-TransactionTableModel *TransactionsWindow::model() const {
-    return entityView.model<TransactionTableModel>();
-}
-
 void TransactionsWindow::showAccount(domain_id accountId) {
     auto oldModel = model();
     if (accountId != oldModel->accountId) {

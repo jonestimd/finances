@@ -7,7 +7,7 @@
 #include <QMainWindow>
 #include <QTableView>
 
-class PayeesWindow : public EntityWindow<> {
+class PayeesWindow : public EntityWindow<PayeeTableModel> {
     Q_OBJECT
     PayeeStore *store;
     QAction *mergeAction;
@@ -15,8 +15,6 @@ class PayeesWindow : public EntityWindow<> {
 public:
     PayeesWindow(DataStore *dataStore);
     ~PayeesWindow();
-
-    PayeeTableModel *model() const;
 
     void loadData() override;
     void saveData() override;

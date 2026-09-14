@@ -9,7 +9,7 @@
 
 class UiContext;
 
-class TransactionsWindow : public EntityWindow<> {
+class TransactionsWindow : public EntityWindow<TransactionTableModel> {
     Q_OBJECT
     UiContext* const context;
     QLabel* const clearedBalance{new QLabel()};
@@ -20,8 +20,6 @@ class TransactionsWindow : public EntityWindow<> {
 public:
     TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
     ~TransactionsWindow();
-
-    TransactionTableModel* model() const;
 
     void showAccount(domain_id accountId);
 

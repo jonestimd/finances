@@ -8,7 +8,7 @@
 #include <QTableView>
 #include <ui/model/comboboxmodel.h>
 
-class CategoriesWindow : public EntityWindow<> {
+class CategoriesWindow : public EntityWindow<CategoryTableModel> {
     Q_OBJECT
     CategoryStore *store;
     QAction *moveAction;
@@ -18,8 +18,6 @@ class CategoriesWindow : public EntityWindow<> {
 public:
     CategoriesWindow(DataStore *dataStore);
     ~CategoriesWindow();
-
-    CategoryTableModel *model();
 
     void loadData() override;
     void saveData() override;

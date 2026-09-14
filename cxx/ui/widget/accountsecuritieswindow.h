@@ -2,6 +2,7 @@
 #define ACCOUNT_SECURITIES_WINDOW_H
 
 #include "treeview.h"
+#include "ui/model/accountsecuritymodel.h"
 #include "ui/store/datastore.h"
 #include "ui/widget/appwindow.h"
 
@@ -12,7 +13,7 @@ class UiContext;
  * @details The data in the window is updated when the window is shown or when transactions
  * are saved while the window is visible.
  */
-class AccountSecuritiesWindow : public ReadOnlyEntityWindow {
+class AccountSecuritiesWindow : public EntityWindow<AccountSecurityTableModel> {
     Q_OBJECT
     DataStore *const dataStore;
 
