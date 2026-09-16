@@ -32,7 +32,7 @@ public:
 public Q_SLOTS:
     void modelReset();
     void expandRow(const QModelIndex& parent, int first, int last);
-    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void selectionChanged(const QModelIndex &current);
     void showRecentsMenu(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void showMoveDialog();
     void showSearchDialog();

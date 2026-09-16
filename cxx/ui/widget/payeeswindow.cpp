@@ -17,8 +17,7 @@ PayeesWindow::PayeesWindow(DataStore *dataStore)
     entityView.insertAction(2, mergeAction);
 
     connect(store, SIGNAL(valuesLoaded(QList<domain_id>)), this, SLOT(setPayees(QList<domain_id>)));
-    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged()));
 
     if (store->load(&entityView, tr(LOADING_PAYEES))) model()->setRows(store->ids());
 
@@ -62,6 +61,6 @@ void PayeesWindow::merge() {
     }
 }
 
-void PayeesWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+void PayeesWindow::selectionChanged() {
     mergeAction->setEnabled(entityView.selectedIndex().isValid());
 }

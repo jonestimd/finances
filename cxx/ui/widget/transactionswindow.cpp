@@ -67,7 +67,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     connect(dataStore->transactionStore, SIGNAL(showRecents(QList<PendingTransaction*>)), this, SLOT(showRecentsMenu(QList<PendingTransaction*>)));
     connect(entityView.sortModel, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(expandRow(QModelIndex,int,int)));
     connect(entityView.sortModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged(QModelIndex,QModelIndex)));
+    connect(entityView.itemView->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectionChanged(QModelIndex)));
     if (entityView.model()->rowCount() > 0) treeView()->expandAll();
 
     setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP(isSecurity()));
@@ -148,8 +148,9 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
     }
 }
 
-void TransactionsWindow::selectionChanged(const QModelIndex &current, const QModelIndex &previous) {
-    moveAction->setEnabled(!model()->transactionHasChanges(current));
+void TransactionsWindow::selectionChanged(const QModelIndex &current) {
+    auto index = entityView.sortModel->mapToSource(current);
+    moveAction->setEnabled(!model()->transactionHasChanges(index));
 }
 
 void TransactionsWindow::showRecentsMenu(const QList<PendingTransaction*> transactions) {

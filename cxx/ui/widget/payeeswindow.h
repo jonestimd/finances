@@ -24,6 +24,6 @@ public:
 public Q_SLOTS:
     void setPayees(const QList<domain_id> payeeIds);
     void merge();
-    void selectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void selectionChanged();
 };
 #endif // PAYEESWINDOW_H
