@@ -13,7 +13,9 @@ public:
 
     QList<domain_id> getSplits(domain_id securityId) const;
 
-    QDecNumber adjustedShares(domain_id securityId, const QDate &date, const QDecNumber &shares) const;
+    QDecNumber adjustedShares(domain_id securityId, const QDate &purchaseDate, const QDecNumber &shares, const QDate asOfDate = {}) const;
+
+    SplitRatio totalSplits(domain_id securityId, const QDate &purchaseDate, const QDate asOfDate = {}) const;
 };
 
 #endif // STOCK_SPLIT_STORE_H

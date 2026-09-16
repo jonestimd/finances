@@ -2,7 +2,7 @@
 #define SECURITY_TABLE_MODEL_H
 
 #include <QAbstractItemModel>
-#include "adapteritemmodel.h"
+#include "changetrackingitemmodel.h"
 #include "service/model/securitylot.h"
 #include "service/model/transactiondetail.h"
 #include "ui/model/columnadapter.h"
@@ -42,6 +42,12 @@ public:
     bool isValid() const override;
     void undoChange(const QModelIndex& index) override;
 
+    QList<const SecurityLot*> unsavedAdds() const;
+    QList<const SecurityLot*> unsavedDeletes() const;
+    QList<SecurityLot*> unsavedChanges() const;
+
+    /** @brief Returns purchase shares adjusted for splits. */
+    QDecNumber purchaseShares(const SecurityPurchase* purchase) const;
     /** @brief Returns shares for an existing security lot. */
     QDecNumber lotShares(domain_id purchaseId) const;
     /** @brief Returns current (unsaved) available shares for the purchase. */

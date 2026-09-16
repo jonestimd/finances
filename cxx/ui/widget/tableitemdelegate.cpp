@@ -104,7 +104,7 @@ void TableItemDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, cons
         p->setFont(bold(option.font));
         p->fillRect(rect, option.backgroundBrush);
         rect.adjust(0, 0, -margin, 0);
-        style->drawItemText(p, rect, Qt::AlignRight, option.palette, opt.state & Qt::ItemIsEnabled, displayValue, QPalette::Text);
+        style->drawItemText(p, rect, Qt::AlignRight | Qt::AlignVCenter, option.palette, opt.state & Qt::ItemIsEnabled, displayValue, QPalette::Text);
     }
 }
 

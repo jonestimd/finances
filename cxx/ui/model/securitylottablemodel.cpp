@@ -25,32 +25,6 @@ namespace securitylottable {
             return message;
         }
     };
-
-    class AvailableSharesAdapter : public AmountColumnAdapter<SecurityPurchase, optional_id> {
-        SecurityLotTableModel* const model;
-
-    public:
-        AvailableSharesAdapter(const QString title, SecurityLotTableModel* model)
-            : AmountColumnAdapter{title, &SecurityPurchase::id, securityShares, false}
-            , model{model} {}
-
-        QVariant rowValue(const SecurityPurchase* row) const override {
-            return QVariant::fromValue(model->availableShares(row));
-        }
-    };
-
-    class AllocatedSharesAdapter : public AmountColumnAdapter<SecurityPurchase, optional_id> {
-        SecurityLotTableModel* const model;
-
-    public:
-        AllocatedSharesAdapter(const QString title, SecurityLotTableModel* model)
-            : AmountColumnAdapter{title, &SecurityPurchase::id, securityShares, true, new SharesValidator{model}}
-            , model{model} {}
-
-        QVariant rowValue(const SecurityPurchase* row) const override {
-            return QVariant::fromValue(model->allocatedShares(row->id.value()));
-        }
-    };
 }
 
 using namespace securitylottable;
@@ -63,10 +37,13 @@ SecurityLotTableModel::SecurityLotTableModel(DataStore* dataStore, const Transac
     , sale{sale}
     , columns{
         new FormatColumnAdapter{tr(DATE_TITLE), &SecurityPurchase::transactionDate, dateFormat, false},
-        new AmountColumnAdapter{tr(SHARES_TITLE), &SecurityPurchase::totalShares, securityShares, false},
-        new AmountColumnAdapter{tr("Price"), &SecurityPurchase::price, dollarFormat},
-        new AvailableSharesAdapter{tr("Available Shares"), this},
-        new AllocatedSharesAdapter{tr("Allocated Shares"), this},
+        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr(SHARES_TITLE),
+            [this](const SecurityPurchase* row) { return purchaseShares(row); }, securityShares},
+        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Price"), &SecurityPurchase::price, dollarFormat},
+        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Available Shares"),
+            [this](const SecurityPurchase* row) { return availableShares(row); }, securityShares},
+        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Allocated Shares"),
+            [this](const SecurityPurchase* row) { return allocatedShares(row->id.value()); }, securityShares, true, new SharesValidator{this}},
     }
 {}
 
@@ -161,9 +138,29 @@ void SecurityLotTableModel::undoChange(const QModelIndex& index) {
         auto purchaseId = purchases.at(index.row())->id.value();
         if (sharesByPurchaseId.contains(purchaseId)) {
             sharesByPurchaseId.remove(purchaseId);
-            emit dataChanged(index, index);
+            emit dataChanged(index.siblingAtColumn(index.column()-1), index);
         }
     }
+}
+
+QList<const SecurityLot*> SecurityLotTableModel::unsavedAdds() const {
+    QList<const SecurityLot*> adds;
+    auto saleDate = dataStore->transactionStore->value(sale->transactionId)->date;
+    for (auto purchase : std::as_const(purchases)) {
+        auto purchaseId = purchase->id.value();
+        if (sharesByPurchaseId.contains(purchaseId) && !lotsByPurchaseId.contains(purchaseId)) {
+            auto saleShares = sharesByPurchaseId.value(purchaseId);
+            auto purchaseShares = dataStore->securityStore->stockSplitStore.adjustedShares(sale->exchangeAssetId.value(), saleDate, saleShares);
+            adds.append(new SecurityLot{purchaseId, purchaseShares, sale->id.value(), saleShares});
+        }
+    }
+    return adds;
+}
+
+QDecNumber SecurityLotTableModel::purchaseShares(const SecurityPurchase* purchase) const {
+    auto saleTx = dataStore->transactionStore->value(sale->transactionId);
+    return dataStore->securityStore->stockSplitStore.adjustedShares(
+        saleTx->securityId.value(), purchase->transactionDate, purchase->totalShares, saleTx->date);
 }
 
 QDecNumber SecurityLotTableModel::lotShares(domain_id purchaseId) const {
@@ -172,7 +169,11 @@ QDecNumber SecurityLotTableModel::lotShares(domain_id purchaseId) const {
 
 QDecNumber SecurityLotTableModel::availableShares(const SecurityPurchase* purchase) const {
     auto purchaseId = purchase->id.value();
-    return purchase->availableShares() + lotShares(purchaseId) - allocatedShares(purchaseId);
+    auto saleTx = dataStore->transactionStore->value(sale->transactionId);
+    auto securityId = saleTx->securityId.value();
+    auto shares = dataStore->securityStore->stockSplitStore.adjustedShares(
+            securityId, purchase->transactionDate, purchase->availableShares(), saleTx->date);
+    return shares + lotShares(purchaseId) - allocatedShares(purchaseId);
 }
 
 QDecNumber SecurityLotTableModel::allocatedShares(domain_id purchaseId) const {

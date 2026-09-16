@@ -14,8 +14,8 @@ public:
     NumberColumnAdapter(QString title, Value T::* field, bool editable = false, ValidatorFactory *factory = nullptr)
         : FieldColumnAdapter<T, Value>(title, field, editable, factory) {}
 
-    NumberColumnAdapter(QString title, Value (T::*getter)() const)
-        : FieldColumnAdapter<T, Value>(title, getter) {}
+    NumberColumnAdapter(QString title, std::function<Value(const T*)> getter, bool editable = false, ValidatorFactory *factory = nullptr)
+        : FieldColumnAdapter<T, Value>(title, getter, editable, factory) {}
 
     virtual QVariant value(const T *row, const QModelIndex &index, const QVariant current, int role) const override {
         if (role == Qt::TextAlignmentRole) return numberAlignment; // TODO move

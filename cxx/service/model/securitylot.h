@@ -26,6 +26,7 @@ public:
 
     SecurityLot();
     SecurityLot(const QSqlRecord &record);
+    SecurityLot(domain_id purchaseId, QDecNumber purchaseShares, domain_id relatedDetailId, QDecNumber adjustedShares);
 };
 
 #endif // SECURITYLOT_H

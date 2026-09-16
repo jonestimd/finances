@@ -28,10 +28,16 @@ public:
     static TransactionDetail* copyRecent(const TransactionDetail* detail);
 };
 
+/**
+ * @brief The SecurityPurchase class provides account specific data for a purchase.
+ * @sa TransactionDetailDao::findPreviousPurchases.
+ */
 class SecurityPurchase : public TransactionDetail {
 public:
     QDate transactionDate{};
+    /** @brief Total shares purchased in or transfered to the account (unadjusted for splits). */
     QDecNumber totalShares{0};
+    /** @brief Shares allocated to sales (unadjusted for splits). */
     QDecNumber allocatedShares{0};
 
     SecurityPurchase();

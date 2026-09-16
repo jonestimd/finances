@@ -82,6 +82,7 @@ struct extract_value<std::optional<V>> {
 template<class T, class Value = QVariant>
 class FieldColumnAdapter : public ColumnAdapter<T> {
     typedef extract_value<Value>::value_type optional_value;
+public:
     struct Accessor {
         virtual Value getValue(const T* row) const = 0;
         virtual void setValue(T* row, Value value) const {}
@@ -101,13 +102,13 @@ class FieldColumnAdapter : public ColumnAdapter<T> {
         }
     };
 
-    class GetAccessor : public Accessor {
-        Value (T::* const getter)() const;
+    class FunctionAccessor : public Accessor {
+        std::function<Value(const T*)> getter;
     public:
-        GetAccessor(Value (T::*getter)() const) : getter{getter} {}
+        FunctionAccessor(std::function<Value(const T*)> getter) : getter{getter} {}
 
         Value getValue(const T* row) const override {
-            return (row->*getter)();
+            return getter(row);
         }
     };
 
@@ -118,10 +119,10 @@ public:
         : ColumnAdapter<T>(title, [editable](const T *r) { return editable; }, factory), accessor{new FieldAccessor{field}} {}
 
     FieldColumnAdapter(QString title, Value T::* field, ColumnAdapter<T>::IsEditable isEditable, ValidatorFactory *factory = nullptr)
-        : ColumnAdapter<T>{factory, title, isEditable, factory}, accessor{new FieldAccessor{field}} {}
+        : ColumnAdapter<T>{title, isEditable, factory}, accessor{new FieldAccessor{field}} {}
 
-    FieldColumnAdapter(QString title, Value (T::*getter)() const)
-        : ColumnAdapter<T>{title, false}, accessor{new GetAccessor{getter}} {}
+    FieldColumnAdapter(QString title, std::function<Value(const T*)> getter, bool editable = false, ValidatorFactory *factory = nullptr)
+        : ColumnAdapter<T>{title, editable, factory}, accessor{new FunctionAccessor{getter}} {}
 
     ~FieldColumnAdapter() {
         delete accessor;

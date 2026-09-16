@@ -68,7 +68,7 @@ SecurityPurchase::SecurityPurchase(const QSqlRecord &record)
 {}
 
 QDecNumber SecurityPurchase::availableShares() const {
-    return (totalShares - allocatedShares).max(0);
+    return (totalShares - allocatedShares); // .max(0);
 }
 
 QDecNumber SecurityPurchase::cost() const {
