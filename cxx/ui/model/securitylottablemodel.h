@@ -8,6 +8,7 @@
 #include "ui/model/columnadapter.h"
 
 class DataStore;
+class Transaction;
 
 class SecurityLotTableModel : public ChangeTrackingItemModel {
     Q_OBJECT
@@ -19,6 +20,7 @@ class SecurityLotTableModel : public ChangeTrackingItemModel {
 
 public:
     const TransactionDetail* const sale;
+    const Transaction* const saleTx;
 
     explicit SecurityLotTableModel(DataStore* dataStore, const TransactionDetail* sale);
     ~SecurityLotTableModel();
@@ -31,6 +33,7 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
     void setRows(const QList<const SecurityPurchase*> rows, const QList<const SecurityLot*> lots);
+    void updateLots(const QList<const SecurityLot*> lots, const QList<const SecurityLot*> deletes);
 
     QModelIndex index(int row, int column, const QModelIndex& parent) const override;
     QModelIndex parent(const QModelIndex& child) const override;
@@ -46,13 +49,13 @@ public:
     QList<const SecurityLot*> unsavedDeletes() const;
     QList<SecurityLot*> unsavedChanges() const;
 
-    /** @brief Returns purchase shares adjusted for splits. */
+    /** @returns Purchase shares adjusted for splits. */
     QDecNumber purchaseShares(const SecurityPurchase* purchase) const;
-    /** @brief Returns shares for an existing security lot. */
+    /** @returns Shares for an existing security lot. */
     QDecNumber lotShares(domain_id purchaseId) const;
-    /** @brief Returns current (unsaved) available shares for the purchase. */
+    /** @returns Current (unsaved) available shares for the purchase. */
     QDecNumber availableShares(const SecurityPurchase* purchaseId) const;
-    /** @brief Returns current (unsaved) allocation for the purchase. */
+    /** @returns Current (unsaved) allocation for the purchase. */
     QDecNumber allocatedShares(domain_id purchaseId) const;
     QDecNumber totalAllocatedShares() const;
 
@@ -64,6 +67,7 @@ public Q_SLOTS:
     void discardLots();
 
 private:
+    QDecNumber price(const SecurityPurchase* purchase) const;
     void allocateShares(std::function<bool(const SecurityPurchase*, const SecurityPurchase*)> less);
     void setAllocation(domain_id purchaseId, QDecNumber shares);
     void reset();

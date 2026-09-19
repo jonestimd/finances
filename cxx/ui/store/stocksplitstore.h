@@ -12,8 +12,10 @@ public:
     StockSplitStore(StockSplitService *service, StatusMessageStore* messageStore);
 
     QList<domain_id> getSplits(domain_id securityId) const;
-
+    
+    QDecNumber adjustedShares(const SecurityPurchase* purchase, const Transaction* sale, QDecNumber shares) const;
     QDecNumber adjustedShares(domain_id securityId, const QDate &purchaseDate, const QDecNumber &shares, const QDate asOfDate = {}) const;
+    QDecNumber purchaseShares(const Transaction* sale, const QDate &purchaseDate, const QDecNumber &saleShares) const;
 
     SplitRatio totalSplits(domain_id securityId, const QDate &purchaseDate, const QDate asOfDate = {}) const;
 };

@@ -15,8 +15,8 @@ namespace securitylottable {
         const QString isValid(const QModelIndex& index, QString& value) const override {
             auto purchase = model->getRow(index);
             auto shares = QDecNumber{value.toLocal8Bit().constData()};
-            if (shares > purchase->availableShares() + model->lotShares(purchase->id.value())) {
-                return tr("%1 exceeds the purchase shares").arg(columnHeader(index));
+            if (shares > model->availableShares(purchase) + model->lotShares(purchase->id.value())) {
+                return tr("%1 exceeds the available shares").arg(columnHeader(index));
             }
             if (shares > model->sale->assetQuantity.value().abs()) {
                 return tr("%1 exceeds the sale shares").arg(columnHeader(index));
@@ -35,11 +35,13 @@ SecurityLotTableModel::SecurityLotTableModel(DataStore* dataStore, const Transac
     : ChangeTrackingItemModel{}
     , dataStore{dataStore}
     , sale{sale}
+    , saleTx{dataStore->transactionStore->value(sale->transactionId)}
     , columns{
         new FormatColumnAdapter{tr(DATE_TITLE), &SecurityPurchase::transactionDate, dateFormat, false},
         new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr(SHARES_TITLE),
             [this](const SecurityPurchase* row) { return purchaseShares(row); }, securityShares},
-        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Price"), &SecurityPurchase::price, dollarFormat},
+        new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Price"),
+            [this](const SecurityPurchase* row) { return price(row); }, dollarFormat},
         new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Available Shares"),
             [this](const SecurityPurchase* row) { return availableShares(row); }, securityShares},
         new AmountColumnAdapter<SecurityPurchase, QDecNumber>{tr("Allocated Shares"),
@@ -107,6 +109,28 @@ void SecurityLotTableModel::setRows(const QList<const SecurityPurchase*> rows, c
     endResetModel();
 }
 
+void SecurityLotTableModel::updateLots(const QList<const SecurityLot*> lots, const QList<const SecurityLot*> deletes) {
+    beginResetModel();
+    auto purchasesById = domain::byId(purchases);
+    for (auto lot : lots) {
+        auto purchase = purchasesById.value(lot->purchaseDetailId);
+        auto oldLot = lotsByPurchaseId.take(lot->purchaseDetailId);
+        if (oldLot) {
+            purchase->allocatedShares -= oldLot->purchaseShares;
+            delete oldLot;
+        }
+        lotsByPurchaseId.insert(lot->purchaseDetailId, lot);
+        purchase->allocatedShares += lot->purchaseShares;
+    }
+    for (auto lot : deletes) {
+        lotsByPurchaseId.remove(lot->purchaseDetailId);
+        purchasesById.value(lot->purchaseDetailId)->allocatedShares -= lot->purchaseShares;
+        delete lot;
+    }
+    sharesByPurchaseId.clear();
+    endResetModel();
+}
+
 QModelIndex SecurityLotTableModel::index(int row, int column, const QModelIndex& parent) const {
     return hasIndex(row, column, parent) ? createIndex(row, column) : QModelIndex{};
 }
@@ -145,22 +169,42 @@ void SecurityLotTableModel::undoChange(const QModelIndex& index) {
 
 QList<const SecurityLot*> SecurityLotTableModel::unsavedAdds() const {
     QList<const SecurityLot*> adds;
-    auto saleDate = dataStore->transactionStore->value(sale->transactionId)->date;
     for (auto purchase : std::as_const(purchases)) {
         auto purchaseId = purchase->id.value();
         if (sharesByPurchaseId.contains(purchaseId) && !lotsByPurchaseId.contains(purchaseId)) {
             auto saleShares = sharesByPurchaseId.value(purchaseId);
-            auto purchaseShares = dataStore->securityStore->stockSplitStore.adjustedShares(sale->exchangeAssetId.value(), saleDate, saleShares);
+            auto purchaseShares = dataStore->securityStore->stockSplitStore.purchaseShares(saleTx, purchase->transactionDate, saleShares);
             adds.append(new SecurityLot{purchaseId, purchaseShares, sale->id.value(), saleShares});
         }
     }
     return adds;
 }
 
+QList<const SecurityLot*> SecurityLotTableModel::unsavedDeletes() const {
+    QList<const SecurityLot*> deletes;
+    for (auto [purchaseId, lot] : lotsByPurchaseId.asKeyValueRange()) {
+        if (allocatedShares(purchaseId).isZero()) deletes.append(lot);
+    }
+    return deletes;
+}
+
+QList<SecurityLot*> SecurityLotTableModel::unsavedChanges() const {
+    QList<SecurityLot*> changes;
+    for (auto purchase : std::as_const(purchases)) {
+        auto purchaseId = purchase->id.value();
+        auto shares = sharesByPurchaseId.value(purchaseId, QDecNumber{"NaN"});
+        if (lotsByPurchaseId.contains(purchaseId) && !shares.isNaN() && !shares.isZero()) {
+            auto change = new SecurityLot{*lotsByPurchaseId.value(purchaseId)};
+            change->adjustedShares = shares;
+            change->purchaseShares = dataStore->securityStore->stockSplitStore.purchaseShares(saleTx, purchase->transactionDate, shares);
+            changes.append(change);
+        }
+    }
+    return changes;
+}
+
 QDecNumber SecurityLotTableModel::purchaseShares(const SecurityPurchase* purchase) const {
-    auto saleTx = dataStore->transactionStore->value(sale->transactionId);
-    return dataStore->securityStore->stockSplitStore.adjustedShares(
-        saleTx->securityId.value(), purchase->transactionDate, purchase->totalShares, saleTx->date);
+    return dataStore->securityStore->stockSplitStore.adjustedShares(purchase, saleTx, purchase->accountShares);
 }
 
 QDecNumber SecurityLotTableModel::lotShares(domain_id purchaseId) const {
@@ -169,10 +213,7 @@ QDecNumber SecurityLotTableModel::lotShares(domain_id purchaseId) const {
 
 QDecNumber SecurityLotTableModel::availableShares(const SecurityPurchase* purchase) const {
     auto purchaseId = purchase->id.value();
-    auto saleTx = dataStore->transactionStore->value(sale->transactionId);
-    auto securityId = saleTx->securityId.value();
-    auto shares = dataStore->securityStore->stockSplitStore.adjustedShares(
-            securityId, purchase->transactionDate, purchase->availableShares(), saleTx->date);
+    auto shares = dataStore->securityStore->stockSplitStore.adjustedShares(purchase, saleTx, purchase->availableShares());
     return shares + lotShares(purchaseId) - allocatedShares(purchaseId);
 }
 
@@ -204,14 +245,14 @@ void SecurityLotTableModel::allocateLastIn() {
 }
 
 void SecurityLotTableModel::allocateLowestPrice() {
-    allocateShares([](const SecurityPurchase* p1, const SecurityPurchase* p2) {
-        return p1->price() < p2->price();
+    allocateShares([this](const SecurityPurchase* p1, const SecurityPurchase* p2) {
+        return price(p1) < price(p2);
     });
 }
 
 void SecurityLotTableModel::allocateHighestPrice() {
-    allocateShares([](const SecurityPurchase* p1, const SecurityPurchase* p2) {
-        return p1->price() > p2->price();
+    allocateShares([this](const SecurityPurchase* p1, const SecurityPurchase* p2) {
+        return price(p1) > price(p2);
     });
 }
 
@@ -221,6 +262,11 @@ void SecurityLotTableModel::discardLots() {
         sharesByPurchaseId.insert(purchaseId, QDecNumber{0});
     }
     emit dataChanged(index(0, AvailableShares, {}), index(purchases.size()-1, AllocatedShares, {}));
+}
+
+QDecNumber SecurityLotTableModel::price(const SecurityPurchase* purchase) const {
+    auto shares = dataStore->securityStore->stockSplitStore.adjustedShares(purchase, saleTx, purchase->assetQuantity.value());
+    return (purchase->amount / shares).abs().rescale({-2});
 }
 
 void SecurityLotTableModel::allocateShares(std::function<bool(const SecurityPurchase*, const SecurityPurchase*)> less) {

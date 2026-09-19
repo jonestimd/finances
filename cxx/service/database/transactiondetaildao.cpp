@@ -153,14 +153,14 @@ with sale as (
     group by td.id
 )
 -- shares transfered from other accounts --
-select td.*, xs.shares total_shares, ss.shares allocated_shares, tx.date
+select td.*, xs.shares account_shares, ss.shares allocated_shares, tx.date
 from tx_detail td
 join tx on td.tx_id = tx.id
 join xfer_shares xs on xs.purchase_id = td.id
 left join sale_shares ss on ss.purchase_id = td.id
 union
 -- purchases from the account --
-select td.*, td.asset_quantity total_shares, ss.shares allocated_shares, tx.date
+select td.*, td.asset_quantity account_shares, ss.shares allocated_shares, tx.date
 from sale
 join tx on tx.date <= sale.date and tx.account_id = sale.account_id and tx.security_id = sale.security_id
 join tx_detail td on td.tx_id = tx.id and td.asset_quantity > 0 and td.related_detail_id is null

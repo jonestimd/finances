@@ -35,17 +35,18 @@ public:
 class SecurityPurchase : public TransactionDetail {
 public:
     QDate transactionDate{};
-    /** @brief Total shares purchased in or transfered to the account (unadjusted for splits). */
-    QDecNumber totalShares{0};
-    /** @brief Shares allocated to sales (unadjusted for splits). */
-    QDecNumber allocatedShares{0};
+    /** @brief Shares purchased in or transfered to the account (unadjusted for splits). */
+    QDecNumber accountShares{0};
+    /** @brief Shares allocated to sales in the account (unadjusted for splits). */
+    mutable QDecNumber allocatedShares{0};
 
     SecurityPurchase();
     SecurityPurchase(const QSqlRecord& record);
 
+    /** @return unallocated purchase shares (unadjusted for splits). */
     QDecNumber availableShares() const;
+    /** @return cost of the shares in the account. */
     QDecNumber cost() const;
-    QDecNumber price() const;
 };
 
 class SearchTransactionDetail : public TransactionDetail {

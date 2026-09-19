@@ -16,12 +16,12 @@
     ")"
 
 static const auto insertQuery = R"(
-insert into security_lot (purchase_tx_detail_id, related_detail_id, purchase_shares, adjusted_shares, version, change_user, change_date)
+insert into security_lot (purchase_tx_detail_id, related_tx_detail_id, purchase_shares, adjusted_shares, version, change_user, change_date)
 values (:purchaseDetailId, :relatedDetailId, :purchaseShares, :adjustedShares, 0, :user, current_timestamp))";
 
 static const auto updateQuery = R"(
 update security_lot
-set purchase_tx_detail_id = :purchaseDetailId, related_detail_id = :relatedDetailId,
+set purchase_tx_detail_id = :purchaseDetailId, related_tx_detail_id = :relatedDetailId,
     purchase_shares = :purchaseShares, adjusted_shares = :adjustedShares,
     change_user = :user, change_date = current_timestamp, version = version + 1
 where id = :id and version = :version)";

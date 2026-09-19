@@ -118,7 +118,7 @@ public:
      */
     void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes, const QString& message) {
         doInBackground(source, message, [=, this]() {
-            auto changes = BulkUpdate{updates, adds, deletes};
+            BulkUpdate changes{updates, adds, deletes};
             update(service->update(changes, user), deletes);
             emit valuesLoaded(ids());
         });
