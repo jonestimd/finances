@@ -6,8 +6,10 @@
 #include <QDialog>
 #include <QTableView>
 
+class SecurityLot;
 class SecurityLotTableModel;
 class SortFilterProxyModel;
+class SecurityPurchase;
 class TransactionDetail;
 class UiContext;
 
@@ -24,6 +26,8 @@ public:
 
     void loadData() override;
     void saveData() override;
+
+    void setRows(const QList<const SecurityPurchase*> rows, const QList<const SecurityLot*> lots);
 
 private Q_SLOTS:
     void dataChanged();

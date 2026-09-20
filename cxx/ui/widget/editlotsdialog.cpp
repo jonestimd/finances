@@ -51,7 +51,6 @@ EditLotsDialog::EditLotsDialog(QMainWindow* parent, UiContext* context, const Tr
 
     connect(model(), SIGNAL(modelReset()), this, SLOT(dataChanged()));
     connect(model(), SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged()));
-    // TODO select editable column (shares) after loading
 }
 
 SecurityLotTableModel* EditLotsDialog::model() const {
@@ -65,6 +64,14 @@ void EditLotsDialog::loadData() {
 void EditLotsDialog::saveData() {
     auto model = this->model();
     context->dataStore->securityStore->updateLots(this, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes());
+}
+
+void EditLotsDialog::setRows(const QList<const SecurityPurchase*> rows, const QList<const SecurityLot*> lots) {
+    auto oldRowCount = model()->rowCount({});
+    model()->setRows(rows, lots);
+    if (!oldRowCount) {
+        entityView.selectIndex(entityView.sortModel->mapFromSource(model()->index(0, SecurityLotTableModel::AllocatedShares, {})));
+    }
 }
 
 void EditLotsDialog::dataChanged() {

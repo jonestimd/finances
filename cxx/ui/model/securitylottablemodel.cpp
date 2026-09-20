@@ -29,8 +29,6 @@ namespace securitylottable {
 
 using namespace securitylottable;
 
-enum Column : int {Date, TotalShares, Price, AvailableShares, AllocatedShares};
-
 SecurityLotTableModel::SecurityLotTableModel(DataStore* dataStore, const TransactionDetail* sale)
     : ChangeTrackingItemModel{}
     , dataStore{dataStore}

@@ -39,6 +39,7 @@ public:
     void insertAction(qsizetype index, QAction* action);
 
     QModelIndex selectedIndex();
+    void selectIndex(QModelIndex index);
 
     void focusItemView();
 

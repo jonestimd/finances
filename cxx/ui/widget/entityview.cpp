@@ -93,6 +93,16 @@ QModelIndex EntityView::selectedIndex() {
     return QModelIndex{};
 }
 
+void EntityView::selectIndex(QModelIndex index) {
+    if (itemView->isEnabled()) {
+        itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+    } else if (index.isValid()) {
+        lastSelection.clear();
+        lastColumn = index.column();
+        for (; index.isValid(); index = index.parent()) lastSelection.insert(0, index.row());
+    }
+}
+
 void EntityView::focusItemView() {
     if (itemView->isEnabled()) itemView->setFocus();
     else itemView->installEventFilter(new ViewFocusFilter);
@@ -100,11 +110,9 @@ void EntityView::focusItemView() {
 
 void EntityView::showStatusMessage(const QString message) {
     if (itemView->isEnabled()) {
-        lastSelection.clear();
         auto index = itemView->currentIndex();
-        lastColumn = index.column();
-        for (; index.isValid(); index = index.parent()) lastSelection.insert(0, index.row());
         itemView->setEnabled(false);
+        selectIndex(index);
     }
     statusBar.showMessage(message);
 }
@@ -153,7 +161,7 @@ void EntityView::restoreSelection() {
             index = sortModel->index(std::min(row, count-1), 0, index);
         }
         int column = std::min(lastColumn, sortModel->columnCount({})-1);
-        itemView->setCurrentIndex(index.siblingAtColumn(column));
+        itemView->selectionModel()->setCurrentIndex(index.siblingAtColumn(column), QItemSelectionModel::ClearAndSelect);
         lastSelection.clear();
     }
 }

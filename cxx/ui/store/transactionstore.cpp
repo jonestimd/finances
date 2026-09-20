@@ -155,7 +155,7 @@ void TransactionStore::findTransactions(TransactionDetailsWindow* window, const 
 void TransactionStore::findPurchases(EditLotsDialog* dialog, const TransactionDetail* sale) {
     doInBackground(dialog, tr("Loading Security Lots"), [=, this]() {
         auto [lots, purchases] = detailStore.service->findAvailableLots(sale);
-        QMetaObject::invokeMethod(dialog->model(), &SecurityLotTableModel::setRows, purchases, lots);
+        QMetaObject::invokeMethod(dialog, &EditLotsDialog::setRows, purchases, lots);
     });
 }
 

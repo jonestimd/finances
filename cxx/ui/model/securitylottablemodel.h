@@ -22,6 +22,8 @@ public:
     const TransactionDetail* const sale;
     const Transaction* const saleTx;
 
+    enum Column : int {Date, TotalShares, Price, AvailableShares, AllocatedShares};
+
     explicit SecurityLotTableModel(DataStore* dataStore, const TransactionDetail* sale);
     ~SecurityLotTableModel();
 
