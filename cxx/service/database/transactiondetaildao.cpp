@@ -28,12 +28,15 @@
     "    constraint tx_detail_tx_type_fk foreign key (tx_category_id) references tx_category (id)\n" \
     ")"
 
-#define GET_ALL_QUERY \
-    "with sale_lots as (\n" \
+#define SALE_LOTS_CTE \
+    "sale_lots as (\n" \
     "    select related_tx_detail_id, sum(adjusted_shares) shares_out\n" \
     "    from security_lot\n" \
     "    group by related_tx_detail_id\n" \
-    ")\n" \
+    ")\n"
+
+#define GET_ALL_QUERY \
+    "with " SALE_LOTS_CTE \
     "select td.*, rx.account_id transfer_account_id, sl.shares_out lot_shares\n" \
     "from tx_detail td\n" \
     "left join tx_detail rd on rd.id = td.related_detail_id\n" \
@@ -115,16 +118,6 @@ set tx_category_id = :categoryId, change_user = :user, change_date = current_tim
 where tx_category_id = :oldCategoryId)";
 
 static const auto findByCriteriaSql = R"(
-select td.*, tx.account_id, tx.date, tx.payee_id, tx.security_id, tx.memo tx_memo
-from tx_detail td
-join tx on td.tx_id = tx.id
-left join payee p on tx.payee_id = p.id
-left join asset s on tx.security_id = s.id
-left join tx_group g on td.tx_group_id = g.id
-where {criteria}
-order by tx.date desc, tx.id desc, td.id)";
-
-static const auto withCategoryChildrenSql = R"(
 with recursive category as (
     select id, parent_id
     from tx_category
@@ -133,7 +126,16 @@ with recursive category as (
     select c.id, c.parent_id
     from tx_category c
     join category on c.parent_id = category.id
-))";
+), )" SALE_LOTS_CTE R"(
+select td.*, tx.account_id, tx.date, tx.payee_id, tx.security_id, tx.memo tx_memo, sl.shares_out lot_shares
+from tx_detail td
+join tx on td.tx_id = tx.id
+left join payee p on tx.payee_id = p.id
+left join asset s on tx.security_id = s.id
+left join tx_group g on td.tx_group_id = g.id
+left join sale_lots sl on td.id = sl.related_tx_detail_id
+where {criteria}
+order by tx.date desc, tx.id desc, td.id)";
 
 static const auto findAvalableLots = R"(
 with sale as (
@@ -238,8 +240,10 @@ QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatab
     }
     if (criteria.categoryId.has_value()) {
         values.insert(":categoryId", criteria.categoryId.value());
-        sql.prepend(withCategoryChildrenSql);
         where.append("td.tx_category_id in (select id from category)\n");
+    }
+    if (criteria.missingLots) {
+        where.append("td.asset_quantity < 0 and -td.asset_quantity != sl.shares_out");
     }
     sql.replace("{criteria}", where.join("  and "));
     query.prepare(sql);

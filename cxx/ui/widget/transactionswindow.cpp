@@ -16,6 +16,7 @@
 #include <QInputDialog>
 #include <QMenu>
 #include <QMenuBar>
+#include <QToolButton>
 #include <QWidgetAction>
 
 #define TRANSACTION_SETTINGS "transactions"
@@ -49,9 +50,14 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->accountSecuritiesAction(),
     });
     entityView.addActions({searchAction});
-    QMenuBar *menuBar = new QMenuBar();
+    auto searchButton = static_cast<QToolButton*>(entityView.toolbar.widgetForAction(searchAction));
+    searchButton->setPopupMode(QToolButton::MenuButtonPopup);
+    searchButton->addAction(finances::iconAction(finances::Stacks, tr("Sales With &Missing Lots"), tr("ctrl+shift+L"), this, SLOT(findMissingLots())));
+
+    auto menuBar = new QMenuBar;
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
+
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
@@ -204,6 +210,10 @@ void TransactionsWindow::showEditLotsDialog() {
     auto sale = model()->getDetail(entityView.selectedIndex());
     EditLotsDialog dialog{this, context, sale};
     if (dialog.exec() == QDialog::Accepted) qDebug("here");
+}
+
+void TransactionsWindow::findMissingLots() {
+    context->findTransactions(DetailSearchCriteria{true});
 }
 
 TransactionStore *TransactionsWindow::store() const {

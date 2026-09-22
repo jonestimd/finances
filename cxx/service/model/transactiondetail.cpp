@@ -97,3 +97,5 @@ bool SearchTransactionDetail::deletable() const {
 }
 DetailSearchCriteria::DetailSearchCriteria(const QString text, optional_id payeeId, optional_id securityId, optional_id categoryId)
     : text{text}, payeeId{payeeId}, securityId{securityId}, categoryId{categoryId} {}
+
+DetailSearchCriteria::DetailSearchCriteria(bool missingLots) : missingLots{missingLots} {}

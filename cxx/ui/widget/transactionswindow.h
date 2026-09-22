@@ -56,6 +56,7 @@ private Q_SLOTS:
     void transactionsLoaded();
     void newWindow();
     void clearedBalanceChanged(const QDecNumber& balance);
+    void findMissingLots();
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event) override;

@@ -70,9 +70,11 @@ struct DetailSearchCriteria {
     optional_id payeeId;
     optional_id securityId;
     optional_id categoryId;
+    bool missingLots{false};
 
     DetailSearchCriteria() = default;
     DetailSearchCriteria(const QString text, optional_id payeeId, optional_id securityId, optional_id categoryId);
+    DetailSearchCriteria(bool missingLots);
 };
 
 #endif // TRANSACTIONDETAIL_H
