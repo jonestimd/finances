@@ -13,6 +13,7 @@ public:
     QDecNumber amount{"NaN"};
     std::optional<QDecNumber> assetQuantity;
     QString memo;
+    mutable std::optional<QDecNumber> lotShares;
 
     optional_id transferAccountId;
 
@@ -21,6 +22,7 @@ public:
     TransactionDetail(const QSqlRecord& record);
 
     bool isEmpty() const;
+    bool isMissingLots() const;
 
     TransactionDetail *newTransfer(const optional_id& transferAccountId, domain_id transactionId) const;
     void initTransfer(domain_id transactionId, TransactionDetail &relatedDetail) const;

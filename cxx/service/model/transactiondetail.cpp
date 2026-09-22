@@ -17,6 +17,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , assetQuantity{sql::decimalValue(record, "asset_quantity")}
     , memo{sql::getString(record, "memo")}
     , transferAccountId{sql::getInt(record, "transfer_account_id")}
+    , lotShares{sql::decimalValue(record, "lot_shares")}
 {}
 
 bool TransactionDetail::isEmpty() const {
@@ -28,6 +29,11 @@ bool TransactionDetail::isEmpty() const {
            && memo.isNull()
            && (amount.isNaN() || amount.isZero())
            && (!assetQuantity.has_value() || assetQuantity.value().isZero());
+}
+
+bool TransactionDetail::isMissingLots() const {
+    return assetQuantity.has_value() && assetQuantity.value().isNegative() &&
+        (!lotShares.has_value() || assetQuantity.value().abs() > lotShares.value());
 }
 
 TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAccountId, domain_id transactionId) const {

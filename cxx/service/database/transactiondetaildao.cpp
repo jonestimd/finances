@@ -29,10 +29,16 @@
     ")"
 
 #define GET_ALL_QUERY \
-    "select td.*, rx.account_id transfer_account_id\n" \
+    "with sale_lots as (\n" \
+    "    select related_tx_detail_id, sum(adjusted_shares) shares_out\n" \
+    "    from security_lot\n" \
+    "    group by related_tx_detail_id\n" \
+    ")\n" \
+    "select td.*, rx.account_id transfer_account_id, sl.shares_out lot_shares\n" \
     "from tx_detail td\n" \
     "left join tx_detail rd on rd.id = td.related_detail_id\n" \
-    "left join tx rx on rx.id = rd.tx_id" \
+    "left join tx rx on rx.id = rd.tx_id\n" \
+    "left join sale_lots sl on sl.related_tx_detail_id = td.id"
 
 static const auto getAllQuery = GET_ALL_QUERY;
 

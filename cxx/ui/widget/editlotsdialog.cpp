@@ -64,6 +64,7 @@ void EditLotsDialog::loadData() {
 void EditLotsDialog::saveData() {
     auto model = this->model();
     context->dataStore->securityStore->updateLots(this, model->unsavedChanges(), model->unsavedAdds(), model->unsavedDeletes());
+    model->sale->lotShares = model->totalAllocatedShares();
 }
 
 void EditLotsDialog::setRows(const QList<const SecurityPurchase*> rows, const QList<const SecurityLot*> lots) {

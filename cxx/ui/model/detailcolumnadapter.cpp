@@ -37,7 +37,7 @@ QVariant TransactionTypeColumnAdapter::value(const TransactionDetail *row, const
     case finances::OptionsRole:
         return accountId.has_value() ? QVariant::fromValue(getOptions()) : QVariant{};
     case Qt::DecorationRole:
-        return value.isValid() && typeId.transfer ? finances::RightBlackArrow: finances::None;
+        return value.isValid() && typeId.transfer ? finances::RightBlackArrow : finances::None;
     }
     return QVariant{};
 }
@@ -96,16 +96,16 @@ SharesColumnAdapter::SharesColumnAdapter(const QString& title, const Transaction
 {}
 
 QVariant SharesColumnAdapter::value(const TransactionDetail *row, const QModelIndex &index, const QVariant current, int role) const {
-    if (index.isValid() && role == finances::AltDisplayRole) {
-        auto shares = row->assetQuantity;
-        if (shares.has_value()) {
-            auto securityId = getSecurityId(index);
-            auto date = getDate(index);
-            auto shares = AmountColumnAdapter::value(row, index, current, Qt::EditRole).value<QDecNumber>();
-            auto adjustedShares = securityStore->stockSplitStore.adjustedShares(securityId.toLongLong(), date.value<QDate>(), shares);
-            if (shares != adjustedShares) return formatter(QVariant::fromValue(adjustedShares));
+    if (index.isValid() && row->assetQuantity.has_value()) {
+        auto shares = row->assetQuantity.value();
+        if (role == finances::AltDisplayRole) {
+            auto securityId = getSecurityId(index).toLongLong();
+            auto date = getDate(index).value<QDate>();
+            auto adjustedShares = securityStore->stockSplitStore.adjustedShares(securityId, date, shares);
+            return shares != adjustedShares ? formatter(QVariant::fromValue(adjustedShares)) : QVariant{};
+        } else if (role == Qt::DecorationRole) {
+            return row->isMissingLots() ? finances::Stacks : finances::None;
         }
-        return QVariant{};
     }
     return AmountColumnAdapter::value(row, index, current, role);
 }
