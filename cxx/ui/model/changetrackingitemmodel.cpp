@@ -18,7 +18,7 @@ void ChangeHandler::modelChanged() {
     connections.clear();
     // Need to connect to the source model because rowsRemoved is emitted by the proxy model before
     // the source model has completed the change.  Otherwise, the save button and change indicator
-    // don't update when a singleton window with a new row and is closed (discarding the changes) and reopened.
+    // don't update when a singleton window with a new row is closed (discarding the changes) and reopened.
     auto model = sortModel->sourceModel();
     connections.append(connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QList<int>)), this, SLOT(dataChanged())));
     connections.append(connect(model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(dataChanged())));

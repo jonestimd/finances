@@ -17,7 +17,7 @@ class SecurityLot : public BaseDomain {
 public:
     /** @brief Amount of purchase shares assigned to the sale/transfer (not adjusted for splits). */
     QDecNumber purchaseShares;
-    /** @brief Amount of sale/transfer shares included in the lot (adjusted for splits as the sale/transfer date). */
+    /** @brief Amount of sale/transfer shares included in the lot (adjusted for splits as of the sale/transfer date). */
     QDecNumber adjustedShares;
     /** @brief ID of the original purchase (never a transfer). */
     domain_id purchaseDetailId;

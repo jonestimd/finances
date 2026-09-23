@@ -96,11 +96,7 @@ QModelIndex EntityView::selectedIndex() {
 void EntityView::selectIndex(QModelIndex index) {
     if (itemView->isEnabled()) {
         itemView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
-    } else if (index.isValid()) {
-        lastSelection.clear();
-        lastColumn = index.column();
-        for (; index.isValid(); index = index.parent()) lastSelection.insert(0, index.row());
-    }
+    } else saveSelection(index);
 }
 
 void EntityView::focusItemView() {
@@ -110,9 +106,8 @@ void EntityView::focusItemView() {
 
 void EntityView::showStatusMessage(const QString message) {
     if (itemView->isEnabled()) {
-        auto index = itemView->currentIndex();
+        saveSelection(itemView->currentIndex());
         itemView->setEnabled(false);
-        selectIndex(index);
     }
     statusBar.showMessage(message);
 }
@@ -151,6 +146,14 @@ bool EntityView::eventFilter(QObject *obj, QEvent *event) {
         if (settingsGroup.isValid()) settings::saveWindowState(settingsGroup.toString(), window, sortModel->sourceModel(), viewHeader);
     }
     return false;
+}
+
+void EntityView::saveSelection(QModelIndex index) {
+    if (index.isValid()) {
+        lastSelection.clear();
+        lastColumn = index.column();
+        for (; index.isValid(); index = index.parent()) lastSelection.insert(0, index.row());
+    }
 }
 
 void EntityView::restoreSelection() {

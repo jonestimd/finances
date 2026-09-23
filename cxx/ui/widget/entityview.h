@@ -56,6 +56,7 @@ protected:
     virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
+    void saveSelection(QModelIndex index);
     void restoreSelection();
 };
 

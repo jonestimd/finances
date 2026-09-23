@@ -15,7 +15,7 @@ void AppWindow::closeEvent(QCloseEvent *event) {
 ////////////// EntityDialog //////////////
 
 EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, ChangeTrackingItemModel *model,
-    QTableView *itemView, StatusMessageStore *messageStore)
+                           QTableView *itemView, StatusMessageStore *messageStore)
     : QDialog{parent}
     , layout{this}
     , entityView{this, messageStore, model, itemView, itemView->horizontalHeader(), entityName}
