@@ -37,6 +37,10 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
     moveAction->setEnabled(false);
+    entityView.sortModel->addFilterExclusion([this](QModelIndex index) {
+        auto parent = index.parent().isValid() ? index.parent() : index;
+        return this->model()->isPendingAdd(parent);
+    });
     entityView.insertAction(2, moveAction);
     editLotsAction->setEnabled(false);
     entityView.insertAction(3, editLotsAction);

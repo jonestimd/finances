@@ -14,13 +14,23 @@ void SortFilterProxyModel::addFilter(AcceptRow acceptFunction) {
     endFilterChange(Direction::Rows);
 }
 
+void SortFilterProxyModel::addFilterExclusion(AcceptRow excludeFunction) {
+    beginFilterChange();
+    filterExclusions.append(excludeFunction);
+    endFilterChange(Direction::Rows);
+}
+
 void SortFilterProxyModel::clearFilters() {
     beginFilterChange();
     acceptFunctions.clear();
+    filterExclusions.clear();
     endFilterChange(Direction::Rows);
 }
 
 bool SortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
+    for (const auto &accept : filterExclusions) {
+        if (accept(sourceModel()->index(sourceRow, 0, sourceParent))) return true;
+    }
     for (const auto &accept : acceptFunctions) {
         if (!accept(sourceModel()->index(sourceRow, 0, sourceParent))) return false;
     }

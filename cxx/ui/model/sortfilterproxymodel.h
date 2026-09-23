@@ -7,11 +7,14 @@ typedef std::function<bool(const QModelIndex &sourceIndex)> AcceptRow;
 
 class SortFilterProxyModel : public QSortFilterProxyModel {
     QList<AcceptRow> acceptFunctions{};
+    QList<AcceptRow> filterExclusions{};
 
 public:
     explicit SortFilterProxyModel(QObject *parent = nullptr);
 
     void addFilter(AcceptRow acceptFunction);
+    /** @brief Add a function that prevents rows from being filtered. */
+    void addFilterExclusion(AcceptRow excludeFunction);
     void clearFilters();
 
 protected:
