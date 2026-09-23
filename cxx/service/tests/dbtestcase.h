@@ -84,6 +84,7 @@ public:
     TransactionGroupDao &groupDao(const QString &driver);
     PayeeDao &payeeDao(const QString &driver);
     SecurityDao &securityDao(const QString &driver);
+    SecurityLotDao &securityLotDao(const QString &driver);
     StockSplitDao &stockSplitDao(const QString &driver);
     TransactionDao &transactionDao(const QString &driver);
     TransactionDetailDao &detailDao(const QString &driver);

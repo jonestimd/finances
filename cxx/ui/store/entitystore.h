@@ -118,7 +118,7 @@ public:
      */
     void update(QWidget *source, const QList<T*> updates, const QList<const T*> adds, const QList<const T*> deletes, const QString& message) {
         doInBackground(source, message, [=, this]() {
-            auto changes = BulkUpdate{updates, adds, deletes};
+            BulkUpdate changes{updates, adds, deletes};
             update(service->update(changes, user), deletes);
             emit valuesLoaded(ids());
         });
@@ -151,7 +151,7 @@ protected:
         if (!updateIds.isEmpty()) emit valuesUpdated(updateIds);
         if (!addIds.isEmpty()) emit valuesAdded(addIds);
         if (!deletes.isEmpty()) {
-            auto ids = getEntityIds(deletes);
+            auto ids = domain::getIds(deletes);
             emit valuesToBeRemoved(ids);
             locker.relock();
             for (auto entity : deletes) delete byId.take(entity->id.value());

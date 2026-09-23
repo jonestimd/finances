@@ -33,6 +33,8 @@ public:
 
     QList<const SearchTransactionDetail*> find(const QSqlDatabase& db, const DetailSearchCriteria& criteria);
 
+    QList<const SecurityPurchase*> findPreviousPurchases(const QSqlDatabase& db, domain_id saleTxId) const;
+
     const TransactionDetail* addRelatedDetail(QSqlDatabase& db, domain_id txId, const TransactionDetail* detail, const QString& user);
 
     /**

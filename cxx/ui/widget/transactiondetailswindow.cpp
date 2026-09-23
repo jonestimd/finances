@@ -6,7 +6,7 @@
 #define SETTINGS_GROUP "transactionDetails"
 
 TransactionDetailsWindow::TransactionDetailsWindow(UiContext* context, const DetailSearchCriteria criteria)
-    : ReadOnlyEntityWindow{tr("Transaction Details"), new TransactionDetailTableModel{context->dataStore}, new QTableView, &context->dataStore->messageStore}
+    : EntityWindow{tr("Transaction Details"), new TransactionDetailTableModel{context->dataStore}, new QTableView, &context->dataStore->messageStore}
     , context{context}
     , criteria{criteria}
 {
@@ -22,7 +22,7 @@ TransactionDetailsWindow::TransactionDetailsWindow(UiContext* context, const Det
 }
 
 TransactionDetailsWindow::~TransactionDetailsWindow() {
-    delete entityView.model();
+    delete model();
 }
 
 void TransactionDetailsWindow::loadData() {
@@ -39,5 +39,5 @@ void TransactionDetailsWindow::gotoTransaction() {
 
 void TransactionDetailsWindow::showEvent(QShowEvent * event) {
     loadData();
-    ReadOnlyEntityWindow::showEvent(event);
+    EntityWindow::showEvent(event);
 }

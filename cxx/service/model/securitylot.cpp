@@ -11,3 +11,10 @@ SecurityLot::SecurityLot(const QSqlRecord &record)
     , purchaseDetailId{sql::getValue(record, "purchase_tx_detail_id").toLongLong()}
     , relatedDetailId{sql::getValue(record, "related_tx_detail_id").toLongLong()}
 {}
+
+SecurityLot::SecurityLot(domain_id purchaseId, QDecNumber purchaseShares, domain_id relatedDetailId, QDecNumber adjustedShares)
+    : purchaseDetailId{purchaseId}
+    , purchaseShares{purchaseShares}
+    , relatedDetailId{relatedDetailId}
+    , adjustedShares{adjustedShares}
+{}

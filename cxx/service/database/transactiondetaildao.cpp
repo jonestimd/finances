@@ -28,11 +28,20 @@
     "    constraint tx_detail_tx_type_fk foreign key (tx_category_id) references tx_category (id)\n" \
     ")"
 
+#define SALE_LOTS_CTE \
+    "sale_lots as (\n" \
+    "    select related_tx_detail_id, sum(adjusted_shares) shares_out\n" \
+    "    from security_lot\n" \
+    "    group by related_tx_detail_id\n" \
+    ")\n"
+
 #define GET_ALL_QUERY \
-    "select td.*, rx.account_id transfer_account_id\n" \
+    "with " SALE_LOTS_CTE \
+    "select td.*, rx.account_id transfer_account_id, sl.shares_out lot_shares\n" \
     "from tx_detail td\n" \
     "left join tx_detail rd on rd.id = td.related_detail_id\n" \
-    "left join tx rx on rx.id = rd.tx_id" \
+    "left join tx rx on rx.id = rd.tx_id\n" \
+    "left join sale_lots sl on sl.related_tx_detail_id = td.id"
 
 static const auto getAllQuery = GET_ALL_QUERY;
 
@@ -109,16 +118,6 @@ set tx_category_id = :categoryId, change_user = :user, change_date = current_tim
 where tx_category_id = :oldCategoryId)";
 
 static const auto findByCriteriaSql = R"(
-select td.*, tx.account_id, tx.date, tx.payee_id, tx.security_id, tx.memo tx_memo
-from tx_detail td
-join tx on td.tx_id = tx.id
-left join payee p on tx.payee_id = p.id
-left join asset s on tx.security_id = s.id
-left join tx_group g on td.tx_group_id = g.id
-where {criteria}
-order by tx.date desc, tx.id desc, td.id)";
-
-static const auto withCategoryChildrenSql = R"(
 with recursive category as (
     select id, parent_id
     from tx_category
@@ -127,7 +126,53 @@ with recursive category as (
     select c.id, c.parent_id
     from tx_category c
     join category on c.parent_id = category.id
-))";
+), )" SALE_LOTS_CTE R"(
+select td.*, tx.account_id, tx.date, tx.payee_id, tx.security_id, tx.memo tx_memo, sl.shares_out lot_shares
+from tx_detail td
+join tx on td.tx_id = tx.id
+left join payee p on tx.payee_id = p.id
+left join asset s on tx.security_id = s.id
+left join tx_group g on td.tx_group_id = g.id
+left join sale_lots sl on td.id = sl.related_tx_detail_id
+where {criteria}
+order by tx.date desc, tx.id desc, td.id)";
+
+static const auto findAvalableLots = R"(
+with sale as (
+    select *
+    from tx
+    where id = :saleTxId
+), xfer_shares as (
+    select td.id purchase_id, sum(lot.purchase_shares) shares
+    from sale
+    join tx on tx.date <= sale.date and tx.account_id = sale.account_id and tx.security_id = sale.security_id
+    join tx_detail xd on xd.tx_id = tx.id and xd.asset_quantity > 0
+    join tx_detail sd on sd.related_detail_id = xd.id
+    join security_lot lot on lot.related_tx_detail_id = sd.id
+    join tx_detail td on td.id = lot.purchase_tx_detail_id
+    group by td.id
+), sale_shares as (
+    select td.id purchase_id, sum(lot.purchase_shares) shares
+    from sale
+    join tx on tx.account_id = sale.account_id and tx.security_id = sale.security_id
+    join tx_detail sd on sd.tx_id = tx.id and sd.asset_quantity < 0
+    join security_lot lot on lot.related_tx_detail_id = sd.id
+    join tx_detail td on td.id = lot.purchase_tx_detail_id
+    group by td.id
+)
+-- shares transfered from other accounts --
+select td.*, xs.shares account_shares, ss.shares allocated_shares, tx.date
+from tx_detail td
+join tx on td.tx_id = tx.id
+join xfer_shares xs on xs.purchase_id = td.id
+left join sale_shares ss on ss.purchase_id = td.id
+union
+-- purchases from the account --
+select td.*, td.asset_quantity account_shares, ss.shares allocated_shares, tx.date
+from sale
+join tx on tx.date <= sale.date and tx.account_id = sale.account_id and tx.security_id = sale.security_id
+join tx_detail td on td.tx_id = tx.id and td.asset_quantity > 0 and td.related_detail_id is null
+left join sale_shares ss on ss.purchase_id = td.id)";
 
 #define DAO_QUERIES(idtype) \
     .createTableSql = CREATE_TABLE_QUERY(idtype),\
@@ -195,14 +240,24 @@ QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatab
     }
     if (criteria.categoryId.has_value()) {
         values.insert(":categoryId", criteria.categoryId.value());
-        sql.prepend(withCategoryChildrenSql);
         where.append("td.tx_category_id in (select id from category)\n");
+    }
+    if (criteria.missingLots) {
+        where.append("td.asset_quantity < 0 and -td.asset_quantity != sl.shares_out");
     }
     sql.replace("{criteria}", where.join("  and "));
     query.prepare(sql);
     sql::bindValues(query, values);
     sql::exec(query, className, "findByCriteria");
     return loadRows<SearchTransactionDetail>(query);
+}
+
+QList<const SecurityPurchase*> TransactionDetailDao::findPreviousPurchases(const QSqlDatabase &db, domain_id saleTxId) const {
+    QSqlQuery query(db);
+    query.prepare(findAvalableLots);
+    sql::bindValue(query, ":saleTxId", saleTxId);
+    sql::exec(query, className, "findPreviousPurchases");
+    return loadRows<SecurityPurchase>(query);
 }
 
 const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db, domain_id txId, const TransactionDetail *detail, const QString &user) {
@@ -220,7 +275,7 @@ const TransactionDetail *TransactionDetailDao::addRelatedDetail(QSqlDatabase &db
 QList<domain_id> TransactionDetailDao::removeByTransaction(QSqlDatabase &db, const QList<const Transaction*> transactions, QList<domain_id>& relatedTransactionIds) {
     QSqlQuery query(db);
     query.prepare(deleteIdsByTransactionSql);
-    sql::bindList(query, ":txIds", getEntityIds(transactions));
+    sql::bindList(query, ":txIds", domain::getIds(transactions));
     sql::exec(query, className, "deleteIdsByTransaction");
     QList<domain_id> ids{}, relatedDetailIds{};
     while (query.next()) {
@@ -276,7 +331,7 @@ void TransactionDetailDao::setRelatedDetailIds(QSqlDatabase &db, const QHash<Tra
 
 QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSqlDatabase &db, const QList<TransactionDetail*> updates) {
     QSqlQuery query(db);
-    auto ids = getEntityIds(updates);
+    auto ids = domain::getIds(updates);
     query.prepare(getRelatedIdsSql);
     sql::bindList(query, ":ids", ids);
     sql::exec(query, className, "getRelatedDetailIds");
@@ -290,7 +345,7 @@ QHash<domain_id, RelatedDetailIds> TransactionDetailDao::getRelatedDetailIds(QSq
 
 void TransactionDetailDao::remove(QSqlDatabase &db, const QList<const TransactionDetail*> details) {
     QSqlQuery query(db);
-    auto ids = getEntityIds(details);
+    auto ids = domain::getIds(details);
     for (auto detail : details) if (detail->relatedDetailId.has_value()) ids.append(detail->relatedDetailId.value());
     removeByIds(db, ids);
 }

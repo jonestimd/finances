@@ -1,9 +1,12 @@
 #include "securitystore.h"
+#include "ui/model/securitylottablemodel.h"
+#include "ui/widget/editlotsdialog.h"
 #include "ui/widget/statusmessage.h"
 
-SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore, StockSplitService* stockSplitService)
+SecurityStore::SecurityStore(SecurityService *service, StatusMessageStore* messageStore, StockSplitService* stockSplitService, SecurityLotService* securityLotService)
     : EntityStore{service, messageStore}
     , stockSplitStore{stockSplitService, messageStore}
+    , securityLotService{securityLotService}
 {}
 
 bool SecurityStore::load(EntityView *view, bool reload) {
@@ -39,5 +42,13 @@ void SecurityStore::loadAccountSecurities(EntityView *view, const QList<domain_i
             }
         }
         if (!removedIds.isEmpty()) emit accountSecuritiesRemoved(removedIds);
+    });
+}
+
+void SecurityStore::updateLots(EditLotsDialog* dialog, const QList<SecurityLot*> updates, const QList<const SecurityLot*> adds, const QList<const SecurityLot*> deletes) const {
+    doInBackground(dialog, tr("Saving lots..."), [=, this]() {
+        BulkUpdate changes{updates, adds, deletes};
+        auto lots = securityLotService->update(changes, user);
+        QMetaObject::invokeMethod(dialog->model(), &SecurityLotTableModel::updateLots, lots, deletes);
     });
 }

@@ -3,6 +3,7 @@
 
 #include <QAbstractItemModel>
 #include "ui/store/datastore.h"
+#include "columnadapter.h"
 
 class AccountSecurityTableModel : public QAbstractItemModel { // TODO extract change tracking from AdapterItemModel
     Q_OBJECT

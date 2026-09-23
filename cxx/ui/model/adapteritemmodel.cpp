@@ -1,7 +1,7 @@
 #include "adapteritemmodel.h"
 #include "ui/finances.h"
 
-AdapterItemModel::AdapterItemModel(QObject *parent) : QAbstractItemModel{parent} {}
+AdapterItemModel::AdapterItemModel(QObject *parent) : ChangeTrackingItemModel{parent} {}
 
 bool AdapterItemModel::hasUnsavedChanges() const {
     return !changes.isEmpty() || !pendingDeletes.isEmpty();

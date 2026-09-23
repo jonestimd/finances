@@ -1,4 +1,5 @@
 #include "accountsmenu.h"
+#include "editlotsdialog.h"
 #include "entityselectiondialog.h"
 #include "filemenu.h"
 #include "recenttxaction.h"
@@ -9,11 +10,13 @@
 #include "ui/model/formats.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
+#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 #include <QInputDialog>
 #include <QMenu>
 #include <QMenuBar>
+#include <QToolButton>
 #include <QWidgetAction>
 
 #define TRANSACTION_SETTINGS "transactions"
@@ -29,11 +32,14 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     , context{context}
     , moveAction{finances::iconAction(finances::MoveItem, tr("Move Transaction"), tr("ctrl+m"), this, SLOT(showMoveDialog()))}
     , searchAction{finances::iconAction(finances::Search, tr("Search Transactions"), tr("ctrl+shift+f"), this, SLOT(showSearchDialog()))}
+    , editLotsAction(finances::iconAction(finances::Stacks, tr("Edit Lots"), tr("ctrl+l"), this, SLOT(showEditLotsDialog())))
 {
     setWindowTitle(QString("%1 - Transactions").arg(connectionName()));
     setAttribute(Qt::WA_DeleteOnClose, true);
     moveAction->setEnabled(false);
     entityView.insertAction(2, moveAction);
+    editLotsAction->setEnabled(false);
+    entityView.insertAction(3, editLotsAction);
     entityView.addActions({finances::iconAction(finances::NewWindow, tr("New Window"), tr("alt+n"), this, SLOT(newWindow()))});
     entityView.addActions({
         context->accountsAction(),
@@ -44,9 +50,14 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
         context->accountSecuritiesAction(),
     });
     entityView.addActions({searchAction});
-    QMenuBar *menuBar = new QMenuBar();
+    auto searchButton = static_cast<QToolButton*>(entityView.toolbar.widgetForAction(searchAction));
+    searchButton->setPopupMode(QToolButton::MenuButtonPopup);
+    searchButton->addAction(finances::iconAction(finances::Stacks, tr("Sales With &Missing Lots"), tr("ctrl+shift+L"), this, SLOT(findMissingLots())));
+
+    auto menuBar = new QMenuBar;
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
+
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
@@ -101,19 +112,15 @@ TransactionsWindow::~TransactionsWindow() {
     context->transactionsWindowClosed(this);
 }
 
-TransactionTableModel *TransactionsWindow::model() const {
-    return entityView.model<TransactionTableModel>();
-}
-
 void TransactionsWindow::showAccount(domain_id accountId) {
     auto oldModel = model();
     if (accountId != oldModel->accountId) {
         auto windowCount = context->windowCount(oldModel);
-        if (windowCount > 1 || entityView.confirmLoadData()) {
+        if (windowCount > 1 || dialog::confirmDiscardChanges(this, oldModel)) {
             if (windowCount == 1) oldModel->clearChanges();
             disconnect(oldModel, SIGNAL(clearedBalanceChanged(QDecNumber)), this, SLOT(clearedBalanceChanged(QDecNumber)));
             disconnect(oldModel, SIGNAL(dataLoaded()), this, SLOT(transactionsLoaded()));
-            entityView.setModel(context->transactionsModel(accountId));
+            entityView.sortModel->setSourceModel(context->transactionsModel(accountId));
             context->transactionsModelRemoved(oldModel);
             connectModel(model());
             initializeData();
@@ -122,7 +129,7 @@ void TransactionsWindow::showAccount(domain_id accountId) {
 }
 
 void TransactionsWindow::loadData() {
-    if (entityView.confirmLoadData()) store()->load(&entityView, model()->accountId, true);
+    if (dialog::confirmDiscardChanges(this, model())) store()->load(&entityView, model()->accountId, true);
 }
 
 void TransactionsWindow::saveData() {
@@ -151,6 +158,10 @@ void TransactionsWindow::expandRow(const QModelIndex &parent, int first, int las
 void TransactionsWindow::selectionChanged(const QModelIndex &current) {
     auto index = entityView.sortModel->mapToSource(current);
     moveAction->setEnabled(!model()->transactionHasChanges(index));
+    if (index.parent().isValid()) {
+        auto detail = model()->getDetail(index);
+        editLotsAction->setEnabled(detail->assetQuantity.has_value() && detail->assetQuantity.value().isNegative());
+    } else editLotsAction->setEnabled(false);
 }
 
 void TransactionsWindow::showRecentsMenu(const QList<PendingTransaction*> transactions) {
@@ -193,6 +204,16 @@ void TransactionsWindow::showMoveDialog() {
 void TransactionsWindow::showSearchDialog() {
     SearchDialog dialog{this, context->dataStore};
     if (dialog.exec() == QDialog::Accepted) context->findTransactions(dialog.criteria);
+}
+
+void TransactionsWindow::showEditLotsDialog() {
+    auto sale = model()->getDetail(entityView.selectedIndex());
+    EditLotsDialog dialog{this, context, sale};
+    if (dialog.exec() == QDialog::Accepted) qDebug("here");
+}
+
+void TransactionsWindow::findMissingLots() {
+    context->findTransactions(DetailSearchCriteria{true});
 }
 
 TransactionStore *TransactionsWindow::store() const {

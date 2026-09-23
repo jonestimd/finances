@@ -1,5 +1,6 @@
 #include "groupswindow.h"
 #include "statusmessage.h"
+#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
@@ -23,12 +24,8 @@ GroupsWindow::~GroupsWindow() {
     delete model();
 }
 
-GroupTableModel *GroupsWindow::model() {
-    return entityView.model<GroupTableModel>();
-}
-
 void GroupsWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_GROUPS), true);
+    if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_GROUPS), true);
 }
 
 void GroupsWindow::saveData() {

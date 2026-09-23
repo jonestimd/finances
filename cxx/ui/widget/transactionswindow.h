@@ -9,18 +9,17 @@
 
 class UiContext;
 
-class TransactionsWindow : public EntityWindow<> {
+class TransactionsWindow : public EntityWindow<TransactionTableModel> {
     Q_OBJECT
     UiContext* const context;
     QLabel* const clearedBalance{new QLabel()};
     QAction* moveAction;
     QAction* searchAction;
+    QAction* editLotsAction;
 
 public:
     TransactionsWindow(UiContext* context, TransactionTableModel* model, bool initializeModel = true);
     ~TransactionsWindow();
-
-    TransactionTableModel* model() const;
 
     void showAccount(domain_id accountId);
 
@@ -36,6 +35,7 @@ public Q_SLOTS:
     void showRecentsMenu(const QList<PendingTransaction*> transactions); // clazy:exclude=fully-qualified-moc-types
     void showMoveDialog();
     void showSearchDialog();
+    void showEditLotsDialog();
 
 private:
     TransactionStore* store() const;
@@ -56,6 +56,7 @@ private Q_SLOTS:
     void transactionsLoaded();
     void newWindow();
     void clearedBalanceChanged(const QDecNumber& balance);
+    void findMissingLots();
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event) override;

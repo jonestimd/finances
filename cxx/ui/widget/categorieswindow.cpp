@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "treeview.h"
 #include "statusmessage.h"
+#include "ui/widget/dialog.h"
 
 #define SETTINGS_GROUP "categories"
 
@@ -34,12 +35,8 @@ CategoriesWindow::~CategoriesWindow() {
     delete model();
 }
 
-CategoryTableModel *CategoriesWindow::model() {
-    return entityView.model<CategoryTableModel>();
-}
-
 void CategoriesWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, tr(LOADING_CATEGORIES), true);
+    if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, tr(LOADING_CATEGORIES), true);
 }
 
 void CategoriesWindow::saveData() {

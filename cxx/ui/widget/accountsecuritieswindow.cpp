@@ -6,7 +6,7 @@
 #define SETTINGS_GROUP "accountSecurities"
 
 AccountSecuritiesWindow::AccountSecuritiesWindow(UiContext *context)
-    : ReadOnlyEntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView, &context->dataStore->messageStore}
+    : EntityWindow{tr("Account Securities"), new AccountSecurityTableModel(context->dataStore), new TreeView, &context->dataStore->messageStore}
     , dataStore{context->dataStore}
 {
     entityView.addActions({
@@ -21,21 +21,21 @@ AccountSecuritiesWindow::AccountSecuritiesWindow(UiContext *context)
     view->setRootSpansAllColumns();
 
     connect(dataStore->securityStore, SIGNAL(accountSecuritiesLoaded(QList<const AccountSecurity*>)),
-        entityView.model(), SLOT(setRows(QList<const AccountSecurity*>)));
+        model(), SLOT(setRows(QList<const AccountSecurity*>)));
     connect(dataStore->securityStore, SIGNAL(accountSecuritiesUpdated(QList<const AccountSecurity*>)),
-        entityView.model(), SLOT(updateRows(QList<const AccountSecurity*>)));
+        model(), SLOT(updateRows(QList<const AccountSecurity*>)));
     connect(dataStore->securityStore, SIGNAL(accountSecuritiesRemoved(QList<AccountSecurityId>)),
-        entityView.model(), SLOT(removeRows(QList<AccountSecurityId>)));
+        model(), SLOT(removeRows(QList<AccountSecurityId>)));
     connect(dataStore->transactionStore, SIGNAL(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)),
         this, SLOT(transactionsUpdated(QHash<domain_id,TransactionChange>,QHash<domain_id,DetailChange>)));
-    connect(entityView.model(), SIGNAL(modelReset()), this, SLOT(modelReset()));
+    connect(model(), SIGNAL(modelReset()), this, SLOT(modelReset()));
 
     setProperty(SETTINGS_GROUP_PROP, SETTINGS_GROUP);
     settings::restoreWindowState(SETTINGS_GROUP, this, QSize{800, 600}, &entityView);
 }
 
 AccountSecuritiesWindow::~AccountSecuritiesWindow() {
-    delete entityView.model();
+    delete model();
 }
 
 void AccountSecuritiesWindow::loadData() {
@@ -70,5 +70,5 @@ void AccountSecuritiesWindow::transactionsUpdated(const QHash<domain_id, Transac
 
 void AccountSecuritiesWindow::showEvent(QShowEvent *event) {
     loadData();
-    ReadOnlyEntityWindow::showEvent(event);
+    EntityWindow::showEvent(event);
 }

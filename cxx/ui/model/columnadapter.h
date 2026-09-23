@@ -82,17 +82,54 @@ struct extract_value<std::optional<V>> {
 template<class T, class Value = QVariant>
 class FieldColumnAdapter : public ColumnAdapter<T> {
     typedef extract_value<Value>::value_type optional_value;
-    Value T::* const field;
+public:
+    struct Accessor {
+        virtual Value getValue(const T* row) const = 0;
+        virtual void setValue(T* row, Value value) const {}
+    };
+
+    class FieldAccessor : public Accessor {
+        Value T::* const field;
+    public:
+        FieldAccessor(Value T::*field) : field{field} {}
+
+        Value getValue(const T* row) const override {
+            return row->*field;
+        }
+
+        void setValue(T* row, Value value) const override {
+            row->*field = value;
+        }
+    };
+
+    class FunctionAccessor : public Accessor {
+        std::function<Value(const T*)> getter;
+    public:
+        FunctionAccessor(std::function<Value(const T*)> getter) : getter{getter} {}
+
+        Value getValue(const T* row) const override {
+            return getter(row);
+        }
+    };
+
+    Accessor* accessor;
 
 public:
     FieldColumnAdapter(QString title, Value T::* field, bool editable = true, ValidatorFactory *factory = nullptr)
-        : ColumnAdapter<T>(title, [editable](const T *r) { return editable; }, factory), field{field} {}
+        : ColumnAdapter<T>(title, [editable](const T *r) { return editable; }, factory), accessor{new FieldAccessor{field}} {}
 
     FieldColumnAdapter(QString title, Value T::* field, ColumnAdapter<T>::IsEditable isEditable, ValidatorFactory *factory = nullptr)
-        : ColumnAdapter<T>{factory, title, isEditable, factory}, field{field} {}
+        : ColumnAdapter<T>{title, isEditable, factory}, accessor{new FieldAccessor{field}} {}
+
+    FieldColumnAdapter(QString title, std::function<Value(const T*)> getter, bool editable = false, ValidatorFactory *factory = nullptr)
+        : ColumnAdapter<T>{title, editable, factory}, accessor{new FunctionAccessor{getter}} {}
+
+    ~FieldColumnAdapter() {
+        delete accessor;
+    }
 
     virtual QVariant rowValue(const T* row) const override {
-        auto value = row->*field;
+        auto value = accessor->getValue(row);
         if constexpr (std::is_same_v<Value, QString>) return value.isEmpty() ? QVariant{} : value;
         else if constexpr (std::is_convertible_v<Value, QDate>) return value.isValid() ? value : QVariant{};
         else if constexpr (std::is_convertible_v<Value, QVariant>) return value;
@@ -107,11 +144,11 @@ public:
 
     virtual void setValue(T *row, QVariant value) const  override {
         if (value.isValid() && value.toString().isEmpty()) value = QVariant{};
-        if constexpr (std::is_same_v<Value, QVariant>) row->*field = value;
+        if constexpr (std::is_same_v<Value, QVariant>) accessor->setValue(row, value);
         else if constexpr (std::is_convertible_v<optional_value, QVariant> || std::is_same_v<optional_value, QDecNumber>) {
-            if (value.isNull()) (row->*field).reset();
-            else (row->*field).emplace(value.value<optional_value>());
-        } else row->*field = value.value<Value>();
+            if (value.isNull()) accessor->getValue(row).reset();
+            else accessor->setValue(row, std::optional(value.value<optional_value>()));
+        } else accessor->setValue(row, value.value<Value>());
     }
 };
 

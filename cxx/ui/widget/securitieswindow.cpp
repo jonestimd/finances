@@ -3,6 +3,7 @@
 #include "stocksplitswindow.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/uicontext.h"
+#include "ui/widget/dialog.h"
 #include "ui/widget/settings.h"
 #include <QCloseEvent>
 
@@ -38,12 +39,8 @@ SecuritiesWindow::~SecuritiesWindow() {
     delete model();
 }
 
-SecurityTableModel *SecuritiesWindow::model() const {
-    return entityView.model<SecurityTableModel>();
-}
-
 void SecuritiesWindow::loadData() {
-    if (entityView.confirmLoadData()) store->load(&entityView, true);
+    if (dialog::confirmDiscardChanges(this, model())) store->load(&entityView, true);
 }
 
 void SecuritiesWindow::saveData() {

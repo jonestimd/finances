@@ -2,6 +2,7 @@
 #define ADAPTER_ITEM_MODEL_H
 
 #include "columnadapter.h"
+#include "changetrackingitemmodel.h"
 #include "service/model/basedomain.h"
 #include <QAbstractItemModel>
 
@@ -15,7 +16,7 @@ concept Copyable = requires(Row &t){
  * @brief The AdapterItemModel class provides the base implementation for
  * models that display entities from a data store (see `PodItemModel` and `PodTableModel`).
  */
-class AdapterItemModel : public QAbstractItemModel {
+class AdapterItemModel : public ChangeTrackingItemModel {
     Q_OBJECT
 protected:
     QList<domain_id> rootIds;
@@ -26,19 +27,20 @@ protected:
 public:
     explicit AdapterItemModel(QObject *parent = nullptr);
 
-    virtual bool hasUnsavedChanges() const;
-    virtual void clearChanges();
-    virtual bool isValid() const;
+    bool hasUnsavedChanges() const override;
+    void clearChanges() override;
+    bool isValid() const override;
     virtual bool enableDelete(const QModelIndex &index) const = 0;
 
     QVariant data(const QModelIndex &index, int role) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
+    void undoChange(const QModelIndex &index) override;
+
 public Q_SLOTS:
     virtual QModelIndex queueAdd(const QModelIndex &selectedIndex = QModelIndex{}) = 0;
     virtual void queueDelete(const QModelIndex &index);
-    virtual void undoChange(const QModelIndex &index);
     /** @brief Handle values added to the store. `PodItemModel` adds the connection to the store. */
     virtual void valuesAdded(const QList<domain_id>& ids);
     /** @brief Handle values being removed from the store. `PodItemModel` adds the connection to the store. */

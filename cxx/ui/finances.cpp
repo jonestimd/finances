@@ -1,5 +1,6 @@
 #include "finances.h"
 #include "uicontext.h"
+#include "ui/model/changetrackingitemmodel.h"
 #include "ui/widget/connectiondialog.h"
 #include <QFile>
 #include <QFontDatabase>
@@ -35,8 +36,9 @@ namespace finances {
         fontId = QFontDatabase::addApplicationFont(fileName);
         auto fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
         family = fontFamilies.first();
-        // qDebug() << "Finances:" << fontFamilies;
-        // qDebug() << "Finances:" << QFontDatabase::styles(family);
+        // qDebug() << fileName;
+        // qDebug() << "font families:" << fontFamilies;
+        // qDebug() << "font styles:" << QFontDatabase::styles(family);
     }
 
     FontResource::~FontResource() {
@@ -44,41 +46,50 @@ namespace finances {
     }
 
     QFont FontResource::font() {
-        return QFont(family);
+        return font(-1);
     }
 
     QFont FontResource::font(int pointSize) {
-        return QFontDatabase::font(family, style, pointSize);
+        auto f = QFontDatabase::font(family, style, pointSize);
+        f.setVariableAxis("FILL", 1);
+        f.setVariableAxis("GRAD", 50);
+        return f;
     }
 
+    MaterialIcon::MaterialIcon(FontIcon symbol, FontIcon overlay)
+        : symbol{symbol}, overlay{overlay}, mirrorY{false} {}
+
+    MaterialIcon::MaterialIcon(FontIcon symbol, bool mirrorY)
+        : symbol{symbol}, overlay{None}, mirrorY{mirrorY} {}
+
     class MaterialIconEngine : public QIconEngine {
-        const FontIcon icon;
-        const FontIcon overlayIcon;
+        const MaterialIcon icon;
         const QColor color;
     public:
-        MaterialIconEngine(FontIcon icon, FontIcon overlayIcon, QColor color)
-            : icon{icon}, overlayIcon{overlayIcon}, color{color} {}
+        MaterialIconEngine(MaterialIcon icon, QColor color)
+            : icon{icon}, color{color} {}
 
     public:
         void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override {
             QFont font = iconFont->font();
-            font.setPixelSize(qRound(rect.height() * (overlayIcon == None ? 0.8 : 0.6)));
+            font.setPixelSize(qRound(rect.height() * (icon.overlay == None ? 0.8 : 0.6)));
             auto colorGroup = mode == QIcon::Mode::Disabled ? QPalette::Disabled : QPalette::Normal;
             QColor textColor = color.isValid() ? color : QApplication::palette("QWidget").color(colorGroup, QPalette::Text);
-            auto alignment = overlayIcon == None ? Qt::AlignCenter : Qt::AlignTop | Qt::AlignLeft;
+            auto alignment = icon.overlay == None ? Qt::AlignCenter : Qt::AlignTop | Qt::AlignLeft;
 
             painter->save();
             painter->setPen(textColor);
             painter->setFont(font);
-            painter->drawText(rect, alignment, QChar{uint(icon)});
-            if (overlayIcon != None) {
-                painter->drawText(rect, Qt::AlignBottom | Qt::AlignRight, QChar{uint(overlayIcon)});
+            if (icon.mirrorY) painter->setTransform(QTransform::fromScale(1, -1).translate(0, -rect.height()));
+            painter->drawText(rect, alignment, QChar{uint(icon.symbol)});
+            if (icon.overlay != None) {
+                painter->drawText(rect, Qt::AlignBottom | Qt::AlignRight, QChar{uint(icon.overlay)});
             }
             painter->restore();
         }
 
         QIconEngine *clone() const override {
-            return new MaterialIconEngine(icon, overlayIcon, color);
+            return new MaterialIconEngine(icon, color);
         }
 
         QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override {
@@ -90,9 +101,9 @@ namespace finances {
             return pix;
         }
     };
-    
-    QIcon materialIcon(FontIcon icon, QColor color, FontIcon overlayIcon) {
-        return QIcon(new MaterialIconEngine(icon, overlayIcon, color));
+
+    QIcon materialIcon(MaterialIcon icon, QColor color) {
+        return QIcon(new MaterialIconEngine(icon, color));
     }
 
     QLabel* iconWidget(FontIcon icon, QWidget *parent) {
@@ -102,7 +113,7 @@ namespace finances {
         return label;
     }
 
-    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QString &tooltip) {
+    QAction* initAction(QAction *action, MaterialIcon icon, const QString &text, const QString &tooltip) {
         return initAction(action, materialIcon(icon), text, tooltip);
     }
 
@@ -113,7 +124,7 @@ namespace finances {
         return action;
     }
 
-    QAction* initAction(QAction *action, FontIcon icon, const QString &text, const QKeySequence &shortcut) {
+    QAction* initAction(QAction *action, MaterialIcon icon, const QString &text, const QKeySequence &shortcut) {
         return initAction(action, materialIcon(icon), text, shortcut);
     }
 
@@ -126,22 +137,22 @@ namespace finances {
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString &text, QObject *parent) {
+    QAction *iconAction(MaterialIcon icon, const QString &text, QObject *parent) {
         return initAction(new QAction(parent), icon, text, text);
     }
 
-    QAction *iconAction(FontIcon icon, const QString &text, const QKeySequence &shortcut, QObject *parent) {
+    QAction *iconAction(MaterialIcon icon, const QString &text, const QKeySequence &shortcut, QObject *parent) {
         return initAction(new QAction(parent), icon, text, shortcut);
     }
 
-    QAction *iconAction(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(MaterialIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
         return action;
     }
 
-    QAction *iconAction(FontIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
+    QAction *iconAction(MaterialIcon icon, const QString &text, QKeySequence::StandardKey shortcut, QObject *receiver, const char *slot, bool enabled) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setEnabled(enabled);
         if (receiver && slot) QObject::connect(action, SIGNAL(triggered(bool)), receiver, slot);
@@ -156,7 +167,7 @@ namespace finances {
         return action;
     }
 
-    QAction *iconToggle(FontIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot) {
+    QAction *iconToggle(MaterialIcon icon, const QString &text, const QString &shortcut, QObject *receiver, const char *slot) {
         auto action = iconAction(icon, text, QKeySequence(shortcut), receiver);
         action->setCheckable(true);
         if (receiver && slot) QObject::connect(action, SIGNAL(toggled(bool)), receiver, slot);
@@ -177,8 +188,12 @@ namespace finances {
         }
     };
 
-    QAction *saveAction(QWidget *window, const char *invokable) {
-        return new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+    QAction *saveAction(QWidget *window, SortFilterProxyModel* sortModel, const char *invokable) {
+        auto action = new InvokableAction(window, invokable, Save, QObject::tr("Save"), QKeySequence::Save, false);
+        new ChangeHandler{window, sortModel, [action](const ChangeTrackingItemModel* model) {
+            action->setEnabled(model->hasUnsavedChanges() && model->isValid());
+        }};
+        return action;
     }
 
     QAction *reloadAction(QWidget *window, const char *invokable) {
@@ -463,5 +478,4 @@ namespace finances {
         font.setBold(true);
         return font;
     }
-
 }

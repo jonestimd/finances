@@ -11,7 +11,7 @@
 
 class UiContext;
 
-class AccountsWindow : public EntityWindow<> {
+class AccountsWindow : public EntityWindow<AccountTableModel> {
     Q_OBJECT
     UiContext *const context;
     DataStore *const dataStore;
@@ -21,8 +21,6 @@ class AccountsWindow : public EntityWindow<> {
 public:
     AccountsWindow(UiContext *context);
     ~AccountsWindow();
-
-    AccountTableModel *model();
 
     void loadData() override;
     void saveData() override;

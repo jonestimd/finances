@@ -4,9 +4,13 @@
 #include "entitydao.h"
 #include "service/model/securitylot.h"
 
+class TransactionDetail;
+
 class SecurityLotDao : public EntityDao<SecurityLot> {
 public:
     SecurityLotDao(const QString &dbType);
+
+    QList<const SecurityLot*> findBySale(QSqlDatabase& db, const TransactionDetail* sale);
 
 protected:
     virtual void bindInsertValues(QSqlQuery &query, SecurityLot *lot) override;

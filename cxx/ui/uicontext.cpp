@@ -58,7 +58,7 @@ UiContext::UiContext(DataStore *dataStore)
     , categoriesAction_(this, finances::Category, tr("Categories"), tr("alt+k", "categories"), dataStore)
     , groupsAction_(this, Workspaces, tr("Groups"), tr("alt+g", "groups"), dataStore)
     , securitiesAction_(this, AreaChart, tr("Securities"), tr("alt+s", "securities"), this)
-    , accountSecuritiesAction_(this, materialIcon(LibraryBooks, {}, AreaChart), tr("Account Securities"), tr("ctrl+shift+s", "account securities"), this)
+    , accountSecuritiesAction_(this, materialIcon({LibraryBooks, AreaChart}), tr("Account Securities"), tr("ctrl+shift+s", "account securities"), this)
 {}
 
 UiContext::UiContext(const ConnectionSettings &settings) : UiContext(new DataStore(settings)) {}

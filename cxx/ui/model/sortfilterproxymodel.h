@@ -3,13 +3,9 @@
 
 #include <QSortFilterProxyModel>
 
-class AdapterItemModel;
-class EntityView;
-
 typedef std::function<bool(const QModelIndex &sourceIndex)> AcceptRow;
 
 class SortFilterProxyModel : public QSortFilterProxyModel {
-    friend class EntityView;
     QList<AcceptRow> acceptFunctions{};
 
 public:
@@ -17,9 +13,6 @@ public:
 
     void addFilter(AcceptRow acceptFunction);
     void clearFilters();
-
-private:
-    virtual void setSourceModel(QAbstractItemModel*) override;
 
 protected:
     virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;

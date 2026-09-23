@@ -2,8 +2,7 @@
 #define ENTITY_VIEW_H
 
 #include "filterinput.h"
-#include "tableitemdelegate.h"
-#include "ui/model/adapteritemmodel.h"
+#include "ui/model/changetrackingitemmodel.h"
 #include "ui/model/sortfilterproxymodel.h"
 #include "ui/store/statusmessagestore.h"
 #include <QStatusBar>
@@ -16,7 +15,6 @@ class EntityView : public QObject {
     Q_OBJECT
 protected:
     QWidget *const window;
-    TableItemDelegate itemDelegate;
     /** @brief Index of the last selected cell. */
     QList<int> lastSelection;
     int lastColumn;
@@ -32,21 +30,24 @@ public:
     EntityView(QWidget *window, StatusMessageStore* messageStore, QAbstractItemModel *model,
                QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
 
-    inline QAbstractItemModel* model() const {
-        return sortModel->sourceModel();
+    template<class Model = QAbstractItemModel>
+    inline Model* model() const requires std::is_base_of_v<QAbstractItemModel, Model>{
+        return qobject_cast<Model*>(sortModel->sourceModel());
     }
-    void setModel(QAbstractItemModel* model);
 
     void addActions(const QList<QAction*> &actions);
     void insertAction(qsizetype index, QAction* action);
 
     QModelIndex selectedIndex();
+    void selectIndex(QModelIndex index);
 
     void focusItemView();
 
 public Q_SLOTS:
     void showStatusMessage(const QString message);
     void clearStatusMessage();
+private Q_SLOTS:
+    void showValidation(const QModelIndex& index);
 
 protected:
     /**
@@ -55,38 +56,8 @@ protected:
     virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
+    void saveSelection(QModelIndex index);
     void restoreSelection();
-};
-
-class EditEntityView : public EntityView {
-    Q_OBJECT
-
-public:
-    QAction *const saveAction;
-
-    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-               QAbstractItemView *itemView, QHeaderView *viewHeader, const QString &entityName);
-    EditEntityView(QWidget *window, StatusMessageStore* messageStore, AdapterItemModel *model,
-               QTableView *itemView, const QString &entityName);
-
-    template<class T = AdapterItemModel>
-    inline T *model() const {
-        return static_cast<T*>(sortModel->sourceModel());
-    }
-    void setModel(AdapterItemModel* model);
-
-    bool confirmLoadData();
-    void confirmClose(QCloseEvent *event, const char *settingsGroup);
-
-public Q_SLOTS:
-    void dataChanged();
-    void showValidation(const QModelIndex &index);
-
-protected:
-    /**
-     * @brief eventFilter Confirms closing the window when there are unsaved changes.
-     */
-    virtual bool eventFilter(QObject* obj, QEvent* event) override;
 };
 
 #endif // ENTITY_VIEW_H

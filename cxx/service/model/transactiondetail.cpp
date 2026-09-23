@@ -17,6 +17,7 @@ TransactionDetail::TransactionDetail(const QSqlRecord &record)
     , assetQuantity{sql::decimalValue(record, "asset_quantity")}
     , memo{sql::getString(record, "memo")}
     , transferAccountId{sql::getInt(record, "transfer_account_id")}
+    , lotShares{sql::decimalValue(record, "lot_shares")}
 {}
 
 bool TransactionDetail::isEmpty() const {
@@ -28,6 +29,11 @@ bool TransactionDetail::isEmpty() const {
            && memo.isNull()
            && (amount.isNaN() || amount.isZero())
            && (!assetQuantity.has_value() || assetQuantity.value().isZero());
+}
+
+bool TransactionDetail::isMissingLots() const {
+    return assetQuantity.has_value() && assetQuantity.value().isNegative() &&
+        (!lotShares.has_value() || assetQuantity.value().abs() > lotShares.value());
 }
 
 TransactionDetail *TransactionDetail::newTransfer(const optional_id &transferAccountId, domain_id transactionId) const {
@@ -58,6 +64,23 @@ TransactionDetail *TransactionDetail::copyRecent(const TransactionDetail *detail
     return copy;
 }
 
+SecurityPurchase::SecurityPurchase() : TransactionDetail{} {}
+
+SecurityPurchase::SecurityPurchase(const QSqlRecord &record)
+    : TransactionDetail{record}
+    , transactionDate{sql::getDate(record, "date").value()}
+    , accountShares{sql::decimalValue(record, "account_shares").value()}
+    , allocatedShares{sql::decimalValue(record, "allocated_shares").value_or(QDecNumber{0})}
+{}
+
+QDecNumber SecurityPurchase::availableShares() const {
+    return (accountShares - allocatedShares);
+}
+
+QDecNumber SecurityPurchase::cost() const {
+    return (amount * accountShares / assetQuantity.value()).abs();
+}
+
 SearchTransactionDetail::SearchTransactionDetail() {}
 
 SearchTransactionDetail::SearchTransactionDetail(const QSqlRecord& record)
@@ -74,3 +97,5 @@ bool SearchTransactionDetail::deletable() const {
 }
 DetailSearchCriteria::DetailSearchCriteria(const QString text, optional_id payeeId, optional_id securityId, optional_id categoryId)
     : text{text}, payeeId{payeeId}, securityId{securityId}, categoryId{categoryId} {}
+
+DetailSearchCriteria::DetailSearchCriteria(bool missingLots) : missingLots{missingLots} {}

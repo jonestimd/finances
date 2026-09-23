@@ -47,7 +47,10 @@ QString RecentTxAction::label(PendingTransaction *transaction, const DataStore *
     const auto& details = transaction->details;
     for (auto detail : details.first(std::min<qsizetype>(details.size(), SUMMARY_DETAILS))) {
         if (detail->categoryId.has_value()) label += " <b>" + dataStore->categoryStore->displayName(detail->categoryId.value()) + "</b>";
-        else if (detail->transferAccountId.has_value()) label += " &#xf81c;<b>" + dataStore->accountStore->qualifiedName(detail->transferAccountId.value()) + "</b>";
+        else if (detail->transferAccountId.has_value()) {
+            label += QChar(uint(finances::RightBlackArrow));
+            label += " <b>" + dataStore->accountStore->qualifiedName(detail->transferAccountId.value()) + "</b>";
+        }
         label += QString{" $%1"}.arg(detail->amount.toString()); // TODO other currencies
         if (detail->assetQuantity.has_value()) label += ' ' + detail->assetQuantity.value().toString();
         label += SUMMARY_SEPARATOR;

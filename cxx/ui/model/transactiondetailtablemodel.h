@@ -18,7 +18,7 @@ public:
     static const int securityColumn;
     static const int sharesColumn;
 
-    explicit TransactionDetailTableModel(DataStore *dataStore);
+    explicit TransactionDetailTableModel(DataStore* dataStore);
     ~TransactionDetailTableModel();
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;

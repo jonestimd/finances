@@ -4,15 +4,21 @@
 
 AppWindow::AppWindow(QWidget *parent) : QMainWindow{parent} {}
 
+void AppWindow::saveData() {
+    qCritical("saveData not implemented");
+}
+
 void AppWindow::closeEvent(QCloseEvent *event) {
     emit closed(this);
 }
 
-EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, AdapterItemModel *model,
+////////////// EntityDialog //////////////
+
+EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const char *settingsGroup, ChangeTrackingItemModel *model,
                            QTableView *itemView, StatusMessageStore *messageStore)
     : QDialog{parent}
     , layout{this}
-    , entityView{this, messageStore, model, itemView, entityName}
+    , entityView{this, messageStore, model, itemView, itemView->horizontalHeader(), entityName}
 {
     layout.addWidget(&entityView.toolbar);
     layout.addWidget(itemView);
@@ -27,14 +33,7 @@ EntityDialog::EntityDialog(QMainWindow *parent, const QString &entityName, const
 }
 
 void EntityDialog::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, entityView.model())) return;
+    auto model = entityView.model<ChangeTrackingItemModel>();
+    if (model && event->key() == Qt::Key_Escape && !dialog::confirmDiscardChanges(this, model)) return;
     QDialog::keyPressEvent(event);
 }
-
-ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTableView *itemView, StatusMessageStore *messageStore)
-    : EntityWindow{entityName, model, itemView, messageStore} {}
-
-ReadOnlyEntityWindow::ReadOnlyEntityWindow(const QString &entityName, QAbstractItemModel *model, QTreeView *itemView, StatusMessageStore *messageStore)
-    : EntityWindow{entityName, model, itemView, messageStore} {}
-
-void ReadOnlyEntityWindow::saveData() {}

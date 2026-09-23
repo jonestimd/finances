@@ -167,6 +167,10 @@ SecurityDao &DbTestCase::securityDao(const QString &driver) {
     return DAOS(driver).securityDao;
 }
 
+SecurityLotDao &DbTestCase::securityLotDao(const QString &driver) {
+    return DAOS(driver).securityLotDao;
+}
+
 StockSplitDao &DbTestCase::stockSplitDao(const QString &driver) {
     return DAOS(driver).stockSplitDao;
 }
@@ -322,7 +326,7 @@ void DbTestCase::saveTransaction(const QString &driver, Transaction *tx, const Q
     transactionDao(driver).add(conn.db, QList<Transaction*>{tx}, TEST_USER);
     for (auto detail : details) detail->transactionId = tx->id.value();
     detailDao(driver).add(conn.db, details, TEST_USER);
-    tx->detailIds = getEntityIds(details);
+    tx->detailIds = domain::getIds(details);
     this->transactions.append(tx);
     for (auto detail : std::as_const(details)) this->details.append(detail);
 }
