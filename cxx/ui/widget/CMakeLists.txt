@@ -17,6 +17,7 @@ target_sources(finances-ui
     ${CMAKE_CURRENT_LIST_DIR}/filemenu.h ${CMAKE_CURRENT_LIST_DIR}/filemenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/filterinput.h ${CMAKE_CURRENT_LIST_DIR}/filterinput.cpp
     ${CMAKE_CURRENT_LIST_DIR}/groupswindow.h ${CMAKE_CURRENT_LIST_DIR}/groupswindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/helpmenu.h ${CMAKE_CURRENT_LIST_DIR}/helpmenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/itemview.h ${CMAKE_CURRENT_LIST_DIR}/itemview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.h ${CMAKE_CURRENT_LIST_DIR}/payeeswindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.h ${CMAKE_CURRENT_LIST_DIR}/recenttxaction.cpp
