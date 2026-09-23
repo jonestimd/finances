@@ -12,6 +12,7 @@
 #include <Qt>
 
 #define APP_NAME "finances"
+#define APP_VERSION "2.0.0"
 
 class SortFilterProxyModel;
 

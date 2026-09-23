@@ -2,6 +2,7 @@
 #include "editlotsdialog.h"
 #include "entityselectiondialog.h"
 #include "filemenu.h"
+#include "helpmenu.h"
 #include "recenttxaction.h"
 #include "searchdialog.h"
 #include "statusmessage.h"
@@ -61,6 +62,7 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     auto menuBar = new QMenuBar;
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
     menuBar->addMenu(new AccountsMenu(this, context));
+    menuBar->addMenu(new HelpMenu{this});
 
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);

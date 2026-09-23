@@ -1,5 +1,6 @@
 #include "accountswindow.h"
 #include "filemenu.h"
+#include "helpmenu.h"
 #include "settings.h"
 #include "ui/titles.h"
 #include "ui/uicontext.h"
@@ -33,6 +34,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
     });
     QMenuBar *menuBar = new QMenuBar();
     menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
+    menuBar->addMenu(new HelpMenu{this});
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(menuBar, 0, Qt::AlignCenter);
