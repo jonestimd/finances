@@ -60,8 +60,8 @@ TransactionsWindow::TransactionsWindow(UiContext *context, TransactionTableModel
     searchButton->addAction(finances::iconAction(finances::Stacks, tr("Sales With &Missing Lots"), tr("ctrl+shift+L"), this, SLOT(findMissingLots())));
 
     auto menuBar = new QMenuBar;
-    menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
-    menuBar->addMenu(new AccountsMenu(this, context));
+    menuBar->addMenu(new FileMenu{this, context});
+    menuBar->addMenu(new AccountsMenu{this, context});
     menuBar->addMenu(new HelpMenu{this});
 
     QHBoxLayout *layout = new QHBoxLayout();

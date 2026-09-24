@@ -5,13 +5,16 @@
 #include "ui/widget/appwindow.h"
 #include <QMenu>
 
+class UiContext;
+
 class FileMenu : public QMenu {
     Q_OBJECT
     QMenu recentsMenu{tr("Recent &Files")};
     const QString connectionName;
+    StatusMessageStore* const messageStore;
 
 public:
-    FileMenu(AppWindow* window, const QString& connectionName);
+    FileMenu(AppWindow* window, UiContext* context);
 
     Q_SLOT void updateRecentsMenu();
 

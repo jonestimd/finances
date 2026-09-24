@@ -33,7 +33,7 @@ AccountsWindow::AccountsWindow(UiContext *context)
         showAccount,
     });
     QMenuBar *menuBar = new QMenuBar();
-    menuBar->addMenu(new FileMenu(this, context->dataStore->connectionSettings().configName()));
+    menuBar->addMenu(new FileMenu{this, context});
     menuBar->addMenu(new HelpMenu{this});
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);

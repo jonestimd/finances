@@ -10,6 +10,7 @@
 #include <QToolButton>
 
 #define CONNECTION_PROP "connectionName"
+#define CONNECTION_MESSAGE "Opening %1..."
 
 namespace filemenu {
     static const QHash<const QString, const char*> typeMap{
@@ -36,9 +37,10 @@ namespace filemenu {
 
 using namespace filemenu;
 
-FileMenu::FileMenu(AppWindow* window, const QString &connectionName)
+FileMenu::FileMenu(AppWindow* window, UiContext* context)
     : QMenu(tr("&File"), window)
-    , connectionName{connectionName}
+    , connectionName{context->dataStore->connectionSettings().configName()}
+    , messageStore{&context->dataStore->messageStore}
 {
     addAction(new FileAction(tr("&New Database..."), QKeyCombination{}, window, Mode::Create));
     addAction(new FileAction(tr("&Open Database..."), QKeyCombination{Qt::ControlModifier, Qt::Key_O}, window));
@@ -68,13 +70,16 @@ void FileMenu::openConnection() {
     if (action) {
         auto name = action->property(CONNECTION_PROP).toString();
         if (!name.isEmpty()) {
-            auto dataStore = new DataStore(App::connectionSettings(name));
+            auto settings = App::connectionSettings(name);
+            messageStore->addMessage(tr(CONNECTION_MESSAGE).arg(settings.displayName()));
+            auto dataStore = new DataStore(settings);
             dataStore->loadAccounts(std::bind_front(&FileMenu::handleOpenResult, this));
         }
     }
 }
 
 void FileMenu::handleOpenResult(DataStore *dataStore, const QString &error) {
+    messageStore->removeMessage(tr(CONNECTION_MESSAGE).arg(dataStore->connectionName()));
     if (error.isEmpty()) {
         App::addRecentName(dataStore->connectionSettings().configName());
         auto context = new UiContext(dataStore);

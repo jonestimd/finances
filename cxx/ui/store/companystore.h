@@ -13,6 +13,10 @@ public:
     CompanyStore(CompanyService *service, StatusMessageStore* messageStore);
 
     void addCompany(QWidget *source, const QString &name, const char *callback);
+    using EntityStore::load;
+
+private:
+    void load();
 };
 
 #endif // COMPANYSTORE_H
