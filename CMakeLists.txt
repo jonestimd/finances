@@ -69,7 +69,7 @@ set_target_properties(libqdecimal
     PROPERTIES IMPORTED_LOCATION ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
 )
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgetsl)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED
     COMPONENTS Widgets Sql Concurrent Test
     OPTIONAL_COMPONENTS LinguistTools
