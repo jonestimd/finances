@@ -46,7 +46,7 @@ void DataStore::loadAccounts(OpenHandler handler) {
     QThreadPool::globalInstance()->start([=, this]() {
         QString message;
         try {
-            accountStore->setValues(services->accountService.getAll(), AccountStore::FriendKey{});
+            accountStore->load(AccountStore::FriendKey{});
         } catch(const QString error) {
             message = error;
         }

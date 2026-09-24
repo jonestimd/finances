@@ -9,9 +9,14 @@ AccountStore::AccountStore(ServiceContext *services, StatusMessageStore* message
     , companyStore{&services->companyService, messageStore} {}
 
 bool AccountStore::load(EntityView *view, bool reload) {
-    bool loaded = EntityStore::load(view, QObject::tr(LOADING_ACCOUNTS), reload);
-    if (!loaded) companyStore.load(view, QObject::tr(LOADING_COMPANIES), true);
+    bool loaded = EntityStore::load(view, tr(LOADING_ACCOUNTS), reload);
+    if (!loaded) companyStore.load(view, tr(LOADING_COMPANIES), true);
     return loaded;
+}
+
+void AccountStore::load(FriendKey key) {
+    companyStore.load();
+    setValues(service->getAll());
 }
 
 void AccountStore::update(QWidget* source, AccountTableModel* model) {

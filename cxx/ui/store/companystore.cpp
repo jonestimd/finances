@@ -13,3 +13,7 @@ void CompanyStore::addCompany(QWidget *source, const QString &name, const char *
         QMetaObject::invokeMethod(source, callback, nullptr);
     });
 }
+
+void CompanyStore::load() {
+    setValues(service->getAll());
+}

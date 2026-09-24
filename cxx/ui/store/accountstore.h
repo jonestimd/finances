@@ -20,14 +20,11 @@ public:
     AccountStore(ServiceContext *services, StatusMessageStore* messageStore);
 
     bool load(EntityView *source, bool reload = false);
+    void load(FriendKey key);
 
     void update(QWidget *source, AccountTableModel *model);
 
     QString qualifiedName(domain_id accountId, QChar delimiter = ':') const;
-
-    inline void setValues(const QHash<domain_id, const Account*> values, FriendKey key) {
-        EntityStore::setValues(values);
-    }
 
 public slots:
     void transactionsUpdated(const QHash<domain_id, TransactionChange> changes);
