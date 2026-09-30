@@ -11,6 +11,7 @@
 #include <QtEnvironmentVariables>
 #include "connectionpool.h"
 #include "dbdialect.h"
+#include "service/database/sqlite3/sqlite_finances.h"
 
 #define MAX_ACTIVE 5
 #define CONFIG_SEP '|'
@@ -20,6 +21,10 @@ Q_LOGGING_CATEGORY(connectionPoolLogger, "connectionPool");
 
 Q_DECLARE_OPAQUE_POINTER(sqlite3*);
 
+extern "C" {
+    void sqlite3_decimal_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi);
+};
+
 static int openConnections{0};
 
 static const QHash<const QString, const char*>timeoutOptions{
@@ -27,12 +32,12 @@ static const QHash<const QString, const char*>timeoutOptions{
     {PG_DRIVER, "connect_timeout="},
 };
 
-static void load_sqlite_extension(sqlite3 *handle, const char *filename, const char *initFunction) {
-    char *msg;
-    sqlite3_load_extension(handle, filename, initFunction, &msg);
+typedef std::function<void(sqlite3*,char**,const sqlite3_api_routines*)> sqlite_init_function;
+static void init_sqlite_extension(sqlite3 *handle, const char *name, sqlite_init_function initFunction) {
+    char *msg{nullptr};
+    initFunction(handle, &msg, nullptr);
     if (msg) {
-        qCCritical(connectionPoolLogger) << qgetenv("LD_LIBRARY_PATH");
-        qCCritical(connectionPoolLogger) << msg;
+        qCCritical(connectionPoolLogger, "error initializing sqlite extension \"%s\": %s", name, msg);
         sqlite3_free(msg);
     }
 }
@@ -100,8 +105,8 @@ QSqlDatabase ConnectionSettings::connect(int* activeCount) const {
         if (qhandle.isValid()) {
             sqlite3 *handle = qhandle.value<sqlite3*>();
             sqlite3_db_config(handle, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, 1, nullptr);
-            load_sqlite_extension(handle, "./decimal", "sqlite3_decimal_init");
-            load_sqlite_extension(handle, "./sqlite_finances", "sqlite3_finances_init");
+            init_sqlite_extension(handle, "decimal", sqlite3_decimal_init);
+            init_sqlite_extension(handle, "finances", sqlite3_finances_init);
             QSqlQuery query{db};
             query.exec("pragma foreign_keys = on");
         }

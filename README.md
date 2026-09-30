@@ -15,11 +15,42 @@ and must be installed separately.
 When using `SQLite`, the database runs as part of the application
 and does not require a separate installation.
 
-## Compile MySql and SQLite3 QT plugins
+# Installing
 
-* Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
-* Install `libsqlite3-dev`, `libpq-dev` and `libmysqlclient-dev`
-* Compile and install the drivers:
+Download and install the appropriate file for your OS.
+
+### Ubuntu/Debian
+  * For Ubuntu 26.04 or later, [finances-qt-2.0.0-Linux.deb](https://github.com/jonestimd/finances/releases/download/v2.0.0/finances-qt-2.0.0-Linux.deb)
+  (Uses system Qt libraries >= 6.10)
+  * Otherwise, [finances-qt-all-2.0.0-Linux.deb](https://github.com/jonestimd/finances/releases/download/v2.0.0/finances-qt-all-2.0.0-Linux.deb)
+  (Includes Qt libraries for 6.11)
+
+# Building
+
+Prerequisites for building:
+* Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html) or the following packages:
+  * `qt6-base-dev`
+  * `qt6-tools-dev`
+  * `qt6-5compat-dev`
+  * `libqt6sql6`
+  * `libqt6sql6-psql`
+  * `libqt6sql6-mysql`
+  * `libqt6widgets6`
+* Install `CMake`
+* Set the `CMAKE_PREFIX_PATH` env variable to the location of the Qt `cmake` extensions, for example:
+```sh
+# to use Qt installed at /opt/Qt
+export CMAKE_PREFIX_PATH=/opt/Qt/6.11.0/gcc_64
+# or to use system Qt development packages
+export CMAKE_PREFIX_PATH=/usr
+```
+* If using Ninja
+  * install Ninja
+  * or add Qt's ninja to your `PATH` (e.g. `alias ninja=${QT_DIR}/../Tools/Ninja/ninja`)
+
+* If building with Qt instead of system libs then Compile MySql and SQLite3 QT plugins
+  * Install `libsqlite3-dev`, `libpq-dev` and `libmysqlclient-dev`
+  * Compile and install the drivers:
 
 ```sh
 # set QT_DIR to the base directory of the QT version, e.g. /opt/Qt/6.11.1
@@ -35,31 +66,24 @@ cmake --build .
 cmake --install .
 ```
 
-## Compiling the Application
+## Compiling the Application (on Ubuntu)
 
 The application can be built using [Qt Creator](https://www.qt.io/product/development-tools)
 or `CMake`.
 
 ### Compiling with CMake
-Prerequisites for building:
-* Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html)
-* Install `CMake`
-* Set the `CMAKE_PREFIX_PATH` env variable to the location of the Qt `cmake` extensions
-  (e.g. `<QT install dir>/<QT version>/gcc_64/lib/cmake`)
-* If using Ninja
-  * install Ninja
-  * or add Qt's ninja to your `PATH` (e.g. `alias ninja=${QT_DIR}/../Tools/Ninja/ninja`)
-```sh
-export CMAKE_PREFIX_PATH=/opt/Qt/6.11.0/gcc_64/lib/cmake
-```
 
 Run the following commands in the project root directory.
 ```sh
+# configure CMake
 cmake -S . -B out -G Ninja
+# compile
 cmake --build out -v
+# generate package file(s)
+cmake --build out -t package
 ```
 
-The compiled executable will be at `out/finances`.
+The compiled executable will be at `out/finances-qt`.
 
 ### Running tests with CTest
 

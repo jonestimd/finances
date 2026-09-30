@@ -17,10 +17,16 @@ target_link_libraries(finances-service PUBLIC
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
     ${SQLite3_LIBRARY}
+    $<TARGET_OBJECTS:sqlite_finances>
+    ${SQLITE_EXTENSION_DIR}/decimal.o
 )
 
 target_include_directories(finances-service PRIVATE
     $<TARGET_PROPERTY:finances,INCLUDE_DIRECTORIES>
+)
+
+set_property(TARGET finances-service
+    PROPERTY COMPILE_DEFINITIONS SQLITE_CORE
 )
 
 add_subdirectory(model/)

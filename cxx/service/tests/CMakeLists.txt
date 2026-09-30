@@ -20,7 +20,7 @@ target_include_directories(dbtestcase PRIVATE
 function(add_service_test name)
     set(exec_name "test_${name}")
     qt_add_executable(${exec_name} ${exec_name}.cpp ${ARGN})
-    add_dependencies(${exec_name} qdecimal decimal.so)
+    add_dependencies(${exec_name} qdecimal)
     set_target_properties(${exec_name} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
     )
@@ -40,19 +40,6 @@ function(add_service_test name)
         dbtestcase
         finances-service
     )
-
-    # install(TARGETS ${exec_name}
-    #     BUNDLE  DESTINATION .
-    #     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    #     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    # )
-
-    # qt_generate_deploy_app_script(
-    #     TARGET ${exec_name}
-    #     OUTPUT_SCRIPT deploy_${exec_name}
-    #     NO_UNSUPPORTED_PLATFORM_ERROR
-    # )
-    # install(SCRIPT ${deploy_${exec_name}})
 
     add_test(NAME ${exec_name}
         WORKING_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>

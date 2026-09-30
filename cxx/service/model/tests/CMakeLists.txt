@@ -1,7 +1,7 @@
 function(add_domain_model_test name)
     set(exec_name "test_${name}")
     qt_add_executable(${exec_name} ${exec_name}.cpp ${ARGN})
-    add_dependencies(${exec_name} qdecimal decimal.so)
+    add_dependencies(${exec_name} qdecimal)
     set_target_properties(${exec_name} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY $<TARGET_PROPERTY:finances,BINARY_DIR>
     )
