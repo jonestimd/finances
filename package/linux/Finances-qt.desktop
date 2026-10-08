@@ -1,7 +1,7 @@
 [Desktop Entry]
 Comment=Manage personal finances
 Comment[en_US]=Manage personal finances
-Categories=Application;Office;
+Categories=Office
 Exec=/usr/bin/finances-qt
 Icon=finances-qt
 Name=Finances (Qt)

@@ -17,18 +17,22 @@ and does not require a separate installation.
 
 # Installing
 
-Download and install the appropriate file for your OS.
+Download and install the appropriate file for your OS from the [releases](https://github.com/jonestimd/finances/releases).
 
 ### Ubuntu/Debian
-  * For Ubuntu 26.04 or later, [finances-qt-2.0.0-Linux.deb](https://github.com/jonestimd/finances/releases/download/v2.0.0/finances-qt-2.0.0-Linux.deb)
-  (Uses system Qt libraries >= 6.10)
-  * Otherwise, [finances-qt-all-2.0.0-Linux.deb](https://github.com/jonestimd/finances/releases/download/v2.0.0/finances-qt-all-2.0.0-Linux.deb)
-  (Includes Qt libraries for 6.11)
+  * For Ubuntu 26.04 or later, you can use <code>finances-qt-<em>&lt;version></em>-Linux.deb</code>
+  which includes dependencies on Qt packages (>= 6.10)
+  * Otherwise, you can use <code>finances-qt-all-<em>&lt;version></em>-Linux.deb</code>
+  which includes Qt libraries and plugins
+
+### Other Linux
+* Use <code>finances-qt-<em>&lt;version></em>-Linux.AppImage</code> which includes Qt libraries and plugins
 
 # Building
 
-Prerequisites for building:
-* Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html) or the following packages:
+## Linux Prerequisites
+
+* Install [Qt](https://doc.qt.io/qt-6/get-and-install-qt.html) **or** the following packages:
   * `qt6-base-dev`
   * `qt6-tools-dev`
   * `qt6-5compat-dev`
@@ -48,7 +52,7 @@ export CMAKE_PREFIX_PATH=/usr
   * install Ninja
   * or add Qt's ninja to your `PATH` (e.g. `alias ninja=${QT_DIR}/../Tools/Ninja/ninja`)
 
-* If building with Qt instead of system libs then Compile MySql and SQLite3 QT plugins
+* If building with Qt install instead of system libs then compile MySql and SQLite3 QT plugins
   * Install `libsqlite3-dev`, `libpq-dev` and `libmysqlclient-dev`
   * Compile and install the drivers:
 
@@ -79,11 +83,19 @@ Run the following commands in the project root directory.
 cmake -S . -B out -G Ninja
 # compile
 cmake --build out -v
-# generate package file(s)
-cmake --build out -t package
 ```
 
 The compiled executable will be at `out/finances-qt`.
+
+Run the following commands in the project root to generate package files.
+When building with system libs, CPack will generate a `.deb` file with dependencies on the Qt packages.
+When building with a Qt install, CPack will generate a `.deb` file and an AppImage containing the Qt
+libraries.
+
+```sh
+cd out
+cpack
+```
 
 ### Running tests with CTest
 

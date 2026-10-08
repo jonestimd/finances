@@ -156,15 +156,13 @@ set_target_properties(finances PROPERTIES
 
 include(GNUInstallDirs)
 
-install(TARGETS finances sqlite_finances_ext
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION "/usr/${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "/usr/${CMAKE_INSTALL_BINDIR}"
-)
-install(FILES "package/linux/Finances-qt.desktop" DESTINATION "/usr/${CMAKE_INSTALL_DATADIR}/applications")
-install(FILES "package/linux/finances-qt.png" DESTINATION "/usr/${CMAKE_INSTALL_DATADIR}/icons")
+install(TARGETS finances sqlite_finances_ext)
+install(FILES "package/linux/Finances-qt.desktop" DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+install(FILES "package/linux/finances-qt.png" DESTINATION "${CMAKE_INSTALL_DATADIR}/icons")
 
 qt_finalize_executable(finances)
+
+set(CPACK_GENERATOR DEB)
 if(${CMAKE_PREFIX_PATH} STREQUAL "/usr")
     message(NOTICE "using system Qt libs")
     set(CPACK_PACKAGE_NAME finances-qt)
@@ -193,14 +191,12 @@ qt6_deploy_runtime_dependencies(
     NO_TRANSLATIONS
 )
 ")
-    install(CODE "set(CMAKE_INSTALL_PREFIX /opt/finances)")
     install(SCRIPT ${qt_install_script})
+
+    list(APPEND CPACK_GENERATOR AppImage)
+    set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/package/linux/CPackOptions.cmake")
 endif()
 
-set(CPACK_BINARY_DEB ON)
-set(CPACK_BINARY_STGZ OFF)
-set(CPACK_BINARY_TGZ OFF)
-set(CPACK_BINARY_TZ OFF)
 set(CPACK_PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
 set(CPACK_PACKAGE_CONTACT "jonestimd@users.noreply.github.com")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Application for tracking personal finances in a SQL database.")
