@@ -3,7 +3,6 @@
 
 #include <QSqlDatabase>
 #include <QString>
-#include <sqlite3.h>
 #include "../model/basedomain.h"
 #include "connectionpool.h"
 

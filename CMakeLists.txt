@@ -1,12 +1,18 @@
-# cmds:
-# $ cmake -S . -B build
-# $ cmake --build build -v
-# $ cmake --build build --target update_translations
 # env:
 # CMAKE_PREFIX_PATH=/opt/Qt/6.11.0/gcc_64/lib/cmake
+# cmds:
+### use development Qt libs
+# $ cmake -G Ninja -DCMAKE_PREFIX_PATH=/opt/Qt/6.11.1/gcc_64 -S . -B build
+### use system Qt libs
+# $ cmake -G Ninja -DCMAKE_PREFIX_PATH=/usr -S . -B build
+### compile
+# $ cmake --build build -v
+### generate translation files
+# $ cmake --build build --target update_translations
 cmake_minimum_required(VERSION 3.27)
 
-project(finances VERSION 0.1 LANGUAGES CXX)
+project(finances VERSION 2.0.0 LANGUAGES CXX)
+add_compile_definitions(APP_VERSION="${CMAKE_PROJECT_VERSION}" SQLITE_CORE)
 
 if (NOT DEFINED CMAKE_PREFIX_PATH)
     message(WARNING "CMAKE_PREFIX_PATH not defined, using env value")
@@ -32,20 +38,17 @@ find_file(COPY cp ${PATH})
 ExternalProject_Add(sqlite3
     GIT_REPOSITORY https://github.com/sqlite/sqlite.git
     GIT_TAG release
+    GIT_SHALLOW true
     CONFIGURE_COMMAND <SOURCE_DIR>/configure --disable-tcl
     BUILD_IN_SOURCE true
     BUILD_COMMAND
-        ${MAKE} sqlite3.c && ${CMAKE_C_COMPILER} -g -I. -fPIC -shared ext/misc/decimal.c -o decimal.so
+        ${MAKE} sqlite3.c && ${CMAKE_C_COMPILER} -DSQLITE_CORE -I. -c -g -o decimal.o ext/misc/decimal.c
     BUILD_BYPRODUCTS
-        <SOURCE_DIR>/decimal.so
+        <SOURCE_DIR>/decimal.o
     INSTALL_COMMAND ""
 )
 ExternalProject_Get_Property(sqlite3 SOURCE_DIR)
 set(SQLITE_EXTENSION_DIR ${SOURCE_DIR})
-add_custom_target(decimal.so
-    DEPENDS sqlite3
-    COMMAND ${COPY} ${SQLITE_EXTENSION_DIR}/decimal.so .
-)
 
 ExternalProject_Add(qdecimal
     GIT_REPOSITORY https://github.com/semihc/qdecimal.git
@@ -99,22 +102,19 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_RESOURCES}
     )
-    add_dependencies(finances libdecnumber qdecimal decimal.so)
+    set_property(TARGET finances PROPERTY OUTPUT_NAME "finances-qt")
+    add_dependencies(finances libdecnumber qdecimal sqlite3)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET finances APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(finances SHARED
-            # ${PROJECT_SOURCES}
-        )
+        add_library(finances SHARED)
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(finances
-            # ${PROJECT_SOURCES}
-        )
+        add_executable(finances)
     endif()
 endif()
 
@@ -131,7 +131,7 @@ target_link_libraries(finances PRIVATE
     Qt${QT_VERSION_MAJOR}::Concurrent
     ${SQLite3_LIBRARY}
     $<TARGET_OBJECTS:qtcommon>
-    # comment out next 2 lines for initial build with Ninja
+    $<TARGET_OBJECTS:sqlite_finances>
     libqdecimal
     libdecnumber
     finances-ui
@@ -155,12 +155,52 @@ set_target_properties(finances PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS finances
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(finances)
+install(TARGETS finances sqlite_finances_ext)
+install(FILES "package/linux/Finances-qt.desktop" DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+install(FILES "package/linux/finances-qt.png" DESTINATION "${CMAKE_INSTALL_DATADIR}/icons")
+
+qt_finalize_executable(finances)
+
+set(CPACK_GENERATOR DEB)
+if(${CMAKE_PREFIX_PATH} STREQUAL "/usr")
+    message(NOTICE "using system Qt libs")
+    set(CPACK_PACKAGE_NAME finances-qt)
+    string(JOIN "," DEBIAN_DEPENDS
+        "libqt6sql6 (>= ${QT_VERSION})"
+        "libqt6sql6-psql (>= ${QT_VERSION})"
+        "libqt6sql6-mysql (>= ${QT_VERSION})"
+        "libqt6widgets6 (>= ${QT_VERSION})"
+    )
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${DEBIAN_DEPENDS}")
+    set(CPACK_DEBIAN_PACKAGE_REPLACES "finances-qt-all, finances-qt (<< 2.0.0)")
+    set(CPACK_DEBIAN_PACKAGE_BREAKS "finances-qt-all, finances-qt (<< 2.0.0)")
+else()
+    message(NOTICE "including Qt libs")
+    set(CPACK_PACKAGE_NAME finances-qt-all)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb-cursor0 (>= 0.0.99), libxcb-icccm4 (>= 0.4.2), libxcb-keysyms1 (>= 0.4.1)")
+    set(CPACK_DEBIAN_PACKAGE_REPLACES finances-qt)
+    set(CPACK_DEBIAN_PACKAGE_BREAKS finances-qt)
+    set_property(TARGET finances PROPERTY INSTALL_RPATH "/opt/finances/lib")
+    # includes Qt libs in .deb file
+    # qt_generate_deploy_app_script(TARGET finances OUTPUT_SCRIPT qt_install_script NO_TRANSLATIONS NO_PLUGINS)
+    # above function would include unwanted qt.conf
+    qt6_generate_deploy_script(TARGET finances OUTPUT_SCRIPT qt_install_script CONTENT "
+qt6_deploy_runtime_dependencies(
+    EXECUTABLE \"$<TARGET_FILE:finances>\"
+    NO_TRANSLATIONS
+)
+")
+    install(SCRIPT ${qt_install_script})
+
+    list(APPEND CPACK_GENERATOR AppImage)
+    set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/package/linux/CPackOptions.cmake")
 endif()
+
+set(CPACK_PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
+set(CPACK_PACKAGE_CONTACT "jonestimd@users.noreply.github.com")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Application for tracking personal finances in a SQL database.")
+set(CPACK_DEBIAN_PACKAGE_SECTION "Financial Management")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jonestimd/finances")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
+include(CPack)

@@ -1,7 +1,7 @@
 /**
  * @brief Sqlite3 extension that provides the `adjust_shares` function used by `finances`.
  */
-#include <sqlite3ext.h>
+#include "sqlite_finances.h"
 #include <assert.h>
 #include <decNumber.h>
 
@@ -61,5 +61,5 @@ __declspec(dllexport)
 int sqlite3_finances_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi) {
     SQLITE_EXTENSION_INIT2(pApi);
     decContextDefault(&ctx, DEC_INIT_BASE);
-    return pApi->create_function_v2(db, "adjust_shares", 3, SQLITE_UTF8|SQLITE_DETERMINISTIC|SQLITE_INNOCUOUS, NULL, adjustShares, NULL, NULL, NULL);
+    return sqlite3_create_function_v2(db, "adjust_shares", 3, SQLITE_UTF8|SQLITE_DETERMINISTIC|SQLITE_INNOCUOUS, NULL, adjustShares, NULL, NULL, NULL);
 }

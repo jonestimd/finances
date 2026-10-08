@@ -25,19 +25,6 @@ target_link_libraries(test_decimal PRIVATE
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
 )
 
-install(TARGETS test_decimal
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-# qt_generate_deploy_app_script(
-#     TARGET test_decimal
-#     OUTPUT_SCRIPT deploy_test_decimal
-#     NO_UNSUPPORTED_PLATFORM_ERROR
-# )
-# install(SCRIPT ${deploy_test_decimal})
-
 add_test(NAME test_decimal COMMAND test_decimal)
 
 qt_add_library(finances-uitest OBJECT
