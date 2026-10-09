@@ -28,6 +28,9 @@ Download and install the appropriate file for your OS from the [releases](https:
 ### Other Linux
 * Use <code>finances-qt-<em>&lt;version></em>-Linux.AppImage</code> which includes Qt libraries and plugins
 
+### Windows
+* Use <code>Finances-<em>&lt;version></em>-win64.exe</code> to install the program
+
 # Building
 
 ## Linux Prerequisites
@@ -61,11 +64,7 @@ export CMAKE_PREFIX_PATH=/usr
 cd $QT_DIR/Src/qtbase/src/plugins/sqldrivers
 mkdir build
 cd build
-cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_DIR -DCMAKE_INSTALL_PREFIX=$QT_DIR/gcc_64 -DFEATURE_system_sqlite=ON \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-# fetch external projects
-cmake --build . --target qdecimal
-# build default target
+cmake -G Ninja -S .. -DCMAKE_INSTALL_PREFIX=$QT_DIR/gcc_64 -DFEATURE_system_sqlite=ON
 cmake --build .
 cmake --install .
 ```
@@ -80,9 +79,11 @@ or `CMake`.
 Run the following commands in the project root directory.
 ```sh
 # configure CMake
-cmake -S . -B out -G Ninja
-# compile
+cmake -S . -B out -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+# compile the application
 cmake --build out -v
+# or to just build external projects
+cmake --build . --target qdecimal
 ```
 
 The compiled executable will be at `out/finances-qt`.
@@ -129,4 +130,38 @@ QT_LOGGING_RULES=sql.debug=false;sql.info=false
 TEST_PG_SOCKET_PATH=
 # Directory containing the MySQL unix socket file (not used by default)
 TEST_MYSQL_SOCKET_PATH=
+```
+
+## Cross-compiling for Windows
+
+* Clone [MXE](https://github.com/mxe/mxe).
+The following instructions use `/opt/mxe` for the build environment.
+```sh
+cd /opt
+git clone https://github.com/mxe/mxe.git
+```
+* Install [MXE requirements](https://mxe.cc/#requirements-debian)
+```sh
+cd /opt/mxe
+make check-requirements
+# install missing requirements
+# e.g. sudo apt install ...
+```
+* To build the required MXE packages, run the following in project root.
+```sh
+./package/windows/setup-mxe.sh /opt/mxe
+```
+
+* Compile the project.
+```sh
+mkdir -p build/windows
+cd build/windows
+export PATH=$PATH:/opt/mxe/usr/bin
+alias mxe-cmake=/opt/mxe/usr/bin/x86_64-w64-mingw32.shared-cmake
+mxe-cmake -G Ninja -S ../..
+mxe-cmake --build .
+
+# generate the Windows installer: Finances-<version>-win64.exe
+alias mxe-cpack=/opt/mxe/usr/bin/x86_64-w64-mingw32.shared-cpack
+mxe-cpack
 ```

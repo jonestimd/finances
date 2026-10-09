@@ -25,6 +25,12 @@
 #define RECENT_ITEM(index) QString{RECENT_PREFIX "%1"}.arg(index)
 #define MAX_RECENT_COUNT 5
 
+#ifdef _WIN32
+#define ICON_FILE "finances.ico"
+#else
+#define ICON_FILE "finances.svg"
+#endif
+
 QString readStyles(const QString &fileName) {
     QFile file(fileName);
     if (file.open(QFile::ReadOnly)) return QString(file.readAll());
@@ -51,8 +57,8 @@ namespace finances {
 
     QFont FontResource::font(int pointSize) {
         auto f = QFontDatabase::font(family, style, pointSize);
-        f.setVariableAxis("FILL", 1);
-        f.setVariableAxis("GRAD", 50);
+        // f.setVariableAxis("FILL", 1);
+        // f.setVariableAxis("GRAD", 50);
         return f;
     }
 
@@ -286,7 +292,7 @@ namespace finances {
         , userStyleSheet{""}
     {
         setStyle(new AppStyle()); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-        setWindowIcon(QIcon(":/images/finances.svg")); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        setWindowIcon(QIcon(":/images/" ICON_FILE)); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         auto styleFile = styleSheet();
         if (!styleFile.isEmpty()) userStyleSheet = readStyles(styleFile.replace(0, 8, ""));
         updateStyleSheet(styleHints()->colorScheme());

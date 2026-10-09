@@ -12,13 +12,13 @@ qt_add_library(finances-service OBJECT
 add_dependencies(finances-service libdecnumber)
 
 target_link_libraries(finances-service PUBLIC
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Sql
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
-    ${SQLite3_LIBRARY}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Sql
     $<TARGET_OBJECTS:sqlite_finances>
     ${SQLITE_EXTENSION_DIR}/decimal.o
+    ${SQLite3_LIBRARY}
 )
 
 target_include_directories(finances-service PRIVATE

@@ -2,9 +2,10 @@
     <qresource prefix="/images">
         <file>finances.svg</file>
         <file>invalid.svg</file>
+        <file>finances.ico</file>
     </qresource>
     <qresource prefix="/fonts">
-        <file>MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2</file>
+        <file>MaterialSymbolsRounded_Filled-Regular.ttf</file>
     </qresource>
     <qresource prefix="/styles">
         <file>minimal-dark.qss</file>

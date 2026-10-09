@@ -16,6 +16,9 @@
 #error "APP_VERSION not defined"
 #endif
 
+template<typename T>
+struct SupportedType : std::false_type {};
+
 class SortFilterProxyModel;
 
 namespace finances {
@@ -102,7 +105,7 @@ namespace finances {
         MaterialIcon(FontIcon symbol, bool mirrorY);
     };
 
-    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2", "Regular");
+    Q_GLOBAL_STATIC(FontResource, iconFont, ":/fonts/MaterialSymbolsRounded_Filled-Regular.ttf", "Regular")
 
     QIcon materialIcon(MaterialIcon icon, QColor color = {});
     QLabel* iconWidget(FontIcon icon, QWidget *parent = nullptr);

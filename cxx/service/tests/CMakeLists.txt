@@ -5,10 +5,10 @@ qt_add_library(dbtestcase OBJECT
 add_dependencies(dbtestcase finances-service)
 
 target_link_libraries(dbtestcase
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Sql
     ${QDECIMAL_BINARY_DIR}/src/libqdecimal.a
     ${QDECIMAL_BINARY_DIR}/decnumber/libdecnumber.a
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Sql
     ${SQLite3_LIBRARY}
     $<TARGET_OBJECTS:qtcommon>
 )

@@ -32,17 +32,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 include(ExternalProject)
 
-find_file(MAKE make ${PATH})
-find_file(COPY cp ${PATH})
+find_program(MAKE make)
+find_program(COPY cp)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(SQLITE3_CONFIG_OPTS --build=x86_64-pc-linux-gnu --host=x86_64-w64-mingw32.shared)
+else()
+    set(SQLITE3_CONFIG_OPTS "")
+endif()
+set(SQLITE3_TARGET "sqlite3.c")
 
 ExternalProject_Add(sqlite3
     GIT_REPOSITORY https://github.com/sqlite/sqlite.git
     GIT_TAG release
     GIT_SHALLOW true
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --disable-tcl
+    CONFIGURE_COMMAND test Makefile -nt Makefile.in || ./configure --disable-tcl ${SQLITE3_CONFIG_OPTS}
     BUILD_IN_SOURCE true
     BUILD_COMMAND
-        ${MAKE} sqlite3.c && ${CMAKE_C_COMPILER} -DSQLITE_CORE -I. -c -g -o decimal.o ext/misc/decimal.c
+        test ${SQLITE3_TARGET} -nt Makefile || ${MAKE} ${SQLITE3_TARGET} && ${CMAKE_C_COMPILER} -DSQLITE_CORE -I. -c -g ext/misc/decimal.c
     BUILD_BYPRODUCTS
         <SOURCE_DIR>/decimal.o
     INSTALL_COMMAND ""
@@ -52,7 +59,7 @@ set(SQLITE_EXTENSION_DIR ${SOURCE_DIR})
 
 ExternalProject_Add(qdecimal
     GIT_REPOSITORY https://github.com/semihc/qdecimal.git
-    CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} -DCMAKE_C_FLAGS=-fPIC
+    CMAKE_ARGS -DCMAKE_C_FLAGS=-fPIC -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     INSTALL_COMMAND ""
     BUILD_BYPRODUCTS
         <BINARY_DIR>/decnumber/libdecnumber.a
@@ -91,16 +98,20 @@ add_dependencies(qtcommon libdecnumber)
 
 set(PROJECT_RESOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qrc
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.svg
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/finances.qss
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-dark.qss
-    ${CMAKE_CURRENT_LIST_DIR}/cxx/ui/resources/minimal-light.qss
 )
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    add_custom_command(
+        OUTPUT finances_icon.o
+        COMMAND ${CMAKE_RC_COMPILER} "${CMAKE_CURRENT_SOURCE_DIR}/cxx/ui/resources/finances.rc" -o finances_icon.o
+    )
+    set(WINDOWS_RESOURCES finances_icon.o)
+endif()
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(finances
         MANUAL_FINALIZATION
         ${PROJECT_RESOURCES}
+        ${WINDOWS_RESOURCES}
     )
     set_property(TARGET finances PROPERTY OUTPUT_NAME "finances-qt")
     add_dependencies(finances libdecnumber qdecimal sqlite3)
@@ -154,47 +165,80 @@ set_target_properties(finances PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-include(GNUInstallDirs)
-
-install(TARGETS finances sqlite_finances_ext)
-install(FILES "package/linux/Finances-qt.desktop" DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-install(FILES "package/linux/finances-qt.png" DESTINATION "${CMAKE_INSTALL_DATADIR}/icons")
-
 qt_finalize_executable(finances)
 
-set(CPACK_GENERATOR DEB)
-if(${CMAKE_PREFIX_PATH} STREQUAL "/usr")
-    message(NOTICE "using system Qt libs")
-    set(CPACK_PACKAGE_NAME finances-qt)
-    string(JOIN "," DEBIAN_DEPENDS
-        "libqt6sql6 (>= ${QT_VERSION})"
-        "libqt6sql6-psql (>= ${QT_VERSION})"
-        "libqt6sql6-mysql (>= ${QT_VERSION})"
-        "libqt6widgets6 (>= ${QT_VERSION})"
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(CMAKE_INSTALL_BINDIR ".")
+    set(CMAKE_INSTALL_LIBDIR ".")
+    include(GNUInstallDirs)
+    install(TARGETS finances sqlite_finances_ext)
+    install(CODE "
+    execute_process(
+        COMMAND ./package/windows/list-dlls.sh ${CMAKE_PREFIX_PATH} $<TARGET_FILE:finances>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE FINANCES_DLLS
+        ERROR_VARIABLE MISSING_FINANCES_DLLS
+        ECHO_ERROR_VARIABLE
     )
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${DEBIAN_DEPENDS}")
-    set(CPACK_DEBIAN_PACKAGE_REPLACES "finances-qt-all, finances-qt (<< 2.0.0)")
-    set(CPACK_DEBIAN_PACKAGE_BREAKS "finances-qt-all, finances-qt (<< 2.0.0)")
+    file(INSTALL \${FINANCES_DLLS} DESTINATION \${CMAKE_INSTALL_PREFIX})
+    file(COPY ${CMAKE_PREFIX_PATH}/qt6/plugins DESTINATION \${CMAKE_INSTALL_PREFIX})
+")
+    set(CPACK_GENERATOR NSIS)
+    set(CPACK_PACKAGE_NAME Finances)
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finances ${CMAKE_PROJECT_VERSION}")
+    set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/package/windows/finances.bmp")
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+    set(CPACK_NSIS_PACKAGE_NAME "Finances ${CMAKE_PROJECT_VERSION}")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/cxx/ui/resources/finances.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/cxx/ui/resources/finances.ico")
+    set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+    file(GENERATE OUTPUT "nsis_options.cmake" CONTENT [[
+set(CPACK_PACKAGE_EXECUTABLES $<TARGET_FILE_BASE_NAME:finances> "Finances")
+set(CPACK_CREATE_DESKTOP_LINKS $<TARGET_FILE_BASE_NAME:finances>)
+set(CPACK_NSIS_INSTALLED_ICON_NAME $<TARGET_FILE_NAME:finances>)
+]])
+    set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/nsis_options.cmake)
 else()
-    message(NOTICE "including Qt libs")
-    set(CPACK_PACKAGE_NAME finances-qt-all)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb-cursor0 (>= 0.0.99), libxcb-icccm4 (>= 0.4.2), libxcb-keysyms1 (>= 0.4.1)")
-    set(CPACK_DEBIAN_PACKAGE_REPLACES finances-qt)
-    set(CPACK_DEBIAN_PACKAGE_BREAKS finances-qt)
-    set_property(TARGET finances PROPERTY INSTALL_RPATH "/opt/finances/lib")
-    # includes Qt libs in .deb file
-    # qt_generate_deploy_app_script(TARGET finances OUTPUT_SCRIPT qt_install_script NO_TRANSLATIONS NO_PLUGINS)
-    # above function would include unwanted qt.conf
-    qt6_generate_deploy_script(TARGET finances OUTPUT_SCRIPT qt_install_script CONTENT "
+    include(GNUInstallDirs)
+
+    install(TARGETS finances sqlite_finances_ext)
+    install(FILES "package/linux/Finances-qt.desktop" DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+    install(FILES "package/linux/finances-qt.png" DESTINATION "${CMAKE_INSTALL_DATADIR}/icons")
+
+    set(CPACK_GENERATOR DEB)
+    if(${CMAKE_PREFIX_PATH} STREQUAL "/usr")
+        message(NOTICE "using system Qt libs")
+        set(CPACK_PACKAGE_NAME finances-qt)
+        string(JOIN "," DEBIAN_DEPENDS
+            "libqt6sql6 (>= ${QT_VERSION})"
+            "libqt6sql6-psql (>= ${QT_VERSION})"
+            "libqt6sql6-mysql (>= ${QT_VERSION})"
+            "libqt6widgets6 (>= ${QT_VERSION})"
+        )
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${DEBIAN_DEPENDS}")
+        set(CPACK_DEBIAN_PACKAGE_REPLACES "finances-qt-all, finances-qt (<< 2.0.0)")
+        set(CPACK_DEBIAN_PACKAGE_BREAKS "finances-qt-all, finances-qt (<< 2.0.0)")
+    else()
+        message(NOTICE "including Qt libs")
+        set(CPACK_PACKAGE_NAME finances-qt-all)
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb-cursor0 (>= 0.0.99), libxcb-icccm4 (>= 0.4.2), libxcb-keysyms1 (>= 0.4.1)")
+        set(CPACK_DEBIAN_PACKAGE_REPLACES finances-qt)
+        set(CPACK_DEBIAN_PACKAGE_BREAKS finances-qt)
+        set_property(TARGET finances PROPERTY INSTALL_RPATH "/opt/finances/lib")
+        # includes Qt libs in .deb file
+        # qt_generate_deploy_app_script(TARGET finances OUTPUT_SCRIPT qt_install_script NO_TRANSLATIONS NO_PLUGINS)
+        # above function would include unwanted qt.conf
+        qt6_generate_deploy_script(TARGET finances OUTPUT_SCRIPT qt_install_script CONTENT "
 qt6_deploy_runtime_dependencies(
     EXECUTABLE \"$<TARGET_FILE:finances>\"
     NO_TRANSLATIONS
 )
 ")
-    install(SCRIPT ${qt_install_script})
+        install(SCRIPT ${qt_install_script})
 
-    list(APPEND CPACK_GENERATOR AppImage)
-    set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/package/linux/CPackOptions.cmake")
+        list(APPEND CPACK_GENERATOR AppImage)
+        set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/package/linux/CPackOptions.cmake")
+    endif()
 endif()
 
 set(CPACK_PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
