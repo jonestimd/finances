@@ -12,11 +12,25 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  define-matrix:
     runs-on: ubuntu-latest
+    outputs:
+      cmake_prefix: ${{ steps.matrix.outputs.cmake_prefix }}
+    steps:
+      - name: Define Matrix
+        id: matrix
+        run: echo 'cmake_prefix=["/usr", "${{ env.QT_DIR }}/${{ env.QT_VERSION }}/gcc_64"]' >> "$GITHUB_OUTPUT"
+  build:
+    runs-on: ubuntu-26.04
+    needs: define-matrix
     env:
       SOURCE_DIR: ${{ github.workspace }}
       BUILD_DIR: ${{ github.workspace }}/build
+    strategy:
+      fail-fast: false
+      matrix:
+        CMAKE_PREFIX_PATH: ${{ fromJSON(needs.define-matrix.outputs.cmake_prefix) }}
+
     steps:
     - uses: actions/checkout@v7
 
@@ -26,7 +40,7 @@ jobs:
 
     - name: Create test databases
       run: |
-        sudo sed -i -e "/^local .*\bpostgres\b/s/\bpeer$/trust/" /etc/postgresql/16/main/pg_hba.conf
+        sudo sed -i -e "/^local .*\bpostgres\b/s/\bpeer$/trust/" /etc/postgresql/1[678]/main/pg_hba.conf
         sudo systemctl start postgresql.service
         psql -h /var/run/postgresql -U postgres \
             -c "create database test_finances" \
@@ -39,7 +53,14 @@ jobs:
             -e "create user test_finances identified by 'test_finances';" \
             -e "grant all on test_finances.* to test_finances;"
 
+    - name: Install Qt packages
+      if: ${{ matrix.CMAKE_PREFIX_PATH == '/usr' }}
+      shell: bash
+      run: >-
+        sudo apt-get install -y qt6-base-dev qt6-tools-dev qt6-5compat-dev
+        libqt6sql6 libqt6sql6-psql libqt6sql6-mysql libqt6widgets6
     - name: Install Qt
+      if: ${{ matrix.CMAKE_PREFIX_PATH != '/usr' }}
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ env.QT_VERSION }}
@@ -55,12 +76,13 @@ jobs:
         src-archives: 'qtbase'
 
     - name: Compile Qt SQL drivers
+      if: ${{ matrix.CMAKE_PREFIX_PATH != '/usr' }}
       run: |
         export QT_PREFIX=$QT_DIR/$QT_VERSION
         cd $QT_PREFIX/Src/qtbase/src/plugins/sqldrivers
         mkdir build
         cd build
-        cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=$QT_PREFIX/gcc_64 -DFEATURE_system_sqlite=ON
+        cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=${{ matrix.CMAKE_PREFIX_PATH }} -DFEATURE_system_sqlite=ON
         cmake --build .
         cmake --install .
 
@@ -69,7 +91,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       working-directory: ${{ env.SOURCE_DIR }}
       env:
-        CMAKE_PREFIX_PATH: $${{ env.QT_DIR }}/$QT_VERSION/gcc_64/lib/cmake
+        CMAKE_PREFIX_PATH: ${{ matrix.CMAKE_PREFIX_PATH }}
       run: |
         cmake -S . -B ${{ env.BUILD_DIR }} -G Ninja
         cmake --build ${{ env.BUILD_DIR }}

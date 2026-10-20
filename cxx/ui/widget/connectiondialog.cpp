@@ -59,7 +59,7 @@ QLineEdit *ConnectionDialog::connectInput(QLineEdit* input, Value Settings::*fie
         } else if constexpr (std::is_same_v<Value, int>) {
             auto x = value.toInt();
             &settings->*field = x > 0 ? x : -1;
-        } else static_assert(false);
+        } else static_assert(SupportedType<Value>::value);
         inputChanged(input);
     });
     return input;

@@ -78,7 +78,6 @@ struct extract_value<std::optional<V>> {
     typedef V value_type;
 };
 
-
 template<class T, class Value = QVariant>
 class FieldColumnAdapter : public ColumnAdapter<T> {
     typedef extract_value<Value>::value_type optional_value;
@@ -139,7 +138,7 @@ public:
             return value.isNaN() ? QVariant{} : QVariant::fromValue(value);
         } else if constexpr (std::is_convertible_v<Value, const EnumValue*>) {
             return value ? QVariant::fromValue<const EnumValue*>(value) : QVariant{};
-        } else static_assert(false, "unsupported value type for FieldColumnAdapter");
+        } else static_assert(SupportedType<Value>::value, "unsupported value type for FieldColumnAdapter");
     }
 
     virtual void setValue(T *row, QVariant value) const  override {

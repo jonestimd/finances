@@ -1,0 +1,14 @@
+[Desktop Entry]
+Comment=Manage personal finances
+Comment[en_US]=Manage personal finances
+Categories=Office
+Exec=/usr/bin/finances-qt
+Icon=finances-qt
+Name=Finances (Qt)
+Name[en_US]=Finances (Qt)
+NoDisplay=false
+StartupNotify=false
+Terminal=false
+Type=Application
+X-DBUS-StartupType=none
+X-KDE-SubstituteUID=false
