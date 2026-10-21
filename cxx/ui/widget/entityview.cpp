@@ -68,7 +68,8 @@ EntityView::EntityView(QWidget *window, StatusMessageStore *messageStore, QAbstr
     auto tableView = qobject_cast<QTableView*>(itemView);
     if (tableView) {
         tableView->resizeColumnsToContents();
-        // tableView->verticalHeader()->setDefaultSectionSize(5); // minimize row height
+        // using setSectionResizeMode() will cause tall rows for long cell content, so use setDefaultSectionSize()
+        tableView->verticalHeader()->setDefaultSectionSize(5); // minimize row height
     }
 }
 
