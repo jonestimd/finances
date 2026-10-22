@@ -183,8 +183,22 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     file(INSTALL \${FINANCES_DLLS} DESTINATION \${CMAKE_INSTALL_PREFIX})
     file(COPY ${CMAKE_PREFIX_PATH}/qt6/plugins DESTINATION \${CMAKE_INSTALL_PREFIX})
 ")
+
+    # set working directory for start menu shortcut
+    file(READ "${CMAKE_ROOT}/Modules/Internal/CPack/NSIS.template.in" NSIS_TEMPLATE)
+    string(REPLACE
+        "@CPACK_NSIS_CREATE_ICONS@"
+        "SetOutPath '%HOMEPATH%'\n@CPACK_NSIS_CREATE_ICONS@\nSetOutPath \"\$INSTDIR\""
+        MY_NSIS_TEMPLATE
+        "${NSIS_TEMPLATE}")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/NSIS.template.in "${MY_NSIS_TEMPLATE}")
+    unset(NSIS_TEMPLATE)
+    unset(MY_NSIS_TEMPLATE)
+    set(CPACK_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+
     set(CPACK_GENERATOR NSIS)
     set(CPACK_PACKAGE_NAME Finances)
+    set(CPACK_PACKAGE_VENDOR "Timothy Jones")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finances ${CMAKE_PROJECT_VERSION}")
     set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/package/windows/finances.bmp")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
