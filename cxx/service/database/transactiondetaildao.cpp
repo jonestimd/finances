@@ -223,12 +223,12 @@ QList<const SearchTransactionDetail*> TransactionDetailDao::find(const QSqlDatab
     QStringList where;
     QHash<const QString, QVariant> values;
     if (!criteria.text.isEmpty()) {
-        values.insert(":text", criteria.text);
-        where.append("(lower(p.name) like :text\n" \
-           "   or lower(s.name) like :text\n" \
-           "   or lower(tx.memo) like :text\n" \
-           "   or lower(td.memo) like :text\n" \
-           "   or lower(g.name) like :text)\n");
+        values.insert(":text", criteria.text.toLower());
+        where.append(QString{'('}.append(SQL_POSITION(db, :text, lower(p.name))).append(" > 0\n")
+           .append("   or ").append(SQL_POSITION(db, :text, lower(s.name))).append(" > 0\n")
+           .append("   or ").append(SQL_POSITION(db, :text, lower(tx.memo))).append(" > 0\n")
+           .append("   or ").append(SQL_POSITION(db, :text, lower(td.memo))).append(" > 0\n")
+           .append("   or ").append(SQL_POSITION(db, :text, lower(g.name))).append(" > 0)"));
     }
     if (criteria.payeeId.has_value()) {
         values.insert(":payeeId", criteria.payeeId.value());

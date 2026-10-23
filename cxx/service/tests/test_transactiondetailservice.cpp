@@ -39,10 +39,11 @@ private slots:
         QFETCH_GLOBAL(domain_id, accountId);
         auto transaction = factory::transaction(accountId);
         auto detail = factory::detail();
-        detail->memo = "find me";
+        detail->memo = "fiNd% me";
         dbTestCase.saveTransaction(driver, transaction, {detail, factory::detail()});
 
-        auto result = service->findTransactionDetails({detail->memo, {}, {}, {}});
+        QString search{detail->memo.toUpper().sliced(1,4)};
+        auto result = service->findTransactionDetails({search, {}, {}, {}});
 
         QCOMPARE(result.size(), 1);
         QCOMPARE(result[0]->id.value(), detail->id.value());

@@ -39,6 +39,10 @@
 #define IS_MYSQL(db) (db.driverName() == MYSQL_DRIVER)
 #define IS_SQLITE(db) (db.driverName() == SQLITE_DRIVER)
 
+#define SQL_POSITION(db, needle, haystack) (db.driverName() == SQLITE_DRIVER \
+    ? "instr(" #haystack "," #needle ")" \
+    : "position(" #needle " in " #haystack ")")
+
 // Requires 3 query variables in scope with the passed suffix and the following prefixes:
 //  - pg
 //  - mysql
